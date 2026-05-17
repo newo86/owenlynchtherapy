@@ -81,7 +81,7 @@ const faqCategories: FaqCategory[] = [
       },
       {
         q: 'What happens in the first session?',
-        a: "The first session is a chance for us to meet and for me to understand what's brought you to therapy. I'll ask about what you're experiencing, what you're hoping to get from the work, and a little about your background. There's no pressure to share more than feels comfortable. By the end we'll have a sense of whether working together feels like a good fit.",
+        a: "The first session is a chance for us to meet and for me to understand what has brought you to therapy. I will ask about what you are experiencing, what you are hoping for, and a little about your background. There is no pressure to share more than feels comfortable. By the end we will have a sense of whether working together feels like a good fit.",
       },
       {
         q: 'How long will I need therapy for?',
@@ -171,6 +171,10 @@ const faqCategories: FaqCategory[] = [
       {
         q: 'Do you work with LGBTQIA+ clients?',
         a: "Yes. This is an affirming, non-judgmental space. You don't need to explain or justify your identity. We can get straight to what's actually brought you to therapy. I also have experience working with chemsex-related concerns.",
+      },
+      {
+        q: 'Do you diagnose autism or ADHD?',
+        a: 'No. I do not carry out assessments or provide diagnoses for autism or ADHD. However I do work with clients around the symptoms and challenges associated with both, whether or not they have a formal diagnosis. If you are looking to get assessed, I am happy to signpost you toward appropriate assessment services in Ireland.',
       },
       {
         q: "I've never been diagnosed with anything. Can I still come to therapy?",
