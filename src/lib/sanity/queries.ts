@@ -5,9 +5,12 @@ export const allPostsQuery = groq`
     _id,
     title,
     slug,
+    author,
     excerpt,
+    category,
     publishedAt,
-    "imageUrl": mainImage.asset->url
+    "featuredImageUrl": featuredImage.asset->url,
+    "featuredImageAlt": featuredImage.alt
   }
 `;
 
@@ -16,11 +19,16 @@ export const postBySlugQuery = groq`
     _id,
     title,
     slug,
+    author,
     excerpt,
+    category,
     publishedAt,
     body,
-    "imageUrl": mainImage.asset->url,
-    "imageAlt": mainImage.alt
+    references,
+    seoTitle,
+    seoDescription,
+    "featuredImageUrl": featuredImage.asset->url,
+    "featuredImageAlt": featuredImage.alt
   }
 `;
 
