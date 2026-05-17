@@ -98,11 +98,11 @@ const faqCategories: FaqCategory[] = [
     items: [
       {
         q: 'How much does therapy cost?',
-        a: 'Sessions are €90 for 50 minutes. I keep my fees transparent and there are no hidden charges.',
+        a: 'Sessions are €80 in person and €70 online for 50 minutes. I keep my fees transparent and there are no hidden charges.',
       },
       {
-        q: 'Can I claim tax relief on therapy fees?',
-        a: "Yes. Psychotherapy fees qualify for tax relief in Ireland under the MED 1 claim. At the standard 20% tax rate this reduces the effective cost per session. Keep your receipts and claim at year end through Revenue's myAccount.",
+        q: 'Am I covered by health insurance?',
+        a: 'Depending on your health insurance plan, yes. Many plans provide partial refunds or discounts on psychotherapy sessions. I am fully accredited by both IAHIP and ICP, which means my sessions should qualify under most plans that cover psychotherapy. Check directly with your insurance provider to confirm your specific cover.',
       },
       {
         q: 'What is your cancellation policy?',
@@ -162,7 +162,7 @@ const faqCategories: FaqCategory[] = [
       },
       {
         q: 'Do you work with OCD?',
-        a: 'Yes. I use CBT and Exposure and Response Prevention (ERP), the most evidence-based approaches for OCD. I work with all presentations of OCD including intrusive thoughts, checking, contamination fears, and pure O.',
+        a: 'Yes. I work with all presentations of OCD including intrusive thoughts, checking, contamination fears, and pure O. I use Cognitive Behavioural Therapy (CBT), Exposure and Response Prevention (ERP), and Inference-Based Therapy (IBT) — all evidence-based approaches for OCD.',
       },
       {
         q: 'Do you work with autistic adults?',
