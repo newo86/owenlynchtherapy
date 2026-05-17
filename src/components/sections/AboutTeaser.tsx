@@ -37,7 +37,11 @@ export default function AboutTeaser() {
           </h2>
 
           <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-5">
-            I&apos;m Owen Lynch, an IAHIP and ICP accredited psychotherapist based in Dublin. I work with adults
+            I&apos;m Owen Lynch, an{' '}
+            <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 hover:decoration-orange transition-colors">IAHIP</a>
+            {' '}and{' '}
+            <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 hover:decoration-orange transition-colors">ICP</a>
+            {' '}accredited psychotherapist based in Dublin. I work with adults
             navigating anxiety, identity, relationships, and the quieter struggles that are often
             hardest to name.
           </p>

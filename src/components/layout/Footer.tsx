@@ -120,7 +120,12 @@ export default function Footer() {
         {/* Copyright */}
         <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-cream/50">
           <p>&copy; {year} Owen Lynch Psychotherapy. All rights reserved.</p>
-          <p>IAHIP &amp; ICP Accredited Psychotherapist</p>
+          <p>
+            <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="hover:text-cream/80 transition-colors">IAHIP</a>
+            {' & '}
+            <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="hover:text-cream/80 transition-colors">ICP</a>
+            {' Accredited Psychotherapist'}
+          </p>
         </div>
 
       </div>

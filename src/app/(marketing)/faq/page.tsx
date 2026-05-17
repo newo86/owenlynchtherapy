@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   },
 };
 
+const linkClass = 'underline underline-offset-2 decoration-orange/50 hover:decoration-orange transition-colors';
+const IAHIP = <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className={linkClass}>IAHIP</a>;
+const ICP   = <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className={linkClass}>ICP</a>;
+
 /* ── Crisis answer: rich content rendered in the accordion ── */
 const crisisContent = (
   <div className="text-sm font-normal text-gray-600 leading-[1.8] space-y-4">
@@ -103,6 +107,7 @@ const faqCategories: FaqCategory[] = [
       {
         q: 'Am I covered by health insurance?',
         a: 'Depending on your health insurance plan, yes. Many plans provide partial refunds or discounts on psychotherapy sessions. I am fully accredited by both IAHIP and ICP, which means my sessions should qualify under most plans that cover psychotherapy. Check directly with your insurance provider to confirm your specific cover.',
+        content: <p className="text-sm font-normal text-gray-600 leading-[1.8]">Depending on your health insurance plan, yes. Many plans provide partial refunds or discounts on psychotherapy sessions. I am fully accredited by both {IAHIP} and {ICP}, which means my sessions should qualify under most plans that cover psychotherapy. Check directly with your insurance provider to confirm your specific cover.</p>,
       },
       {
         q: 'What is your cancellation policy?',
@@ -145,6 +150,7 @@ const faqCategories: FaqCategory[] = [
       {
         q: 'Do you keep notes?',
         a: 'I keep brief clinical notes as required by my accreditation bodies IAHIP and ICP. These are stored securely and are not shared with anyone without your consent.',
+        content: <p className="text-sm font-normal text-gray-600 leading-[1.8]">I keep brief clinical notes as required by my accreditation bodies {IAHIP} and {ICP}. These are stored securely and are not shared with anyone without your consent.</p>,
       },
       {
         q: "What if I'm in crisis?",

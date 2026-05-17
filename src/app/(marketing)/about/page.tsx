@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
+import PsychologyTodayBadge from '@/components/sections/PsychologyTodayBadge';
 
 export const metadata: Metadata = {
   title: 'About Owen Lynch | IAHIP & ICP Accredited Psychotherapist Dublin',
@@ -139,7 +140,10 @@ export default function AboutPage() {
 
         <div className="relative z-10 max-w-6xl mx-auto">
           <p className="relative z-10 text-white md:text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
-            IAHIP &amp; ICP Accredited Psychotherapist
+            <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="hover:underline">IAHIP</a>
+            {' & '}
+            <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="hover:underline">ICP</a>
+            {' Accredited Psychotherapist'}
           </p>
           <h1
             id="about-hero-heading"
@@ -184,7 +188,11 @@ export default function AboutPage() {
             </h2>
 
             <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-5">
-              I&apos;m an IAHIP and ICP accredited integrative psychotherapist based in Dublin. I work with
+              I&apos;m an{' '}
+              <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 hover:decoration-orange transition-colors">IAHIP</a>
+              {' '}and{' '}
+              <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 hover:decoration-orange transition-colors">ICP</a>
+              {' '}accredited integrative psychotherapist based in Dublin. I work with
               adults in person and online across Ireland and the UK.
             </p>
             <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-5">
@@ -198,12 +206,15 @@ export default function AboutPage() {
               it&apos;s needed.
             </p>
 
-            <Link
-              href="/contact"
-              className="inline-block bg-orange text-white px-8 py-3.5 rounded-md text-xs uppercase tracking-[2px] font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
-            >
-              Get in touch
-            </Link>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                href="/contact"
+                className="inline-block bg-orange text-white px-8 py-3.5 rounded-md text-xs uppercase tracking-[2px] font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+              >
+                Get in touch
+              </Link>
+              <PsychologyTodayBadge />
+            </div>
           </div>
         </div>
       </section>

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Poppins, Montserrat } from 'next/font/google';
 import './globals.css';
+import ScrollToTop from '@/components/ui/ScrollToTop';
 
 const poppins = Poppins({
   variable: '--font-poppins',
@@ -74,6 +75,7 @@ export default function RootLayout({
     <html lang="en" className={`${poppins.variable} ${montserrat.variable}`}>
       <body className="min-h-screen flex flex-col antialiased bg-cream text-gray-900">
         {children}
+        <ScrollToTop />
       </body>
     </html>
   );
