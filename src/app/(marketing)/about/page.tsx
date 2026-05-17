@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import HeroCircles from '@/components/sections/HeroCircles';
 
 export const metadata: Metadata = {
   title: 'About Owen Lynch | IAHIP & ICP Accredited Psychotherapist Dublin',
@@ -134,21 +135,7 @@ export default function AboutPage() {
         className="relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8"
         aria-labelledby="about-hero-heading"
       >
-        <style>{`
-          @keyframes breathe1 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
-          @keyframes breathe2 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
-          @keyframes breathe3 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-          @media (max-width: 767px) {
-            .about-c1 { width: 100px !important; height: 100px !important; bottom: -20px !important; right: -20px !important; }
-            .about-c2 { width:  80px !important; height:  80px !important; bottom:  55px !important; right:  40px !important; }
-            .about-c3 { width:  60px !important; height:  60px !important; bottom:  10px !important; right: 105px !important; }
-          }
-        `}</style>
-
-        {/* Ambient circles — bottom-right corner, behind text */}
-        <div aria-hidden="true" className="about-c1" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '200px', height: '200px', background: '#4f8a68', bottom: '-40px', right: '-40px', zIndex: 0, willChange: 'transform', animation: 'breathe1 8s ease-in-out infinite', animationDelay: '0s' }} />
-        <div aria-hidden="true" className="about-c2" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '150px', height: '150px', background: '#c85a1a', bottom:  '80px', right:  '40px', zIndex: 0, willChange: 'transform', animation: 'breathe2 8s ease-in-out infinite', animationDelay: '2.6s' }} />
-        <div aria-hidden="true" className="about-c3" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '100px', height: '100px', background: '#d4a843', bottom:  '20px', right: '150px', zIndex: 0, willChange: 'transform', animation: 'breathe3 8s ease-in-out infinite', animationDelay: '5.2s' }} />
+        <HeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
           <p className="relative z-10 text-orange text-xs font-normal uppercase tracking-[3px] mb-5">

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import HeroCircles from '@/components/sections/HeroCircles';
 
 export const metadata: Metadata = {
   title: 'Therapy Services Dublin & Online | Owen Lynch Psychotherapy',
@@ -110,14 +111,7 @@ export default function ServicesPage() {
         className="relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8"
         aria-labelledby="services-hero-heading"
       >
-        <style>{`
-          @keyframes breathe1 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
-          @keyframes breathe2 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
-          @keyframes breathe3 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
-        `}</style>
-        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '180px', height: '180px', background: '#4f8a68', top: '-40px', right:  '-30px', willChange: 'transform', animation: 'breathe1 8s ease-in-out infinite', animationDelay: '0s'   }} />
-        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '120px', height: '120px', background: '#c85a1a', top:  '70px', right:   '90px', willChange: 'transform', animation: 'breathe2 8s ease-in-out infinite', animationDelay: '2.6s' }} />
-        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width:  '80px', height:  '80px', background: '#d4a843', top:  '15px', right:  '150px', willChange: 'transform', animation: 'breathe3 8s ease-in-out infinite', animationDelay: '5.2s' }} />
+        <HeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
           <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-5">

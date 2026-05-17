@@ -1,51 +1,5 @@
 import Link from 'next/link';
-
-const CSS = `
-  @keyframes breathe {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.06); }
-  }
-
-  .hero-c1 {
-    position: absolute; border-radius: 50%; pointer-events: none;
-    will-change: transform; z-index: 0;
-    width: 380px; height: 380px;
-    background: #4F8A68;
-    top: -120px; left: -120px;
-    animation: breathe 4s ease-in-out infinite;
-  }
-  .hero-c2 {
-    position: absolute; border-radius: 50%; pointer-events: none;
-    will-change: transform; z-index: 0;
-    width: 300px; height: 300px;
-    background: #2D5A42;
-    top: 60px; left: -60px;
-    animation: breathe 4s ease-in-out infinite;
-  }
-  .hero-c3 {
-    position: absolute; border-radius: 50%; pointer-events: none;
-    will-change: transform; z-index: 0;
-    width: 220px; height: 220px;
-    background: #C85A1A;
-    bottom: -60px; left: -40px;
-    animation: breathe 4s ease-in-out infinite;
-  }
-  .hero-c4 {
-    position: absolute; border-radius: 50%; pointer-events: none;
-    will-change: transform; z-index: 0;
-    width: 280px; height: 280px;
-    background: #D4A843;
-    bottom: -80px; right: -60px;
-    animation: breathe 4s ease-in-out infinite;
-  }
-
-  @media (min-width: 768px) {
-    .hero-c1 { width: 600px; height: 600px; top: -150px; left: -150px; }
-    .hero-c2 { width: 500px; height: 500px; top: 80px; left: -80px; }
-    .hero-c3 { width: 350px; height: 350px; bottom: -80px; left: -60px; }
-    .hero-c4 { width: 420px; height: 420px; bottom: -100px; right: -80px; }
-  }
-`;
+import HeroCircles from './HeroCircles';
 
 export default function Hero() {
   return (
@@ -54,12 +8,7 @@ export default function Hero() {
       style={{ backgroundColor: '#2A4D3C' }}
       aria-labelledby="hero-heading"
     >
-      <style>{CSS}</style>
-
-      <div aria-hidden="true" className="hero-c1" />
-      <div aria-hidden="true" className="hero-c2" />
-      <div aria-hidden="true" className="hero-c3" />
-      <div aria-hidden="true" className="hero-c4" />
+      <HeroCircles />
 
       {/* Content — sits above circles */}
       <div style={{ position: 'relative', zIndex: 10 }} className="flex flex-col items-center text-center px-6 sm:px-8">
