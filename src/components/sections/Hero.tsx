@@ -4,7 +4,7 @@ import HeroCircles from './HeroCircles';
 export default function Hero() {
   return (
     <section
-      className="relative min-h-screen flex items-start justify-center overflow-hidden pt-[15vh]"
+      className="relative md:min-h-screen flex items-start justify-center overflow-hidden pt-20 pb-[60px] md:pt-[15vh] md:pb-0"
       style={{ backgroundColor: '#2A4D3C' }}
       aria-labelledby="hero-heading"
     >
