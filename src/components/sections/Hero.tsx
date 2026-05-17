@@ -4,6 +4,11 @@ const BREATHE_CSS = `
   @keyframes breathe1 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
   @keyframes breathe2 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
   @keyframes breathe3 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  @media (max-width: 767px) {
+    .hero-c1 { width: 25% !important; max-width: 120px !important; max-height: 120px !important; top: -80px !important; left: -80px !important; }
+    .hero-c2 { width: 13% !important; max-width: 60px !important; max-height: 60px !important; bottom: -60px !important; left: -40px !important; }
+    .hero-c3 { width: 18% !important; max-width: 90px !important; max-height: 90px !important; bottom: -80px !important; right: -60px !important; }
+  }
 `;
 
 export default function Hero() {
@@ -18,11 +23,11 @@ export default function Hero() {
 
       {/* Breathing circles — constrained within hero, partially clipped at edges */}
       {/* Sage green — top-left */}
-      <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '42%', aspectRatio: '1', top: '-8%', left: '-8%', background: '#4f8a68', opacity: 0.8, willChange: 'transform', animation: 'breathe1 8s ease-in-out infinite', animationDelay: '0s' }} />
+      <div aria-hidden="true" className="hero-c1" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '42%', aspectRatio: '1', top: '-8%', left: '-8%', background: '#4f8a68', opacity: 0.8, willChange: 'transform', animation: 'breathe1 8s ease-in-out infinite', animationDelay: '0s' }} />
       {/* Terracotta — bottom-left */}
-      <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '22%', aspectRatio: '1', bottom: '-8%', left: '-4%', background: '#c85a1a', willChange: 'transform', animation: 'breathe2 8s ease-in-out infinite', animationDelay: '2.6s' }} />
+      <div aria-hidden="true" className="hero-c2" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '22%', aspectRatio: '1', bottom: '-8%', left: '-4%', background: '#c85a1a', willChange: 'transform', animation: 'breathe2 8s ease-in-out infinite', animationDelay: '2.6s' }} />
       {/* Gold — bottom-right */}
-      <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '30%', aspectRatio: '1', bottom: '-6%', right: '-6%', background: '#d4a843', willChange: 'transform', animation: 'breathe3 8s ease-in-out infinite', animationDelay: '5.2s' }} />
+      <div aria-hidden="true" className="hero-c3" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '30%', aspectRatio: '1', bottom: '-6%', right: '-6%', background: '#d4a843', willChange: 'transform', animation: 'breathe3 8s ease-in-out infinite', animationDelay: '5.2s' }} />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-center px-6 sm:px-8">
