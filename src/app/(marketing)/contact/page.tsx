@@ -86,9 +86,16 @@ export default async function ContactPage({ searchParams }: Props) {
         className="relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8"
         aria-labelledby="contact-hero-heading"
       >
-        <div aria-hidden="true" className="contact-hero-circle contact-hero-circle-1" />
-        <div aria-hidden="true" className="contact-hero-circle contact-hero-circle-2" />
-        <div aria-hidden="true" className="contact-hero-circle contact-hero-circle-3" />
+        <style>{`
+          @keyframes breathe {
+            0%, 100% { transform: scale(1) translate(0px, 0px); }
+            33%       { transform: scale(1.08) translate(-8px, 12px); }
+            66%       { transform: scale(0.94) translate(10px, -8px); }
+          }
+        `}</style>
+        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '200px', height: '200px', background: '#4f8a68', top: '-50px', right:  '-40px', willChange: 'transform', animation: 'breathe 8s ease-in-out infinite', animationDelay: '0s'   }} />
+        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '150px', height: '150px', background: '#c85a1a', top:  '60px', right:  '100px', willChange: 'transform', animation: 'breathe 8s ease-in-out infinite', animationDelay: '2.5s' }} />
+        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '100px', height: '100px', background: '#d4a843', top:  '10px', right:  '170px', willChange: 'transform', animation: 'breathe 8s ease-in-out infinite', animationDelay: '5s'   }} />
 
         <div className="relative z-10 max-w-6xl mx-auto">
           <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-5">

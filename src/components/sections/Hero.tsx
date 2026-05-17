@@ -1,5 +1,27 @@
 import Link from 'next/link';
 
+const BREATHE_CSS = `
+  @keyframes breathe {
+    0%, 100% { transform: scale(1) translate(0px, 0px); }
+    33%       { transform: scale(1.08) translate(-8px, 12px); }
+    66%       { transform: scale(0.94) translate(10px, -8px); }
+  }
+`;
+
+const circle = (
+  overrides: React.CSSProperties,
+  delay: string,
+): React.CSSProperties => ({
+  position: 'absolute',
+  borderRadius: '50%',
+  pointerEvents: 'none',
+  userSelect: 'none',
+  willChange: 'transform',
+  animation: 'breathe 8s ease-in-out infinite',
+  animationDelay: delay,
+  ...overrides,
+});
+
 export default function Hero() {
   return (
     <section
@@ -7,12 +29,15 @@ export default function Hero() {
       style={{ backgroundColor: '#2A4D3C' }}
       aria-labelledby="hero-heading"
     >
-      {/* Breathing circles — see globals.css for animation/sizing */}
-      <div aria-hidden="true" className="hero-circle hero-circle-5" />
-      <div aria-hidden="true" className="hero-circle hero-circle-1" />
-      <div aria-hidden="true" className="hero-circle hero-circle-2" />
-      <div aria-hidden="true" className="hero-circle hero-circle-3" />
-      <div aria-hidden="true" className="hero-circle hero-circle-4" />
+      {/* Inline keyframes — bypasses any external CSS suppression on iOS Safari */}
+      <style>{BREATHE_CSS}</style>
+
+      {/* Breathing circles */}
+      <div aria-hidden="true" style={circle({ width: '28%', aspectRatio: '1', top: '-15%', left: '-4%', background: '#5a9e78', opacity: 0.4 }, '0s')} />
+      <div aria-hidden="true" style={circle({ width: '50%', aspectRatio: '1', bottom: '-30%', left: '-5%', background: '#3d7254' }, '1.5s')} />
+      <div aria-hidden="true" style={circle({ width: '55%', aspectRatio: '1', bottom: '-35%', left: '25%',  background: '#2d5a42' }, '3s')} />
+      <div aria-hidden="true" style={circle({ width: '32%', aspectRatio: '1', bottom: '-18%', right: '-3%', background: '#d4a843' }, '0.8s')} />
+      <div aria-hidden="true" style={circle({ width: '18%', aspectRatio: '1', bottom: '-5%',  left: '-2%', background: '#c85a1a' }, '4.5s')} />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-center px-6 sm:px-8">
@@ -68,7 +93,7 @@ export default function Hero() {
           marginBottom: '24px',
         }} />
 
-        {/* H1 — SEO + visual headline */}
+        {/* H1 */}
         <h1
           id="hero-heading"
           className="text-[36px] md:text-[52px]"
