@@ -1,36 +1,49 @@
 import Link from 'next/link';
 
 const CSS = `
-  @keyframes breathe1 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
-  @keyframes breathe2 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
-  @keyframes breathe3 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
 
   .hero-c1 {
-    position: absolute; border-radius: 50%; pointer-events: none; will-change: transform;
-    width: 500px; height: 500px;
+    position: absolute; border-radius: 50%; pointer-events: none;
+    will-change: transform; z-index: 0;
+    width: 380px; height: 380px;
     background: #4F8A68;
-    top: -150px; left: -150px;
-    animation: breathe1 8s ease-in-out infinite;
+    top: -120px; left: -120px;
+    animation: breathe 4s ease-in-out infinite;
   }
   .hero-c2 {
-    position: absolute; border-radius: 50%; pointer-events: none; will-change: transform;
-    width: 400px; height: 400px;
-    background: #C85A1A;
-    bottom: -120px; left: -60px;
-    animation: breathe2 8s ease-in-out infinite 2.6s;
+    position: absolute; border-radius: 50%; pointer-events: none;
+    will-change: transform; z-index: 0;
+    width: 300px; height: 300px;
+    background: #2D5A42;
+    top: 60px; left: -60px;
+    animation: breathe 4s ease-in-out infinite;
   }
   .hero-c3 {
-    position: absolute; border-radius: 50%; pointer-events: none; will-change: transform;
-    width: 450px; height: 450px;
+    position: absolute; border-radius: 50%; pointer-events: none;
+    will-change: transform; z-index: 0;
+    width: 220px; height: 220px;
+    background: #C85A1A;
+    bottom: -60px; left: -40px;
+    animation: breathe 4s ease-in-out infinite;
+  }
+  .hero-c4 {
+    position: absolute; border-radius: 50%; pointer-events: none;
+    will-change: transform; z-index: 0;
+    width: 280px; height: 280px;
     background: #D4A843;
-    bottom: -150px; right: -100px;
-    animation: breathe3 8s ease-in-out infinite 5.2s;
+    bottom: -80px; right: -60px;
+    animation: breathe 4s ease-in-out infinite;
   }
 
-  @media (max-width: 767px) {
-    .hero-c1 { width: 250px; height: 250px; top: -80px; left: -80px; }
-    .hero-c2 { width: 200px; height: 200px; bottom: -60px; left: -40px; }
-    .hero-c3 { width: 220px; height: 220px; bottom: -60px; right: -60px; }
+  @media (min-width: 768px) {
+    .hero-c1 { width: 600px; height: 600px; top: -150px; left: -150px; }
+    .hero-c2 { width: 500px; height: 500px; top: 80px; left: -80px; }
+    .hero-c3 { width: 350px; height: 350px; bottom: -80px; left: -60px; }
+    .hero-c4 { width: 420px; height: 420px; bottom: -100px; right: -80px; }
   }
 `;
 
@@ -46,6 +59,7 @@ export default function Hero() {
       <div aria-hidden="true" className="hero-c1" />
       <div aria-hidden="true" className="hero-c2" />
       <div aria-hidden="true" className="hero-c3" />
+      <div aria-hidden="true" className="hero-c4" />
 
       {/* Content — sits above circles */}
       <div style={{ position: 'relative', zIndex: 10 }} className="flex flex-col items-center text-center px-6 sm:px-8">
