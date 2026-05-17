@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 
-type FaqItem = { q: string; a: string };
-type FaqCategory = { category: string; items: FaqItem[] };
+export type FaqItem = { q: string; a: string; content?: React.ReactNode };
+export type FaqCategory = { category: string; items: FaqItem[] };
 
 export default function FaqAccordion({ categories }: { categories: FaqCategory[] }) {
   const [openKeys, setOpenKeys] = useState<Set<string>>(new Set());
@@ -20,7 +20,6 @@ export default function FaqAccordion({ categories }: { categories: FaqCategory[]
     <div className="space-y-14">
       {categories.map((cat, ci) => (
         <div key={cat.category}>
-          {/* Category heading */}
           <div className="flex items-center gap-4 mb-8">
             <span className="block w-8 h-px flex-shrink-0" style={{ backgroundColor: '#d4a843' }} aria-hidden="true" />
             <h2 className="font-heading font-light text-2xl text-forest">{cat.category}</h2>
@@ -59,13 +58,15 @@ export default function FaqAccordion({ categories }: { categories: FaqCategory[]
 
                   <div
                     className="overflow-hidden transition-[max-height] duration-300 ease-in-out"
-                    style={{ maxHeight: isOpen ? '600px' : '0px' }}
+                    style={{ maxHeight: isOpen ? '800px' : '0px' }}
                   >
                     <div
-                      className="pb-5 pl-5 text-sm font-normal text-gray-600 leading-[1.8]"
+                      className="pb-5 pl-5"
                       style={{ borderLeft: '2px solid #d4a843' }}
                     >
-                      {item.a}
+                      {item.content ?? (
+                        <p className="text-sm font-normal text-gray-600 leading-[1.8]">{item.a}</p>
+                      )}
                     </div>
                   </div>
                 </div>
