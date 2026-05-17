@@ -111,15 +111,13 @@ export default function ServicesPage() {
         aria-labelledby="services-hero-heading"
       >
         <style>{`
-          @keyframes breathe {
-            0%, 100% { transform: scale(1) translate(0px, 0px); }
-            33%       { transform: scale(1.08) translate(-8px, 12px); }
-            66%       { transform: scale(0.94) translate(10px, -8px); }
-          }
+          @keyframes breathe1 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+          @keyframes breathe2 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+          @keyframes breathe3 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
         `}</style>
-        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '180px', height: '180px', background: '#4f8a68', top: '-40px',  right:  '-30px', willChange: 'transform', animation: 'breathe 8s ease-in-out infinite', animationDelay: '0s'   }} />
-        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '120px', height: '120px', background: '#c85a1a', top:  '70px', right:   '90px', willChange: 'transform', animation: 'breathe 8s ease-in-out infinite', animationDelay: '2.5s' }} />
-        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width:  '80px', height:  '80px', background: '#d4a843', top:  '15px', right:  '150px', willChange: 'transform', animation: 'breathe 8s ease-in-out infinite', animationDelay: '5s'   }} />
+        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '180px', height: '180px', background: '#4f8a68', top: '-40px', right:  '-30px', willChange: 'transform', animation: 'breathe1 8s ease-in-out infinite', animationDelay: '0s'   }} />
+        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '120px', height: '120px', background: '#c85a1a', top:  '70px', right:   '90px', willChange: 'transform', animation: 'breathe2 8s ease-in-out infinite', animationDelay: '2.6s' }} />
+        <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width:  '80px', height:  '80px', background: '#d4a843', top:  '15px', right:  '150px', willChange: 'transform', animation: 'breathe3 8s ease-in-out infinite', animationDelay: '5.2s' }} />
 
         <div className="relative z-10 max-w-6xl mx-auto">
           <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-5">

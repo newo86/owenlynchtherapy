@@ -1,26 +1,10 @@
 import Link from 'next/link';
 
 const BREATHE_CSS = `
-  @keyframes breathe {
-    0%, 100% { transform: scale(1) translate(0px, 0px); }
-    33%       { transform: scale(1.08) translate(-8px, 12px); }
-    66%       { transform: scale(0.94) translate(10px, -8px); }
-  }
+  @keyframes breathe1 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+  @keyframes breathe2 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+  @keyframes breathe3 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
 `;
-
-const circle = (
-  overrides: React.CSSProperties,
-  delay: string,
-): React.CSSProperties => ({
-  position: 'absolute',
-  borderRadius: '50%',
-  pointerEvents: 'none',
-  userSelect: 'none',
-  willChange: 'transform',
-  animation: 'breathe 8s ease-in-out infinite',
-  animationDelay: delay,
-  ...overrides,
-});
 
 export default function Hero() {
   return (
@@ -32,12 +16,13 @@ export default function Hero() {
       {/* Inline keyframes — bypasses any external CSS suppression on iOS Safari */}
       <style>{BREATHE_CSS}</style>
 
-      {/* Breathing circles */}
-      <div aria-hidden="true" style={circle({ width: '28%', aspectRatio: '1', top: '-15%', left: '-4%', background: '#5a9e78', opacity: 0.4 }, '0s')} />
-      <div aria-hidden="true" style={circle({ width: '50%', aspectRatio: '1', bottom: '-30%', left: '-5%', background: '#3d7254' }, '1.5s')} />
-      <div aria-hidden="true" style={circle({ width: '55%', aspectRatio: '1', bottom: '-35%', left: '25%',  background: '#2d5a42' }, '3s')} />
-      <div aria-hidden="true" style={circle({ width: '32%', aspectRatio: '1', bottom: '-18%', right: '-3%', background: '#d4a843' }, '0.8s')} />
-      <div aria-hidden="true" style={circle({ width: '18%', aspectRatio: '1', bottom: '-5%',  left: '-2%', background: '#c85a1a' }, '4.5s')} />
+      {/* Breathing circles — constrained within hero, partially clipped at edges */}
+      {/* Sage green — top-left */}
+      <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '42%', aspectRatio: '1', top: '-8%', left: '-8%', background: '#4f8a68', opacity: 0.8, willChange: 'transform', animation: 'breathe1 8s ease-in-out infinite', animationDelay: '0s' }} />
+      {/* Terracotta — bottom-left */}
+      <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '22%', aspectRatio: '1', bottom: '-8%', left: '-4%', background: '#c85a1a', willChange: 'transform', animation: 'breathe2 8s ease-in-out infinite', animationDelay: '2.6s' }} />
+      {/* Gold — bottom-right */}
+      <div aria-hidden="true" style={{ position: 'absolute', borderRadius: '50%', pointerEvents: 'none', width: '30%', aspectRatio: '1', bottom: '-6%', right: '-6%', background: '#d4a843', willChange: 'transform', animation: 'breathe3 8s ease-in-out infinite', animationDelay: '5.2s' }} />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-center px-6 sm:px-8">
