@@ -39,30 +39,53 @@ h6 {
    Two independent CSS properties per circle:
      - transform: scale() via breathe keyframes
      - translate: x y   via drift keyframes (CSS Transforms L2)
-   They compose without conflict; will-change hints both.
+   They compose without conflict on modern browsers.
+   WebKit-prefixed keyframes included for iOS Safari < 14.
    ───────────────────────────────────────────────────── */
 
+@-webkit-keyframes hero-breathe-1 {
+  0%, 100% { -webkit-transform: scale(1);    transform: scale(1);    }
+  50%       { -webkit-transform: scale(1.07); transform: scale(1.07); }
+}
 @keyframes hero-breathe-1 {
   0%, 100% { transform: scale(1);    }
   50%       { transform: scale(1.07); }
+}
+@-webkit-keyframes hero-breathe-2 {
+  0%, 100% { -webkit-transform: scale(1);    transform: scale(1);    }
+  50%       { -webkit-transform: scale(1.06); transform: scale(1.06); }
 }
 @keyframes hero-breathe-2 {
   0%, 100% { transform: scale(1);    }
   50%       { transform: scale(1.06); }
 }
+@-webkit-keyframes hero-breathe-3 {
+  0%, 100% { -webkit-transform: scale(1);    transform: scale(1);    }
+  50%       { -webkit-transform: scale(1.08); transform: scale(1.08); }
+}
 @keyframes hero-breathe-3 {
   0%, 100% { transform: scale(1);    }
   50%       { transform: scale(1.08); }
 }
+@-webkit-keyframes hero-breathe-4 {
+  0%, 100% { -webkit-transform: scale(1);    transform: scale(1);    }
+  50%       { -webkit-transform: scale(1.10); transform: scale(1.10); }
+}
 @keyframes hero-breathe-4 {
   0%, 100% { transform: scale(1);    }
   50%       { transform: scale(1.10); }
+}
+@-webkit-keyframes hero-breathe-5 {
+  0%, 100% { -webkit-transform: scale(1);    transform: scale(1);    }
+  50%       { -webkit-transform: scale(1.07); transform: scale(1.07); }
 }
 @keyframes hero-breathe-5 {
   0%, 100% { transform: scale(1);    }
   50%       { transform: scale(1.07); }
 }
 
+/* Drift uses the CSS Transforms L2 individual `translate` property.
+   Supported iOS Safari 14.5+. Older devices see breathe only. */
 @keyframes hero-drift-1 {
   0%, 100% { translate:  0px  0px; }
   25%       { translate:  8px -5px; }
@@ -94,14 +117,16 @@ h6 {
   75%       { translate:  5px -4px; }
 }
 
-/* Shared circle base */
+/* Shared circle base — translateZ(0) forces a GPU compositor layer on iOS */
 .hero-circle {
   position: absolute;
   border-radius: 50%;
   aspect-ratio: 1;
   pointer-events: none;
   user-select: none;
-  will-change: transform, translate;
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* Desktop sizing, positioning and colour */
@@ -110,6 +135,7 @@ h6 {
   background: #3d7254;
   bottom: -30%;
   left: -5%;
+  -webkit-animation: hero-breathe-1 8s ease-in-out infinite;
   animation:
     hero-breathe-1 8s    ease-in-out infinite,
     hero-drift-1   20s   ease-in-out infinite;
@@ -119,6 +145,7 @@ h6 {
   background: #2d5a42;
   bottom: -35%;
   left: 25%;
+  -webkit-animation: hero-breathe-2 7.5s ease-in-out infinite;
   animation:
     hero-breathe-2 7.5s  ease-in-out infinite,
     hero-drift-2   25s   ease-in-out infinite;
@@ -128,6 +155,7 @@ h6 {
   background: #d4a843;
   bottom: -18%;
   right: -3%;
+  -webkit-animation: hero-breathe-3 8.5s ease-in-out infinite;
   animation:
     hero-breathe-3 8.5s  ease-in-out infinite,
     hero-drift-3   22s   ease-in-out infinite;
@@ -137,6 +165,7 @@ h6 {
   background: #c85a1a;
   bottom: -5%;
   left: -2%;
+  -webkit-animation: hero-breathe-4 8s ease-in-out infinite;
   animation:
     hero-breathe-4 8s    ease-in-out infinite,
     hero-drift-4   18s   ease-in-out infinite;
@@ -147,6 +176,7 @@ h6 {
   top: -15%;
   left: -4%;
   opacity: 0.4;
+  -webkit-animation: hero-breathe-5 9s ease-in-out infinite;
   animation:
     hero-breathe-5 9s    ease-in-out infinite,
     hero-drift-5   24s   ease-in-out infinite;
@@ -177,6 +207,7 @@ h6 {
   background: #4f8a68;
   top: -40px;
   right: -30px;
+  -webkit-animation: hero-breathe-1 8s ease-in-out infinite;
   animation: hero-breathe-1 8s ease-in-out infinite;
 }
 .services-hero-circle-2 {
@@ -185,6 +216,7 @@ h6 {
   background: #c85a1a;
   top: 70px;
   right: 90px;
+  -webkit-animation: hero-breathe-3 9s ease-in-out infinite;
   animation: hero-breathe-3 9s ease-in-out infinite;
 }
 .services-hero-circle-3 {
@@ -193,6 +225,7 @@ h6 {
   background: #d4a843;
   top: 15px;
   right: 150px;
+  -webkit-animation: hero-breathe-2 7.5s ease-in-out infinite;
   animation: hero-breathe-2 7.5s ease-in-out infinite;
 }
 
@@ -212,6 +245,7 @@ h6 {
   background: #4f8a68;
   top: -50px;
   right: -40px;
+  -webkit-animation: hero-breathe-1 8s ease-in-out infinite;
   animation: hero-breathe-1 8s ease-in-out infinite;
 }
 .contact-hero-circle-2 {
@@ -220,6 +254,7 @@ h6 {
   background: #c85a1a;
   top: 60px;
   right: 100px;
+  -webkit-animation: hero-breathe-3 9s ease-in-out infinite;
   animation: hero-breathe-3 9s ease-in-out infinite;
 }
 .contact-hero-circle-3 {
@@ -228,6 +263,7 @@ h6 {
   background: #d4a843;
   top: 10px;
   right: 170px;
+  -webkit-animation: hero-breathe-2 7.5s ease-in-out infinite;
   animation: hero-breathe-2 7.5s ease-in-out infinite;
 }
 
@@ -241,6 +277,9 @@ h6 {
   pointer-events: none;
   user-select: none;
   will-change: transform;
+  z-index: 0;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 .about-hero-circle-1 {
   width: 200px;
@@ -248,6 +287,7 @@ h6 {
   background: #4f8a68;
   top: -50px;
   right: -40px;
+  -webkit-animation: hero-breathe-1 8s ease-in-out infinite;
   animation: hero-breathe-1 8s ease-in-out infinite;
 }
 .about-hero-circle-2 {
@@ -256,6 +296,7 @@ h6 {
   background: #c85a1a;
   top: 60px;
   right: 100px;
+  -webkit-animation: hero-breathe-3 9s ease-in-out infinite;
   animation: hero-breathe-3 9s ease-in-out infinite;
 }
 .about-hero-circle-3 {
@@ -264,7 +305,30 @@ h6 {
   background: #d4a843;
   top: 10px;
   right: 170px;
+  -webkit-animation: hero-breathe-2 7.5s ease-in-out infinite;
   animation: hero-breathe-2 7.5s ease-in-out infinite;
+}
+
+/* Mobile: cap circles at 80px, cluster in top-right, never overlap text */
+@media (max-width: 767px) {
+  .about-hero-circle-1 {
+    width: 72px;
+    height: 72px;
+    top: 0;
+    right: 0;
+  }
+  .about-hero-circle-2 {
+    width: 58px;
+    height: 58px;
+    top: 12px;
+    right: 78px;
+  }
+  .about-hero-circle-3 {
+    width: 44px;
+    height: 44px;
+    top: 4px;
+    right: 132px;
+  }
 }
 
 /* ── Map pin pulse animation ── */
