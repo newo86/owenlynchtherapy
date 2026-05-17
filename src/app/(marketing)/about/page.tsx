@@ -138,7 +138,7 @@ export default function AboutPage() {
         <HeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="relative z-10 text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+          <p className="relative z-10 text-white md:text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
             IAHIP &amp; ICP Accredited Psychotherapist
           </p>
           <h1

@@ -26,8 +26,8 @@ const CSS = `
           animation: breathe5 9s ease-in-out infinite, drift5 24s ease-in-out infinite; }
 
   @media (max-width: 767px) {
-    .hc1 { width:75vw; padding-bottom:75vw; bottom:-20%; left:-15%; }
-    .hc2 { width:80vw; padding-bottom:80vw; bottom:-25%; left:20%; }
+    .hc1 { width:60vw; padding-bottom:60vw; bottom:-35%; left:-20%; }
+    .hc2 { width:65vw; padding-bottom:65vw; bottom:-40%; left:15%; }
     .hc3 { width:50vw; padding-bottom:50vw; top:-10%; right:-15%; bottom:auto; }
     .hc4 { width:30vw; padding-bottom:30vw; top:5%; left:-5%; bottom:auto; }
     .hc5 { width:45vw; padding-bottom:45vw; bottom:-10%; left:40%; top:auto; opacity:0.3; }

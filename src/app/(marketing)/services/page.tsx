@@ -114,7 +114,7 @@ export default function ServicesPage() {
         <HeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+          <p className="text-white md:text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
             What I work with
           </p>
           <h1
