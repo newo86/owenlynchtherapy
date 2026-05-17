@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import HeroCircles from '@/components/sections/HeroCircles';
+import PageHeroCircles from '@/components/sections/PageHeroCircles';
 
 export const metadata: Metadata = {
   title: 'Therapy Services Dublin & Online | Owen Lynch Psychotherapy',
@@ -108,10 +108,10 @@ export default function ServicesPage() {
       {/* ── Section 1: Hero ── */}
       <section
         style={{ backgroundColor: '#2A4D3C' }}
-        className="relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8"
+        className="relative overflow-hidden pt-[100px] pb-[60px] md:pt-[120px] md:pb-[80px] px-4 sm:px-6 lg:px-8"
         aria-labelledby="services-hero-heading"
       >
-        <HeroCircles />
+        <PageHeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
           <p className="text-white md:text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
