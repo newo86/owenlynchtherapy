@@ -4,7 +4,7 @@ import HeroCircles from './HeroCircles';
 export default function Hero() {
   return (
     <section
-      className="relative md:min-h-screen flex items-start justify-center overflow-hidden pt-20 pb-[60px] md:pt-[15vh] md:pb-0"
+      className="relative md:min-h-screen flex flex-col items-center md:flex-row md:items-start justify-center overflow-hidden pt-20 pb-[60px] md:pt-[15vh] md:pb-0"
       style={{ backgroundColor: '#2A4D3C' }}
       aria-labelledby="hero-heading"
     >
@@ -106,7 +106,7 @@ export default function Hero() {
 
       {/* Scroll indicator */}
       <div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+        className="relative mt-8 md:absolute md:bottom-8 md:left-1/2 md:-translate-x-1/2 flex flex-col items-center gap-2"
         style={{ zIndex: 10 }}
         aria-hidden="true"
       >
