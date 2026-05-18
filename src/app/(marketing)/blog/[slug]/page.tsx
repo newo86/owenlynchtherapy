@@ -63,12 +63,12 @@ const blogPostingJsonLd = {
   citation: [
     {
       '@type': 'ScholarlyArticle',
-      name: 'The inference-based approach to OCD: A comprehensive review',
-      author: ['Aardema, F.', 'O’Connor, K. P.', 'Delorme, M.-E.', 'Audet, J.-S.'],
-      datePublished: '2022',
+      name: ‘Evaluation of inference-based cognitive-behavioral therapy for obsessive-compulsive disorder: A multicenter randomized controlled trial with three treatment modalities’,
+      author: [‘Aardema, F.’, ‘Bouchard, S.’, ‘Koszycki, D.’, ‘Lavoie, M. E.’, ‘Audet, J.-S.’, ‘O\’Connor, K.’],
+      datePublished: ‘2022’,
       isPartOf: {
-        '@type': 'Periodical',
-        name: 'Journal of Obsessive-Compulsive and Related Disorders',
+        ‘@type’: ‘Periodical’,
+        name: ‘Psychotherapy and Psychosomatics’,
       },
     },
     {
@@ -415,7 +415,7 @@ export default async function BlogPostPage({ params }: Props) {
             </p>
 
             <p className={p}>
-              {`The research suggests that ACT may be particularly helpful for people who struggle with the experiential avoidance that OCD often produces, meaning the increasing tendency to avoid situations, people, or activities that might trigger obsessional thoughts (Twohig et al., 2015).`}
+              {`The research suggests that ACT may be particularly helpful for people who struggle with the experiential avoidance that OCD often produces, meaning the increasing tendency to avoid situations, people, or activities that might trigger obsessional thoughts (Twohig et al., 2018).`}
             </p>
 
             {/* H2: Psychodynamic Perspectives */}
@@ -510,9 +510,9 @@ export default async function BlogPostPage({ params }: Props) {
 
               <div className="mt-6 space-y-5">
                 <p className="text-sm text-gray-600 leading-[1.75]">
-                  {`Aardema, F., O’Connor, K. P., Delorme, M.-E., & Audet, J.-S. (2022). The inference-based approach to OCD: A comprehensive review of its etiological model, treatment efficacy, and model of change. `}
-                  <em>Journal of Obsessive-Compulsive and Related Disorders</em>
-                  {`, 32, 100703.`}
+                  {`Aardema, F., Bouchard, S., Koszycki, D., Lavoie, M. E., Audet, J.-S., & O’Connor, K. (2022). Evaluation of inference-based cognitive-behavioral therapy for obsessive-compulsive disorder: A multicenter randomized controlled trial with three treatment modalities. `}
+                  <em>Psychotherapy and Psychosomatics</em>
+                  {`, 91(5), 348–359.`}
                 </p>
 
                 <p className="text-sm text-gray-600 leading-[1.75]">
@@ -576,9 +576,9 @@ export default async function BlogPostPage({ params }: Props) {
                 </p>
 
                 <p className="text-sm text-gray-600 leading-[1.75]">
-                  {`Twohig, M. P., Abramowitz, J. S., Smith, B. M., Fabricant, L. E., Jacoby, R. J., Morrison, K. L., … & Ledermann, T. (2015). Adding acceptance and commitment therapy to exposure and response prevention for obsessive-compulsive disorder: A randomized controlled trial. `}
+                  {`Twohig, M. P., Abramowitz, J. S., Smith, B. M., Fabricant, L. E., Jacoby, R. J., Morrison, K. L., Bluett, E. J., Reuman, L., Blakey, S. M., & Ledermann, T. (2018). Adding acceptance and commitment therapy to exposure and response prevention for obsessive-compulsive disorder: A randomized controlled trial. `}
                   <em>Behaviour Research and Therapy</em>
-                  {`, 74, 58–67.`}
+                  {`, 108, 1–9.`}
                 </p>
 
                 <p className="text-sm text-gray-600 leading-[1.75]">
