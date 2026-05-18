@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
-import AnimatedBlogCard from '@/components/blog/AnimatedBlogCard';
+import AnimatedCard from '@/components/ui/AnimatedCard';
 
 // TODO: Replace hard-coded posts with Sanity query when CMS is configured:
 // import { sanityClient } from '@/lib/sanity/client';
@@ -164,7 +164,7 @@ export default function BlogPage() {
                  * in a motion.div with whileInView fade-up. The article content
                  * itself is always present in the server-rendered HTML for SEO.
                  */
-                <AnimatedBlogCard key={post.slug} index={i}>
+                <AnimatedCard key={post.slug} index={i}>
                   <article
                     className="group flex flex-col flex-1 rounded-2xl bg-white border border-transparent hover:border-[#C85A1A]/15 hover:-translate-y-1 transition-all duration-300"
                     style={{ boxShadow: '0 2px 16px rgba(42,77,60,0.07)' }}
@@ -233,7 +233,7 @@ export default function BlogPage() {
                       </div>
                     </Link>
                   </article>
-                </AnimatedBlogCard>
+                </AnimatedCard>
               ))}
             </div>
           )}

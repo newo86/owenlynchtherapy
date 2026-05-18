@@ -2,12 +2,12 @@
 
 import { motion } from 'motion/react';
 
-interface AnimatedBlogCardProps {
+interface AnimatedCardProps {
   children: React.ReactNode;
   index: number;
 }
 
-export default function AnimatedBlogCard({ children, index }: AnimatedBlogCardProps) {
+export default function AnimatedCard({ children, index }: AnimatedCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 28, scale: 0.97 }}
