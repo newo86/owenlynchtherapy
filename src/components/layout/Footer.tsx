@@ -13,7 +13,7 @@ const navLinks = [
 export default function Footer() {
   return (
     <footer style={{ backgroundColor: '#2A4D3C' }} className="text-cream" role="contentinfo">
-      <div className="max-w-6xl mx-auto px-6 lg:px-16 pt-16 pb-10">
+      <div className="max-w-6xl mx-auto px-6 lg:px-16 pt-16 pb-24 md:pb-10">
 
         {/* Three-column grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
