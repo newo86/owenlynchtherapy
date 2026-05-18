@@ -53,7 +53,7 @@ export default function AboutTeaser() {
 
           <Link
             href="/about"
-            className="inline-flex items-center gap-2 text-forest text-xs font-normal uppercase tracking-[2px] border-b border-forest/40 pb-0.5 hover:border-forest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest rounded-sm"
+            className="inline-flex items-center gap-2 text-forest text-xs font-normal uppercase tracking-normal border-b border-forest/40 pb-0.5 hover:border-forest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest rounded-sm"
           >
             Read more about my approach <span aria-hidden="true">→</span>
           </Link>

@@ -87,7 +87,7 @@ export default function Services() {
                 </p>
 
                 <span
-                  className="inline-flex items-center gap-2 text-orange text-[10px] font-normal uppercase tracking-[2px] group-hover:gap-3 transition-all duration-200"
+                  className="inline-flex items-center gap-2 text-orange text-[10px] font-normal uppercase tracking-normal group-hover:gap-3 transition-all duration-200"
                   aria-label={`Learn more about ${name} therapy`}
                 >
                   Learn more <span aria-hidden="true">→</span>

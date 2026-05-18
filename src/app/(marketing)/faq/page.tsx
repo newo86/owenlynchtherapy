@@ -257,7 +257,7 @@ export default function FaqPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-white md:text-orange text-sm font-semibold uppercase tracking-normal mb-5">
+          <p className="text-white text-sm font-semibold uppercase tracking-normal mb-5">
             Got a question
           </p>
           <h1
@@ -309,7 +309,7 @@ export default function FaqPage() {
           />
           <Link
             href="/contact"
-            className="inline-block bg-orange text-white px-10 py-4 rounded-md text-xs uppercase tracking-[2px] font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#2A4D3C]"
+            className="inline-block bg-orange text-white px-10 py-4 rounded-md text-xs uppercase tracking-normal font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#2A4D3C]"
           >
             Get in Touch
           </Link>

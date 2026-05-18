@@ -63,7 +63,7 @@ const inputClass =
   'focus:ring-1 focus:ring-[#2a4d3c] transition-colors placeholder:text-gray-400';
 
 const labelClass =
-  'block text-xs font-normal uppercase tracking-[2px] text-gray-500 mb-1.5';
+  'block text-xs font-normal uppercase tracking-normal text-gray-500 mb-1.5';
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -90,7 +90,7 @@ export default async function ContactPage({ searchParams }: Props) {
         <PageHeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-white md:text-orange text-sm font-semibold uppercase tracking-normal mb-5">
+          <p className="text-white text-sm font-semibold uppercase tracking-normal mb-5">
             Get in touch
           </p>
           <h1
@@ -343,7 +343,7 @@ export default async function ContactPage({ searchParams }: Props) {
 
                   <button
                     type="submit"
-                    className="w-full bg-orange text-white py-3.5 rounded-md text-xs uppercase tracking-[2px] font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+                    className="w-full bg-orange text-white py-3.5 rounded-md text-xs uppercase tracking-normal font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
                   >
                     Send Message
                   </button>

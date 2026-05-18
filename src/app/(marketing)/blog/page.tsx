@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import PageHeroCircles from '@/components/sections/PageHeroCircles';
 
 // TODO: Replace hard-coded posts with Sanity query when CMS is configured:
 // import { sanityClient } from '@/lib/sanity/client';
@@ -98,36 +99,28 @@ export default function BlogPage() {
         }}
       />
 
-      {/* ── Page masthead ─────────────────────────────────────────────────────
-           Light background with the H1 in forest green — editorial, not heroic.
-           A thin gold rule and a muted subtitle frame the section before cards.
+      {/* ── Page banner ───────────────────────────────────────────────────────
+           Dark forest banner matching the hero sections on About, Services,
+           FAQ, and Contact — consistent sitewide page-entry pattern.
       ──────────────────────────────────────────────────────────────────────── */}
       <section
-        style={{ backgroundColor: '#F5F0E8' }}
-        className="px-4 sm:px-6 lg:px-8 pt-20 pb-0 sm:pt-28"
+        style={{ backgroundColor: '#2A4D3C' }}
+        className="relative overflow-hidden pt-[100px] pb-[60px] md:pt-[120px] md:pb-[80px] px-4 sm:px-6 lg:px-8"
         aria-labelledby="blog-heading"
       >
-        <div className="max-w-6xl mx-auto border-b border-forest/10 pb-14 sm:pb-16">
-          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-6">
+        <PageHeroCircles />
+
+        <div className="relative z-10 max-w-6xl mx-auto">
+          <p className="text-white text-sm font-semibold uppercase tracking-normal mb-5">
             Articles &amp; Insights
           </p>
-
           <h1
             id="blog-heading"
-            className="font-heading font-light leading-none text-forest mb-7"
-            style={{ fontSize: 'clamp(3rem, 8vw, 5.5rem)' }}
+            className="font-heading font-light text-4xl sm:text-5xl lg:text-[3.25rem] leading-tight text-cream mb-4"
           >
             Blog
           </h1>
-
-          {/* Gold rule — brand accent, signals the subtitle is a sub-title */}
-          <span
-            className="block w-10 h-px mb-7"
-            style={{ backgroundColor: '#D4A843' }}
-            aria-hidden="true"
-          />
-
-          <p className="font-normal text-base sm:text-lg text-gray-500 leading-[1.65] max-w-[440px]">
+          <p className="font-normal text-base text-cream/75 leading-[1.8] max-w-xl">
             Thoughts on therapy, mental health, and the work of change
           </p>
         </div>
@@ -232,7 +225,7 @@ export default function BlogPage() {
 
                       {/* Read more — arrow shifts right, no gap-width trick
                            which could cause layout shift on narrow cards */}
-                      <span className="inline-flex items-center gap-1.5 text-orange text-[10px] font-normal uppercase tracking-[2px] mt-auto">
+                      <span className="inline-flex items-center gap-1.5 text-orange text-[10px] font-normal uppercase tracking-normal mt-auto">
                         Read more
                         <span
                           className="transition-transform duration-300 group-hover:translate-x-1"
@@ -286,7 +279,7 @@ export default function BlogPage() {
           />
           <Link
             href="/contact"
-            className="inline-block bg-orange text-white px-10 py-4 rounded-md text-xs uppercase tracking-[2px] font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#2A4D3C]"
+            className="inline-block bg-orange text-white px-10 py-4 rounded-md text-xs uppercase tracking-normal font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#2A4D3C]"
           >
             Get in touch
           </Link>
