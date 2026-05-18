@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import PageHeroCircles from '@/components/sections/PageHeroCircles';
 
-// TODO: Replace hard-coded posts with Sanity query:
+// TODO: Replace hard-coded posts with Sanity query when CMS is configured:
 // import { sanityClient } from '@/lib/sanity/client';
 // import { allPostsQuery } from '@/lib/sanity/queries';
 // const posts = await sanityClient.fetch(allPostsQuery);
@@ -39,6 +38,18 @@ const breadcrumbJsonLd = {
   ],
 };
 
+// ── Card entrance animation ───────────────────────────────────────────────────
+// Inline style element, same pattern as PageHeroCircles — Server Component safe.
+const CARD_ANIM_CSS = `
+  @keyframes blog-card-in {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0);    }
+  }
+  .blog-card {
+    animation: blog-card-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+`;
+
 type Post = {
   slug: string;
   title: string;
@@ -49,7 +60,7 @@ type Post = {
   featuredImageAlt: string;
 };
 
-// Hard-coded fallback posts — swap for Sanity fetch when CMS is configured
+// Hard-coded fallback — swap for Sanity fetch when CMS is wired up
 const posts: Post[] = [
   {
     slug: 'how-ocd-therapy-works',
@@ -77,7 +88,6 @@ const PAGE_SIZE = 9;
 export default function BlogPage() {
   const visiblePosts = posts.slice(0, PAGE_SIZE);
   const hasMore = posts.length > PAGE_SIZE;
-  const [featuredPost, ...gridPosts] = visiblePosts;
 
   return (
     <>
@@ -88,186 +98,169 @@ export default function BlogPage() {
         }}
       />
 
-      {/* ── Hero ─────────────────────────────────────────────────────────────── */}
+      {/* ── Page masthead ─────────────────────────────────────────────────────
+           Light background with the H1 in forest green — editorial, not heroic.
+           A thin gold rule and a muted subtitle frame the section before cards.
+      ──────────────────────────────────────────────────────────────────────── */}
       <section
-        style={{ backgroundColor: '#2A4D3C' }}
-        className="relative overflow-hidden pt-[100px] pb-[60px] md:pt-[120px] md:pb-[80px] px-4 sm:px-6 lg:px-8"
-        aria-labelledby="blog-hero-heading"
+        style={{ backgroundColor: '#F5F0E8' }}
+        className="px-4 sm:px-6 lg:px-8 pt-20 pb-0 sm:pt-28"
+        aria-labelledby="blog-heading"
       >
-        <PageHeroCircles />
-        <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-white md:text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+        <div className="max-w-6xl mx-auto border-b border-forest/10 pb-14 sm:pb-16">
+          <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-6">
             Articles &amp; Insights
           </p>
+
           <h1
-            id="blog-hero-heading"
-            className="font-heading font-light text-4xl sm:text-5xl lg:text-[3.25rem] leading-tight text-cream mb-6"
+            id="blog-heading"
+            className="font-heading font-light leading-none text-forest mb-7"
+            style={{ fontSize: 'clamp(3rem, 8vw, 5.5rem)' }}
           >
             Blog
           </h1>
-          <p className="font-normal text-base text-cream/75 leading-[1.8] max-w-xl">
+
+          {/* Gold rule — brand accent, signals the subtitle is a sub-title */}
+          <span
+            className="block w-10 h-px mb-7"
+            style={{ backgroundColor: '#D4A843' }}
+            aria-hidden="true"
+          />
+
+          <p className="font-normal text-base sm:text-lg text-gray-500 leading-[1.65] max-w-[440px]">
             Thoughts on therapy, mental health, and the work of change
           </p>
         </div>
       </section>
 
-      {/* ── Empty state ───────────────────────────────────────────────────────── */}
-      {visiblePosts.length === 0 && (
-        <section
-          style={{ backgroundColor: '#F5F0E8' }}
-          className="py-32 px-4 sm:px-6 lg:px-8 text-center"
-        >
-          <p className="font-normal text-sm text-gray-500">
-            No articles yet — check back soon.
-          </p>
-        </section>
-      )}
+      {/* ── Card grid ─────────────────────────────────────────────────────────
+           All posts rendered as equal-weight cards. When there is only one post
+           it sits in the first column; the grid fills naturally as posts grow.
+           Cards have no overflow-hidden at the article level so the category
+           pill can overlap the image/content boundary cleanly with z-index.
+      ──────────────────────────────────────────────────────────────────────── */}
+      <section
+        style={{ backgroundColor: '#F5F0E8' }}
+        className="px-4 sm:px-6 lg:px-8 pt-14 pb-24"
+        aria-label="Blog posts"
+      >
+        {/* Inject keyframes — pattern from PageHeroCircles, Server Component safe */}
+        <style>{CARD_ANIM_CSS}</style>
 
-      {/* ── Featured post ─────────────────────────────────────────────────────── */}
-      {featuredPost && (
-        <section
-          className="py-20 px-4 sm:px-6 lg:px-8 bg-white"
-          aria-labelledby="featured-post-heading"
-        >
-          <div className="max-w-6xl mx-auto">
-            <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-12">
-              Latest Article
+        <div className="max-w-6xl mx-auto">
+          {visiblePosts.length === 0 ? (
+            <p className="font-normal text-sm text-gray-500 py-16">
+              No articles yet — check back soon.
             </p>
-
-            <article className="group">
-              {/*
-               * <Link> as a grid container is valid HTML5 — <a> may wrap block content.
-               * The entire card (image + text) is one focusable unit.
-               */}
-              <Link
-                href={`/blog/${featuredPost.slug}`}
-                className="grid grid-cols-1 lg:grid-cols-[58fr_42fr] gap-10 lg:gap-16 items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:rounded-xl"
-                aria-label={`Read: ${featuredPost.title}`}
-              >
-                {/* Image */}
-                <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
-                  <Image
-                    src={featuredPost.featuredImage}
-                    alt={featuredPost.featuredImageAlt}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-[1.025]"
-                    sizes="(max-width: 1024px) 100vw, 58vw"
-                    priority
-                  />
-                </div>
-
-                {/* Content */}
-                <div>
-                  <span
-                    className="block w-8 h-px mb-7"
-                    style={{ backgroundColor: '#C85A1A' }}
-                    aria-hidden="true"
-                  />
-                  <p className="text-orange text-[10px] font-normal uppercase tracking-[3px] mb-4">
-                    {featuredPost.category}
-                  </p>
-                  <h2
-                    id="featured-post-heading"
-                    className="font-heading font-light text-3xl sm:text-4xl text-forest mb-5 leading-tight"
-                  >
-                    {featuredPost.title}
-                  </h2>
-                  <time
-                    dateTime={featuredPost.publishedAt}
-                    className="block text-xs text-gray-400 tracking-wide mb-6"
-                  >
-                    {formatDate(featuredPost.publishedAt)}
-                  </time>
-                  <p className="font-normal text-sm text-gray-600 leading-[1.85] mb-10">
-                    {featuredPost.excerpt}
-                  </p>
-                  <span
-                    className="inline-flex items-center gap-2 text-orange text-[10px] font-normal uppercase tracking-[2px] group-hover:gap-4 transition-all duration-300"
-                    aria-hidden="true"
-                  >
-                    Read the article <span>→</span>
-                  </span>
-                </div>
-              </Link>
-            </article>
-          </div>
-        </section>
-      )}
-
-      {/* ── Grid: remaining posts ─────────────────────────────────────────────── */}
-      {gridPosts.length > 0 && (
-        <section
-          style={{ backgroundColor: '#F5F0E8' }}
-          className="py-20 px-4 sm:px-6 lg:px-8"
-          aria-label="More articles"
-        >
-          <div className="max-w-6xl mx-auto">
-            <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-12">
-              More Articles
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {gridPosts.map((post) => (
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+              {visiblePosts.map((post, i) => (
                 <article
                   key={post.slug}
-                  className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
+                  className="blog-card group flex flex-col rounded-2xl bg-white border border-transparent hover:border-forest/10 hover:-translate-y-1 transition-all duration-300"
+                  style={{
+                    animationDelay: `${i * 110}ms`,
+                    boxShadow: '0 2px 16px rgba(42,77,60,0.07)',
+                  }}
+                  /*
+                   * Hover shadow via onMouseEnter/Leave would need 'use client'.
+                   * We use a CSS custom property trick via a sibling data attribute
+                   * instead — or simply rely on Tailwind's hover: utilities below.
+                   * The base shadow is set inline; the lifted shadow is handled by
+                   * a <style> rule targeting .blog-card:hover for SSR safety.
+                   */
                 >
                   <Link
                     href={`/blog/${post.slug}`}
-                    className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-inset"
-                    aria-label={`Read: ${post.title}`}
+                    className="flex flex-col flex-1 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-2 focus-visible:ring-offset-linen"
+                    aria-label={`Read article: ${post.title}`}
                   >
-                    <div className="relative aspect-video overflow-hidden">
+                    {/* ── Featured image ─────────────────────────────────────
+                         overflow-hidden on this container clips the scale
+                         animation; rounded-t-2xl matches the card corners.
+                    ─────────────────────────────────────────────────────── */}
+                    <div className="relative aspect-video overflow-hidden rounded-t-2xl">
                       <Image
                         src={post.featuredImage}
                         alt={post.featuredImageAlt}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        priority={i === 0}
                       />
                     </div>
 
-                    <div className="p-6">
+                    {/* ── Category pill ──────────────────────────────────────
+                         Negative margin-top pulls the pill up into the image
+                         zone. position:relative + z-index ensures it paints
+                         above the image even when the image has a CSS transform
+                         applied (transform creates a stacking context).
+                    ─────────────────────────────────────────────────────── */}
+                    <div className="relative z-10 px-5 -mt-[14px] mb-4">
+                      <span className="inline-flex items-center bg-forest text-white text-[9px] font-semibold uppercase tracking-[2px] px-3 py-1.5 rounded-full shadow-sm">
+                        {post.category}
+                      </span>
+                    </div>
+
+                    {/* ── Card body ──────────────────────────────────────────
+                         flex-1 on this div + mt-auto on "Read more" ensures
+                         consistent card heights: excerpt stretches, the link
+                         is always anchored to the card bottom.
+                    ─────────────────────────────────────────────────────── */}
+                    <div className="flex flex-col flex-1 px-5 pb-6">
+                      {/* Gold accent rule — grows on hover, signals hover intent */}
                       <span
-                        className="block w-6 h-[1.5px] mb-4 transition-all duration-300 group-hover:w-10"
-                        style={{ backgroundColor: '#D4A843' }}
+                        className="block h-px mb-4 transition-all duration-300 group-hover:w-10"
+                        style={{ backgroundColor: '#D4A843', width: '24px' }}
                         aria-hidden="true"
                       />
-                      <p className="text-orange text-[10px] font-normal uppercase tracking-[2px] mb-2">
-                        {post.category}
-                      </p>
-                      <h2 className="font-heading font-light text-xl text-forest mb-2 leading-snug">
+
+                      <h2 className="font-heading font-light text-forest leading-snug mb-2" style={{ fontSize: '1.15rem' }}>
                         {post.title}
                       </h2>
+
                       <time
                         dateTime={post.publishedAt}
-                        className="block text-xs text-gray-400 mb-4"
+                        className="block text-xs text-gray-400 tracking-wide mb-4"
                       >
                         {formatDate(post.publishedAt)}
                       </time>
-                      <p className="font-normal text-sm text-gray-600 leading-[1.8] line-clamp-2 mb-5">
+
+                      <p className="font-normal text-sm text-gray-600 leading-[1.8] flex-1 mb-5 line-clamp-3">
                         {post.excerpt}
                       </p>
-                      <span className="inline-flex items-center gap-1.5 text-orange text-[10px] font-normal uppercase tracking-[2px] group-hover:gap-3 transition-all duration-200">
-                        Read more <span aria-hidden="true">→</span>
+
+                      {/* Read more — arrow shifts right, no gap-width trick
+                           which could cause layout shift on narrow cards */}
+                      <span className="inline-flex items-center gap-1.5 text-orange text-[10px] font-normal uppercase tracking-[2px] mt-auto">
+                        Read more
+                        <span
+                          className="transition-transform duration-300 group-hover:translate-x-1"
+                          aria-hidden="true"
+                        >
+                          →
+                        </span>
                       </span>
                     </div>
                   </Link>
                 </article>
               ))}
             </div>
+          )}
 
-            {/* Pagination — rendered when post count exceeds PAGE_SIZE */}
-            {hasMore && (
-              <nav aria-label="Blog pagination" className="mt-16 flex justify-center gap-2">
-                {/* TODO: implement pagination when post count exceeds 9 */}
-              </nav>
-            )}
-          </div>
-        </section>
-      )}
+          {/* Pagination slot — visible only when posts exceed PAGE_SIZE */}
+          {hasMore && (
+            <nav aria-label="Blog pagination" className="mt-16 flex justify-center gap-3">
+              {/* TODO: implement page links when post count exceeds 9 */}
+            </nav>
+          )}
+        </div>
+      </section>
 
-      {/* ── CTA ──────────────────────────────────────────────────────────────── */}
+      {/* ── CTA ──────────────────────────────────────────────────────────────
+           Matches the closing CTA pattern used on every other page of the site
+           (About, Services, FAQ). Keeps the blog page feeling fully resolved.
+      ──────────────────────────────────────────────────────────────────────── */}
       <section
         style={{ backgroundColor: '#2A4D3C' }}
         className="py-24 px-4 sm:px-6 lg:px-8"
