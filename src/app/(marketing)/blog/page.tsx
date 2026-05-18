@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
+import AnimatedBlogCard from '@/components/blog/AnimatedBlogCard';
 
 // TODO: Replace hard-coded posts with Sanity query when CMS is configured:
 // import { sanityClient } from '@/lib/sanity/client';
@@ -39,18 +40,6 @@ const breadcrumbJsonLd = {
   ],
 };
 
-// ── Card entrance animation ───────────────────────────────────────────────────
-// Inline style element, same pattern as PageHeroCircles — Server Component safe.
-const CARD_ANIM_CSS = `
-  @keyframes blog-card-in {
-    from { opacity: 0; transform: translateY(22px); }
-    to   { opacity: 1; transform: translateY(0);    }
-  }
-  .blog-card {
-    animation: blog-card-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-`;
-
 type Post = {
   slug: string;
   title: string;
@@ -67,12 +56,32 @@ const posts: Post[] = [
     slug: 'how-ocd-therapy-works',
     title: 'How OCD Therapy Works: An Evidence-Based Guide',
     excerpt:
-      'OCD is more complex than popular culture suggests. This article explores how it maintains itself and what evidence-based treatment — I-CBT, ACT, ERP, and psychodynamic therapy — looks like.',
+      'An integrative look at I-CBT, ACT, and psychodynamic approaches to OCD treatment — what the research says and what therapy actually looks like.',
     publishedAt: '2026-05-13',
     category: 'OCD',
     featuredImage: '/images/ocd-radio-analogy.png',
     featuredImageAlt:
       'Illustration of the radio analogy explaining how OCD tunes into meaningless thoughts and treats them as threats',
+  },
+  {
+    slug: 'what-does-adhd-feel-like',
+    title: 'What Does ADHD Actually Feel Like?',
+    excerpt:
+      'Beyond the stereotypes — understanding the lived experience of ADHD in adults, and why so many people are only diagnosed later in life.',
+    publishedAt: '2026-05-20',
+    category: 'ADHD',
+    featuredImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
+    featuredImageAlt: 'Person looking thoughtfully out a window, representing the internal experience of ADHD',
+  },
+  {
+    slug: 'finding-the-right-therapist',
+    title: 'Finding the Right Therapist: What to Look For',
+    excerpt:
+      'Therapy is a relationship. Here\'s how to find someone who\'s actually a good fit for you — and what the research says matters most.',
+    publishedAt: '2026-05-27',
+    category: 'General',
+    featuredImage: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80',
+    featuredImageAlt: 'Two chairs facing each other in a warm therapy room, representing the therapeutic relationship',
   },
 ];
 
@@ -99,10 +108,7 @@ export default function BlogPage() {
         }}
       />
 
-      {/* ── Page banner ───────────────────────────────────────────────────────
-           Dark forest banner matching the hero sections on About, Services,
-           FAQ, and Contact — consistent sitewide page-entry pattern.
-      ──────────────────────────────────────────────────────────────────────── */}
+      {/* ── Page banner ─────────────────────────────────────────────────────── */}
       <section
         style={{ backgroundColor: '#2A4D3C' }}
         className="relative overflow-hidden pt-[100px] pb-[60px] md:pt-[120px] md:pb-[80px] px-4 sm:px-6 lg:px-8"
@@ -111,6 +117,19 @@ export default function BlogPage() {
         <PageHeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
+          {/* Breadcrumb */}
+          <nav aria-label="Breadcrumb" className="mb-6">
+            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 list-none text-xs text-cream/60">
+              <li>
+                <Link href="/" className="hover:text-cream transition-colors">
+                  Home
+                </Link>
+              </li>
+              <li aria-hidden="true">/</li>
+              <li className="text-cream/80">Blog</li>
+            </ol>
+          </nav>
+
           <p className="text-white text-sm font-semibold uppercase tracking-normal mb-5">
             Articles &amp; Insights
           </p>
@@ -126,20 +145,12 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* ── Card grid ─────────────────────────────────────────────────────────
-           All posts rendered as equal-weight cards. When there is only one post
-           it sits in the first column; the grid fills naturally as posts grow.
-           Cards have no overflow-hidden at the article level so the category
-           pill can overlap the image/content boundary cleanly with z-index.
-      ──────────────────────────────────────────────────────────────────────── */}
+      {/* ── Card grid ───────────────────────────────────────────────────────── */}
       <section
         style={{ backgroundColor: '#F5F0E8' }}
         className="px-4 sm:px-6 lg:px-8 pt-14 pb-24"
         aria-label="Blog posts"
       >
-        {/* Inject keyframes — pattern from PageHeroCircles, Server Component safe */}
-        <style>{CARD_ANIM_CSS}</style>
-
         <div className="max-w-6xl mx-auto">
           {visiblePosts.length === 0 ? (
             <p className="font-normal text-sm text-gray-500 py-16">
@@ -148,95 +159,81 @@ export default function BlogPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
               {visiblePosts.map((post, i) => (
-                <article
-                  key={post.slug}
-                  className="blog-card group flex flex-col rounded-2xl bg-white border border-transparent hover:border-forest/10 hover:-translate-y-1 transition-all duration-300"
-                  style={{
-                    animationDelay: `${i * 110}ms`,
-                    boxShadow: '0 2px 16px rgba(42,77,60,0.07)',
-                  }}
-                  /*
-                   * Hover shadow via onMouseEnter/Leave would need 'use client'.
-                   * We use a CSS custom property trick via a sibling data attribute
-                   * instead — or simply rely on Tailwind's hover: utilities below.
-                   * The base shadow is set inline; the lifted shadow is handled by
-                   * a <style> rule targeting .blog-card:hover for SSR safety.
-                   */
-                >
-                  <Link
-                    href={`/blog/${post.slug}`}
-                    className="flex flex-col flex-1 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-2 focus-visible:ring-offset-linen"
-                    aria-label={`Read article: ${post.title}`}
+                /*
+                 * AnimatedBlogCard is a client component that wraps the article
+                 * in a motion.div with whileInView fade-up. The article content
+                 * itself is always present in the server-rendered HTML for SEO.
+                 */
+                <AnimatedBlogCard key={post.slug} index={i}>
+                  <article
+                    className="group flex flex-col flex-1 rounded-2xl bg-white border border-transparent hover:border-[#C85A1A]/15 hover:-translate-y-1 transition-all duration-300"
+                    style={{ boxShadow: '0 2px 16px rgba(42,77,60,0.07)' }}
                   >
-                    {/* ── Featured image ─────────────────────────────────────
-                         overflow-hidden on this container clips the scale
-                         animation; rounded-t-2xl matches the card corners.
-                    ─────────────────────────────────────────────────────── */}
-                    <div className="relative aspect-video overflow-hidden rounded-t-2xl">
-                      <Image
-                        src={post.featuredImage}
-                        alt={post.featuredImageAlt}
-                        fill
-                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        priority={i === 0}
-                      />
-                    </div>
+                    <Link
+                      href={`/blog/${post.slug}`}
+                      className="flex flex-col flex-1 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-2 focus-visible:ring-offset-linen"
+                      aria-label={`Read article: ${post.title}`}
+                    >
+                      {/* Featured image */}
+                      <div className="relative aspect-video overflow-hidden rounded-t-2xl">
+                        <Image
+                          src={post.featuredImage}
+                          alt={post.featuredImageAlt}
+                          fill
+                          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          priority={i === 0}
+                          unoptimized={post.featuredImage.startsWith('https://images.unsplash')}
+                        />
+                      </div>
 
-                    {/* ── Category pill ──────────────────────────────────────
-                         Negative margin-top pulls the pill up into the image
-                         zone. position:relative + z-index ensures it paints
-                         above the image even when the image has a CSS transform
-                         applied (transform creates a stacking context).
-                    ─────────────────────────────────────────────────────── */}
-                    <div className="relative z-10 px-5 -mt-[14px] mb-4">
-                      <span className="inline-flex items-center bg-forest text-white text-[9px] font-semibold uppercase tracking-[2px] px-3 py-1.5 rounded-full shadow-sm">
-                        {post.category}
-                      </span>
-                    </div>
-
-                    {/* ── Card body ──────────────────────────────────────────
-                         flex-1 on this div + mt-auto on "Read more" ensures
-                         consistent card heights: excerpt stretches, the link
-                         is always anchored to the card bottom.
-                    ─────────────────────────────────────────────────────── */}
-                    <div className="flex flex-col flex-1 px-5 pb-6">
-                      {/* Gold accent rule — grows on hover, signals hover intent */}
-                      <span
-                        className="block h-px mb-4 transition-all duration-300 group-hover:w-10"
-                        style={{ backgroundColor: '#D4A843', width: '24px' }}
-                        aria-hidden="true"
-                      />
-
-                      <h2 className="font-heading font-light text-forest leading-snug mb-2" style={{ fontSize: '1.15rem' }}>
-                        {post.title}
-                      </h2>
-
-                      <time
-                        dateTime={post.publishedAt}
-                        className="block text-xs text-gray-400 tracking-wide mb-4"
-                      >
-                        {formatDate(post.publishedAt)}
-                      </time>
-
-                      <p className="font-normal text-sm text-gray-600 leading-[1.8] flex-1 mb-5 line-clamp-3">
-                        {post.excerpt}
-                      </p>
-
-                      {/* Read more — arrow shifts right, no gap-width trick
-                           which could cause layout shift on narrow cards */}
-                      <span className="inline-flex items-center gap-1.5 text-orange text-[10px] font-normal uppercase tracking-normal mt-auto">
-                        Read more
-                        <span
-                          className="transition-transform duration-300 group-hover:translate-x-1"
-                          aria-hidden="true"
-                        >
-                          →
+                      {/* Category pill — pulls up slightly into the image zone */}
+                      <div className="relative z-10 px-5 -mt-[14px] mb-4">
+                        <span className="inline-flex items-center bg-forest text-white text-[9px] font-semibold uppercase tracking-[2px] px-3 py-1.5 rounded-full shadow-sm">
+                          {post.category}
                         </span>
-                      </span>
-                    </div>
-                  </Link>
-                </article>
+                      </div>
+
+                      {/* Card body */}
+                      <div className="flex flex-col flex-1 px-5 pb-6">
+                        {/* Gold accent rule — grows on hover */}
+                        <span
+                          className="block h-px mb-4 transition-all duration-300 group-hover:w-10"
+                          style={{ backgroundColor: '#D4A843', width: '24px' }}
+                          aria-hidden="true"
+                        />
+
+                        <h2
+                          className="font-heading font-light text-forest leading-snug mb-2"
+                          style={{ fontSize: '1.15rem' }}
+                        >
+                          {post.title}
+                        </h2>
+
+                        <time
+                          dateTime={post.publishedAt}
+                          className="block text-xs text-gray-400 tracking-wide mb-4"
+                        >
+                          {formatDate(post.publishedAt)}
+                        </time>
+
+                        <p className="font-normal text-sm text-gray-600 leading-[1.8] flex-1 mb-5 line-clamp-3">
+                          {post.excerpt}
+                        </p>
+
+                        <span className="inline-flex items-center gap-1.5 text-orange text-[10px] font-normal uppercase tracking-normal mt-auto">
+                          Read more
+                          <span
+                            className="transition-transform duration-300 group-hover:translate-x-1"
+                            aria-hidden="true"
+                          >
+                            →
+                          </span>
+                        </span>
+                      </div>
+                    </Link>
+                  </article>
+                </AnimatedBlogCard>
               ))}
             </div>
           )}
@@ -250,10 +247,7 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* ── CTA ──────────────────────────────────────────────────────────────
-           Matches the closing CTA pattern used on every other page of the site
-           (About, Services, FAQ). Keeps the blog page feeling fully resolved.
-      ──────────────────────────────────────────────────────────────────────── */}
+      {/* ── CTA ─────────────────────────────────────────────────────────────── */}
       <section
         style={{ backgroundColor: '#2A4D3C' }}
         className="py-24 px-4 sm:px-6 lg:px-8"
