@@ -3,6 +3,7 @@ import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import AnimatedCard from '@/components/ui/AnimatedCard';
 import { Globe } from '@/components/ui/cobe-globe';
+import FloatingCircles from '@/components/ui/floating-circles';
 
 export const metadata: Metadata = {
   title: 'Therapy Services Dublin & Online | Owen Lynch Psychotherapy',
@@ -135,10 +136,11 @@ export default function ServicesPage() {
       {/* ── Section 2: Services grid ── */}
       <section
         style={{ backgroundColor: '#F5F0E8' }}
-        className="py-20 px-4 sm:px-6 lg:px-8"
+        className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8"
         aria-labelledby="services-grid-heading"
       >
-        <div className="max-w-6xl mx-auto">
+        <FloatingCircles />
+        <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
           <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
             Areas of practice
           </p>
@@ -239,17 +241,11 @@ export default function ServicesPage() {
             >
               Available Across Ireland &amp; the UK
             </h2>
-            <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-8">
+            <p className="font-normal text-sm text-gray-600 leading-[1.8]">
               All sessions are available online via secure video call — no travel, no waiting
               rooms, no compromise on quality. Online therapy works just as well as in-person for
               most people and many clients prefer it.
             </p>
-            <Link
-              href="/online-therapy-ireland"
-              className="inline-flex items-center gap-2 text-orange text-xs font-normal uppercase tracking-normal hover:gap-3 transition-all duration-200"
-            >
-              Learn more <span aria-hidden="true">→</span>
-            </Link>
           </div>
 
           {/* Globe */}
