@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import AnimatedCard from '@/components/ui/AnimatedCard';
+import { Globe } from '@/components/ui/cobe-globe';
 
 export const metadata: Metadata = {
   title: 'Therapy Services Dublin & Online | Owen Lynch Psychotherapy',
@@ -251,49 +252,40 @@ export default function ServicesPage() {
             </Link>
           </div>
 
-          {/* Ireland & Great Britain map */}
-          <div className="flex items-center justify-center">
-            <svg
-              viewBox="0 0 280 380"
-              width="300"
-              xmlns="http://www.w3.org/2000/svg"
-              role="img"
-              aria-labelledby="map-title"
-              style={{ overflow: 'visible' }}
-            >
-              <title id="map-title">Map of Ireland and Great Britain with Dublin and UK marked</title>
-
-              {/* Great Britain — forest green, clockwise from Cape Wrath */}
-              <path
-                d="M 129 74 L 164 72 L 194 104 L 184 134 L 178 154 L 194 164
-                   L 206 192 L 235 217 L 248 255 L 265 254 L 268 302 L 265 310
-                   L 258 317 L 220 323 L 184 330 L 114 344 L 139 317 L 143 299
-                   L 128 285 L 134 261 L 136 239 L 153 242 L 168 239 L 167 217
-                   L 132 200 L 112 179 L 102 134 L 118 98 Z"
-                fill="#2D5A42"
-                fillOpacity="0.6"
+          {/* Globe */}
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="w-full max-w-[420px] md:max-w-[450px]">
+              <Globe
+                markers={[
+                  { id: "dublin", location: [53.3498, -6.2603], label: "Dublin" },
+                  { id: "london", location: [51.5074, -0.1278], label: "London" },
+                ]}
+                arcs={[
+                  {
+                    id: "dublin-london",
+                    from: [53.3498, -6.2603],
+                    to: [51.5074, -0.1278],
+                  },
+                ]}
+                baseColor={[0.96, 0.94, 0.91]}
+                markerColor={[0.78, 0.35, 0.10]}
+                arcColor={[0.16, 0.30, 0.24]}
+                glowColor={[0.96, 0.94, 0.91]}
+                dark={0}
+                mapBrightness={8}
+                markerSize={0.04}
+                markerElevation={0.02}
+                arcWidth={0.6}
+                arcHeight={0.3}
+                speed={0.002}
+                theta={0.3}
+                diffuse={1.5}
+                mapSamples={16000}
               />
-
-              {/* Ireland — sage green, clockwise from Malin Head */}
-              <path
-                d="M 77 178 L 103 183 L 115 205 L 100 221 L 102 242
-                   L 107 254 L 97 279 L 86 282 L 53 295 L 27 303
-                   L 14 290 L 23 268 L 41 245 L 19 237 L 19 212
-                   L 62 200 Z"
-                fill="#4F8A68"
-                fillOpacity="0.8"
-              />
-
-              {/* Dublin pin */}
-              <circle className="map-pin-ring" cx="102" cy="242" r="5" fill="none" stroke="#D4A843" strokeWidth="1.5" />
-              <circle cx="102" cy="242" r="3.5" fill="#D4A843" />
-              <text x="111" y="246" fontFamily="Poppins,sans-serif" fontSize="10" fill="#C85A1A">Dublin</text>
-
-              {/* London / UK pin */}
-              <circle className="map-pin-ring map-pin-ring-london" cx="234" cy="300" r="4" fill="none" stroke="#D4A843" strokeWidth="1.5" />
-              <circle cx="234" cy="300" r="2.5" fill="#D4A843" />
-              <text x="242" y="304" fontFamily="Poppins,sans-serif" fontSize="10" fill="#C85A1A">UK</text>
-            </svg>
+            </div>
+            <p className="font-normal text-xs text-gray-400 leading-relaxed text-center max-w-[320px]">
+              Available in person in Dublin and online across Ireland &amp; the UK
+            </p>
           </div>
 
         </div>
