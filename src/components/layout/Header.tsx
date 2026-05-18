@@ -45,7 +45,7 @@ export default function Header() {
   useEffect(() => { setOpen(false); }, [pathname]);
 
   const linkClass = (href: string) =>
-    `text-[12px] font-medium uppercase tracking-[2.5px] transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest rounded-sm ${
+    `text-[12px] font-medium uppercase tracking-normal transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest rounded-sm ${
       pathname === href ? 'text-orange' : 'text-forest hover:text-orange'
     }`;
 
@@ -119,7 +119,7 @@ export default function Header() {
               <li key={href}>
                 <Link
                   href={href}
-                  className={`block py-3 px-2 text-[15px] font-medium uppercase tracking-[2.5px] rounded-md transition-colors ${
+                  className={`block py-3 px-2 text-[15px] font-medium uppercase tracking-normal rounded-md transition-colors ${
                     pathname === href
                       ? 'text-orange'
                       : 'text-forest hover:text-orange hover:bg-forest/5'
