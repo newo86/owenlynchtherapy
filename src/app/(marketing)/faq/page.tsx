@@ -257,7 +257,7 @@ export default function FaqPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-white md:text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+          <p className="text-white md:text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
             Got a question
           </p>
           <h1
@@ -290,7 +290,7 @@ export default function FaqPage() {
         aria-labelledby="faq-cta-heading"
       >
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
             Get in touch
           </p>
           <h2

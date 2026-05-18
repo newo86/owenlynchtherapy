@@ -90,7 +90,7 @@ export default async function ContactPage({ searchParams }: Props) {
         <PageHeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-white md:text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+          <p className="text-white md:text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
             Get in touch
           </p>
           <h1
@@ -112,7 +112,7 @@ export default async function ContactPage({ searchParams }: Props) {
         aria-labelledby="availability-heading"
       >
         <div className="max-w-6xl mx-auto">
-          <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
             Accepting new clients
           </p>
           <h2

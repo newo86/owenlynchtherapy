@@ -8,7 +8,7 @@ export default function HomeCta() {
       aria-labelledby="cta-heading"
     >
       <div className="max-w-2xl mx-auto text-center">
-        <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+        <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
           Get in touch
         </p>
 

@@ -114,7 +114,7 @@ export default function ServicesPage() {
         <PageHeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-white md:text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+          <p className="text-white md:text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
             What I work with
           </p>
           <h1
@@ -137,7 +137,7 @@ export default function ServicesPage() {
         aria-labelledby="services-grid-heading"
       >
         <div className="max-w-6xl mx-auto">
-          <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
             Areas of practice
           </p>
           <h2
@@ -184,7 +184,7 @@ export default function ServicesPage() {
         aria-labelledby="process-heading"
       >
         <div className="max-w-[700px] mx-auto text-center">
-          <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
             The process
           </p>
           <h2
@@ -227,7 +227,7 @@ export default function ServicesPage() {
 
           {/* Text */}
           <div>
-            <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+            <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
               Online therapy
             </p>
             <h2
@@ -304,7 +304,7 @@ export default function ServicesPage() {
         aria-labelledby="services-cta-heading"
       >
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-orange text-xs font-normal uppercase tracking-[3px] mb-5">
+          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
             Get in touch
           </p>
           <h2
