@@ -1,16 +1,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import FloatingCircles from '@/components/ui/floating-circles';
 
 export default function AboutTeaser() {
   return (
     <section
-      className="relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8 border-t border-forest/10"
+      className="py-24 px-4 sm:px-6 lg:px-8 border-t border-forest/10"
       style={{ backgroundColor: '#F5F0E8' }}
       aria-labelledby="about-teaser-heading"
     >
-      <FloatingCircles />
-      <div className="relative max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12 lg:gap-16" style={{ zIndex: 1 }}>
+      <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12 lg:gap-16">
 
         {/* Portrait — full width on mobile, fixed width on desktop */}
         <div className="w-full md:w-[320px] lg:w-[360px] shrink-0">

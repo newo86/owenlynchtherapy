@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import AnimatedCard from '@/components/ui/AnimatedCard';
-import FloatingCircles from '@/components/ui/floating-circles';
 
 const services = [
   {
@@ -48,12 +47,11 @@ const services = [
 export default function Services() {
   return (
     <section
-      className="relative overflow-hidden py-24 px-4 sm:px-6 lg:px-8"
+      className="py-24 px-4 sm:px-6 lg:px-8"
       style={{ backgroundColor: '#F5F0E8' }}
       aria-labelledby="services-heading"
     >
-      <FloatingCircles />
-      <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
+      <div className="max-w-6xl mx-auto">
         {/* Section header */}
         <div className="text-center mb-16">
           <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
