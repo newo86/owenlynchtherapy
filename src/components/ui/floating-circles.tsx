@@ -14,13 +14,13 @@ export default function FloatingCircles() {
       <div
         style={{
           position: 'absolute',
-          width: 420,
-          height: 420,
-          top: '-8%',
-          left: '-6%',
+          width: 480,
+          height: 480,
+          top: '-10%',
+          left: '-8%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(79,138,104,0.07) 0%, transparent 68%)',
+            'radial-gradient(circle, rgba(79,138,104,0.14) 0%, rgba(79,138,104,0.06) 45%, transparent 75%)',
           animation: 'fc-drift-1 45s ease-in-out infinite',
         }}
       />
@@ -29,13 +29,13 @@ export default function FloatingCircles() {
       <div
         style={{
           position: 'absolute',
-          width: 300,
-          height: 300,
-          top: '15%',
-          right: '-4%',
+          width: 340,
+          height: 340,
+          top: '12%',
+          right: '-5%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(200,90,26,0.06) 0%, transparent 68%)',
+            'radial-gradient(circle, rgba(200,90,26,0.12) 0%, rgba(200,90,26,0.05) 45%, transparent 75%)',
           animation: 'fc-drift-2 38s ease-in-out infinite',
           animationDelay: '-12s',
         }}
@@ -45,13 +45,13 @@ export default function FloatingCircles() {
       <div
         style={{
           position: 'absolute',
-          width: 360,
-          height: 360,
-          bottom: '-12%',
-          left: '18%',
+          width: 400,
+          height: 400,
+          bottom: '-14%',
+          left: '16%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(212,168,67,0.07) 0%, transparent 68%)',
+            'radial-gradient(circle, rgba(212,168,67,0.14) 0%, rgba(212,168,67,0.06) 45%, transparent 75%)',
           animation: 'fc-drift-3 52s ease-in-out infinite',
           animationDelay: '-25s',
         }}
@@ -62,13 +62,13 @@ export default function FloatingCircles() {
         className="hidden sm:block"
         style={{
           position: 'absolute',
-          width: 220,
-          height: 220,
-          top: '45%',
-          right: '22%',
+          width: 260,
+          height: 260,
+          top: '42%',
+          right: '20%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(79,138,104,0.05) 0%, transparent 68%)',
+            'radial-gradient(circle, rgba(79,138,104,0.10) 0%, rgba(79,138,104,0.04) 45%, transparent 75%)',
           animation: 'fc-drift-4 34s ease-in-out infinite',
           animationDelay: '-8s',
         }}
@@ -79,13 +79,13 @@ export default function FloatingCircles() {
         className="hidden md:block"
         style={{
           position: 'absolute',
-          width: 500,
-          height: 500,
-          bottom: '-20%',
-          right: '-8%',
+          width: 540,
+          height: 540,
+          bottom: '-22%',
+          right: '-10%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(200,90,26,0.04) 0%, transparent 68%)',
+            'radial-gradient(circle, rgba(200,90,26,0.09) 0%, rgba(200,90,26,0.03) 45%, transparent 75%)',
           animation: 'fc-drift-5 60s ease-in-out infinite',
           animationDelay: '-35s',
         }}
@@ -96,13 +96,13 @@ export default function FloatingCircles() {
         className="hidden lg:block"
         style={{
           position: 'absolute',
-          width: 260,
-          height: 260,
-          top: '60%',
-          left: '5%',
+          width: 300,
+          height: 300,
+          top: '58%',
+          left: '4%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(212,168,67,0.05) 0%, transparent 68%)',
+            'radial-gradient(circle, rgba(212,168,67,0.10) 0%, rgba(212,168,67,0.04) 45%, transparent 75%)',
           animation: 'fc-drift-1 42s ease-in-out infinite',
           animationDelay: '-18s',
         }}
