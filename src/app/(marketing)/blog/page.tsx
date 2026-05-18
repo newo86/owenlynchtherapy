@@ -10,7 +10,7 @@ import AnimatedBlogCard from '@/components/blog/AnimatedBlogCard';
 // const posts = await sanityClient.fetch(allPostsQuery);
 
 export const metadata: Metadata = {
-  title: 'Blog | Owen Lynch Psychotherapy',
+  title: { absolute: 'Blog | Owen Lynch Psychotherapy' },
   description:
     'Articles on OCD, anxiety, ADHD, autism, and mental health by Owen Lynch, psychotherapist in Dublin. Evidence-based insights and practical guidance.',
   alternates: { canonical: 'https://owenlynchtherapy.com/blog' },
