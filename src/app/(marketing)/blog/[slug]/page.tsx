@@ -63,12 +63,12 @@ const blogPostingJsonLd = {
   citation: [
     {
       '@type': 'ScholarlyArticle',
-      name: ‘Evaluation of inference-based cognitive-behavioral therapy for obsessive-compulsive disorder: A multicenter randomized controlled trial with three treatment modalities’,
-      author: [‘Aardema, F.’, ‘Bouchard, S.’, ‘Koszycki, D.’, ‘Lavoie, M. E.’, ‘Audet, J.-S.’, ‘O\’Connor, K.’],
-      datePublished: ‘2022’,
+      name: 'Evaluation of inference-based cognitive-behavioral therapy for obsessive-compulsive disorder: A multicenter randomized controlled trial with three treatment modalities',
+      author: ['Aardema, F.', 'Bouchard, S.', 'Koszycki, D.', 'Lavoie, M. E.', 'Audet, J.-S.', 'O\'Connor, K.'],
+      datePublished: '2022',
       isPartOf: {
-        ‘@type’: ‘Periodical’,
-        name: ‘Psychotherapy and Psychosomatics’,
+        '@type': 'Periodical',
+        name: 'Psychotherapy and Psychosomatics',
       },
     },
     {
@@ -277,7 +277,7 @@ export default async function BlogPostPage({ params }: Props) {
             <h2 className={h2}>How OCD Maintains Itself</h2>
 
             <p className={p}>
-              {`To understand treatment, it helps to understand the mechanism that keeps OCD going. OCD is sometimes described as a “doubt disorder.” Not because the person is generally indecisive, but because the condition generates a specific, compelling sense of doubt that overrides ordinary reasoning.`}
+              {`To understand treatment, it helps to understand the mechanism that keeps OCD going. OCD is sometimes described as a "doubt disorder." Not because the person is generally indecisive, but because the condition generates a specific, compelling sense of doubt that overrides ordinary reasoning.`}
             </p>
 
             <p className={p}>
@@ -294,7 +294,7 @@ export default async function BlogPostPage({ params }: Props) {
             </h2>
 
             <p className={p}>
-              {`Inference-Based CBT (I-CBT) is a newer approach developed by Frederick Aardema and Kieron O’Connor at the University of Montreal. It has a growing evidence base, including randomised controlled trials showing comparable outcomes to more established treatments (O’Connor et al., 2005; Aardema et al., 2022).`}
+              {`Inference-Based CBT (I-CBT) is a newer approach developed by Frederick Aardema and Kieron O'Connor at the University of Montreal. It has a growing evidence base, including randomised controlled trials showing comparable outcomes to more established treatments (O'Connor et al., 2005; Aardema et al., 2022).`}
             </p>
 
             <p className={p}>
@@ -302,14 +302,14 @@ export default async function BlogPostPage({ params }: Props) {
             </p>
 
             <p className={p}>
-              {`The model proposes that OCD involves what the researchers call “inferential confusion.” This is a process where the person comes to distrust their own direct experience (what they can see, hear, feel, and know) and instead gives authority to an imagined possibility. In other words, OCD convinces you that the story in your head is more trustworthy than the evidence of your own senses.`}
+              {`The model proposes that OCD involves what the researchers call "inferential confusion." This is a process where the person comes to distrust their own direct experience (what they can see, hear, feel, and know) and instead gives authority to an imagined possibility. In other words, OCD convinces you that the story in your head is more trustworthy than the evidence of your own senses.`}
             </p>
 
             {/* H2: The Inner Wheel and the Outer Wheel */}
             <h2 className={h2}>The Inner Wheel and the Outer Wheel</h2>
 
             <p className={p}>
-              {`I-CBT uses a model of two “wheels” to explain this process, and it is worth spending a moment on because it makes the mechanism very concrete.`}
+              {`I-CBT uses a model of two "wheels" to explain this process, and it is worth spending a moment on because it makes the mechanism very concrete.`}
             </p>
 
             <p className={p}>
@@ -322,13 +322,13 @@ export default async function BlogPostPage({ params }: Props) {
 
             <ul className="list-disc list-outside pl-6 space-y-3 mb-6 text-base text-gray-700 leading-[1.75]">
               <li>
-                {`Absorbing stories, news, or information and applying it selectively to yourself (“I read about someone who did something terrible. What if that’s me?”)`}
+                {`Absorbing stories, news, or information and applying it selectively to yourself ("I read about someone who did something terrible. What if that's me?")`}
               </li>
               <li>
-                {`Distrusting your own direct senses (“The door looks locked, but what if I didn’t check properly?”)`}
+                {`Distrusting your own direct senses ("The door looks locked, but what if I didn't check properly?")`}
               </li>
               <li>
-                {`Using purely imagined scenarios as though they are evidence (“I can imagine doing something harmful, so maybe I’m capable of it”)`}
+                {`Using purely imagined scenarios as though they are evidence ("I can imagine doing something harmful, so maybe I'm capable of it")`}
               </li>
               <li>
                 {`Confusing the ability to think something with the likelihood of doing it`}
@@ -336,7 +336,7 @@ export default async function BlogPostPage({ params }: Props) {
             </ul>
 
             <p className={p}>
-              {`The Inner Wheel is where OCD does its most persuasive work. It builds what I-CBT calls a “narrative,” a story that feels compelling but is not actually grounded in anything the person has directly observed or experienced. The doubt feels real, but it is based entirely on imagination and possibility, not on evidence from the person’s actual life.`}
+              {`The Inner Wheel is where OCD does its most persuasive work. It builds what I-CBT calls a "narrative," a story that feels compelling but is not actually grounded in anything the person has directly observed or experienced. The doubt feels real, but it is based entirely on imagination and possibility, not on evidence from the person's actual life.`}
             </p>
 
             {/* Image: inner/outer wheel */}
@@ -403,15 +403,15 @@ export default async function BlogPostPage({ params }: Props) {
             </p>
 
             <p className={p}>
-              {`A central concept in ACT is “cognitive fusion,” the tendency to become entangled with our thoughts, treating them as literal truths rather than as mental events. When you are fused with a thought, there is no space between you and the thought. You are the thought.`}
+              {`A central concept in ACT is "cognitive fusion," the tendency to become entangled with our thoughts, treating them as literal truths rather than as mental events. When you are fused with a thought, there is no space between you and the thought. You are the thought.`}
             </p>
 
             <p className={p}>
-              {`ACT works to create that space through a process called “defusion.” This might involve noticing a thought and naming it (“I’m having the thought that…”), observing the thought as though watching it pass like a cloud, or recognising that a thought can be present without requiring action.`}
+              {`ACT works to create that space through a process called "defusion." This might involve noticing a thought and naming it ("I'm having the thought that…"), observing the thought as though watching it pass like a cloud, or recognising that a thought can be present without requiring action.`}
             </p>
 
             <p className={p}>
-              {`Crucially, ACT also asks: what actually matters to you? What kind of life do you want to build? OCD narrows a person’s world. It consumes time, energy, and attention that could otherwise go toward relationships, work, creativity, or rest. ACT helps people reconnect with their values and take steps toward what matters, even in the presence of uncomfortable thoughts and feelings.`}
+              {`Crucially, ACT also asks: what actually matters to you? What kind of life do you want to build? OCD narrows a person's world. It consumes time, energy, and attention that could otherwise go toward relationships, work, creativity, or rest. ACT helps people reconnect with their values and take steps toward what matters, even in the presence of uncomfortable thoughts and feelings.`}
             </p>
 
             <p className={p}>
@@ -424,23 +424,23 @@ export default async function BlogPostPage({ params }: Props) {
             </h2>
 
             <p className={p}>
-              {`While cognitive and behavioural models focus on mechanisms and cycles, psychodynamic thinking adds another dimension: it asks what function the symptom might be serving in the broader landscape of a person’s emotional life.`}
+              {`While cognitive and behavioural models focus on mechanisms and cycles, psychodynamic thinking adds another dimension: it asks what function the symptom might be serving in the broader landscape of a person's emotional life.`}
             </p>
 
             <p className={p}>
-              {`This is not about claiming that OCD is “caused” by unconscious conflict in some simplistic Freudian sense. Modern psychodynamic approaches to OCD are more nuanced than that. Nancy McWilliams (2011), for example, emphasises the importance of understanding the person’s character structure and developmental history alongside their presenting symptoms. The question is not just “what is the OCD doing?” but “what is this person’s relationship to control, uncertainty, and vulnerability more broadly?”`}
+              {`This is not about claiming that OCD is "caused" by unconscious conflict in some simplistic Freudian sense. Modern psychodynamic approaches to OCD are more nuanced than that. Nancy McWilliams (2011), for example, emphasises the importance of understanding the person's character structure and developmental history alongside their presenting symptoms. The question is not just "what is the OCD doing?" but "what is this person's relationship to control, uncertainty, and vulnerability more broadly?"`}
             </p>
 
             <p className={p}>
-              {`For some people, OCD emerges or intensifies during periods of significant life transition, loss, or relational stress. For others, there is a long developmental history of trying to manage an environment that felt unpredictable or unsafe. Winnicott’s concept of the “holding environment” is relevant here: the degree to which a person’s early relational world provided a sense of safety that allowed them to tolerate uncertainty and ambiguity (Winnicott, 1965).`}
+              {`For some people, OCD emerges or intensifies during periods of significant life transition, loss, or relational stress. For others, there is a long developmental history of trying to manage an environment that felt unpredictable or unsafe. Winnicott's concept of the "holding environment" is relevant here: the degree to which a person's early relational world provided a sense of safety that allowed them to tolerate uncertainty and ambiguity (Winnicott, 1965).`}
             </p>
 
             <p className={p}>
-              {`None of this replaces the need for targeted OCD intervention. But it can enrich the work significantly. Understanding why a person’s nervous system is so primed toward threat, why uncertainty feels so intolerable, why the need for certainty is so urgent, provides a depth of understanding that purely technique-driven approaches sometimes miss.`}
+              {`None of this replaces the need for targeted OCD intervention. But it can enrich the work significantly. Understanding why a person's nervous system is so primed toward threat, why uncertainty feels so intolerable, why the need for certainty is so urgent, provides a depth of understanding that purely technique-driven approaches sometimes miss.`}
             </p>
 
             <p className={p}>
-              {`In practice, this means that alongside specific OCD-focused work, there is often value in exploring the person’s broader emotional world: their attachment history, their relationship patterns, the ways they have learned to cope with anxiety and vulnerability over the course of their life.`}
+              {`In practice, this means that alongside specific OCD-focused work, there is often value in exploring the person's broader emotional world: their attachment history, their relationship patterns, the ways they have learned to cope with anxiety and vulnerability over the course of their life.`}
             </p>
 
             {/* H2: A Note on ERP */}
@@ -462,11 +462,11 @@ export default async function BlogPostPage({ params }: Props) {
             <h2 className={h2}>How We Would Work Together</h2>
 
             <p className={p}>
-              {`I work with clients in Dublin and online across Ireland and the UK, so wherever you’re based, getting started doesn’t have to mean travelling. If you were to come to therapy for OCD, here is what you could expect.`}
+              {`I work with clients in Dublin and online across Ireland and the UK, so wherever you're based, getting started doesn't have to mean travelling. If you were to come to therapy for OCD, here is what you could expect.`}
             </p>
 
             <p className={p}>
-              {`We would not begin with techniques. We would begin by building a relationship in which you feel genuinely safe. Safe enough to talk about thoughts that may feel shameful, frightening, or difficult to say out loud. This matters because the content of OCD is often deeply personal and distressing, and many people have spent years hiding it. The research is clear that the therapeutic relationship is one of the strongest predictors of outcome across all modalities (Norcross & Wampold, 2011). It is not a preamble to the “real” work. It is the foundation of the work.`}
+              {`We would not begin with techniques. We would begin by building a relationship in which you feel genuinely safe. Safe enough to talk about thoughts that may feel shameful, frightening, or difficult to say out loud. This matters because the content of OCD is often deeply personal and distressing, and many people have spent years hiding it. The research is clear that the therapeutic relationship is one of the strongest predictors of outcome across all modalities (Norcross & Wampold, 2011). It is not a preamble to the "real" work. It is the foundation of the work.`}
             </p>
 
             <p className={p}>
@@ -510,7 +510,7 @@ export default async function BlogPostPage({ params }: Props) {
 
               <div className="mt-6 space-y-5">
                 <p className="text-sm text-gray-600 leading-[1.75]">
-                  {`Aardema, F., Bouchard, S., Koszycki, D., Lavoie, M. E., Audet, J.-S., & O’Connor, K. (2022). Evaluation of inference-based cognitive-behavioral therapy for obsessive-compulsive disorder: A multicenter randomized controlled trial with three treatment modalities. `}
+                  {`Aardema, F., Bouchard, S., Koszycki, D., Lavoie, M. E., Audet, J.-S., & O'Connor, K. (2022). Evaluation of inference-based cognitive-behavioral therapy for obsessive-compulsive disorder: A multicenter randomized controlled trial with three treatment modalities. `}
                   <em>Psychotherapy and Psychosomatics</em>
                   {`, 91(5), 348–359.`}
                 </p>
@@ -540,7 +540,7 @@ export default async function BlogPostPage({ params }: Props) {
                 </p>
 
                 <p className="text-sm text-gray-600 leading-[1.75]">
-                  {`O’Connor, K. P., Aardema, F., Bouthillier, D., Fournier, S., Guay, S., Robillard, S., … & Bhardwaj, A. (2005). Evaluation of an inference-based approach to treating obsessive-compulsive disorder. `}
+                  {`O'Connor, K. P., Aardema, F., Bouthillier, D., Fournier, S., Guay, S., Robillard, S., … & Bhardwaj, A. (2005). Evaluation of an inference-based approach to treating obsessive-compulsive disorder. `}
                   <em>Cognitive Behaviour Therapy</em>
                   {`, 34(3), 148–163.`}
                 </p>
@@ -607,7 +607,7 @@ export default async function BlogPostPage({ params }: Props) {
             Could therapy help?
           </h2>
           <p className="font-normal text-sm text-cream/75 leading-[1.8] mb-10">
-            {`If you’re in Ireland or the UK and think therapy might help with OCD, I offer OCD-informed therapy in Dublin and online. There’s no pressure and no obligation — the first step is simply a conversation.`}
+            {`If you're in Ireland or the UK and think therapy might help with OCD, I offer OCD-informed therapy in Dublin and online. There's no pressure and no obligation — the first step is simply a conversation.`}
           </p>
           <span
             className="block w-12 h-px mx-auto mb-8"
