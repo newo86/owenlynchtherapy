@@ -53,7 +53,7 @@ export default function Services() {
       <div className="max-w-6xl mx-auto">
         {/* Section header */}
         <div className="text-center mb-16">
-          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
+          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
             Areas of practice
           </p>
           <h2

@@ -204,7 +204,7 @@ export default async function BlogPostPage({ params }: Props) {
           </nav>
 
           {/* Category */}
-          <p className="text-white md:text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
+          <p className="text-white md:text-orange text-sm font-semibold uppercase tracking-normal mb-5">
             OCD
           </p>
 

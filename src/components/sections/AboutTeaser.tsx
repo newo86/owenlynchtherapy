@@ -25,7 +25,7 @@ export default function AboutTeaser() {
 
         {/* Text */}
         <div className="flex-1 text-center md:text-left">
-          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
+          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
             About me
           </p>
 

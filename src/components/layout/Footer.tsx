@@ -32,7 +32,7 @@ export default function Footer() {
 
           {/* Pages — centre */}
           <nav aria-label="Footer navigation" className="md:text-center">
-            <p className="text-xs font-semibold uppercase tracking-[2px] mb-4 text-cream/50">
+            <p className="text-sm font-semibold uppercase tracking-normal mb-4 text-cream/50">
               Pages
             </p>
             <ul className="space-y-2.5 list-none">
@@ -51,7 +51,7 @@ export default function Footer() {
 
           {/* Contact — right, right-aligned on desktop */}
           <div className="md:text-right">
-            <p className="text-xs font-semibold uppercase tracking-[2px] mb-4 text-cream/50">
+            <p className="text-sm font-semibold uppercase tracking-normal mb-4 text-cream/50">
               Contact
             </p>
             <Link

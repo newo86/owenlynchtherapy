@@ -108,7 +108,7 @@ export default function BlogPage() {
         aria-labelledby="blog-heading"
       >
         <div className="max-w-6xl mx-auto border-b border-forest/10 pb-14 sm:pb-16">
-          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-6">
+          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-6">
             Articles &amp; Insights
           </p>
 
@@ -267,7 +267,7 @@ export default function BlogPage() {
         aria-labelledby="blog-cta-heading"
       >
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
+          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
             Get in touch
           </p>
           <h2

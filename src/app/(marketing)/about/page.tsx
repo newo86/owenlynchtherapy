@@ -139,7 +139,7 @@ export default function AboutPage() {
         <PageHeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="relative z-10 text-white md:text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
+          <p className="relative z-10 text-white md:text-orange text-sm font-semibold uppercase tracking-normal mb-5">
             <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="hover:underline">IAHIP</a>
             {' & '}
             <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="hover:underline">ICP</a>
@@ -177,7 +177,7 @@ export default function AboutPage() {
 
           {/* Text */}
           <div className="flex-1">
-            <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
+            <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
               About me
             </p>
             <h2
@@ -225,7 +225,7 @@ export default function AboutPage() {
         aria-labelledby="approach-heading"
       >
         <div className="max-w-6xl mx-auto">
-          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
+          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
             My approach
           </p>
           <h2
@@ -262,7 +262,7 @@ export default function AboutPage() {
         aria-labelledby="credentials-heading"
       >
         <div className="max-w-6xl mx-auto">
-          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
+          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
             Credentials
           </p>
           <h2
@@ -358,7 +358,7 @@ export default function AboutPage() {
         aria-labelledby="about-cta-heading"
       >
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-orange text-xs font-semibold uppercase tracking-[2px] mb-5">
+          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
             Get in touch
           </p>
           <h2
