@@ -20,7 +20,7 @@ export default function FloatingCircles() {
           left: '-8%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(79,138,104,0.14) 0%, rgba(79,138,104,0.06) 45%, transparent 75%)',
+            'radial-gradient(circle, rgba(79,138,104,0.28) 0%, rgba(79,138,104,0.12) 45%, transparent 75%)',
           animation: 'fc-drift-1 45s ease-in-out infinite',
         }}
       />
@@ -35,7 +35,7 @@ export default function FloatingCircles() {
           right: '-5%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(200,90,26,0.12) 0%, rgba(200,90,26,0.05) 45%, transparent 75%)',
+            'radial-gradient(circle, rgba(200,90,26,0.24) 0%, rgba(200,90,26,0.10) 45%, transparent 75%)',
           animation: 'fc-drift-2 38s ease-in-out infinite',
           animationDelay: '-12s',
         }}
@@ -51,7 +51,7 @@ export default function FloatingCircles() {
           left: '16%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(212,168,67,0.14) 0%, rgba(212,168,67,0.06) 45%, transparent 75%)',
+            'radial-gradient(circle, rgba(212,168,67,0.30) 0%, rgba(212,168,67,0.12) 45%, transparent 75%)',
           animation: 'fc-drift-3 52s ease-in-out infinite',
           animationDelay: '-25s',
         }}
@@ -68,7 +68,7 @@ export default function FloatingCircles() {
           right: '20%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(79,138,104,0.10) 0%, rgba(79,138,104,0.04) 45%, transparent 75%)',
+            'radial-gradient(circle, rgba(79,138,104,0.22) 0%, rgba(79,138,104,0.09) 45%, transparent 75%)',
           animation: 'fc-drift-4 34s ease-in-out infinite',
           animationDelay: '-8s',
         }}
@@ -85,7 +85,7 @@ export default function FloatingCircles() {
           right: '-10%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(200,90,26,0.09) 0%, rgba(200,90,26,0.03) 45%, transparent 75%)',
+            'radial-gradient(circle, rgba(200,90,26,0.20) 0%, rgba(200,90,26,0.08) 45%, transparent 75%)',
           animation: 'fc-drift-5 60s ease-in-out infinite',
           animationDelay: '-35s',
         }}
@@ -102,7 +102,7 @@ export default function FloatingCircles() {
           left: '4%',
           borderRadius: '50%',
           background:
-            'radial-gradient(circle, rgba(212,168,67,0.10) 0%, rgba(212,168,67,0.04) 45%, transparent 75%)',
+            'radial-gradient(circle, rgba(212,168,67,0.22) 0%, rgba(212,168,67,0.09) 45%, transparent 75%)',
           animation: 'fc-drift-1 42s ease-in-out infinite',
           animationDelay: '-18s',
         }}
