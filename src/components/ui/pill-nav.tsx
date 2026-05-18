@@ -30,6 +30,7 @@ export default function PillNav({ variant }: PillNavProps) {
   const [hoverPos, setHoverPos] = useState({ left: 0, width: 0, opacity: 0 })
   const [activePos, setActivePos] = useState({ left: 0, width: 0 })
   const [hovering, setHovering] = useState(false)
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null)
   const tabRefs = useRef<(HTMLLIElement | null)[]>([])
   const isTransparent = variant === "transparent"
 
@@ -51,6 +52,7 @@ export default function PillNav({ variant }: PillNavProps) {
       onMouseLeave={() => {
         setHoverPos((p) => ({ ...p, opacity: 0 }))
         setHovering(false)
+        setHoverIndex(null)
       }}
     >
       {NAV_ITEMS.map((item, index) => (
@@ -62,6 +64,7 @@ export default function PillNav({ variant }: PillNavProps) {
             if (!el) return
             setHoverPos({ left: el.offsetLeft, width: el.getBoundingClientRect().width, opacity: 1 })
             setHovering(true)
+            setHoverIndex(index)
           }}
           className="relative z-10 block cursor-pointer"
         >
@@ -69,7 +72,11 @@ export default function PillNav({ variant }: PillNavProps) {
             href={item.href}
             aria-current={isActive(item.href, pathname) ? "page" : undefined}
             className={`block px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide md:px-5 md:py-3 md:text-xs transition-colors duration-200 select-none ${
-              isTransparent ? "text-white" : "text-forest"
+              isTransparent
+                ? "text-white"
+                : hoverIndex === index
+                ? "text-white"
+                : "text-forest"
             }`}
           >
             {item.label}
