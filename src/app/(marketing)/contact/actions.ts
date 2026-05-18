@@ -24,7 +24,7 @@ export async function submitContactForm(formData: FormData) {
 
   const { error } = await resend.emails.send({
     from: 'onboarding@resend.dev',
-    to: 'info@owenlynchtherapy.com',
+    to: 'owenlynch1310@gmail.com',
     subject: `New enquiry from ${firstName} ${lastName}`,
     html: `
       <table style="font-family:sans-serif;font-size:14px;color:#333;max-width:560px;width:100%">
