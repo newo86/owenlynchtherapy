@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FaqAccordion, { type FaqCategory } from '@/components/sections/FaqAccordion';
+import FloatingCircles from '@/components/ui/floating-circles';
 
 export const metadata: Metadata = {
   title: 'FAQ | Psychotherapy Dublin and Online | Owen Lynch',
@@ -275,10 +276,11 @@ export default function FaqPage() {
       {/* ── Section 2: FAQ accordion ── */}
       <section
         style={{ backgroundColor: '#F5F0E8' }}
-        className="py-20 px-4 sm:px-6 lg:px-8"
+        className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8"
         aria-label="Frequently asked questions"
       >
-        <div className="max-w-3xl mx-auto">
+        <FloatingCircles />
+        <div className="relative max-w-3xl mx-auto" style={{ zIndex: 1 }}>
           <FaqAccordion categories={faqCategories} />
         </div>
       </section>
