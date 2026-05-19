@@ -63,26 +63,6 @@ const posts: Post[] = [
     featuredImageAlt:
       'Illustration of the radio analogy explaining how OCD tunes into meaningless thoughts and treats them as threats',
   },
-  {
-    slug: 'what-does-adhd-feel-like',
-    title: 'What Does ADHD Actually Feel Like?',
-    excerpt:
-      'Beyond the stereotypes — understanding the lived experience of ADHD in adults, and why so many people are only diagnosed later in life.',
-    publishedAt: '2026-05-20',
-    category: 'ADHD',
-    featuredImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
-    featuredImageAlt: 'Person looking thoughtfully out a window, representing the internal experience of ADHD',
-  },
-  {
-    slug: 'finding-the-right-therapist',
-    title: 'Finding the Right Therapist: What to Look For',
-    excerpt:
-      'Therapy is a relationship. Here\'s how to find someone who\'s actually a good fit for you — and what the research says matters most.',
-    publishedAt: '2026-05-27',
-    category: 'General',
-    featuredImage: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80',
-    featuredImageAlt: 'Two chairs facing each other in a warm therapy room, representing the therapeutic relationship',
-  },
 ];
 
 function formatDate(iso: string) {
