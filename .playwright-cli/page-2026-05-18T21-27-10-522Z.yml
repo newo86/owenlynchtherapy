@@ -1,0 +1,178 @@
+- generic [active] [ref=e1]:
+  - link "Owen Lynch Psychotherapy — home" [ref=e4] [cursor=pointer]:
+    - /url: /
+    - img [ref=e5]:
+      - generic [ref=e8]: OL
+  - main [ref=e10]:
+    - region "About Owen Lynch" [ref=e11]:
+      - generic [ref=e12]:
+        - paragraph [ref=e13]:
+          - link "IAHIP" [ref=e14] [cursor=pointer]:
+            - /url: https://psychotherapistdirectory.iahip.org/therapist/owen-lynch
+          - text: "&"
+          - link "ICP" [ref=e15] [cursor=pointer]:
+            - /url: https://psychotherapycouncil.ie/therapist/owen-lynch/
+          - text: Accredited Psychotherapist
+        - heading "About Owen Lynch" [level=1] [ref=e16]
+    - region "Hello, I'm Owen" [ref=e17]:
+      - generic [ref=e18]:
+        - img "Owen Lynch, psychotherapist Dublin" [ref=e20]
+        - generic [ref=e21]:
+          - paragraph [ref=e22]: About me
+          - heading "Hello, I'm Owen" [level=2] [ref=e23]
+          - paragraph [ref=e24]:
+            - text: I'm an
+            - link "IAHIP" [ref=e25] [cursor=pointer]:
+              - /url: https://psychotherapistdirectory.iahip.org/therapist/owen-lynch
+            - text: and
+            - link "ICP" [ref=e26] [cursor=pointer]:
+              - /url: https://psychotherapycouncil.ie/therapist/owen-lynch/
+            - text: accredited integrative psychotherapist based in Dublin. I work with adults in person and online across Ireland and the UK.
+          - paragraph [ref=e27]: I adapt therapy to you. We might focus on what's happening now, or take time to understand where things come from. My work draws on approaches including ACT, CBT, ERP, psychodynamic, and person-centred therapy.
+          - paragraph [ref=e28]: I'll be engaged in the process with you. I work with curiosity and honesty — that means I'll support you fully, and I'll also challenge you when it's needed.
+          - generic [ref=e29]:
+            - link "Get in touch" [ref=e30] [cursor=pointer]:
+              - /url: /contact
+            - link "Verified by Psychology Today" [ref=e31] [cursor=pointer]:
+              - /url: https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757
+              - img [ref=e32]
+              - generic [ref=e35]: Verified by Psychology Today
+    - region "How I Work" [ref=e36]:
+      - generic [ref=e37]:
+        - paragraph [ref=e38]: My approach
+        - heading "How I Work" [level=2] [ref=e39]
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - heading "Integrative" [level=3] [ref=e43]
+            - paragraph [ref=e44]: I don't follow a single fixed model. I draw on ACT, CBT, ERP, psychodynamic, and person-centred approaches — adapting how I work to fit you, not the other way around.
+          - generic [ref=e45]:
+            - heading "Honest & Direct" [level=3] [ref=e47]
+            - paragraph [ref=e48]: I'll engage genuinely with what you bring — offering perspective, naming what I notice, and challenging you when that's useful. Always with care, never with judgment.
+          - generic [ref=e49]:
+            - heading "Specialist Focus" [level=3] [ref=e51]
+            - paragraph [ref=e52]: I have particular experience with OCD, anxiety, ADHD, autism, depression, trauma, relationships, and LGBTQIA+ mental health including chemsex support.
+    - region "Qualifications & Accreditation" [ref=e53]:
+      - generic [ref=e54]:
+        - paragraph [ref=e55]: Credentials
+        - heading "Qualifications & Accreditation" [level=2] [ref=e56]
+        - list [ref=e57]:
+          - listitem [ref=e58]:
+            - generic [ref=e60]: Master's in Integrative Psychotherapy (Level 9), Dublin Business School
+          - listitem [ref=e61]:
+            - generic [ref=e63]: Higher Diploma in Counselling and Psychotherapy (Level 8), Dublin Business School
+          - listitem [ref=e64]:
+            - link "Accredited member of the Irish Association of Humanistic and Integrative Psychotherapy (IAHIP)" [ref=e66] [cursor=pointer]:
+              - /url: https://psychotherapistdirectory.iahip.org/therapist/owen-lynch
+          - listitem [ref=e67]:
+            - link "Registered with the Irish Council for Psychotherapy (ICP)" [ref=e69] [cursor=pointer]:
+              - /url: https://psychotherapycouncil.ie/therapist/owen-lynch/
+          - listitem [ref=e70]:
+            - generic [ref=e72]: Honours Bachelor's Degree in Biomedical Science, National University of Ireland Maynooth
+          - listitem [ref=e73]:
+            - generic [ref=e75]: Higher Diploma in Web Development, Computer Science
+          - listitem [ref=e76]:
+            - generic [ref=e78]: Certified Yoga Teacher
+        - generic [ref=e79]:
+          - link "IAHIP accredited psychotherapist — view directory listing" [ref=e80] [cursor=pointer]:
+            - /url: https://psychotherapistdirectory.iahip.org/therapist/owen-lynch
+            - img "IAHIP accredited psychotherapist" [ref=e81]
+          - link "Irish Council for Psychotherapy member — view directory listing" [ref=e82] [cursor=pointer]:
+            - /url: https://psychotherapycouncil.ie/therapist/owen-lynch/
+            - img "Irish Council for Psychotherapy member" [ref=e83]
+          - link "Verified by Psychology Today" [ref=e84] [cursor=pointer]:
+            - /url: https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757
+            - img [ref=e85]
+            - generic [ref=e88]: Verified by Psychology Today
+    - region "Ready to take the first step?" [ref=e89]:
+      - generic [ref=e90]:
+        - paragraph [ref=e91]: Get in touch
+        - heading "Ready to take the first step?" [level=2] [ref=e92]
+        - paragraph [ref=e93]: Getting started can feel daunting. Send me a message and I'll get back to you within one working day.
+        - link "Get in touch" [ref=e95] [cursor=pointer]:
+          - /url: /contact
+  - separator [ref=e96]
+  - contentinfo [ref=e97]:
+    - generic [ref=e98]:
+      - generic [ref=e99]:
+        - generic [ref=e100]:
+          - paragraph [ref=e101]: Owen Lynch Psychotherapy
+          - paragraph [ref=e102]: Evidence-based therapy for anxiety, OCD, ADHD, autism, depression, and relationship difficulties.
+          - link "Owen Lynch Psychotherapy on Instagram" [ref=e103] [cursor=pointer]:
+            - /url: https://www.instagram.com/owenlynchtherapy
+            - img [ref=e104]
+        - navigation "Footer navigation" [ref=e108]:
+          - paragraph [ref=e109]: Pages
+          - list [ref=e110]:
+            - listitem [ref=e111]:
+              - link "Home" [ref=e112] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e113]:
+              - link "About" [ref=e114] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e115]:
+              - link "Services" [ref=e116] [cursor=pointer]:
+                - /url: /services
+            - listitem [ref=e117]:
+              - link "Blog" [ref=e118] [cursor=pointer]:
+                - /url: /blog
+            - listitem [ref=e119]:
+              - link "FAQ" [ref=e120] [cursor=pointer]:
+                - /url: /faq
+            - listitem [ref=e121]:
+              - link "Contact" [ref=e122] [cursor=pointer]:
+                - /url: /contact
+        - generic [ref=e123]:
+          - paragraph [ref=e124]: Contact
+          - generic [ref=e125]:
+            - link "Get in touch" [ref=e126] [cursor=pointer]:
+              - /url: /contact
+            - paragraph [ref=e127]: Dublin & Online
+      - generic [ref=e129]:
+        - generic [ref=e130]:
+          - link "IAHIP accredited psychotherapist — view directory listing" [ref=e131] [cursor=pointer]:
+            - /url: https://psychotherapistdirectory.iahip.org/therapist/owen-lynch
+            - img "IAHIP accredited psychotherapist" [ref=e132]
+          - link "Irish Council for Psychotherapy member — view directory listing" [ref=e133] [cursor=pointer]:
+            - /url: https://psychotherapycouncil.ie/therapist/owen-lynch/
+            - img "Irish Council for Psychotherapy member" [ref=e134]
+          - link "Verified by Psychology Today" [ref=e135] [cursor=pointer]:
+            - /url: https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757
+            - img [ref=e136]
+            - generic [ref=e139]: Verified by Psychology Today
+        - generic [ref=e140]:
+          - paragraph [ref=e141]: © 2026 Owen Lynch Psychotherapy. All rights reserved.
+          - paragraph [ref=e142]: IAHIP & ICP Accredited Psychotherapist
+  - navigation "Mobile navigation" [ref=e143]:
+    - list [ref=e144]:
+      - listitem [ref=e145]:
+        - link "Home" [ref=e146] [cursor=pointer]:
+          - /url: /
+          - img [ref=e147]
+          - generic [ref=e150]: Home
+      - listitem [ref=e151]:
+        - link "About" [ref=e152] [cursor=pointer]:
+          - /url: /about
+          - img [ref=e153]
+          - generic [ref=e156]: About
+      - listitem [ref=e157]:
+        - link "Services" [ref=e158] [cursor=pointer]:
+          - /url: /services
+          - img [ref=e159]
+          - generic [ref=e163]: Services
+      - listitem [ref=e164]:
+        - link "Blog" [ref=e165] [cursor=pointer]:
+          - /url: /blog
+          - img [ref=e166]
+          - generic [ref=e168]: Blog
+      - listitem [ref=e169]:
+        - link "FAQ" [ref=e170] [cursor=pointer]:
+          - /url: /faq
+          - img [ref=e171]
+          - generic [ref=e174]: FAQ
+      - listitem [ref=e175]:
+        - link "Contact" [ref=e176] [cursor=pointer]:
+          - /url: /contact
+          - img [ref=e177]
+          - generic [ref=e180]: Contact
+  - button "Open Next.js Dev Tools" [ref=e186] [cursor=pointer]:
+    - img [ref=e187]

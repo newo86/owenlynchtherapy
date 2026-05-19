@@ -1,0 +1,183 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - link "Owen Lynch Psychotherapy — home" [ref=e4] [cursor=pointer]:
+      - /url: /
+      - img [ref=e5]:
+        - generic [ref=e8]: OL
+    - list [ref=e10]:
+      - listitem [ref=e11] [cursor=pointer]:
+        - link "Home" [ref=e12]:
+          - /url: /
+      - listitem [ref=e13] [cursor=pointer]:
+        - link "About" [ref=e14]:
+          - /url: /about
+      - listitem [ref=e15] [cursor=pointer]:
+        - link "Services" [ref=e16]:
+          - /url: /services
+      - listitem [ref=e17] [cursor=pointer]:
+        - link "Blog" [ref=e18]:
+          - /url: /blog
+      - listitem [ref=e19] [cursor=pointer]:
+        - link "FAQ" [ref=e20]:
+          - /url: /faq
+      - listitem [ref=e21] [cursor=pointer]:
+        - link "Contact" [ref=e22]:
+          - /url: /contact
+      - listitem
+  - main [ref=e24]:
+    - 'region "How OCD Therapy Works: An Evidence-Based Guide" [ref=e25]':
+      - generic [ref=e26]:
+        - navigation "Breadcrumb" [ref=e27]:
+          - list [ref=e28]:
+            - listitem [ref=e29]:
+              - link "Home" [ref=e30] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e31]: /
+            - listitem [ref=e32]:
+              - link "Blog" [ref=e33] [cursor=pointer]:
+                - /url: /blog
+            - listitem [ref=e34]: /
+            - listitem [ref=e35]: How OCD Therapy Works
+        - paragraph [ref=e36]: OCD
+        - 'heading "How OCD Therapy Works: An Evidence-Based Guide" [level=1] [ref=e37]'
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - text: By
+            - link "Owen Lynch" [ref=e40] [cursor=pointer]:
+              - /url: /about
+          - generic [ref=e41]: ·
+          - time [ref=e42]: 13 May 2026
+          - generic [ref=e43]: ·
+          - generic [ref=e44]: 10 min read
+    - region "Article content" [ref=e45]:
+      - generic [ref=e46]:
+        - figure [ref=e47]:
+          - img "Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta with a figure, symbolising the cycle of obsessive thoughts" [ref=e48]
+        - article [ref=e49]:
+          - paragraph [ref=e50]: Obsessive-Compulsive Disorder is one of the most misunderstood conditions in mental health. It is frequently reduced to a punchline about tidiness or hand-washing, but the clinical reality is far more complex, and far more distressing, than popular culture suggests.
+          - paragraph [ref=e51]:
+            - link "OCD" [ref=e52] [cursor=pointer]:
+              - /url: /ocd-therapy-dublin
+            - text: affects roughly 2–3% of the population over a lifetime (Ruscio et al., 2010). It involves intrusive, unwanted thoughts (obsessions) that generate intense anxiety, followed by repetitive behaviours or mental acts (compulsions) aimed at neutralising that anxiety. The content of obsessions can be deeply disturbing to the person experiencing them. Thoughts about harm, contamination, sexuality, religion, relationships, or identity can feel utterly at odds with who they know themselves to be.
+          - paragraph [ref=e53]: "This is a critical point that often gets lost: OCD latches onto what matters most to you. A loving parent may be tormented by intrusive thoughts of harming their child. A deeply moral person may be plagued by thoughts they find repulsive. The distress these thoughts cause is itself evidence of how seriously the person holds their values, not evidence of hidden intent."
+          - paragraph [ref=e54]: If you are living with OCD, or suspect you might be, this post outlines what current research tells us about how OCD works and what effective treatment looks like.
+          - heading "How OCD Maintains Itself" [level=2] [ref=e55]
+          - paragraph [ref=e56]: To understand treatment, it helps to understand the mechanism that keeps OCD going. OCD is sometimes described as a "doubt disorder." Not because the person is generally indecisive, but because the condition generates a specific, compelling sense of doubt that overrides ordinary reasoning.
+          - paragraph [ref=e57]: Most people experience intrusive thoughts. Research by Rachman and de Silva (1978) demonstrated decades ago that the content of intrusive thoughts in people with OCD and people without OCD is largely the same. The difference is not in what thought shows up, but in what happens next. In OCD, the thought gets flagged as meaningful, dangerous, or revealing of character. This interpretation triggers anxiety, which triggers compulsions, which provide temporary relief but ultimately reinforce the cycle.
+          - paragraph [ref=e58]: This is the basic cognitive-behavioural model, and it has strong empirical support (Salkovskis, 1985). But more recent research has added important nuance to our understanding of how that doubt arises in the first place.
+          - 'heading "Inference-Based CBT: Understanding Where the Doubt Comes From" [level=2] [ref=e59]'
+          - paragraph [ref=e60]: Inference-Based CBT (I-CBT) is a newer approach developed by Frederick Aardema and Kieron O'Connor at the University of Montreal. It has a growing evidence base, including randomised controlled trials showing comparable outcomes to more established treatments (O'Connor et al., 2005; Aardema et al., 2022).
+          - paragraph [ref=e61]: "I-CBT offers a different angle on OCD. Rather than focusing primarily on how you respond to an intrusive thought once it has arrived, I-CBT asks a more upstream question: why did you take this thought seriously in the first place?"
+          - paragraph [ref=e62]: The model proposes that OCD involves what the researchers call "inferential confusion." This is a process where the person comes to distrust their own direct experience (what they can see, hear, feel, and know) and instead gives authority to an imagined possibility. In other words, OCD convinces you that the story in your head is more trustworthy than the evidence of your own senses.
+          - heading "The Inner Wheel and the Outer Wheel" [level=2] [ref=e63]
+          - paragraph [ref=e64]: I-CBT uses a model of two "wheels" to explain this process, and it is worth spending a moment on because it makes the mechanism very concrete.
+          - paragraph [ref=e65]: "The Outer Wheel represents the observable OCD cycle that most people are familiar with: an intrusive thought appears, it triggers doubt, the doubt creates anxiety, and the person performs a compulsion to manage the anxiety. This is the visible pattern, the part you can see from the outside."
+          - paragraph [ref=e66]: "The Inner Wheel is what drives that cycle from underneath. It represents the reasoning process that makes the obsessional doubt feel believable in the first place. This includes things like:"
+          - list [ref=e67]:
+            - listitem [ref=e68]: Absorbing stories, news, or information and applying it selectively to yourself ("I read about someone who did something terrible. What if that's me?")
+            - listitem [ref=e69]: Distrusting your own direct senses ("The door looks locked, but what if I didn't check properly?")
+            - listitem [ref=e70]: Using purely imagined scenarios as though they are evidence ("I can imagine doing something harmful, so maybe I'm capable of it")
+            - listitem [ref=e71]: Confusing the ability to think something with the likelihood of doing it
+          - paragraph [ref=e72]: The Inner Wheel is where OCD does its most persuasive work. It builds what I-CBT calls a "narrative," a story that feels compelling but is not actually grounded in anything the person has directly observed or experienced. The doubt feels real, but it is based entirely on imagination and possibility, not on evidence from the person's actual life.
+          - 'figure "The I-CBT model: the inner wheel drives obsessional doubt, the outer wheel maintains the cycle through compulsions and avoidance." [ref=e73]':
+            - img "Diagram of the I-CBT inner wheel and outer wheel model showing how OCD maintains itself" [ref=e74]
+            - generic [ref=e75]: "The I-CBT model: the inner wheel drives obsessional doubt, the outer wheel maintains the cycle through compulsions and avoidance."
+          - heading "The Radio Analogy" [level=2] [ref=e76]
+          - paragraph [ref=e77]: One way to understand this is to think of OCD as a radio station. Everyone has a radio in their head, and occasionally it picks up static. Random, unwanted signals. For most people, the static is briefly annoying but they recognise it as noise and move on.
+          - paragraph [ref=e78]: In OCD, something different happens. You tune into the static, and instead of recognising it as meaningless interference, you start listening carefully. You begin to hear patterns in the noise. You turn up the volume. You start to believe there is an important message hidden in the static that you need to decode.
+          - paragraph [ref=e79]: "I-CBT does not ask you to fight the static or force yourself to sit with it. Instead, it helps you understand why you tuned in and started listening in the first place, and what reasoning process made the noise seem meaningful. Over time, you learn to recognise the static for what it is: noise. Not a message. Not a warning. Not a reflection of who you are."
+          - paragraph [ref=e80]: This is a fundamentally different move from trying to manage or tolerate the anxiety once it has already taken hold. It addresses the mechanism that generates the doubt, not just the distress that follows from it.
+          - figure "Everyone gets intrusive thoughts. OCD tunes in and turns up the volume." [ref=e81]:
+            - img "Illustration of the radio analogy explaining how OCD tunes into meaningless thoughts and treats them as threats" [ref=e82]
+            - generic [ref=e83]: Everyone gets intrusive thoughts. OCD tunes in and turns up the volume.
+          - 'heading "Acceptance and Commitment Therapy: Changing Your Relationship With Thoughts" [level=2] [ref=e84]'
+          - paragraph [ref=e85]: Acceptance and Commitment Therapy (ACT) approaches OCD from a different but complementary direction. Developed by Steven Hayes, ACT has a substantial evidence base for anxiety-related presentations and a growing body of research specific to OCD (Twohig et al., 2010; Bluett et al., 2014).
+          - paragraph [ref=e86]: ACT does not focus on whether the content of a thought is true or false. Instead, it focuses on how you relate to your thoughts and whether that relationship is helping or hindering you in living the life you actually want.
+          - paragraph [ref=e87]: A central concept in ACT is "cognitive fusion," the tendency to become entangled with our thoughts, treating them as literal truths rather than as mental events. When you are fused with a thought, there is no space between you and the thought. You are the thought.
+          - paragraph [ref=e88]: ACT works to create that space through a process called "defusion." This might involve noticing a thought and naming it ("I'm having the thought that…"), observing the thought as though watching it pass like a cloud, or recognising that a thought can be present without requiring action.
+          - paragraph [ref=e89]: "Crucially, ACT also asks: what actually matters to you? What kind of life do you want to build? OCD narrows a person's world. It consumes time, energy, and attention that could otherwise go toward relationships, work, creativity, or rest. ACT helps people reconnect with their values and take steps toward what matters, even in the presence of uncomfortable thoughts and feelings."
+          - paragraph [ref=e90]: The research suggests that ACT may be particularly helpful for people who struggle with the experiential avoidance that OCD often produces, meaning the increasing tendency to avoid situations, people, or activities that might trigger obsessional thoughts (Twohig et al., 2018).
+          - 'heading "Psychodynamic Perspectives: Understanding the Person Behind the Symptom" [level=2] [ref=e91]'
+          - paragraph [ref=e92]: "While cognitive and behavioural models focus on mechanisms and cycles, psychodynamic thinking adds another dimension: it asks what function the symptom might be serving in the broader landscape of a person's emotional life."
+          - paragraph [ref=e93]: This is not about claiming that OCD is "caused" by unconscious conflict in some simplistic Freudian sense. Modern psychodynamic approaches to OCD are more nuanced than that. Nancy McWilliams (2011), for example, emphasises the importance of understanding the person's character structure and developmental history alongside their presenting symptoms. The question is not just "what is the OCD doing?" but "what is this person's relationship to control, uncertainty, and vulnerability more broadly?"
+          - paragraph [ref=e94]: "For some people, OCD emerges or intensifies during periods of significant life transition, loss, or relational stress. For others, there is a long developmental history of trying to manage an environment that felt unpredictable or unsafe. Winnicott's concept of the \"holding environment\" is relevant here: the degree to which a person's early relational world provided a sense of safety that allowed them to tolerate uncertainty and ambiguity (Winnicott, 1965)."
+          - paragraph [ref=e95]: None of this replaces the need for targeted OCD intervention. But it can enrich the work significantly. Understanding why a person's nervous system is so primed toward threat, why uncertainty feels so intolerable, why the need for certainty is so urgent, provides a depth of understanding that purely technique-driven approaches sometimes miss.
+          - paragraph [ref=e96]: "In practice, this means that alongside specific OCD-focused work, there is often value in exploring the person's broader emotional world: their attachment history, their relationship patterns, the ways they have learned to cope with anxiety and vulnerability over the course of their life."
+          - heading "A Note on Exposure and Response Prevention" [level=2] [ref=e97]
+          - paragraph [ref=e98]: Exposure and Response Prevention (ERP) remains one of the most extensively researched treatments for OCD, with a large evidence base stretching back decades (Foa & Kozak, 1986; Öst et al., 2015). It works by gradually exposing the person to the situations or thoughts that trigger their obsessions, while supporting them to resist performing compulsions.
+          - paragraph [ref=e99]: "It is worth being honest about ERP: for many people, the early stages can be intensely uncomfortable. The treatment asks you to move toward the very thing your OCD is telling you to avoid, and that requires significant courage. Some people find this approach highly effective from the outset. Others find it difficult to engage with, particularly if the therapeutic relationship does not feel safe enough yet, or if the rationale has not been clearly explained and genuinely understood."
+          - paragraph [ref=e100]: This is not a reason to dismiss ERP. The evidence for its efficacy is strong. But it is a reason to think carefully about how and when it is introduced, and to recognise that it is one tool among several, not the only legitimate approach to OCD treatment.
+          - heading "How We Would Work Together" [level=2] [ref=e101]
+          - paragraph [ref=e102]: I work with clients in Dublin and online across Ireland and the UK, so wherever you're based, getting started doesn't have to mean travelling. If you were to come to therapy for OCD, here is what you could expect.
+          - paragraph [ref=e103]: We would not begin with techniques. We would begin by building a relationship in which you feel genuinely safe. Safe enough to talk about thoughts that may feel shameful, frightening, or difficult to say out loud. This matters because the content of OCD is often deeply personal and distressing, and many people have spent years hiding it. The research is clear that the therapeutic relationship is one of the strongest predictors of outcome across all modalities (Norcross & Wampold, 2011). It is not a preamble to the "real" work. It is the foundation of the work.
+          - paragraph [ref=e104]: "From there, we would develop a shared understanding of what is happening: how your OCD operates, what maintains it, and what your experience of it has been. This is a collaborative process. You are the expert on your own life; I bring expertise in how OCD functions and what the research says about changing it."
+          - paragraph [ref=e105]: Treatment would draw on the approaches described above, tailored to what fits for you. That might involve exploring the reasoning process that makes your doubts feel so compelling (I-CBT), learning to change your relationship with intrusive thoughts rather than fighting them (ACT), understanding the deeper emotional patterns that make uncertainty feel so threatening (psychodynamic exploration), or gradually facing feared situations at a pace that feels manageable (ERP).
+          - paragraph [ref=e106]: Critically, therapy would never force you to do anything you do not want to do. This is not a boot camp. You set the pace. If something feels too much, we slow down. If an approach does not fit, we adjust. The goal is not to white-knuckle your way through distress. It is to develop a fundamentally different relationship with your own mind, one that gives you back the freedom that OCD has taken.
+          - heading "A Final Word" [level=2] [ref=e107]
+          - paragraph [ref=e108]: OCD is a condition that thrives on silence and shame. The more isolated a person feels with their thoughts, the more power those thoughts accumulate. One of the most important things you can do, whether or not you pursue therapy right now, is to understand that intrusive thoughts are not a reflection of your character. They are a feature of a well-documented neuropsychological condition that responds to treatment.
+          - paragraph [ref=e109]: You are not your OCD. You are the person it is happening to.
+          - group [ref=e110]:
+            - generic "References" [ref=e111] [cursor=pointer]:
+              - generic [ref=e112]: References
+              - img [ref=e113]
+    - region "Could therapy help?" [ref=e115]:
+      - generic [ref=e116]:
+        - heading "Could therapy help?" [level=2] [ref=e117]
+        - paragraph [ref=e118]: If you're in Ireland or the UK and think therapy might help with OCD, I offer OCD-informed therapy in Dublin and online. There's no pressure and no obligation — the first step is simply a conversation.
+        - link "Get in Touch" [ref=e120] [cursor=pointer]:
+          - /url: /contact
+  - separator [ref=e121]
+  - contentinfo [ref=e122]:
+    - generic [ref=e123]:
+      - generic [ref=e124]:
+        - generic [ref=e125]:
+          - paragraph [ref=e126]: Owen Lynch Psychotherapy
+          - paragraph [ref=e127]: Evidence-based therapy for anxiety, OCD, ADHD, autism, depression, and relationship difficulties.
+          - link "Owen Lynch Psychotherapy on Instagram" [ref=e128] [cursor=pointer]:
+            - /url: https://www.instagram.com/owenlynchtherapy
+            - img [ref=e129]
+        - navigation "Footer navigation" [ref=e133]:
+          - paragraph [ref=e134]: Pages
+          - list [ref=e135]:
+            - listitem [ref=e136]:
+              - link "Home" [ref=e137] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e138]:
+              - link "About" [ref=e139] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e140]:
+              - link "Services" [ref=e141] [cursor=pointer]:
+                - /url: /services
+            - listitem [ref=e142]:
+              - link "Blog" [ref=e143] [cursor=pointer]:
+                - /url: /blog
+            - listitem [ref=e144]:
+              - link "FAQ" [ref=e145] [cursor=pointer]:
+                - /url: /faq
+            - listitem [ref=e146]:
+              - link "Contact" [ref=e147] [cursor=pointer]:
+                - /url: /contact
+        - generic [ref=e148]:
+          - paragraph [ref=e149]: Contact
+          - generic [ref=e150]:
+            - link "Get in touch" [ref=e151] [cursor=pointer]:
+              - /url: /contact
+            - paragraph [ref=e152]: Dublin & Online
+      - generic [ref=e154]:
+        - generic [ref=e155]:
+          - link "IAHIP accredited psychotherapist — view directory listing" [ref=e156] [cursor=pointer]:
+            - /url: https://psychotherapistdirectory.iahip.org/therapist/owen-lynch
+            - img "IAHIP accredited psychotherapist" [ref=e157]
+          - link "Irish Council for Psychotherapy member — view directory listing" [ref=e158] [cursor=pointer]:
+            - /url: https://psychotherapycouncil.ie/therapist/owen-lynch/
+            - img "Irish Council for Psychotherapy member" [ref=e159]
+          - link "Verified by Psychology Today" [ref=e160] [cursor=pointer]:
+            - /url: https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757
+            - img [ref=e161]
+            - generic [ref=e164]: Verified by Psychology Today
+        - generic [ref=e165]:
+          - paragraph [ref=e166]: © 2026 Owen Lynch Psychotherapy. All rights reserved.
+          - paragraph [ref=e167]: IAHIP & ICP Accredited Psychotherapist
+  - button "Open Next.js Dev Tools" [ref=e173] [cursor=pointer]:
+    - img [ref=e174]
+  - alert [ref=e177]

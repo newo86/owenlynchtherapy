@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
+import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
 import ServiceCTA from '@/components/sections/ServiceCTA';
 
@@ -120,10 +121,11 @@ export default function LgbtqiaTherapyPage() {
       {/* ── Content ── */}
       <section
         style={{ backgroundColor: '#F5F0E8' }}
-        className="py-14 px-4 sm:px-6 lg:px-8"
+        className="relative overflow-hidden py-14 px-4 sm:px-6 lg:px-8"
         aria-label="Page content"
       >
-        <div className="max-w-4xl mx-auto">
+        <FloatingCircles />
+        <div className="relative max-w-4xl mx-auto" style={{ zIndex: 1 }}>
           <article className="max-w-[720px] mx-auto">
             <p className={p}>
               I work with adults across the LGBTQIA+ spectrum: gay, lesbian, bisexual, queer,

@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
+import FloatingCircles from '@/components/ui/floating-circles';
 
 // TODO: Wire to Sanity:
 // import { sanityClient } from '@/lib/sanity/client';
@@ -241,10 +242,11 @@ export default async function BlogPostPage({ params }: Props) {
       {/* ── Content ── */}
       <section
         style={{ backgroundColor: '#F5F0E8' }}
-        className="py-14 px-4 sm:px-6 lg:px-8"
+        className="relative overflow-hidden py-14 px-4 sm:px-6 lg:px-8"
         aria-label="Article content"
       >
-        <div className="max-w-4xl mx-auto">
+        <FloatingCircles />
+        <div className="relative max-w-4xl mx-auto" style={{ zIndex: 1 }}>
 
           {/* Featured image */}
           <figure className="mb-14">

@@ -1,0 +1,189 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - link:
+      - /url: /
+      - img:
+        - generic: OL
+    - list [ref=e5]:
+      - listitem [ref=e6] [cursor=pointer]:
+        - link "Home" [ref=e7]:
+          - /url: /
+      - listitem [ref=e8] [cursor=pointer]:
+        - link "About" [ref=e9]:
+          - /url: /about
+      - listitem [ref=e10] [cursor=pointer]:
+        - link "Services" [ref=e11]:
+          - /url: /services
+      - listitem [ref=e12] [cursor=pointer]:
+        - link "Blog" [ref=e13]:
+          - /url: /blog
+      - listitem [ref=e14] [cursor=pointer]:
+        - link "FAQ" [ref=e15]:
+          - /url: /faq
+      - listitem [ref=e16] [cursor=pointer]:
+        - link "Contact" [ref=e17]:
+          - /url: /contact
+      - listitem
+  - main [ref=e18]:
+    - region "Psychotherapy in Dublin & Online" [ref=e19]:
+      - generic [ref=e20]:
+        - img [ref=e21]:
+          - generic [ref=e24]: OL
+        - paragraph [ref=e25]: Owen Lynch
+        - paragraph [ref=e26]: Psychotherapy
+        - heading "Psychotherapy in Dublin & Online" [level=1] [ref=e28]
+        - paragraph [ref=e29]: A warm, confidential space to explore what's troubling you.
+        - link "Get in touch" [ref=e30] [cursor=pointer]:
+          - /url: /contact
+      - generic [ref=e31]:
+        - generic [ref=e32]: Scroll
+        - img [ref=e33]
+    - region "How I can help" [ref=e35]:
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - paragraph [ref=e38]: Areas of practice
+          - heading "How I can help" [level=2] [ref=e39]
+        - list [ref=e40]:
+          - listitem [ref=e41]:
+            - link "OCD Intrusive thoughts and compulsive patterns Learn more about OCD therapy" [ref=e43] [cursor=pointer]:
+              - /url: /services/ocd
+              - heading "OCD" [level=3] [ref=e45]
+              - paragraph [ref=e46]: Intrusive thoughts and compulsive patterns
+              - generic "Learn more about OCD therapy" [ref=e47]:
+                - text: Learn more
+                - generic [ref=e48]: →
+          - listitem [ref=e49]:
+            - link "Anxiety Worry, panic and generalised anxiety Learn more about Anxiety therapy" [ref=e51] [cursor=pointer]:
+              - /url: /services/anxiety
+              - heading "Anxiety" [level=3] [ref=e53]
+              - paragraph [ref=e54]: Worry, panic and generalised anxiety
+              - generic "Learn more about Anxiety therapy" [ref=e55]:
+                - text: Learn more
+                - generic [ref=e56]: →
+          - listitem [ref=e57]:
+            - link "ADHD Attention, focus and executive function Learn more about ADHD therapy" [ref=e59] [cursor=pointer]:
+              - /url: /services/adhd
+              - heading "ADHD" [level=3] [ref=e61]
+              - paragraph [ref=e62]: Attention, focus and executive function
+              - generic "Learn more about ADHD therapy" [ref=e63]:
+                - text: Learn more
+                - generic [ref=e64]: →
+          - listitem [ref=e65]:
+            - link "Autism Autistic identity and late diagnosis support Learn more about Autism therapy" [ref=e67] [cursor=pointer]:
+              - /url: /services/autism
+              - heading "Autism" [level=3] [ref=e69]
+              - paragraph [ref=e70]: Autistic identity and late diagnosis support
+              - generic "Learn more about Autism therapy" [ref=e71]:
+                - text: Learn more
+                - generic [ref=e72]: →
+          - listitem [ref=e73]:
+            - link "Depression Low mood, hopelessness and withdrawal Learn more about Depression therapy" [ref=e75] [cursor=pointer]:
+              - /url: /services/depression
+              - heading "Depression" [level=3] [ref=e77]
+              - paragraph [ref=e78]: Low mood, hopelessness and withdrawal
+              - generic "Learn more about Depression therapy" [ref=e79]:
+                - text: Learn more
+                - generic [ref=e80]: →
+          - listitem [ref=e81]:
+            - link "Relationships Communication, conflict and connection Learn more about Relationships therapy" [ref=e83] [cursor=pointer]:
+              - /url: /services/relationships
+              - heading "Relationships" [level=3] [ref=e85]
+              - paragraph [ref=e86]: Communication, conflict and connection
+              - generic "Learn more about Relationships therapy" [ref=e87]:
+                - text: Learn more
+                - generic [ref=e88]: →
+          - listitem [ref=e89]:
+            - link "Trauma Processing difficult past experiences Learn more about Trauma therapy" [ref=e91] [cursor=pointer]:
+              - /url: /services/trauma
+              - heading "Trauma" [level=3] [ref=e93]
+              - paragraph [ref=e94]: Processing difficult past experiences
+              - generic "Learn more about Trauma therapy" [ref=e95]:
+                - text: Learn more
+                - generic [ref=e96]: →
+          - listitem [ref=e97]:
+            - link "LGBTQIA+ Identity, community and mental wellbeing Learn more about LGBTQIA+ therapy" [ref=e99] [cursor=pointer]:
+              - /url: /services/lgbtqia
+              - heading "LGBTQIA+" [level=3] [ref=e101]
+              - paragraph [ref=e102]: Identity, community and mental wellbeing
+              - generic "Learn more about LGBTQIA+ therapy" [ref=e103]:
+                - text: Learn more
+                - generic [ref=e104]: →
+    - region "A gentle, non-judgmental approach" [ref=e105]:
+      - generic [ref=e106]:
+        - img "Owen Lynch, IAHIP and ICP accredited psychotherapist based in Dublin" [ref=e108]
+        - generic [ref=e109]:
+          - paragraph [ref=e110]: About me
+          - heading "A gentle, non-judgmental approach" [level=2] [ref=e111]
+          - paragraph [ref=e112]:
+            - text: I'm Owen Lynch, an
+            - link "IAHIP" [ref=e113] [cursor=pointer]:
+              - /url: https://psychotherapistdirectory.iahip.org/therapist/owen-lynch
+            - text: and
+            - link "ICP" [ref=e114] [cursor=pointer]:
+              - /url: https://psychotherapycouncil.ie/therapist/owen-lynch/
+            - text: accredited psychotherapist based in Dublin. I work with adults navigating anxiety, identity, relationships, and the quieter struggles that are often hardest to name.
+          - paragraph [ref=e115]: I work with curiosity and honesty — that means I'll support you fully, and I'll also challenge you when it's needed.
+          - link "Read more about my approach" [ref=e116] [cursor=pointer]:
+            - /url: /about
+            - text: Read more about my approach
+            - generic [ref=e117]: →
+    - region "Taking the first step takes courage" [ref=e118]:
+      - generic [ref=e119]:
+        - paragraph [ref=e120]: Get in touch
+        - heading "Taking the first step takes courage" [level=2] [ref=e121]
+        - paragraph [ref=e122]: Getting started can feel daunting. If you'd like to find out more or check availability, send me a message and I'll get back to you within one working day.
+        - link "Get in touch" [ref=e124] [cursor=pointer]:
+          - /url: /contact
+  - separator [ref=e125]
+  - contentinfo [ref=e126]:
+    - generic [ref=e127]:
+      - generic [ref=e128]:
+        - generic [ref=e129]:
+          - paragraph [ref=e130]: Owen Lynch Psychotherapy
+          - paragraph [ref=e131]: Evidence-based therapy for anxiety, OCD, ADHD, autism, depression, and relationship difficulties.
+          - link "Owen Lynch Psychotherapy on Instagram" [ref=e132] [cursor=pointer]:
+            - /url: https://www.instagram.com/owenlynchtherapy
+            - img [ref=e133]
+        - navigation "Footer navigation" [ref=e137]:
+          - paragraph [ref=e138]: Pages
+          - list [ref=e139]:
+            - listitem [ref=e140]:
+              - link "Home" [ref=e141] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e142]:
+              - link "About" [ref=e143] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e144]:
+              - link "Services" [ref=e145] [cursor=pointer]:
+                - /url: /services
+            - listitem [ref=e146]:
+              - link "Blog" [ref=e147] [cursor=pointer]:
+                - /url: /blog
+            - listitem [ref=e148]:
+              - link "FAQ" [ref=e149] [cursor=pointer]:
+                - /url: /faq
+            - listitem [ref=e150]:
+              - link "Contact" [ref=e151] [cursor=pointer]:
+                - /url: /contact
+        - generic [ref=e152]:
+          - paragraph [ref=e153]: Contact
+          - generic [ref=e154]:
+            - link "Get in touch" [ref=e155] [cursor=pointer]:
+              - /url: /contact
+            - paragraph [ref=e156]: Dublin & Online
+      - generic [ref=e158]:
+        - generic [ref=e159]:
+          - link "IAHIP accredited psychotherapist — view directory listing" [ref=e160] [cursor=pointer]:
+            - /url: https://psychotherapistdirectory.iahip.org/therapist/owen-lynch
+            - img "IAHIP accredited psychotherapist" [ref=e161]
+          - link "Irish Council for Psychotherapy member — view directory listing" [ref=e162] [cursor=pointer]:
+            - /url: https://psychotherapycouncil.ie/therapist/owen-lynch/
+            - img "Irish Council for Psychotherapy member" [ref=e163]
+          - link "Verified by Psychology Today" [ref=e164] [cursor=pointer]:
+            - /url: https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757
+            - img [ref=e165]
+            - generic [ref=e168]: Verified by Psychology Today
+        - generic [ref=e169]:
+          - paragraph [ref=e170]: © 2026 Owen Lynch Psychotherapy. All rights reserved.
+          - paragraph [ref=e171]: IAHIP & ICP Accredited Psychotherapist
+  - alert [ref=e172]

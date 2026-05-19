@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import FloatingCircles from '@/components/ui/floating-circles';
 
 export const metadata: Metadata = {
   title: 'Page Not Found',
@@ -9,9 +10,11 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <main
-      className="flex-1 flex flex-col items-center justify-center px-6 py-32 text-center"
+      className="relative overflow-hidden flex-1 flex flex-col items-center justify-center px-6 py-32 text-center"
       style={{ backgroundColor: '#F5F0E8' }}
     >
+      <FloatingCircles />
+      <div className="relative flex flex-col items-center text-center" style={{ zIndex: 1 }}>
       <p
         style={{
           fontFamily: 'var(--font-poppins), system-ui, sans-serif',
@@ -66,6 +69,7 @@ export default function NotFound() {
       >
         Get in Touch
       </Link>
+      </div>
     </main>
   );
 }

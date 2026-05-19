@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import PsychologyTodayBadge from '@/components/sections/PsychologyTodayBadge';
+import FloatingCircles from '@/components/ui/floating-circles';
 
 export const metadata: Metadata = {
   title: 'About Owen Lynch | IAHIP & ICP Accredited Psychotherapist Dublin',
@@ -176,10 +177,11 @@ export default function AboutPage() {
       {/* ── Section 2: Introduction ── */}
       <section
         style={{ backgroundColor: '#F5F0E8' }}
-        className="py-20 px-4 sm:px-6 lg:px-8"
+        className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8"
         aria-labelledby="about-intro-heading"
       >
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-12 lg:gap-16 items-start">
+        <FloatingCircles />
+        <div className="relative max-w-6xl mx-auto flex flex-col md:flex-row gap-12 lg:gap-16 items-start" style={{ zIndex: 1 }}>
 
           {/* Portrait */}
           <div className="w-full md:w-[300px] lg:w-[340px] shrink-0">
@@ -277,10 +279,11 @@ export default function AboutPage() {
       {/* ── Section 4: Qualifications ── */}
       <section
         style={{ backgroundColor: '#F5F0E8' }}
-        className="py-20 px-4 sm:px-6 lg:px-8"
+        className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8"
         aria-labelledby="credentials-heading"
       >
-        <div className="max-w-6xl mx-auto">
+        <FloatingCircles />
+        <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
           <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
             Credentials
           </p>

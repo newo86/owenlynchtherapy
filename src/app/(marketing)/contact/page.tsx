@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import { submitContactForm } from './actions';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
+import FloatingCircles from '@/components/ui/floating-circles';
 
 export const metadata: Metadata = {
   title: 'Contact Owen Lynch | Psychotherapist Dublin',
@@ -114,10 +115,11 @@ export default async function ContactPage({ searchParams }: Props) {
       {/* ── Section 2: Availability + Venue image ── */}
       <section
         style={{ backgroundColor: '#F5F0E8' }}
-        className="py-20 px-4 sm:px-6 lg:px-8"
+        className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8"
         aria-labelledby="availability-heading"
       >
-        <div className="max-w-6xl mx-auto">
+        <FloatingCircles />
+        <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
           <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
             Accepting new clients
           </p>
@@ -364,10 +366,11 @@ export default async function ContactPage({ searchParams }: Props) {
       {/* ── Section 4: Reassurance ── */}
       <section
         style={{ backgroundColor: '#F5F0E8' }}
-        className="py-20 px-4 sm:px-6 lg:px-8"
+        className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8"
         aria-label="Why get in touch"
       >
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">
+        <FloatingCircles />
+        <div className="relative max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10" style={{ zIndex: 1 }}>
           {reassurance.map(({ heading, body }) => (
             <div key={heading}>
               <span

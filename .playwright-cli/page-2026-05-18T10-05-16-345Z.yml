@@ -1,0 +1,128 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "Owen Lynch Psychotherapy — home" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img [ref=e6]:
+          - generic [ref=e9]: OL
+      - navigation "Main navigation" [ref=e10]:
+        - link "About" [ref=e11] [cursor=pointer]:
+          - /url: /about
+        - link "Services" [ref=e12] [cursor=pointer]:
+          - /url: /services
+        - link "Blog" [ref=e13] [cursor=pointer]:
+          - /url: /blog
+        - link "FAQ" [ref=e14] [cursor=pointer]:
+          - /url: /faq
+        - link "Contact" [ref=e15] [cursor=pointer]:
+          - /url: /contact
+  - main [ref=e16]:
+    - region "Blog" [ref=e17]:
+      - generic [ref=e18]:
+        - navigation "Breadcrumb" [ref=e19]:
+          - list [ref=e20]:
+            - listitem [ref=e21]:
+              - link "Home" [ref=e22] [cursor=pointer]:
+                - /url: /
+            - listitem [ref=e23]: /
+            - listitem [ref=e24]: Blog
+        - paragraph [ref=e25]: Articles & Insights
+        - heading "Blog" [level=1] [ref=e26]
+        - paragraph [ref=e27]: Thoughts on therapy, mental health, and the work of change
+    - region "Blog posts" [ref=e28]:
+      - generic [ref=e30]:
+        - article [ref=e32]:
+          - 'link "Read article: How OCD Therapy Works: An Evidence-Based Guide" [ref=e33] [cursor=pointer]':
+            - /url: /blog/how-ocd-therapy-works
+            - img "Illustration of the radio analogy explaining how OCD tunes into meaningless thoughts and treats them as threats" [ref=e35]
+            - generic [ref=e37]: OCD
+            - generic [ref=e38]:
+              - 'heading "How OCD Therapy Works: An Evidence-Based Guide" [level=2] [ref=e40]'
+              - time [ref=e41]: 13 May 2026
+              - paragraph [ref=e42]: An integrative look at I-CBT, ACT, and psychodynamic approaches to OCD treatment — what the research says and what therapy actually looks like.
+              - generic [ref=e43]:
+                - text: Read more
+                - generic [ref=e44]: →
+        - article [ref=e46]:
+          - 'link "Read article: What Does ADHD Actually Feel Like?" [ref=e47] [cursor=pointer]':
+            - /url: /blog/what-does-adhd-feel-like
+            - img "Person looking thoughtfully out a window, representing the internal experience of ADHD" [ref=e49]
+            - generic [ref=e51]: ADHD
+            - generic [ref=e52]:
+              - heading "What Does ADHD Actually Feel Like?" [level=2] [ref=e54]
+              - time [ref=e55]: 20 May 2026
+              - paragraph [ref=e56]: Beyond the stereotypes — understanding the lived experience of ADHD in adults, and why so many people are only diagnosed later in life.
+              - generic [ref=e57]:
+                - text: Read more
+                - generic [ref=e58]: →
+        - article [ref=e60]:
+          - 'link "Read article: Finding the Right Therapist: What to Look For" [ref=e61] [cursor=pointer]':
+            - /url: /blog/finding-the-right-therapist
+            - img "Two chairs facing each other in a warm therapy room, representing the therapeutic relationship" [ref=e63]
+            - generic [ref=e65]: General
+            - generic [ref=e66]:
+              - 'heading "Finding the Right Therapist: What to Look For" [level=2] [ref=e68]'
+              - time [ref=e69]: 27 May 2026
+              - paragraph [ref=e70]: Therapy is a relationship. Here's how to find someone who's actually a good fit for you — and what the research says matters most.
+              - generic [ref=e71]:
+                - text: Read more
+                - generic [ref=e72]: →
+    - region "Thinking about starting therapy?" [ref=e73]:
+      - generic [ref=e74]:
+        - paragraph [ref=e75]: Get in touch
+        - heading "Thinking about starting therapy?" [level=2] [ref=e76]
+        - paragraph [ref=e77]: Reading about therapy is one thing. Taking the first step is another — and it doesn't have to feel daunting. Send me a message and I'll get back to you within one working day.
+        - link "Get in touch" [ref=e79] [cursor=pointer]:
+          - /url: /contact
+  - separator [ref=e80]
+  - contentinfo [ref=e81]:
+    - generic [ref=e82]:
+      - generic [ref=e83]:
+        - generic [ref=e84]:
+          - paragraph [ref=e85]: Owen Lynch Psychotherapy
+          - paragraph [ref=e86]: Evidence-based therapy for anxiety, OCD, ADHD, autism, depression, trauma, and relationship difficulties.
+        - navigation "Footer navigation" [ref=e87]:
+          - paragraph [ref=e88]: Pages
+          - list [ref=e89]:
+            - listitem [ref=e90]:
+              - link "About" [ref=e91] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e92]:
+              - link "Services" [ref=e93] [cursor=pointer]:
+                - /url: /services
+            - listitem [ref=e94]:
+              - link "Blog" [ref=e95] [cursor=pointer]:
+                - /url: /blog
+            - listitem [ref=e96]:
+              - link "FAQ" [ref=e97] [cursor=pointer]:
+                - /url: /faq
+            - listitem [ref=e98]:
+              - link "Contact" [ref=e99] [cursor=pointer]:
+                - /url: /contact
+        - generic [ref=e100]:
+          - paragraph [ref=e101]: Contact
+          - link "Get in touch" [ref=e102] [cursor=pointer]:
+            - /url: /contact
+      - generic [ref=e103]:
+        - link "IAHIP accredited psychotherapist — view directory listing" [ref=e104] [cursor=pointer]:
+          - /url: https://psychotherapistdirectory.iahip.org/therapist/owen-lynch
+          - img "IAHIP accredited psychotherapist" [ref=e105]
+        - link "Irish Council for Psychotherapy member — view directory listing" [ref=e106] [cursor=pointer]:
+          - /url: https://psychotherapycouncil.ie/therapist/owen-lynch/
+          - img "Irish Council for Psychotherapy member" [ref=e107]
+        - link "Verified by Psychology Today" [ref=e108] [cursor=pointer]:
+          - /url: https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757
+          - img [ref=e109]
+          - generic [ref=e112]: Verified by Psychology Today
+      - generic [ref=e113]:
+        - paragraph [ref=e114]: © 2026 Owen Lynch Psychotherapy. All rights reserved.
+        - paragraph [ref=e115]:
+          - link "IAHIP" [ref=e116] [cursor=pointer]:
+            - /url: https://psychotherapistdirectory.iahip.org/therapist/owen-lynch
+          - text: "&"
+          - link "ICP" [ref=e117] [cursor=pointer]:
+            - /url: https://psychotherapycouncil.ie/therapist/owen-lynch/
+          - text: Accredited Psychotherapist
+  - button "Open Next.js Dev Tools" [ref=e123] [cursor=pointer]:
+    - img [ref=e124]
+  - alert [ref=e127]

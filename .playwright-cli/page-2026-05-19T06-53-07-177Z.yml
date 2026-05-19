@@ -1,0 +1,8 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - paragraph [ref=e3]: "404"
+    - heading "This page doesn't exist yet" [level=1] [ref=e4]
+    - paragraph [ref=e5]: Looking for something? Get in touch and I'll point you in the right direction.
+    - link "Get in Touch" [ref=e7] [cursor=pointer]:
+      - /url: /contact
+  - alert [ref=e8]

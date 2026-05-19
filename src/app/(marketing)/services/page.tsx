@@ -207,10 +207,11 @@ export default function ServicesPage() {
       {/* ── Section 4: Online therapy ── */}
       <section
         style={{ backgroundColor: '#F5F0E8' }}
-        className="py-20 px-4 sm:px-6 lg:px-8"
+        className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8"
         aria-labelledby="online-heading"
       >
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <FloatingCircles />
+        <div className="relative max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center" style={{ zIndex: 1 }}>
 
           {/* Text */}
           <div>

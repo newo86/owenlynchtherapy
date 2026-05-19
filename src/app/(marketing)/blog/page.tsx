@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import AnimatedCard from '@/components/ui/AnimatedCard';
+import FloatingCircles from '@/components/ui/floating-circles';
 
 // TODO: Replace hard-coded posts with Sanity query when CMS is configured:
 // import { sanityClient } from '@/lib/sanity/client';
@@ -134,10 +135,11 @@ export default function BlogPage() {
       {/* ── Card grid ───────────────────────────────────────────────────────── */}
       <section
         style={{ backgroundColor: '#F5F0E8' }}
-        className="px-4 sm:px-6 lg:px-8 pt-14 pb-24"
+        className="relative overflow-hidden px-4 sm:px-6 lg:px-8 pt-14 pb-24"
         aria-label="Blog posts"
       >
-        <div className="max-w-6xl mx-auto">
+        <FloatingCircles />
+        <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
           {visiblePosts.length === 0 ? (
             <p className="font-normal text-sm text-gray-500 py-16">
               No articles yet — check back soon.
