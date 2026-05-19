@@ -613,7 +613,11 @@ export default async function BlogPostPage({ params }: Props) {
             Could therapy help?
           </h2>
           <p className="font-normal text-sm text-cream/75 leading-[1.8] mb-10">
-            {`If you're in Ireland or the UK and think therapy might help with OCD, I offer OCD-informed therapy in Dublin and online. There's no pressure and no obligation — the first step is simply a conversation.`}
+            {`If you're in Ireland or the UK and think therapy might help with OCD, I offer `}
+            <Link href="/ocd-therapy-dublin" className="underline underline-offset-2 decoration-cream/40 hover:decoration-cream transition-colors text-cream/90">
+              OCD-informed therapy in Dublin and online
+            </Link>
+            {`. There's no pressure and no obligation — the first step is simply a conversation.`}
           </p>
           <span
             className="block w-12 h-px mx-auto mb-8"
