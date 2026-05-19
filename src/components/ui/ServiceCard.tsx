@@ -39,7 +39,7 @@ export default function ServiceCard({ name, url, description, index }: Props) {
   return (
     <motion.div
       ref={ref}
-      className="service-card-border h-full"
+      className="service-card-border rounded-xl h-full"
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
