@@ -5,42 +5,42 @@ import FloatingCircles from '@/components/ui/floating-circles';
 const services = [
   {
     name: 'OCD',
-    slug: 'ocd',
+    url: '/ocd-therapy-dublin',
     description: 'Intrusive thoughts and compulsive patterns',
   },
   {
     name: 'Anxiety',
-    slug: 'anxiety',
+    url: '/anxiety-therapy-dublin',
     description: 'Worry, panic and generalised anxiety',
   },
   {
     name: 'ADHD',
-    slug: 'adhd',
+    url: '/adhd-therapy-dublin',
     description: 'Attention, focus and executive function',
   },
   {
     name: 'Autism',
-    slug: 'autism',
+    url: '/autism-therapy-dublin',
     description: 'Autistic identity and late diagnosis support',
   },
   {
     name: 'Depression',
-    slug: 'depression',
+    url: '/depression-therapy-dublin',
     description: 'Low mood, hopelessness and withdrawal',
   },
   {
     name: 'Relationships',
-    slug: 'relationships',
+    url: '/relationship-therapy-dublin',
     description: 'Communication, conflict and connection',
   },
   {
     name: 'Trauma',
-    slug: 'trauma',
+    url: '/trauma-therapy-dublin',
     description: 'Processing difficult past experiences',
   },
   {
     name: 'LGBTQIA+',
-    slug: 'lgbtqia',
+    url: '/lgbtqia-therapy-dublin',
     description: 'Identity, community and mental wellbeing',
   },
 ] as const;
@@ -69,11 +69,11 @@ export default function Services() {
 
         {/* 4-col grid — collapses to 2 on tablet, 1 on mobile */}
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 list-none">
-          {services.map(({ name, slug, description }, i) => (
-            <li key={slug}>
+          {services.map(({ name, url, description }, i) => (
+            <li key={url}>
               <AnimatedCard index={i}>
                 <Link
-                  href={`/services/${slug}`}
+                  href={url}
                   className="group flex flex-col gap-4 bg-white rounded-xl p-6 h-full shadow-sm border border-transparent hover:border-forest/15 hover:shadow-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest"
                 >
                   {/* Gold accent line */}
