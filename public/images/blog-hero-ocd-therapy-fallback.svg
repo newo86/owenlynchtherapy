@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+
+  <defs>
+    
+    <filter id="brush" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="4" result="noise"></feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.2"></feDisplacementMap>
+    </filter>
+    <filter id="brushSoft" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="9" result="noise"></feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="4.5"></feDisplacementMap>
+    </filter>
+    <filter id="brushLoose" x="-3%" y="-3%" width="106%" height="106%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="2" seed="14" result="noise"></feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="7"></feDisplacementMap>
+    </filter>
+
+    
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="2" result="g"></feTurbulence>
+      <feColorMatrix in="g" type="matrix" values="0 0 0 0 0.165&#xA;                0 0 0 0 0.302&#xA;                0 0 0 0 0.235&#xA;                0 0 0 0.05 0"></feColorMatrix>
+      <feComposite in2="SourceGraphic" operator="in"></feComposite>
+    </filter>
+
+    <symbol id="hero" viewBox="0 0 1600 900">
+      
+      <rect width="1600" height="900" fill="#F5F0E8"></rect>
+
+      
+      <rect width="1600" height="900" fill="#F5F0E8" filter="url(#grain)" opacity="0.6"></rect>
+
+      
+      <g filter="url(#brush)" stroke-linecap="round" fill="none">
+        
+        <circle cx="440" cy="470" r="305" stroke="#2A4D3C" stroke-width="2.2" opacity="0.35"></circle>
+        <circle cx="442" cy="468" r="270" stroke="#2A4D3C" stroke-width="3" opacity="0.55"></circle>
+        <circle cx="438" cy="472" r="238" stroke="#2A4D3C" stroke-width="4" opacity="0.75"></circle>
+        <circle cx="441" cy="469" r="208" stroke="#2A4D3C" stroke-width="5" opacity="0.92"></circle>
+        <circle cx="439" cy="471" r="180" stroke="#2A4D3C" stroke-width="5.5"></circle>
+        <circle cx="442" cy="468" r="154" stroke="#2A4D3C" stroke-width="6"></circle>
+        <circle cx="440" cy="470" r="130" stroke="#2A4D3C" stroke-width="6.5"></circle>
+        <circle cx="438" cy="471" r="108" stroke="#2A4D3C" stroke-width="7"></circle>
+        <circle cx="441" cy="469" r="88" stroke="#2A4D3C" stroke-width="7.5"></circle>
+        <circle cx="440" cy="470" r="70" stroke="#2A4D3C" stroke-width="8"></circle>
+        <circle cx="439" cy="470" r="54" stroke="#C85A1A" stroke-width="8.5"></circle>
+        <circle cx="440" cy="470" r="38" stroke="#C85A1A" stroke-width="9"></circle>
+        
+        <circle cx="440" cy="470" r="22" fill="#C85A1A" stroke="none"></circle>
+      </g>
+
+      
+
+      
+      <g filter="url(#brushLoose)">
+        <circle cx="1240" cy="500" r="290" fill="#D4A843" opacity="0.10"></circle>
+        <circle cx="1240" cy="500" r="220" fill="#D4A843" opacity="0.08"></circle>
+      </g>
+
+      
+      <g filter="url(#brushSoft)">
+        <path d="&#xA;          M 1060 900&#xA;          C 1080 760, 1140 700, 1240 690&#xA;          C 1340 700, 1400 760, 1420 900&#xA;          Z&#xA;        " fill="#2A4D3C" opacity="0.92"></path>
+      </g>
+
+      
+      <g filter="url(#brushSoft)">
+        <ellipse cx="1240" cy="540" rx="130" ry="140" fill="#2A4D3C"></ellipse>
+      </g>
+
+      
+      <g filter="url(#brushLoose)" fill="none" stroke-linecap="round">
+        <path d="&#xA;          M 1180 500&#xA;          C 1210 470, 1270 470, 1300 500&#xA;        " stroke="#D4A843" stroke-width="3.5" opacity="0.55"></path>
+      </g>
+
+      
+      <g filter="url(#brush)" fill="none" stroke-linecap="round">
+        <circle cx="1185" cy="500" r="12" stroke="#D4A843" stroke-width="3"></circle>
+      </g>
+
+      
+      <g filter="url(#brushSoft)" fill="none" stroke-linecap="round">
+        
+        <circle cx="780" cy="420" r="46" stroke="#2A4D3C" stroke-width="4" opacity="0.85"></circle>
+        <circle cx="780" cy="420" r="28" stroke="#2A4D3C" stroke-width="3.5" opacity="0.7"></circle>
+        <circle cx="780" cy="420" r="12" stroke="#C85A1A" stroke-width="3.5"></circle>
+
+        
+        <circle cx="940" cy="370" r="32" stroke="#2A4D3C" stroke-width="3" opacity="0.7"></circle>
+        <circle cx="940" cy="370" r="14" stroke="#C85A1A" stroke-width="3"></circle>
+
+        
+        <circle cx="1060" cy="380" r="18" stroke="#D4A843" stroke-width="3" opacity="0.9"></circle>
+      </g>
+
+      
+      <g filter="url(#brushLoose)" stroke="#2A4D3C" stroke-width="1.2" opacity="0.18" fill="none" stroke-linecap="round">
+        <path d="M 120 770 Q 800 760 1500 775"></path>
+      </g>
+    </symbol>
+  </defs>
+
+<use href="#hero"></use>
+</svg>

@@ -22,7 +22,7 @@ const blogPostingJsonLd = {
   headline: 'How OCD Therapy Works: An Evidence-Based Guide',
   description:
     'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment.',
-  image: `${BASE_URL}/images/Blog%20Hero%20-%20OCD%20Therapy2.png`,
+  image: `${BASE_URL}/images/blog-hero-ocd-therapy.png`,
   author: {
     '@type': 'Person',
     name: 'Owen Lynch',
@@ -129,7 +129,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment. Written by Owen Lynch, psychotherapist in Dublin, Ireland.',
       type: 'article',
       url: `${BASE_URL}/blog/how-ocd-therapy-works`,
-      images: [{ url: `${BASE_URL}/images/Blog%20Hero%20-%20OCD%20Therapy2.png`, width: 3200, height: 1800, alt: 'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta with a figure, symbolising the cycle of obsessive thoughts' }],
+      images: [{ url: `${BASE_URL}/images/blog-hero-ocd-therapy.png`, width: 3200, height: 1800, alt: 'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta with a figure, symbolising the cycle of obsessive thoughts' }],
       publishedTime: '2026-05-13T00:00:00Z',
       authors: [`${BASE_URL}/about`],
     },
@@ -138,7 +138,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: 'How OCD Therapy Works: An Evidence-Based Guide',
       description:
         'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment.',
-      images: [`${BASE_URL}/images/Blog%20Hero%20-%20OCD%20Therapy2.png`],
+      images: [`${BASE_URL}/images/blog-hero-ocd-therapy.png`],
     },
   };
 }
@@ -243,7 +243,7 @@ export default async function BlogPostPage({ params }: Props) {
           {/* Featured image */}
           <figure className="mb-14">
             <Image
-              src="/images/Blog%20Hero%20-%20OCD%20Therapy2.png"
+              src="/images/blog-hero-ocd-therapy.png"
               alt="Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta with a figure, symbolising the cycle of obsessive thoughts"
               width={3200}
               height={1800}

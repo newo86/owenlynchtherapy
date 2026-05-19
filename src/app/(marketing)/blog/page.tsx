@@ -59,7 +59,7 @@ const posts: Post[] = [
       'An integrative look at I-CBT, ACT, and psychodynamic approaches to OCD treatment — what the research says and what therapy actually looks like.',
     publishedAt: '2026-05-13',
     category: 'OCD',
-    featuredImage: '/images/Blog%20Hero%20-%20OCD%20Therapy2.png',
+    featuredImage: '/images/blog-hero-ocd-therapy.png',
     featuredImageAlt:
       'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta with a figure, symbolising the cycle of obsessive thoughts',
   },
