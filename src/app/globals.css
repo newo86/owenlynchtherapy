@@ -50,6 +50,45 @@ h6 {
   animation-delay: 0.8s;
 }
 
+/* ── Service card gradient border ── */
+@property --border-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes border-spin {
+  to { --border-angle: 360deg; }
+}
+
+.service-card-border {
+  position: relative;
+}
+
+.service-card-border::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: calc(0.75rem + 1.5px);
+  background: conic-gradient(
+    from var(--border-angle),
+    transparent 15%,
+    #C85A1A 35%,
+    #D4A843 50%,
+    #F5F0E8 65%,
+    #C85A1A 80%,
+    transparent 90%
+  );
+  opacity: 0;
+  transition: opacity 350ms ease;
+  z-index: 0;
+}
+
+.service-card-border:hover::before {
+  opacity: 1;
+  animation: border-spin 3s linear infinite;
+}
+
 /* ── Floating circles ambient background ── */
 @keyframes fc-drift-1 {
   0%, 100% { transform: translate(0px, 0px)    scale(1);    }
