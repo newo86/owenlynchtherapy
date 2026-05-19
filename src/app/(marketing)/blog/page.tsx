@@ -150,9 +150,9 @@ export default function BlogPage() {
                  * in a motion.div with whileInView fade-up. The article content
                  * itself is always present in the server-rendered HTML for SEO.
                  */
-                <AnimatedCard key={post.slug} index={i}>
+                <AnimatedCard key={post.slug} index={i} className="service-card-border rounded-2xl">
                   <article
-                    className="group flex flex-col flex-1 rounded-2xl bg-white border border-transparent hover:border-[#C85A1A]/15 hover:-translate-y-1 transition-all duration-300"
+                    className="relative z-[1] group flex flex-col flex-1 rounded-2xl bg-white hover:-translate-y-1 transition-all duration-300"
                     style={{ boxShadow: '0 2px 16px rgba(42,77,60,0.07)' }}
                   >
                     <Link

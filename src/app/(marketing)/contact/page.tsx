@@ -134,16 +134,17 @@ export default async function ContactPage({ searchParams }: Props) {
             {/* Left — stacked cards + note */}
             <div className="flex flex-col gap-6">
               {availability.map(({ day, hours, format }) => (
-                <div
-                  key={day}
-                  className="bg-white rounded-lg shadow-md p-6"
-                  style={{ borderTop: '3px solid #c85a1a' }}
-                >
-                  <p className="font-heading font-light text-lg text-forest mb-2">{day}</p>
-                  <p className="font-normal text-sm text-gray-700 mb-1">{hours}</p>
-                  <p className="text-sm font-normal uppercase tracking-normal text-orange mt-3">
-                    {format}
-                  </p>
+                <div key={day} className="service-card-border rounded-lg">
+                  <div
+                    className="relative z-[1] bg-white rounded-lg shadow-md p-6"
+                    style={{ borderTop: '3px solid #c85a1a' }}
+                  >
+                    <p className="font-heading font-light text-lg text-forest mb-2">{day}</p>
+                    <p className="font-normal text-sm text-gray-700 mb-1">{hours}</p>
+                    <p className="text-sm font-normal uppercase tracking-normal text-orange mt-3">
+                      {format}
+                    </p>
+                  </div>
                 </div>
               ))}
               <p className="font-normal text-sm leading-[1.8]" style={{ color: '#555555' }}>

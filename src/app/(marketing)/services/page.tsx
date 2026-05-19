@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
-import AnimatedCard from '@/components/ui/AnimatedCard';
+import ServiceCard from '@/components/ui/ServiceCard';
 import { Globe } from '@/components/ui/cobe-globe';
 import FloatingCircles from '@/components/ui/floating-circles';
 
@@ -159,31 +159,7 @@ export default function ServicesPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {services.map(({ name, url, description }, i) => (
-              <AnimatedCard key={name} index={i}>
-                <Link
-                  href={url}
-                  className="group bg-white rounded-xl p-8 flex flex-col h-full shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 ease-out"
-                >
-                  {/* Gold accent line — extends on hover */}
-                  <span
-                    className="block h-[2px] w-10 group-hover:w-[60px] mb-6 transition-all duration-300 ease-out"
-                    style={{ backgroundColor: '#d4a843' }}
-                    aria-hidden="true"
-                  />
-
-                  <h3 className="font-heading font-light text-xl text-forest mb-3">
-                    {name}
-                  </h3>
-
-                  <p className="font-normal text-sm text-gray-600 leading-[1.8] flex-1 mb-6">
-                    {description}
-                  </p>
-
-                  <span className="inline-flex items-center gap-1.5 text-orange text-[10px] uppercase tracking-normal font-normal group-hover:gap-3 transition-all duration-200">
-                    Learn more <span aria-hidden="true">→</span>
-                  </span>
-                </Link>
-              </AnimatedCard>
+              <ServiceCard key={name} name={name} url={url} description={description} index={i} />
             ))}
           </div>
         </div>
