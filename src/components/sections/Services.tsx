@@ -5,51 +5,43 @@ import FloatingCircles from '@/components/ui/floating-circles';
 const services = [
   {
     name: 'OCD',
-    url: '/ocd-therapy-dublin',
-    description:
-      'Intrusive thoughts, compulsive behaviours, constant doubt – OCD can be exhausting and isolating. Therapy can help you break the cycle and reclaim your day-to-day life.',
+    slug: 'ocd',
+    description: 'Intrusive thoughts and compulsive patterns',
   },
   {
     name: 'Anxiety',
-    url: '/anxiety-therapy-dublin',
-    description:
-      "Racing thoughts, constant worry, a body that won't settle – anxiety can make everything feel harder than it should. Therapy offers a space to understand what's driving it and find steadier ground.",
+    slug: 'anxiety',
+    description: 'Worry, panic and generalised anxiety',
   },
   {
     name: 'ADHD',
-    url: '/adhd-therapy-dublin',
-    description:
-      "Whether you're recently diagnosed or starting to wonder if ADHD might explain a lot, therapy can help you make sense of how your brain works – and build a life that works with it, not against it.",
+    slug: 'adhd',
+    description: 'Attention, focus and executive function',
   },
   {
     name: 'Autism',
-    url: '/autism-therapy-dublin',
-    description:
-      "Late diagnosis, masking, sensory overwhelm, navigating a world that wasn't designed with you in mind – therapy can be a space to understand yourself better and live more comfortably as you are.",
+    slug: 'autism',
+    description: 'Autistic identity and late diagnosis support',
   },
   {
     name: 'Depression',
-    url: '/depression-therapy-dublin',
-    description:
-      "Loss of motivation, withdrawing from the people and things you care about, a heaviness that won't lift – therapy can help you gently reconnect with yourself and find a way forward.",
+    slug: 'depression',
+    description: 'Low mood, hopelessness and withdrawal',
   },
   {
     name: 'Relationships',
-    url: '/relationship-therapy-dublin',
-    description:
-      "Patterns that keep repeating, communication that breaks down, feeling disconnected from the people closest to you – therapy can help you understand what's happening and start to shift it.",
+    slug: 'relationships',
+    description: 'Communication, conflict and connection',
   },
   {
     name: 'Trauma',
-    url: '/trauma-therapy-dublin',
-    description:
-      'When difficult experiences from the past keep showing up in the present – in your body, your reactions, your relationships – therapy offers a safe space to process what happened at your own pace.',
+    slug: 'trauma',
+    description: 'Processing difficult past experiences',
   },
   {
     name: 'LGBTQIA+',
-    url: '/lgbtqia-therapy-dublin',
-    description:
-      'Navigating identity, relationships, coming out, minority stress, chemsex, or just wanting a therapist who gets it without you having to explain – this is an affirming space where you can bring your whole self.',
+    slug: 'lgbtqia',
+    description: 'Identity, community and mental wellbeing',
   },
 ] as const;
 
@@ -77,11 +69,11 @@ export default function Services() {
 
         {/* 4-col grid — collapses to 2 on tablet, 1 on mobile */}
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 list-none">
-          {services.map(({ name, url, description }, i) => (
-            <li key={url}>
+          {services.map(({ name, slug, description }, i) => (
+            <li key={slug}>
               <AnimatedCard index={i}>
                 <Link
-                  href={url}
+                  href={`/services/${slug}`}
                   className="group flex flex-col gap-4 bg-white rounded-xl p-6 h-full shadow-sm border border-transparent hover:border-forest/15 hover:shadow-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest"
                 >
                   {/* Gold accent line */}
