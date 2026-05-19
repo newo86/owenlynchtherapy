@@ -102,7 +102,7 @@ export default function AutismTherapyPage() {
             Therapy for Autistic Adults in Dublin &amp; Online
           </h1>
           <p className="font-normal text-base text-cream/80 leading-[1.75] max-w-2xl">
-            If you&apos;re autistic — diagnosed, self-identifying, or somewhere in the middle —
+            If you&apos;re autistic, diagnosed, self-identifying, or somewhere in the middle, 
             and looking for a therapist who won&apos;t make you explain why you&apos;re autistic
             before you can talk about anything else, this is that space.
           </p>
@@ -125,12 +125,12 @@ export default function AutismTherapyPage() {
               mask, perform neurotypicality, or justify your identity.
             </p>
 
-            <h2 className={h2}>What autism is — and isn&apos;t</h2>
+            <h2 className={h2}>What autism is, and isn&apos;t</h2>
             <p className={p}>
               Autism is a neurodevelopmental difference, not a disorder to be cured. It shapes how
               you perceive, process, communicate, and connect. The diagnostic frameworks are still
               catching up to what autistic adults actually experience, particularly autistic adults
-              who weren&apos;t picked up as children — which often means women, non-binary people,
+              who weren&apos;t picked up as children, which often means women, non-binary people,
               and anyone who learned to mask early.
             </p>
             <p className={p}>
@@ -142,7 +142,7 @@ export default function AutismTherapyPage() {
             <p className={p}>
               A note on language: I use identity-first language (&ldquo;autistic person&rdquo;) as
               the majority of autistic adults prefer, but I&apos;ll follow your lead on what feels
-              right for you. Same with diagnosis — formal diagnosis isn&apos;t required to come to
+              right for you. Same with diagnosis, formal diagnosis isn&apos;t required to come to
               therapy or to use the language that fits your experience.
             </p>
 

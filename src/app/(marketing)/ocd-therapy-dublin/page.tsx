@@ -111,7 +111,7 @@ export default function OcdTherapyPage() {
             reduced to a stereotype about tidiness or hand-washing, but the lived reality is far
             more complex and often deeply distressing. Intrusive thoughts about harm, contamination,
             relationships, sexuality, religion, or identity can feel completely at odds with who you
-            know yourself to be — and the compulsions that follow can take over your day.
+            know yourself to be, and the compulsions that follow can take over your day.
           </p>
         </div>
       </section>
@@ -137,7 +137,7 @@ export default function OcdTherapyPage() {
               OCD has two main components. Obsessions are intrusive, unwanted thoughts, images, or
               urges that cause significant distress. Compulsions are repetitive behaviours or mental
               acts performed to neutralise that distress. The cycle is exhausting and
-              self-reinforcing — the compulsion offers brief relief, which strengthens the urge to
+              self-reinforcing, the compulsion offers brief relief, which strengthens the urge to
               repeat it.
             </p>
             <p className={p}>
@@ -162,14 +162,14 @@ export default function OcdTherapyPage() {
             <p className={p}>
               <strong>Acceptance and Commitment Therapy (ACT)</strong>{' '}helps you change your
               relationship with intrusive thoughts rather than fighting them. The goal isn&apos;t to
-              eliminate the thoughts — it&apos;s to take their power away, so they no longer
+              eliminate the thoughts, it&apos;s to take their power away, so they no longer
               dictate what you do or how you live.
             </p>
             <p className={p}>
               <strong>Exposure and Response Prevention (ERP)</strong>{' '}is the most extensively
               researched treatment for OCD. It involves gradually facing the situations or thoughts
               that trigger your obsessions while supporting you to resist performing compulsions. ERP
-              is introduced thoughtfully and at your pace — never as a boot camp.
+              is introduced thoughtfully and at your pace, never as a boot camp.
             </p>
             <p className={p}>
               For a more detailed look at how these approaches work and what the research says, you
@@ -194,7 +194,7 @@ export default function OcdTherapyPage() {
             </p>
             <p className={p}>
               Therapy never forces you to do anything you don&apos;t want to do. You set the pace.
-              The goal isn&apos;t to white-knuckle your way through distress — it&apos;s to develop
+              The goal isn&apos;t to white-knuckle your way through distress, it&apos;s to develop
               a fundamentally different relationship with your own mind.
             </p>
           </article>

@@ -102,7 +102,7 @@ export default function RelationshipTherapyPage() {
             Therapy for Relationship Difficulties in Dublin &amp; Online
           </h1>
           <p className="font-normal text-base text-cream/80 leading-[1.75] max-w-2xl">
-            The relationships in your life — romantic, familial, friendships, work — shape your
+            The relationships in your life, romantic, familial, friendships, work, shape your
             wellbeing more than almost anything else. When they&apos;re going well, life feels
             manageable. When they&apos;re not, everything else gets harder.
           </p>
@@ -121,33 +121,33 @@ export default function RelationshipTherapyPage() {
             <p className={p}>
               I work with adults navigating relationship difficulties from an individual
               perspective. That means I work with one person at a time, not couples. The focus is
-              on understanding your patterns, your attachments, and your choices — so that whatever
+              on understanding your patterns, your attachments, and your choices, so that whatever
               happens with the other people in your life, you have more clarity about yourself.
             </p>
 
             <h2 className={h2}>What I work with</h2>
             <ul className="list-disc list-outside pl-6 space-y-3 mb-10 text-base text-gray-700 leading-[1.75]">
               <li>Romantic relationships that keep ending the same way, or that you can&apos;t quite leave</li>
-              <li>Family dynamics — parents, siblings, in-laws, the inherited patterns that show up regardless of your best intentions</li>
+              <li>Family dynamics, parents, siblings, in-laws, the inherited patterns that show up regardless of your best intentions</li>
               <li>Friendships that feel one-sided, draining, or that you&apos;ve outgrown</li>
               <li>Conflict, communication breakdown, the same arguments on repeat</li>
               <li>Difficulty trusting, difficulty letting people close, difficulty being alone</li>
-              <li>Attachment patterns — anxious, avoidant, fearful — and how they shape what you choose and tolerate</li>
+              <li>Attachment patterns, anxious, avoidant, fearful, and how they shape what you choose and tolerate</li>
               <li>Recovering from a significant relationship ending, infidelity, or betrayal</li>
               <li>Difficulty setting boundaries, or boundaries that feel like walls</li>
             </ul>
 
             <h2 className={h2}>How I work with relationship difficulties</h2>
             <p className={p}>
-              The work usually has two layers. The first is what&apos;s happening now — the
-              specific situation, the people, the dynamics. The second is the deeper pattern — why
+              The work usually has two layers. The first is what&apos;s happening now, the
+              specific situation, the people, the dynamics. The second is the deeper pattern, why
               this kind of thing keeps showing up, what role you tend to play, what you&apos;re
               drawn to and what you avoid.
             </p>
             <p className={p}>
               <strong>Attachment work</strong>{' '}can be central. The ways we learned to relate, very
               early in life, often shape our adult relationships in ways that are invisible until
-              they&apos;re named. Understanding your attachment style — and where it came from —
+              they&apos;re named. Understanding your attachment style, and where it came from, 
               can shift a lot.
             </p>
             <p className={p}>
@@ -156,19 +156,19 @@ export default function RelationshipTherapyPage() {
               patterns into view without judgment.
             </p>
             <p className={p}>
-              <strong>Communication and conflict.</strong>{' '}We work on practical skills — how to
+              <strong>Communication and conflict.</strong>{' '}We work on practical skills, how to
               have hard conversations, how to listen without defending, how to express what you
               need. These are learnable.
             </p>
             <p className={p}>
               <strong>Self-knowledge.</strong>{' '}A lot of relationship work is really self work. The
-              more clearly you understand yourself — what you want, what you can offer, what you
-              can&apos;t — the better your relationships tend to go.
+              more clearly you understand yourself, what you want, what you can offer, what you
+              can&apos;t, the better your relationships tend to go.
             </p>
 
             <h2 className={h2}>What therapy with me looks like</h2>
             <p className={p}>
-              We start with what&apos;s most pressing — the specific situation that brought you in.
+              We start with what&apos;s most pressing, the specific situation that brought you in.
               From there, the work usually broadens. You might come in to talk about your partner
               and find yourself talking about your father. That&apos;s not derailment; that&apos;s
               how relationship work tends to move.
@@ -176,7 +176,7 @@ export default function RelationshipTherapyPage() {
             <p className={p}>
               I bring honesty and challenge alongside support. If I notice a pattern, I&apos;ll
               name it. If something doesn&apos;t add up, I&apos;ll say so. The goal isn&apos;t to
-              be told you&apos;re right — it&apos;s to see yourself more clearly.
+              be told you&apos;re right, it&apos;s to see yourself more clearly.
             </p>
           </article>
         </div>

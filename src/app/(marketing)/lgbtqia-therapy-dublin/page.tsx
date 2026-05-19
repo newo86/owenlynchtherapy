@@ -128,7 +128,7 @@ export default function LgbtqiaTherapyPage() {
             <h2 className={h2}>What this work involves</h2>
             <p className={p}>
               LGBTQIA+ affirming therapy isn&apos;t a separate kind of therapy. It&apos;s therapy
-              without the obstacles that mainstream therapy still sometimes presents — without the
+              without the obstacles that mainstream therapy still sometimes presents, without the
               silent assumptions, the misnamings, the moments where you have to teach the therapist
               before you can actually use the session.
             </p>
@@ -137,17 +137,17 @@ export default function LgbtqiaTherapyPage() {
             </p>
             <ul className="list-disc list-outside pl-6 space-y-3 mb-6 text-base text-gray-700 leading-[1.75]">
               <li>Coming out (to yourself, to others, at different stages of life)</li>
-              <li>Identity exploration — including non-linear, fluid, or evolving identities</li>
-              <li>Minority stress — the chronic cost of navigating a world not built for you</li>
+              <li>Identity exploration, including non-linear, fluid, or evolving identities</li>
+              <li>Minority stress, the chronic cost of navigating a world not built for you</li>
               <li>Internalised stigma and self-acceptance</li>
               <li>Family reactions and rebuilding family of choice</li>
               <li>Religious or cultural conflict around identity</li>
               <li>Trans-specific work: transition, dysphoria, navigating healthcare, family and workplace</li>
               <li>Relationships, sex, intimacy</li>
-              <li>Chemsex — exploration, complication, or recovery</li>
+              <li>Chemsex, exploration, complication, or recovery</li>
             </ul>
             <p className={p}>
-              You might also come for something that has nothing to do with your identity — anxiety,
+              You might also come for something that has nothing to do with your identity, anxiety,
               OCD, depression, work stress, grief. The fact that you&apos;re LGBTQIA+ doesn&apos;t
               mean every session has to be about it. But you&apos;ll be in a space where it can be
               when it needs to be.
@@ -155,8 +155,8 @@ export default function LgbtqiaTherapyPage() {
 
             <h2 className={h2}>How I work</h2>
             <p className={p}>
-              I work integratively, drawing on evidence-based modalities — ACT, CBT, psychodynamic,
-              person-centred — and adapting to what fits for you. The approaches aren&apos;t unique
+              I work integratively, drawing on evidence-based modalities, ACT, CBT, psychodynamic,
+              person-centred, and adapting to what fits for you. The approaches aren&apos;t unique
               to LGBTQIA+ clients. What&apos;s unique is the foundation: you don&apos;t have to do
               the labour of making yourself understood before therapy can begin.
             </p>
@@ -168,7 +168,7 @@ export default function LgbtqiaTherapyPage() {
             </p>
             <p className={p}>
               A note on identity-first language: I&apos;ll follow your lead on language, pronouns,
-              and how you describe yourself. If something I say doesn&apos;t fit, please tell me —
+              and how you describe yourself. If something I say doesn&apos;t fit, please tell me, 
               I&apos;d rather get corrected and adjust than continue using language that doesn&apos;t
               work for you.
             </p>
@@ -177,7 +177,7 @@ export default function LgbtqiaTherapyPage() {
             <p className={p}>
               You don&apos;t have to be in crisis to come to therapy. You don&apos;t have to have a
               clear &ldquo;issue&rdquo; to work on. Many LGBTQIA+ clients describe the value of
-              having a space that is just for them — a regular hour each week where they don&apos;t
+              having a space that is just for them, a regular hour each week where they don&apos;t
               have to mask, manage, or explain.
             </p>
             <p className={p}>

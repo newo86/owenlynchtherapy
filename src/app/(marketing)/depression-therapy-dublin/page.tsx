@@ -102,7 +102,7 @@ export default function DepressionTherapyPage() {
             Depression Therapy in Dublin &amp; Online
           </h1>
           <p className="font-normal text-base text-cream/80 leading-[1.75] max-w-2xl">
-            Depression isn&apos;t always sadness. Often it&apos;s flatness — the loss of
+            Depression isn&apos;t always sadness. Often it&apos;s flatness, the loss of
             motivation, the inability to start, the sense that nothing really matters. It might be
             waking up exhausted regardless of how much you slept. It might be functioning on the
             outside while everything feels empty on the inside. It might be the thing that crept up
@@ -138,7 +138,7 @@ export default function DepressionTherapyPage() {
             <p className={p}>
               Depression often makes sense in context. It can follow loss, prolonged stress,
               trauma, illness, isolation, or significant life transitions. It can be linked to ADHD,
-              autism, OCD, or chronic anxiety — what looks like depression is sometimes the cost of
+              autism, OCD, or chronic anxiety, what looks like depression is sometimes the cost of
               years spent masking or managing something underneath. Understanding the context
               matters.
             </p>
@@ -151,8 +151,8 @@ export default function DepressionTherapyPage() {
             <p className={p}>
               <strong>Behavioural activation</strong>{' '}addresses the trap depression creates: the
               less you do, the worse you feel; the worse you feel, the less you do. Carefully and
-              gradually re-engaging with activities — not because you feel like it, but because the
-              engagement itself helps shift the mood — has strong evidence behind it.
+              gradually re-engaging with activities, not because you feel like it, but because the
+              engagement itself helps shift the mood, has strong evidence behind it.
             </p>
             <p className={p}>
               <strong>Cognitive work</strong>{' '}helps with the thinking patterns that depression
@@ -162,7 +162,7 @@ export default function DepressionTherapyPage() {
             </p>
             <p className={p}>
               <strong>Psychodynamic exploration</strong>{' '}can be valuable when depression has deeper
-              roots — when there&apos;s grief that hasn&apos;t been processed, anger that&apos;s
+              roots, when there&apos;s grief that hasn&apos;t been processed, anger that&apos;s
               been turned inward, or patterns from earlier in life that are still shaping your
               present.
             </p>
@@ -176,7 +176,7 @@ export default function DepressionTherapyPage() {
             <p className={p}>
               If you&apos;re in the thick of depression, the idea of &ldquo;doing therapy&rdquo;
               can itself feel exhausting. We start where you are. Sometimes the first weeks are
-              about easing the load — finding small things that help, getting some momentum back,
+              about easing the load, finding small things that help, getting some momentum back,
               building the capacity to do more focused work.
             </p>
             <p className={p}>

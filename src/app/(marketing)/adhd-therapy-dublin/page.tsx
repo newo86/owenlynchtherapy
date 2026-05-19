@@ -121,7 +121,7 @@ export default function AdhdTherapyPage() {
         <div className="relative max-w-4xl mx-auto" style={{ zIndex: 1 }}>
           <article className="max-w-[720px] mx-auto">
             <p className={p}>
-              Many adults arrive at ADHD late — sometimes after a child&apos;s diagnosis, sometimes
+              Many adults arrive at ADHD late, sometimes after a child&apos;s diagnosis, sometimes
               after years of feeling that something didn&apos;t fit. Whether you have a formal
               diagnosis, are exploring whether ADHD might be a factor in your difficulties, or are
               self-identifying without seeking diagnosis, therapy can help you make sense of how
@@ -138,8 +138,8 @@ export default function AdhdTherapyPage() {
             </p>
             <p className={p}>
               This isn&apos;t a character flaw. It&apos;s neurological. But because it&apos;s
-              invisible and inconsistent, ADHD often gets misread — by others and by the person
-              themselves — as laziness, lack of motivation, or unreliability. Years of that
+              invisible and inconsistent, ADHD often gets misread, by others and by the person
+              themselves, as laziness, lack of motivation, or unreliability. Years of that
               misreading take a toll. Many adults with ADHD arrive in therapy carrying significant
               shame, anxiety, or depression layered on top of the ADHD itself.
             </p>
@@ -147,13 +147,13 @@ export default function AdhdTherapyPage() {
             <h2 className={h2}>How I work with ADHD</h2>
             <p className={p}>
               Therapy for ADHD isn&apos;t about fixing your brain. It&apos;s about understanding
-              how it works and building strategies that actually fit you — not strategies designed
+              how it works and building strategies that actually fit you, not strategies designed
               for neurotypical brains that you&apos;ve been failing to implement for years.
             </p>
             <p className={p}>
               <strong>Psychoeducation</strong>{' '}is often a significant part of early work.
-              Understanding the actual mechanics of ADHD — executive function, dopamine, time
-              blindness, rejection sensitivity — can be genuinely transformative. A lot of what
+              Understanding the actual mechanics of ADHD, executive function, dopamine, time
+              blindness, rejection sensitivity, can be genuinely transformative. A lot of what
               you&apos;ve been blaming yourself for starts to make sense.
             </p>
             <p className={p}>
@@ -164,7 +164,7 @@ export default function AdhdTherapyPage() {
             </p>
             <p className={p}>
               <strong>Processing what ADHD has cost you</strong>{' '}is often part of the work too.
-              There&apos;s frequently grief, anger, or relief that needs space — for the years spent
+              There&apos;s frequently grief, anger, or relief that needs space, for the years spent
               struggling, for the relationships strained, for the missed potential. Therapy can hold
               all of that.
             </p>
@@ -182,7 +182,7 @@ export default function AdhdTherapyPage() {
             </p>
             <p className={p}>
               We&apos;ll figure out what matters most to you, what you want to change, and
-              what&apos;s been getting in the way. Then we&apos;ll work with the brain you have —
+              what&apos;s been getting in the way. Then we&apos;ll work with the brain you have, 
               not the one you&apos;ve been told you should have.
             </p>
           </article>

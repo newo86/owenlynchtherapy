@@ -102,8 +102,8 @@ export default function TraumaTherapyPage() {
             Trauma Therapy in Dublin &amp; Online
           </h1>
           <p className="font-normal text-base text-cream/80 leading-[1.75] max-w-2xl">
-            Trauma isn&apos;t only about what happened. It&apos;s about what&apos;s still happening
-            — in your body, in your reactions, in the patterns that don&apos;t seem to shift no
+            Trauma isn&apos;t only about what happened. It&apos;s about what&apos;s still happening,
+            in your body, in your reactions, in the patterns that don&apos;t seem to shift no
             matter how much you understand them intellectually.
           </p>
         </div>
@@ -127,14 +127,14 @@ export default function TraumaTherapyPage() {
 
             <h2 className={h2}>What trauma actually is</h2>
             <p className={p}>
-              Trauma isn&apos;t defined by the event itself — it&apos;s defined by how your nervous
+              Trauma isn&apos;t defined by the event itself, it&apos;s defined by how your nervous
               system responded to it. What was overwhelming for one person at one moment might not
               be for someone else. There&apos;s no objective scale. What matters is what your
               system couldn&apos;t fully metabolise at the time.
             </p>
             <p className={p}>
-              This includes what&apos;s sometimes called &ldquo;big T&rdquo; trauma — discrete
-              events like accidents, assaults, sudden losses — but also &ldquo;small t&rdquo;
+              This includes what&apos;s sometimes called &ldquo;big T&rdquo; trauma, discrete
+              events like accidents, assaults, sudden losses, but also &ldquo;small t&rdquo;
               trauma, which is often more pervasive: emotional neglect, chronic invalidation,
               environments that weren&apos;t safe enough for you to develop in. The latter often
               doesn&apos;t get named as trauma at all, which is part of why it can be so difficult
@@ -150,29 +150,29 @@ export default function TraumaTherapyPage() {
             <p className={p}>
               Trauma work has to be paced carefully. Going too fast or too deep too soon can
               re-traumatise rather than heal. The early stages of therapy for trauma are often about
-              building the capacity to do the work — establishing safety, learning to regulate,
+              building the capacity to do the work, establishing safety, learning to regulate,
               developing trust in the therapeutic relationship.
             </p>
             <p className={p}>
               <strong>Stabilisation and resourcing.</strong>{' '}Before we approach the difficult
               material, we make sure you have the internal and external resources to handle what
-              comes up. This isn&apos;t a delay — it&apos;s the actual work.
+              comes up. This isn&apos;t a delay, it&apos;s the actual work.
             </p>
             <p className={p}>
               <strong>Integrative approaches.</strong>{' '}I draw on psychodynamic understanding,
               somatic awareness, and cognitive work as fits what you bring. I don&apos;t use a
-              single rigid trauma protocol — different approaches suit different people and different
+              single rigid trauma protocol, different approaches suit different people and different
               kinds of trauma.
             </p>
             <p className={p}>
               <strong>Working with the body.</strong>{' '}Trauma changes the nervous system. We work
               with grounding, breath, and noticing what&apos;s happening in the body, alongside the
-              cognitive and relational work. The goal is to help your system update — to learn, at a
+              cognitive and relational work. The goal is to help your system update, to learn, at a
               level deeper than thought, that the danger is over.
             </p>
             <p className={p}>
               <strong>Relational safety as the foundation.</strong>{' '}For trauma that happened in
-              relationships — and most does — the therapeutic relationship is itself a vehicle for
+              relationships, and most does, the therapeutic relationship is itself a vehicle for
               healing. Having a consistent, attuned, non-judgmental presence over time can do work
               that techniques alone can&apos;t.
             </p>
@@ -185,7 +185,7 @@ export default function TraumaTherapyPage() {
             <h2 className={h2}>What therapy with me looks like</h2>
             <p className={p}>
               You set the pace. Always. Trauma work that doesn&apos;t respect your pace isn&apos;t
-              trauma work — it&apos;s re-traumatising. If something is too much, we slow down. If
+              trauma work, it&apos;s re-traumatising. If something is too much, we slow down. If
               you need to pause the deeper work and focus on coping for a while, that&apos;s part
               of it.
             </p>

@@ -128,7 +128,7 @@ export default function AnxietyTherapyPage() {
 
             <h2 className={h2}>What anxiety actually is</h2>
             <p className={p}>
-              Anxiety is your nervous system doing what it was designed to do — preparing you to
+              Anxiety is your nervous system doing what it was designed to do, preparing you to
               respond to threat. The problem is that for many people, that system has become
               miscalibrated. It fires in situations that aren&apos;t dangerous. It stays on long
               after the actual stressor has passed. It interprets ordinary uncertainty as evidence
@@ -144,7 +144,7 @@ export default function AnxietyTherapyPage() {
               It&apos;s also worth saying: anxiety often makes sense in context. If you&apos;ve
               experienced trauma, loss, illness, or chronic stress, an over-active threat system is
               not a malfunction. It&apos;s an adaptation. Therapy isn&apos;t about labelling that
-              adaptation as wrong — it&apos;s about understanding it and helping it settle.
+              adaptation as wrong, it&apos;s about understanding it and helping it settle.
             </p>
 
             <h2 className={h2}>How I work with anxiety</h2>
@@ -162,19 +162,19 @@ export default function AnxietyTherapyPage() {
               toward what matters to you, even when anxiety shows up.
             </p>
             <p className={p}>
-              <strong>Psychodynamic exploration</strong>{' '}can help when anxiety has deeper roots —
+              <strong>Psychodynamic exploration</strong>{' '}can help when anxiety has deeper roots, 
               when your nervous system has learned, often early in life, that uncertainty isn&apos;t
               safe. Understanding why your threat system is so primed adds depth that purely
               technique-driven work sometimes misses.
             </p>
             <p className={p}>
-              For physical anxiety, we may also work with practical regulation strategies —
+              For physical anxiety, we may also work with practical regulation strategies, 
               breathwork, grounding, and approaches that help the body itself settle.
             </p>
 
             <h2 className={h2}>What therapy with me looks like</h2>
             <p className={p}>
-              We start by understanding your specific experience of anxiety — what it looks like,
+              We start by understanding your specific experience of anxiety, what it looks like,
               when it appeared, what it costs you, and what you&apos;ve already tried. From there,
               we develop an approach tailored to you. There&apos;s no one-size-fits-all programme.
             </p>
