@@ -13,21 +13,27 @@ export const metadata: Metadata = {
   title: { absolute: 'Blog | Owen Lynch Psychotherapy' },
   description:
     'Articles on OCD, anxiety, ADHD, autism, and mental health by Owen Lynch, psychotherapist in Dublin. Evidence-based insights and practical guidance.',
-  alternates: { canonical: 'https://owenlynchtherapy.com/blog' },
+  alternates: {
+    canonical: 'https://owenlynchtherapy.com/blog',
+    languages: {
+      'en-IE': 'https://owenlynchtherapy.com/blog',
+      'x-default': 'https://owenlynchtherapy.com/blog',
+    },
+  },
   openGraph: {
     title: 'Blog | Owen Lynch Psychotherapy',
     description:
       'Articles on OCD, anxiety, ADHD, autism, and mental health by Owen Lynch, psychotherapist in Dublin. Evidence-based insights and practical guidance.',
     type: 'website',
     url: 'https://owenlynchtherapy.com/blog',
-    images: [{ url: 'https://owenlynchtherapy.com/images/ocd-radio-analogy.png' }],
+    images: [{ url: 'https://owenlynchtherapy.com/images/blog-hero-ocd-therapy.png', width: 3200, height: 1800, alt: 'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Blog | Owen Lynch Psychotherapy',
     description:
       'Articles on OCD, anxiety, ADHD, autism, and mental health by Owen Lynch, psychotherapist in Dublin.',
-    images: ['https://owenlynchtherapy.com/images/ocd-radio-analogy.png'],
+    images: ['https://owenlynchtherapy.com/images/blog-hero-ocd-therapy.png'],
   },
 };
 

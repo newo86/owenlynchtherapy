@@ -25,18 +25,6 @@ export const metadata: Metadata = {
   },
   description:
     'Professional psychotherapy services with Owen Lynch. Evidence-based therapy for anxiety, depression, trauma, and relationship difficulties. Based in Ireland.',
-  keywords: [
-    'psychotherapy',
-    'psychotherapist',
-    'therapy',
-    'counselling',
-    'mental health',
-    'anxiety',
-    'depression',
-    'trauma',
-    'Owen Lynch',
-    'Ireland',
-  ],
   authors: [{ name: 'Owen Lynch' }],
   creator: 'Owen Lynch',
   openGraph: {
@@ -55,6 +43,10 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://owenlynchtherapy.com',
+    languages: {
+      'en-IE': 'https://owenlynchtherapy.com',
+      'x-default': 'https://owenlynchtherapy.com',
+    },
   },
   robots: {
     index: true,

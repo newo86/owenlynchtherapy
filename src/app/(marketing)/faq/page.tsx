@@ -8,7 +8,13 @@ export const metadata: Metadata = {
   title: 'FAQ | Psychotherapy Dublin and Online | Owen Lynch',
   description:
     'Answers to common questions about psychotherapy in Dublin and online therapy in Ireland. IAHIP accredited. OCD therapy, ADHD therapy, anxiety, confidential sessions.',
-  alternates: { canonical: 'https://owenlynchtherapy.com/faq' },
+  alternates: {
+    canonical: 'https://owenlynchtherapy.com/faq',
+    languages: {
+      'en-IE': 'https://owenlynchtherapy.com/faq',
+      'x-default': 'https://owenlynchtherapy.com/faq',
+    },
+  },
   openGraph: {
     title: 'FAQ | Psychotherapy Dublin and Online | Owen Lynch',
     description:

@@ -8,7 +8,13 @@ export const metadata: Metadata = {
   title: 'About Owen Lynch | IAHIP & ICP Accredited Psychotherapist Dublin',
   description:
     'Owen Lynch is an IAHIP and ICP accredited integrative psychotherapist based in Dublin, working with adults in person and online across Ireland and the UK.',
-  alternates: { canonical: 'https://owenlynchtherapy.com/about' },
+  alternates: {
+    canonical: 'https://owenlynchtherapy.com/about',
+    languages: {
+      'en-IE': 'https://owenlynchtherapy.com/about',
+      'x-default': 'https://owenlynchtherapy.com/about',
+    },
+  },
   openGraph: {
     title: 'About Owen Lynch | IAHIP & ICP Accredited Psychotherapist Dublin',
     description:
@@ -26,13 +32,26 @@ const jsonLd = {
   jobTitle: 'Psychotherapist',
   description:
     'IAHIP and ICP accredited integrative psychotherapist based in Dublin, working with adults in person and online across Ireland and the UK.',
-  url: 'https://owenlynchtherapy.com',
+  url: 'https://owenlynchtherapy.com/about',
   image: 'https://owenlynchtherapy.com/images/Owen2.jpg',
   worksFor: { '@id': 'https://owenlynchtherapy.com/#business' },
   sameAs: [
     'https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757',
     'https://psychotherapistdirectory.iahip.org/therapist/owen-lynch',
     'https://psychotherapycouncil.ie/therapist/owen-lynch/',
+    'https://www.instagram.com/owenlynchtherapy',
+  ],
+  alumniOf: [
+    {
+      '@type': 'EducationalOrganization',
+      name: 'Dublin Business School',
+      url: 'https://www.dbs.ie',
+    },
+    {
+      '@type': 'EducationalOrganization',
+      name: 'National University of Ireland Maynooth',
+      url: 'https://www.maynoothuniversity.ie',
+    },
   ],
   hasCredential: [
     {

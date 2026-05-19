@@ -119,10 +119,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: 'How OCD Therapy Works: An Evidence-Based Guide | Owen Lynch Psychotherapy',
+    title: 'How OCD Therapy Works: An Evidence-Based Guide',
     description:
       'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment. Written by Owen Lynch, psychotherapist in Dublin, Ireland.',
-    alternates: { canonical: `${BASE_URL}/blog/how-ocd-therapy-works` },
+    alternates: {
+      canonical: `${BASE_URL}/blog/how-ocd-therapy-works`,
+      languages: {
+        'en-IE': `${BASE_URL}/blog/how-ocd-therapy-works`,
+        'x-default': `${BASE_URL}/blog/how-ocd-therapy-works`,
+      },
+    },
     openGraph: {
       title: 'How OCD Therapy Works: An Evidence-Based Guide',
       description:

@@ -7,7 +7,13 @@ export const metadata: Metadata = {
   title: 'Contact Owen Lynch | Psychotherapist Dublin',
   description:
     'Get in touch with Owen Lynch, IAHIP and ICP accredited psychotherapist in Dublin. Currently accepting new clients on Tuesday evenings and Friday evenings.',
-  alternates: { canonical: 'https://owenlynchtherapy.com/contact' },
+  alternates: {
+    canonical: 'https://owenlynchtherapy.com/contact',
+    languages: {
+      'en-IE': 'https://owenlynchtherapy.com/contact',
+      'x-default': 'https://owenlynchtherapy.com/contact',
+    },
+  },
   openGraph: {
     title: 'Contact Owen Lynch | Psychotherapist Dublin',
     description:

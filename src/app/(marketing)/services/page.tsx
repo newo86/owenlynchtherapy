@@ -6,10 +6,16 @@ import { Globe } from '@/components/ui/cobe-globe';
 import FloatingCircles from '@/components/ui/floating-circles';
 
 export const metadata: Metadata = {
-  title: 'Therapy Services Dublin & Online | Owen Lynch Psychotherapy',
+  title: 'Therapy Services Dublin & Online',
   description:
     'IAHIP and ICP accredited psychotherapy in Dublin and online. Specialist support for OCD, anxiety, ADHD, autism, depression, relationships, trauma, and LGBTQIA+ mental health.',
-  alternates: { canonical: 'https://owenlynchtherapy.com/services' },
+  alternates: {
+    canonical: 'https://owenlynchtherapy.com/services',
+    languages: {
+      'en-IE': 'https://owenlynchtherapy.com/services',
+      'x-default': 'https://owenlynchtherapy.com/services',
+    },
+  },
   openGraph: {
     title: 'Therapy Services Dublin & Online | Owen Lynch Psychotherapy',
     description:
