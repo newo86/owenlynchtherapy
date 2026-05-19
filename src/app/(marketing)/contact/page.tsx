@@ -131,7 +131,7 @@ export default async function ContactPage({ searchParams }: Props) {
           </h2>
 
           {/* Two-column: stacked cards left, image right */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
 
             {/* Left — stacked cards + note */}
             <div className="flex flex-col gap-6">
@@ -155,16 +155,17 @@ export default async function ContactPage({ searchParams }: Props) {
               </p>
             </div>
 
-            {/* Right — venue image filling column height */}
+            {/* Right — venue image, proportional */}
             <div
-              className="relative w-full overflow-hidden min-h-[400px]"
+              className="w-full overflow-hidden"
               style={{ borderRadius: '12px', boxShadow: '0 4px 24px rgba(0,0,0,0.10)' }}
             >
               <Image
-                src="/images/insightMatters.png"
-                alt="Entrance to Insight Matters therapy practice at 106 Capel Street Dublin where Owen Lynch sees clients in person."
-                fill
-                className="object-cover object-top"
+                src="/images/Capel%20street.png"
+                alt="106 Capel Street, Dublin 1, where Owen Lynch sees clients in person at Insight Matters."
+                width={2554}
+                height={1664}
+                className="w-full h-auto block"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             </div>
