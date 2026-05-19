@@ -82,17 +82,17 @@ export default function Header() {
           <div className="w-12 flex-shrink-0" aria-hidden="true" />
         </div>
 
-        {/* ── Mobile header — logo only, hidden on homepage ── */}
+        {/* ── Mobile header — logo only, hidden while hero is visible ── */}
         <div
           className={`md:hidden flex items-center justify-center h-16 px-4 transition-all duration-300 ${
-            isHomepage ? "opacity-0 pointer-events-none" : "opacity-100"
+            transparent ? "opacity-0 pointer-events-none" : "opacity-100"
           }`}
         >
           <Link
             href="/"
             aria-label="Owen Lynch Psychotherapy — home"
-            tabIndex={isHomepage ? -1 : 0}
-            aria-hidden={isHomepage}
+            tabIndex={transparent ? -1 : 0}
+            aria-hidden={transparent}
             className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest"
           >
             <OLMark size={40} />
