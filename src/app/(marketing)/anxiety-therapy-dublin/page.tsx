@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
@@ -96,15 +95,6 @@ export default function AnxietyTherapyPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 list-none text-xs text-cream/60">
-              <li><Link href="/" className="hover:text-cream transition-colors">Home</Link></li>
-              <li aria-hidden="true">/</li>
-              <li><Link href="/services" className="hover:text-cream transition-colors">Services</Link></li>
-              <li aria-hidden="true">/</li>
-              <li className="text-cream/80">Anxiety Therapy</li>
-            </ol>
-          </nav>
           <h1
             id="page-hero-heading"
             className="font-heading font-light text-3xl sm:text-4xl lg:text-[3rem] leading-tight text-cream mb-8"
@@ -162,17 +152,17 @@ export default function AnxietyTherapyPage() {
               My approach is integrative, drawing on several evidence-based modalities.
             </p>
             <p className={p}>
-              <strong>Cognitive Behavioural Therapy (CBT)</strong> helps you identify the thought
+              <strong>Cognitive Behavioural Therapy (CBT)</strong>{' '}helps you identify the thought
               patterns that fuel anxiety and develop new ways of relating to them. CBT is
               well-established and has strong empirical support for anxiety presentations.
             </p>
             <p className={p}>
-              <strong>Acceptance and Commitment Therapy (ACT)</strong> focuses less on whether your
+              <strong>Acceptance and Commitment Therapy (ACT)</strong>{' '}focuses less on whether your
               anxious thoughts are true and more on whether they&apos;re helpful. It helps you move
               toward what matters to you, even when anxiety shows up.
             </p>
             <p className={p}>
-              <strong>Psychodynamic exploration</strong> can help when anxiety has deeper roots —
+              <strong>Psychodynamic exploration</strong>{' '}can help when anxiety has deeper roots —
               when your nervous system has learned, often early in life, that uncertainty isn&apos;t
               safe. Understanding why your threat system is so primed adds depth that purely
               technique-driven work sometimes misses.

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
@@ -96,15 +95,6 @@ export default function AdhdTherapyPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 list-none text-xs text-cream/60">
-              <li><Link href="/" className="hover:text-cream transition-colors">Home</Link></li>
-              <li aria-hidden="true">/</li>
-              <li><Link href="/services" className="hover:text-cream transition-colors">Services</Link></li>
-              <li aria-hidden="true">/</li>
-              <li className="text-cream/80">ADHD Therapy</li>
-            </ol>
-          </nav>
           <h1
             id="page-hero-heading"
             className="font-heading font-light text-3xl sm:text-4xl lg:text-[3rem] leading-tight text-cream mb-8"
@@ -161,19 +151,19 @@ export default function AdhdTherapyPage() {
               for neurotypical brains that you&apos;ve been failing to implement for years.
             </p>
             <p className={p}>
-              <strong>Psychoeducation</strong> is often a significant part of early work.
+              <strong>Psychoeducation</strong>{' '}is often a significant part of early work.
               Understanding the actual mechanics of ADHD — executive function, dopamine, time
               blindness, rejection sensitivity — can be genuinely transformative. A lot of what
               you&apos;ve been blaming yourself for starts to make sense.
             </p>
             <p className={p}>
-              <strong>Practical strategy work</strong> focuses on real-life adaptations: external
+              <strong>Practical strategy work</strong>{' '}focuses on real-life adaptations: external
               scaffolding, body doubling, environment design, and ways of working with motivation
               rather than against it. The goal isn&apos;t to push you to be neurotypical.
               It&apos;s to help you function more sustainably as yourself.
             </p>
             <p className={p}>
-              <strong>Processing what ADHD has cost you</strong> is often part of the work too.
+              <strong>Processing what ADHD has cost you</strong>{' '}is often part of the work too.
               There&apos;s frequently grief, anger, or relief that needs space — for the years spent
               struggling, for the relationships strained, for the missed potential. Therapy can hold
               all of that.

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
@@ -96,15 +95,6 @@ export default function AutismTherapyPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 list-none text-xs text-cream/60">
-              <li><Link href="/" className="hover:text-cream transition-colors">Home</Link></li>
-              <li aria-hidden="true">/</li>
-              <li><Link href="/services" className="hover:text-cream transition-colors">Services</Link></li>
-              <li aria-hidden="true">/</li>
-              <li className="text-cream/80">Autism Therapy</li>
-            </ol>
-          </nav>
           <h1
             id="page-hero-heading"
             className="font-heading font-light text-3xl sm:text-4xl lg:text-[3rem] leading-tight text-cream mb-8"
@@ -161,24 +151,24 @@ export default function AutismTherapyPage() {
               Therapy is adapted to suit how you actually communicate and process. That means:
             </p>
             <p className={p}>
-              <strong>No assumed shared frameworks.</strong> I won&apos;t assume metaphor lands,
+              <strong>No assumed shared frameworks.</strong>{' '}I won&apos;t assume metaphor lands,
               that direct questions feel safe, that eye contact is wanted, or that processing time
               should match the standard. You can take silence. You can think out loud. You can ask
               me to repeat or rephrase. You can email me afterward if something comes up that
               didn&apos;t fit in the session.
             </p>
             <p className={p}>
-              <strong>Working with sensory and regulatory reality.</strong> Burnout, overwhelm,
+              <strong>Working with sensory and regulatory reality.</strong>{' '}Burnout, overwhelm,
               shutdown, and the cost of masking are real. We can work with all of it without
               pathologising it.
             </p>
             <p className={p}>
-              <strong>Late diagnosis processing.</strong> For many people, identifying as autistic
+              <strong>Late diagnosis processing.</strong>{' '}For many people, identifying as autistic
               later in life brings up grief, relief, anger, and a re-narrating of your own history.
               There&apos;s a lot to make sense of. Therapy can hold that.
             </p>
             <p className={p}>
-              <strong>Relationships, work, family.</strong> Navigating a world built for
+              <strong>Relationships, work, family.</strong>{' '}Navigating a world built for
               neurotypical brains has costs. We can work on the practical strategies as well as the
               emotional weight of it.
             </p>

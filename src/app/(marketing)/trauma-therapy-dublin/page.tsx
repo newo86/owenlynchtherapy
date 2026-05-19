@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
@@ -96,15 +95,6 @@ export default function TraumaTherapyPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 list-none text-xs text-cream/60">
-              <li><Link href="/" className="hover:text-cream transition-colors">Home</Link></li>
-              <li aria-hidden="true">/</li>
-              <li><Link href="/services" className="hover:text-cream transition-colors">Services</Link></li>
-              <li aria-hidden="true">/</li>
-              <li className="text-cream/80">Trauma Therapy</li>
-            </ol>
-          </nav>
           <h1
             id="page-hero-heading"
             className="font-heading font-light text-3xl sm:text-4xl lg:text-[3rem] leading-tight text-cream mb-8"
@@ -164,24 +154,24 @@ export default function TraumaTherapyPage() {
               developing trust in the therapeutic relationship.
             </p>
             <p className={p}>
-              <strong>Stabilisation and resourcing.</strong> Before we approach the difficult
+              <strong>Stabilisation and resourcing.</strong>{' '}Before we approach the difficult
               material, we make sure you have the internal and external resources to handle what
               comes up. This isn&apos;t a delay — it&apos;s the actual work.
             </p>
             <p className={p}>
-              <strong>Integrative approaches.</strong> I draw on psychodynamic understanding,
+              <strong>Integrative approaches.</strong>{' '}I draw on psychodynamic understanding,
               somatic awareness, and cognitive work as fits what you bring. I don&apos;t use a
               single rigid trauma protocol — different approaches suit different people and different
               kinds of trauma.
             </p>
             <p className={p}>
-              <strong>Working with the body.</strong> Trauma changes the nervous system. We work
+              <strong>Working with the body.</strong>{' '}Trauma changes the nervous system. We work
               with grounding, breath, and noticing what&apos;s happening in the body, alongside the
               cognitive and relational work. The goal is to help your system update — to learn, at a
               level deeper than thought, that the danger is over.
             </p>
             <p className={p}>
-              <strong>Relational safety as the foundation.</strong> For trauma that happened in
+              <strong>Relational safety as the foundation.</strong>{' '}For trauma that happened in
               relationships — and most does — the therapeutic relationship is itself a vehicle for
               healing. Having a consistent, attuned, non-judgmental presence over time can do work
               that techniques alone can&apos;t.

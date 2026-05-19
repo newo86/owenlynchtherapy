@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
@@ -96,15 +95,6 @@ export default function LgbtqiaTherapyPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 list-none text-xs text-cream/60">
-              <li><Link href="/" className="hover:text-cream transition-colors">Home</Link></li>
-              <li aria-hidden="true">/</li>
-              <li><Link href="/services" className="hover:text-cream transition-colors">Services</Link></li>
-              <li aria-hidden="true">/</li>
-              <li className="text-cream/80">LGBTQIA+ Therapy</li>
-            </ol>
-          </nav>
           <h1
             id="page-hero-heading"
             className="font-heading font-light text-3xl sm:text-4xl lg:text-[3rem] leading-tight text-cream mb-8"

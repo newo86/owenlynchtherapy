@@ -100,15 +100,6 @@ export default function OcdTherapyPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 list-none text-xs text-cream/60">
-              <li><Link href="/" className="hover:text-cream transition-colors">Home</Link></li>
-              <li aria-hidden="true">/</li>
-              <li><Link href="/services" className="hover:text-cream transition-colors">Services</Link></li>
-              <li aria-hidden="true">/</li>
-              <li className="text-cream/80">OCD Therapy</li>
-            </ol>
-          </nav>
           <h1
             id="page-hero-heading"
             className="font-heading font-light text-3xl sm:text-4xl lg:text-[3rem] leading-tight text-cream mb-8"
@@ -162,20 +153,20 @@ export default function OcdTherapyPage() {
               My approach draws on three evidence-based modalities, adapted to what fits for you.
             </p>
             <p className={p}>
-              <strong>Inference-Based CBT (I-CBT)</strong> is a newer approach that looks at the
+              <strong>Inference-Based CBT (I-CBT)</strong>{' '}is a newer approach that looks at the
               reasoning process underneath the doubt. Rather than focusing only on managing the
               anxiety once a thought has taken hold, I-CBT examines why the thought got taken
               seriously in the first place. It&apos;s a different angle that many people find
               genuinely freeing.
             </p>
             <p className={p}>
-              <strong>Acceptance and Commitment Therapy (ACT)</strong> helps you change your
+              <strong>Acceptance and Commitment Therapy (ACT)</strong>{' '}helps you change your
               relationship with intrusive thoughts rather than fighting them. The goal isn&apos;t to
               eliminate the thoughts — it&apos;s to take their power away, so they no longer
               dictate what you do or how you live.
             </p>
             <p className={p}>
-              <strong>Exposure and Response Prevention (ERP)</strong> is the most extensively
+              <strong>Exposure and Response Prevention (ERP)</strong>{' '}is the most extensively
               researched treatment for OCD. It involves gradually facing the situations or thoughts
               that trigger your obsessions while supporting you to resist performing compulsions. ERP
               is introduced thoughtfully and at your pace — never as a boot camp.

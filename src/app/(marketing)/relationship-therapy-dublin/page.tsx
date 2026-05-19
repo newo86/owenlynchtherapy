@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
@@ -96,15 +95,6 @@ export default function RelationshipTherapyPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 list-none text-xs text-cream/60">
-              <li><Link href="/" className="hover:text-cream transition-colors">Home</Link></li>
-              <li aria-hidden="true">/</li>
-              <li><Link href="/services" className="hover:text-cream transition-colors">Services</Link></li>
-              <li aria-hidden="true">/</li>
-              <li className="text-cream/80">Relationship Therapy</li>
-            </ol>
-          </nav>
           <h1
             id="page-hero-heading"
             className="font-heading font-light text-3xl sm:text-4xl lg:text-[3rem] leading-tight text-cream mb-8"
@@ -155,23 +145,23 @@ export default function RelationshipTherapyPage() {
               drawn to and what you avoid.
             </p>
             <p className={p}>
-              <strong>Attachment work</strong> can be central. The ways we learned to relate, very
+              <strong>Attachment work</strong>{' '}can be central. The ways we learned to relate, very
               early in life, often shape our adult relationships in ways that are invisible until
               they&apos;re named. Understanding your attachment style — and where it came from —
               can shift a lot.
             </p>
             <p className={p}>
-              <strong>Pattern recognition.</strong> Once you can see your own pattern, you have a
+              <strong>Pattern recognition.</strong>{' '}Once you can see your own pattern, you have a
               choice. Until then, the pattern runs you. Therapy is partly the work of bringing
               patterns into view without judgment.
             </p>
             <p className={p}>
-              <strong>Communication and conflict.</strong> We work on practical skills — how to
+              <strong>Communication and conflict.</strong>{' '}We work on practical skills — how to
               have hard conversations, how to listen without defending, how to express what you
               need. These are learnable.
             </p>
             <p className={p}>
-              <strong>Self-knowledge.</strong> A lot of relationship work is really self work. The
+              <strong>Self-knowledge.</strong>{' '}A lot of relationship work is really self work. The
               more clearly you understand yourself — what you want, what you can offer, what you
               can&apos;t — the better your relationships tend to go.
             </p>

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
@@ -96,15 +95,6 @@ export default function DepressionTherapyPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 list-none text-xs text-cream/60">
-              <li><Link href="/" className="hover:text-cream transition-colors">Home</Link></li>
-              <li aria-hidden="true">/</li>
-              <li><Link href="/services" className="hover:text-cream transition-colors">Services</Link></li>
-              <li aria-hidden="true">/</li>
-              <li className="text-cream/80">Depression Therapy</li>
-            </ol>
-          </nav>
           <h1
             id="page-hero-heading"
             className="font-heading font-light text-3xl sm:text-4xl lg:text-[3rem] leading-tight text-cream mb-8"
@@ -159,25 +149,25 @@ export default function DepressionTherapyPage() {
               what fits for you.
             </p>
             <p className={p}>
-              <strong>Behavioural activation</strong> addresses the trap depression creates: the
+              <strong>Behavioural activation</strong>{' '}addresses the trap depression creates: the
               less you do, the worse you feel; the worse you feel, the less you do. Carefully and
               gradually re-engaging with activities — not because you feel like it, but because the
               engagement itself helps shift the mood — has strong evidence behind it.
             </p>
             <p className={p}>
-              <strong>Cognitive work</strong> helps with the thinking patterns that depression
+              <strong>Cognitive work</strong>{' '}helps with the thinking patterns that depression
               generates: the negative filter, the self-criticism, the hopelessness about the
               future. We don&apos;t pretend the thoughts aren&apos;t there. We learn to recognise
               them and develop a different relationship to them.
             </p>
             <p className={p}>
-              <strong>Psychodynamic exploration</strong> can be valuable when depression has deeper
+              <strong>Psychodynamic exploration</strong>{' '}can be valuable when depression has deeper
               roots — when there&apos;s grief that hasn&apos;t been processed, anger that&apos;s
               been turned inward, or patterns from earlier in life that are still shaping your
               present.
             </p>
             <p className={p}>
-              <strong>Working with the body</strong> is part of it too. Depression lives in the
+              <strong>Working with the body</strong>{' '}is part of it too. Depression lives in the
               body, not just the mind. Sleep, movement, sunlight, nutrition, and nervous system
               regulation all play a role. We work with what&apos;s practical given where you are.
             </p>
