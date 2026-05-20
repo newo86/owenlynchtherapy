@@ -106,12 +106,12 @@ export async function POST(req: NextRequest) {
   try {
     await resend.emails.send({
       from: 'onboarding@resend.dev',
-      to: 'info@owenlynchtherapy.com',
+      to: 'owenlynch1310@gmail.com', // TODO: change to info@owenlynchtherapy.com once Resend domain verified
       subject: `New intake form: ${formData.full_name}`,
       html: buildEmailHtml(formData as Record<string, unknown>),
     });
   } catch (emailErr) {
-    console.error('[intake submit] email error', emailErr);
+    console.error('[intake email] error:', emailErr);
   }
 
   return NextResponse.json({ success: true }, { headers: noCache });
