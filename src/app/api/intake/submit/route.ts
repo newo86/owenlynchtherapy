@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   // Re-validate token server-side
   const { data: tokenRow, error: tokenErr } = await supabaseAdmin
     .from('intake_tokens')
-    .select('client_name, expires_at, is_used')
+    .select('id, client_name, expires_at, is_used')
     .eq('token', token)
     .single();
 
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
   // Insert submission
   const { error: insertErr } = await supabaseAdmin.from('intake_submissions').insert({
-    token,
+    token_id: tokenRow.id,
     full_name: formData.full_name,
     preferred_name: (formData.preferred_name as string)?.trim() || null,
     email: formData.email,
@@ -92,14 +92,14 @@ export async function POST(req: NextRequest) {
   });
 
   if (insertErr) {
-    console.error('[intake submit] insert error', insertErr);
+    console.error('[intake submit] insert error:', JSON.stringify(insertErr, null, 2));
     return NextResponse.json({ error: 'Failed to save submission' }, { status: 500 });
   }
 
   // Mark token as used
   await supabaseAdmin
     .from('intake_tokens')
-    .update({ is_used: true, used_at: new Date().toISOString() })
+    .update({ is_used: true })
     .eq('token', token);
 
   // Send email notification (non-blocking — don't fail submission on email error)

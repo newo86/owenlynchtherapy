@@ -18,26 +18,28 @@ export async function POST(req: NextRequest) {
   }
 
   const { client_email, client_name } = body;
-  if (!client_email?.trim() || !client_name?.trim()) {
-    return NextResponse.json(
-      { error: 'client_email and client_name are required' },
-      { status: 400 }
-    );
+  if (!client_name?.trim()) {
+    return NextResponse.json({ error: 'client_name is required' }, { status: 400 });
   }
 
   const token = `${randomUUID()}-${randomBytes(16).toString('hex')}`;
   const expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  const { error } = await supabaseAdmin.from('intake_tokens').insert({
-    token,
-    client_email: client_email.trim(),
-    client_name: client_name.trim(),
-    expires_at,
-  });
+  try {
+    const { error } = await supabaseAdmin.from('intake_tokens').insert({
+      token,
+      client_name: client_name.trim(),
+      ...(client_email?.trim() ? { client_email: client_email.trim() } : {}),
+      expires_at,
+    });
 
-  if (error) {
-    console.error('[generate-token]', error);
-    return NextResponse.json({ error: 'Failed to create token' }, { status: 500 });
+    if (error) {
+      console.error('[generate-token] Supabase error:', JSON.stringify(error, null, 2));
+      return NextResponse.json({ error: error.message ?? 'Failed to create token' }, { status: 500 });
+    }
+  } catch (err) {
+    console.error('[generate-token] Unexpected error:', err);
+    return NextResponse.json({ error: 'Unexpected server error' }, { status: 500 });
   }
 
   const url = `https://owenlynchtherapy.com/intake?token=${token}`;

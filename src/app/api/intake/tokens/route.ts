@@ -11,13 +11,13 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('intake_tokens')
-    .select('token, client_name, client_email, created_at, expires_at, is_used, used_at')
+    .select('id, token, client_name, client_email, created_at, expires_at, is_used')
     .order('created_at', { ascending: false })
     .limit(30);
 
   if (error) {
-    console.error('[tokens list]', error);
-    return NextResponse.json({ error: 'Failed to fetch tokens' }, { status: 500 });
+    console.error('[tokens list] Supabase error:', JSON.stringify(error, null, 2));
+    return NextResponse.json({ error: error.message ?? 'Failed to fetch tokens' }, { status: 500 });
   }
 
   return NextResponse.json(
