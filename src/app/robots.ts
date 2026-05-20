@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/studio/', '/api/'],
+      disallow: ['/studio/', '/api/', '/intake', '/admin'],
     },
     sitemap: 'https://owenlynchtherapy.com/sitemap.xml',
   };
