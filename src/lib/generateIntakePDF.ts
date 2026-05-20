@@ -1,4 +1,6 @@
 import PDFDocument from 'pdfkit';
+import sharp from 'sharp';
+import path from 'path';
 
 export interface SubmissionData {
   id: string;
@@ -48,7 +50,10 @@ const AI_LABELS: Record<string, string> = {
   no: 'No',
 };
 
-export function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
+export async function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
+  const svgPath = path.join(process.cwd(), 'public/images/logo-stacked-light-bg.svg');
+  const logoPng = await sharp(svgPath).resize(480, 560).png().toBuffer();
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
@@ -64,6 +69,13 @@ export function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
     const chunks: Buffer[] = [];
     doc.on('data', (c: Buffer) => chunks.push(c));
     doc.on('error', reject);
+
+    // ── Cream background on every page ─────────────────────────────────────────
+    function paintBackground() {
+      doc.save().rect(0, 0, doc.page.width, doc.page.height).fill('#F5F0E8').restore();
+    }
+    paintBackground();
+    doc.on('pageAdded', () => paintBackground());
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -111,13 +123,11 @@ export function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
 
     // ── Header ─────────────────────────────────────────────────────────────────
 
-    doc.font('Helvetica-Bold').fontSize(26).fillColor(FOREST)
-      .text('OL', L, 50, { align: 'center', width: W, characterSpacing: 3 });
-    doc.moveDown(0.3);
-
-    doc.font('Helvetica').fontSize(13).fillColor(FOREST)
-      .text('Owen Lynch Psychotherapy', { align: 'center' });
-    doc.moveDown(0.2);
+    const logoW = 108;
+    const logoH = Math.round(logoW * 280 / 240); // preserve 240×280 aspect ratio
+    const logoX = (doc.page.width - logoW) / 2;
+    doc.image(logoPng, logoX, 44, { width: logoW });
+    doc.y = 44 + logoH + 10;
 
     doc.font('Helvetica').fontSize(9).fillColor(MUTED)
       .text('Client Intake Form', { align: 'center' });
