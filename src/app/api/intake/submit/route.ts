@@ -1,12 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { generateIntakePDF } from '@/lib/generateIntakePDF';
+import { sanitiseInput } from '@/lib/sanitise';
+import { rateLimit } from '@/lib/rateLimit';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
+const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+const NAME_RE = /^[a-zA-ZÀ-ÿ\s'\-]{2,100}$/;
+const VALID_FORMATS = ['in_person', 'online', 'no_preference'];
+const VALID_REFERRAL = ['Google search', 'Psychology Today', 'Word of mouth', 'Social media', 'GP referral', 'Counselling directory', 'Other'];
+const VALID_AI = ['yes', 'sometimes', 'no'];
+
+function isValidPhone(raw: string): boolean {
+  const stripped = raw.replace(/[\s\-\(\)]/g, '');
+  return /^(\+353|0)(8[3-9]|1|2[1-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]|9[0-9])\d{6,7}$/.test(stripped);
+}
+
+function validateDOB(raw: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return 'Date of birth must be in YYYY-MM-DD format';
+  const dob = new Date(raw);
+  if (isNaN(dob.getTime())) return 'Invalid date of birth';
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  if (age < 18) return 'You must be 18 or over to use this service';
+  if (age > 120) return 'Invalid date of birth';
+  return null;
+}
+
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+
+  if (!rateLimit('submit', ip, 5, 15 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429, headers: noCache });
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await req.json();
@@ -14,9 +46,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { token, ...formData } = body as { token: string } & Record<string, unknown>;
+  const { token, ...rawForm } = body as { token: string } & Record<string, unknown>;
 
-  if (!token) {
+  if (!token || typeof token !== 'string') {
     return NextResponse.json({ error: 'Token required' }, { status: 400 });
   }
 
@@ -37,59 +69,104 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Token expired' }, { status: 400, headers: noCache });
   }
 
-  // Server-side validation of required fields
-  const required: string[] = [
-    'full_name', 'email', 'phone', 'date_of_birth',
-    'session_format', 'referral_source', 'reason_for_therapy',
-    'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship',
-  ];
-  for (const field of required) {
-    if (!formData[field]) {
-      return NextResponse.json({ error: `Missing required field: ${field}` }, { status: 400 });
-    }
-  }
+  // Sanitise all string fields
+  const s = (v: unknown) => typeof v === 'string' ? sanitiseInput(v) : '';
 
-  const validFormats = ['in_person', 'online', 'no_preference'];
-  if (!validFormats.includes(formData.session_format as string)) {
-    return NextResponse.json({ error: 'Invalid session_format' }, { status: 400 });
-  }
+  const full_name                   = s(rawForm.full_name);
+  const preferred_name              = s(rawForm.preferred_name);
+  const email                       = s(rawForm.email);
+  const phone                       = s(rawForm.phone);
+  const date_of_birth               = s(rawForm.date_of_birth);
+  const pronouns                    = s(rawForm.pronouns);
+  const session_format              = s(rawForm.session_format);
+  const referral_source             = s(rawForm.referral_source);
+  const referral_source_other       = s(rawForm.referral_source_other);
+  const reason_for_therapy          = s(rawForm.reason_for_therapy);
+  const diagnosed_conditions        = s(rawForm.diagnosed_conditions);
+  const previous_therapy            = s(rawForm.previous_therapy);
+  const previous_therapy_details    = s(rawForm.previous_therapy_details);
+  const current_medication          = s(rawForm.current_medication);
+  const seeing_psychiatrist         = s(rawForm.seeing_psychiatrist);
+  const psychiatrist_details        = s(rawForm.psychiatrist_details);
+  const uses_ai_tools               = s(rawForm.uses_ai_tools);
+  const emergency_contact_name      = s(rawForm.emergency_contact_name);
+  const emergency_contact_phone     = s(rawForm.emergency_contact_phone);
+  const emergency_contact_relationship = s(rawForm.emergency_contact_relationship);
+  const gp_name                     = s(rawForm.gp_name);
+  const gp_practice                 = s(rawForm.gp_practice);
+  const additional_info             = s(rawForm.additional_info);
 
-  if (formData.uses_ai_tools && !['yes', 'sometimes', 'no'].includes(formData.uses_ai_tools as string)) {
-    return NextResponse.json({ error: 'Invalid uses_ai_tools value' }, { status: 400 });
-  }
+  // Validate required fields
+  if (!full_name) return NextResponse.json({ error: 'Full name is required' }, { status: 400 });
+  if (!NAME_RE.test(full_name)) return NextResponse.json({ error: 'Full name contains invalid characters' }, { status: 400 });
 
-  if (!formData.consent_data_storage || !formData.consent_age_confirmation) {
+  if (!email) return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+  if (!EMAIL_RE.test(email) || email.length > 254) return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
+
+  if (!phone) return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
+  if (!isValidPhone(phone)) return NextResponse.json({ error: 'Please enter a valid Irish phone number' }, { status: 400 });
+
+  if (!date_of_birth) return NextResponse.json({ error: 'Date of birth is required' }, { status: 400 });
+  const dobError = validateDOB(date_of_birth);
+  if (dobError) return NextResponse.json({ error: dobError }, { status: 400 });
+
+  if (!VALID_FORMATS.includes(session_format)) return NextResponse.json({ error: 'Invalid session format' }, { status: 400 });
+  if (!VALID_REFERRAL.includes(referral_source)) return NextResponse.json({ error: 'Invalid referral source' }, { status: 400 });
+  if (referral_source === 'Other' && !referral_source_other) return NextResponse.json({ error: 'Please specify referral source' }, { status: 400 });
+
+  if (!reason_for_therapy || reason_for_therapy.length < 10) return NextResponse.json({ error: 'Please provide a reason for seeking therapy (at least 10 characters)' }, { status: 400 });
+  if (reason_for_therapy.length > 2000) return NextResponse.json({ error: 'Reason for therapy is too long (max 2000 characters)' }, { status: 400 });
+
+  if (!['yes', 'no'].includes(previous_therapy)) return NextResponse.json({ error: 'Please answer the previous therapy question' }, { status: 400 });
+  if (!['yes', 'no'].includes(seeing_psychiatrist)) return NextResponse.json({ error: 'Please answer the psychiatrist question' }, { status: 400 });
+  if (uses_ai_tools && !VALID_AI.includes(uses_ai_tools)) return NextResponse.json({ error: 'Invalid uses_ai_tools value' }, { status: 400 });
+
+  if (!emergency_contact_name) return NextResponse.json({ error: 'Emergency contact name is required' }, { status: 400 });
+  if (!NAME_RE.test(emergency_contact_name)) return NextResponse.json({ error: 'Emergency contact name contains invalid characters' }, { status: 400 });
+  if (!emergency_contact_phone) return NextResponse.json({ error: 'Emergency contact phone is required' }, { status: 400 });
+  if (!isValidPhone(emergency_contact_phone)) return NextResponse.json({ error: 'Please enter a valid phone number for the emergency contact' }, { status: 400 });
+  if (!emergency_contact_relationship) return NextResponse.json({ error: 'Emergency contact relationship is required' }, { status: 400 });
+  if (emergency_contact_relationship.length > 100) return NextResponse.json({ error: 'Relationship is too long' }, { status: 400 });
+
+  if (!rawForm.consent_data_storage || !rawForm.consent_age_confirmation) {
     return NextResponse.json({ error: 'Consent fields required' }, { status: 400 });
   }
+
+  // Optional field length limits
+  if (diagnosed_conditions.length > 1000) return NextResponse.json({ error: 'Diagnosed conditions text is too long (max 1000 characters)' }, { status: 400 });
+  if (previous_therapy_details.length > 1000) return NextResponse.json({ error: 'Previous therapy details text is too long (max 1000 characters)' }, { status: 400 });
+  if (current_medication.length > 500) return NextResponse.json({ error: 'Current medication text is too long (max 500 characters)' }, { status: 400 });
+  if (psychiatrist_details.length > 200) return NextResponse.json({ error: 'Psychiatrist details text is too long (max 200 characters)' }, { status: 400 });
+  if (additional_info.length > 2000) return NextResponse.json({ error: 'Additional info text is too long (max 2000 characters)' }, { status: 400 });
 
   // Insert submission
   const { error: insertErr } = await supabaseAdmin.from('intake_submissions').insert({
     token_id: tokenRow.id,
-    full_name: formData.full_name,
-    preferred_name: (formData.preferred_name as string)?.trim() || null,
-    email: formData.email,
-    phone: formData.phone,
-    date_of_birth: formData.date_of_birth,
-    pronouns: (formData.pronouns as string)?.trim() || null,
-    session_format: formData.session_format,
-    referral_source: formData.referral_source,
-    referral_source_other: (formData.referral_source_other as string)?.trim() || null,
-    reason_for_therapy: formData.reason_for_therapy,
-    diagnosed_conditions: (formData.diagnosed_conditions as string)?.trim() || null,
-    previous_therapy: formData.previous_therapy === 'yes',
-    previous_therapy_details: (formData.previous_therapy_details as string)?.trim() || null,
-    current_medication: (formData.current_medication as string)?.trim() || null,
-    seeing_psychiatrist: formData.seeing_psychiatrist === 'yes',
-    psychiatrist_details: (formData.psychiatrist_details as string)?.trim() || null,
-    uses_ai_tools: (formData.uses_ai_tools as string) || null,
-    emergency_contact_name: formData.emergency_contact_name,
-    emergency_contact_phone: formData.emergency_contact_phone,
-    emergency_contact_relationship: formData.emergency_contact_relationship,
-    gp_name: (formData.gp_name as string)?.trim() || null,
-    gp_practice: (formData.gp_practice as string)?.trim() || null,
-    consent_data_storage: Boolean(formData.consent_data_storage),
-    consent_age_confirmation: Boolean(formData.consent_age_confirmation),
-    additional_info: (formData.additional_info as string)?.trim() || null,
+    full_name,
+    preferred_name: preferred_name || null,
+    email,
+    phone,
+    date_of_birth,
+    pronouns: pronouns || null,
+    session_format,
+    referral_source,
+    referral_source_other: referral_source_other || null,
+    reason_for_therapy,
+    diagnosed_conditions: diagnosed_conditions || null,
+    previous_therapy: previous_therapy === 'yes',
+    previous_therapy_details: previous_therapy_details || null,
+    current_medication: current_medication || null,
+    seeing_psychiatrist: seeing_psychiatrist === 'yes',
+    psychiatrist_details: psychiatrist_details || null,
+    uses_ai_tools: uses_ai_tools || null,
+    emergency_contact_name,
+    emergency_contact_phone,
+    emergency_contact_relationship,
+    gp_name: gp_name || null,
+    gp_practice: gp_practice || null,
+    consent_data_storage: Boolean(rawForm.consent_data_storage),
+    consent_age_confirmation: Boolean(rawForm.consent_age_confirmation),
+    additional_info: additional_info || null,
   });
 
   if (insertErr) {
@@ -113,18 +190,23 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .single();
 
-    const pdfBuffer = savedRow
-      ? await generateIntakePDF(savedRow)
-      : null;
+    const pdfBuffer = savedRow ? await generateIntakePDF(savedRow) : null;
+    const filename = `intake-${full_name.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
 
-    const fullName = formData.full_name as string;
-    const filename = `intake-${fullName.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
+    const sanitisedData = {
+      full_name, preferred_name, email, phone, date_of_birth, pronouns,
+      session_format, referral_source, referral_source_other, reason_for_therapy,
+      diagnosed_conditions, previous_therapy, previous_therapy_details,
+      current_medication, seeing_psychiatrist, psychiatrist_details, uses_ai_tools,
+      emergency_contact_name, emergency_contact_phone, emergency_contact_relationship,
+      gp_name, gp_practice, additional_info,
+    };
 
     const emailResult = await resend.emails.send({
       from: 'onboarding@resend.dev',
       to: 'owenlynch1310@gmail.com', // TODO: change to info@owenlynchtherapy.com once Resend domain verified
-      subject: `New intake form: ${fullName}`,
-      html: buildEmailHtml(formData as Record<string, unknown>),
+      subject: `New intake form: ${full_name}`,
+      html: buildEmailHtml(sanitisedData),
       ...(pdfBuffer ? { attachments: [{ filename, content: pdfBuffer }] } : {}),
     });
     if (emailResult.error) {
@@ -154,7 +236,7 @@ function section(title: string, rows: string): string {
   </td></tr>${rows}`;
 }
 
-function buildEmailHtml(d: Record<string, unknown>): string {
+function buildEmailHtml(d: Record<string, string>): string {
   const fmt = (s: string) => s.replace(/_/g, ' ');
   return `<table style="font-family:system-ui,sans-serif;max-width:620px;width:100%;color:#333;border-collapse:collapse">
     <tr><td colspan="2" style="padding-bottom:24px">
@@ -170,7 +252,7 @@ function buildEmailHtml(d: Record<string, unknown>): string {
       row('Pronouns', d.pronouns),
     ].join(''))}
     ${section('Session Preferences', [
-      row('Format', fmt(String(d.session_format || ''))),
+      row('Format', fmt(d.session_format || '')),
       row('Referral source', d.referral_source),
       row('Referral detail', d.referral_source_other),
     ].join(''))}

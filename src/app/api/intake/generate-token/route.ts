@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { supabaseAdmin } from '@/lib/supabase';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -8,6 +9,11 @@ export async function POST(req: NextRequest) {
 
   if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  if (!rateLimit('generate-token', ip, 20, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
   }
 
   let body: { client_email?: string; client_name?: string };

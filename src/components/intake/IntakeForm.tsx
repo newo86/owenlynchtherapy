@@ -77,11 +77,35 @@ const initialState = (name: string, email: string): FormState => ({
 function validate(step: number, d: FormState): Record<string, string> {
   const e: Record<string, string> = {};
   if (step === 1) {
-    if (!d.full_name.trim()) e.full_name = 'Full name is required';
-    if (!d.email.trim()) e.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) e.email = 'Please enter a valid email address';
-    if (!d.phone.trim()) e.phone = 'Phone number is required';
-    if (!d.date_of_birth) e.date_of_birth = 'Date of birth is required';
+    if (!d.full_name.trim()) {
+      e.full_name = 'Full name is required';
+    } else if (!/^[a-zA-ZÀ-ÿ\s'\-]{2,100}$/.test(d.full_name.trim())) {
+      e.full_name = 'Please enter your name using letters only';
+    }
+    if (!d.email.trim()) {
+      e.email = 'Email address is required';
+    } else if (!/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(d.email.trim())) {
+      e.email = 'Please enter a valid email address';
+    }
+    if (!d.phone.trim()) {
+      e.phone = 'Phone number is required';
+    } else {
+      const stripped = d.phone.replace(/[\s\-\(\)]/g, '');
+      if (!/^(\+353|0)(8[3-9]|1|2[1-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]|9[0-9])\d{6,7}$/.test(stripped)) {
+        e.phone = 'Please enter a valid Irish phone number';
+      }
+    }
+    if (!d.date_of_birth) {
+      e.date_of_birth = 'Date of birth is required';
+    } else {
+      const dob = new Date(d.date_of_birth);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+      if (age < 18) e.date_of_birth = 'You must be 18 or over to use this service';
+      else if (age > 120) e.date_of_birth = 'Please enter a valid date of birth';
+    }
   }
   if (step === 2) {
     if (!d.session_format) e.session_format = 'Please select a session format';
@@ -161,6 +185,17 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
 
   const set = (field: keyof FormState, value: string | boolean) =>
     setForm(prev => ({ ...prev, [field]: value }));
+
+  const handleBlur = (field: string) => {
+    if (step !== 1) return;
+    const errs = validate(1, form);
+    setErrors(prev => {
+      const next = { ...prev };
+      if (errs[field]) next[field] = errs[field];
+      else delete next[field];
+      return next;
+    });
+  };
 
   function next() {
     const errs = validate(step, form);
@@ -246,6 +281,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                     type="text"
                     value={form.full_name}
                     onChange={e => set('full_name', e.target.value)}
+                    onBlur={() => handleBlur('full_name')}
                     className={inputCls}
                     autoComplete="name"
                   />
@@ -270,16 +306,18 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                     type="email"
                     value={form.email}
                     onChange={e => set('email', e.target.value)}
+                    onBlur={() => handleBlur('email')}
                     className={inputCls}
                     autoComplete="email"
                   />
                 </FormField>
-                <FormField label="Phone number" htmlFor="phone" required error={errors.phone}>
+                <FormField label="Phone number" htmlFor="phone" required error={errors.phone} helperText="Irish numbers only — e.g. 087 000 0000 or +353 87 000 0000">
                   <input
                     id="phone"
                     type="tel"
                     value={form.phone}
                     onChange={e => set('phone', e.target.value)}
+                    onBlur={() => handleBlur('phone')}
                     className={inputCls}
                     autoComplete="tel"
                   />
@@ -290,6 +328,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                     type="date"
                     value={form.date_of_birth}
                     onChange={e => set('date_of_birth', e.target.value)}
+                    onBlur={() => handleBlur('date_of_birth')}
                     className={inputCls}
                   />
                 </FormField>

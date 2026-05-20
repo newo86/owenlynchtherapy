@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { generateIntakePDF } from '@/lib/generateIntakePDF';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -9,6 +10,14 @@ export async function GET(req: NextRequest) {
   if (!secret || authHeader !== `Bearer ${secret}`) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  if (!rateLimit('download-pdf', ip, 20, 60 * 60 * 1000)) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
       headers: { 'Content-Type': 'application/json' },
     });
   }
