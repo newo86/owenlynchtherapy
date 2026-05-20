@@ -144,7 +144,9 @@ export default function AdminIntakePage() {
         headers: { Authorization: `Bearer ${getSecret()}` },
       });
       if (!res.ok) {
-        alert('Failed to generate PDF.');
+        const text = await res.text();
+        console.error('[download-pdf] server error', res.status, text);
+        alert(`Failed to generate PDF (${res.status}). Check the console for details.`);
         return;
       }
       const blob = await res.blob();
@@ -156,8 +158,9 @@ export default function AdminIntakePage() {
       a.download = `intake-${name}-${date}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch {
-      alert('Network error downloading PDF.');
+    } catch (err) {
+      console.error('[download-pdf] fetch error:', err);
+      alert('Network error downloading PDF. Check the console for details.');
     } finally {
       setDownloadingId(null);
     }

@@ -28,17 +28,22 @@ export async function GET(req: NextRequest) {
     .single();
 
   if (error || !data) {
+    console.error('[download-pdf] Supabase error:', JSON.stringify(error, null, 2));
     return new Response(JSON.stringify({ error: 'Submission not found' }), {
       status: 404,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
+  console.log('[download-pdf] generating PDF for:', data.full_name, '| submitted_at:', data.submitted_at);
+
   try {
     const pdfBuffer = await generateIntakePDF(data);
     const name = (data.full_name as string).replace(/\s+/g, '-').toLowerCase();
     const date = new Date(data.submitted_at as string).toISOString().split('T')[0];
     const filename = `intake-${name}-${date}.pdf`;
+
+    console.log('[download-pdf] PDF generated, size:', pdfBuffer.length, 'bytes');
 
     return new Response(new Uint8Array(pdfBuffer), {
       headers: {
@@ -48,7 +53,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error('[download-pdf] error:', err);
+    console.error('[download-pdf] PDF generation error:', err);
     return new Response(JSON.stringify({ error: 'Failed to generate PDF' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

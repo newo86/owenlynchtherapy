@@ -120,15 +120,20 @@ export async function POST(req: NextRequest) {
     const fullName = formData.full_name as string;
     const filename = `intake-${fullName.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
 
-    await resend.emails.send({
+    const emailResult = await resend.emails.send({
       from: 'onboarding@resend.dev',
       to: 'owenlynch1310@gmail.com', // TODO: change to info@owenlynchtherapy.com once Resend domain verified
       subject: `New intake form: ${fullName}`,
       html: buildEmailHtml(formData as Record<string, unknown>),
       ...(pdfBuffer ? { attachments: [{ filename, content: pdfBuffer }] } : {}),
     });
+    if (emailResult.error) {
+      console.error('[intake email] Resend error:', JSON.stringify(emailResult.error, null, 2));
+    } else {
+      console.log('[intake email] sent, id:', emailResult.data?.id);
+    }
   } catch (emailErr) {
-    console.error('[intake email] error:', emailErr);
+    console.error('[intake email] thrown error:', emailErr);
   }
 
   return NextResponse.json({ success: true }, { headers: noCache });
