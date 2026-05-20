@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
   try {
     await resend.emails.send({
       from: 'onboarding@resend.dev',
-      to: 'owenlynch1310@gmail.com', // TODO: change to info@owenlynchtherapy.com once domain verified in Resend
+      to: 'info@owenlynchtherapy.com',
       subject: `New intake form: ${formData.full_name}`,
       html: buildEmailHtml(formData as Record<string, unknown>),
     });
