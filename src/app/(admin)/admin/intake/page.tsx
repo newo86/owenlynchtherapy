@@ -12,6 +12,14 @@ interface TokenRow {
   is_used: boolean;
 }
 
+interface SubmissionRow {
+  id: string;
+  full_name: string;
+  email: string | null;
+  session_format: string;
+  submitted_at: string;
+}
+
 const STORAGE_KEY = 'intake_admin_auth';
 
 export default function AdminIntakePage() {
@@ -28,6 +36,11 @@ export default function AdminIntakePage() {
   const [tokens, setTokens] = useState<TokenRow[]>([]);
   const [loadingTokens, setLoadingTokens] = useState(false);
   const [tokensError, setTokensError] = useState('');
+
+  const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState('');
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem(STORAGE_KEY);
@@ -103,8 +116,58 @@ export default function AdminIntakePage() {
     }
   }
 
+  async function loadSubmissions() {
+    setLoadingSubmissions(true);
+    setSubmissionsError('');
+    try {
+      const res = await fetch('/api/intake/submissions', {
+        headers: { Authorization: `Bearer ${getSecret()}` },
+        cache: 'no-store',
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setSubmissionsError(json.error ?? 'Failed to load submissions.');
+        return;
+      }
+      setSubmissions(json.submissions ?? []);
+    } catch {
+      setSubmissionsError('Network error. Please try again.');
+    } finally {
+      setLoadingSubmissions(false);
+    }
+  }
+
+  async function downloadPDF(submission: SubmissionRow) {
+    setDownloadingId(submission.id);
+    try {
+      const res = await fetch(`/api/intake/download-pdf?submission_id=${submission.id}`, {
+        headers: { Authorization: `Bearer ${getSecret()}` },
+      });
+      if (!res.ok) {
+        alert('Failed to generate PDF.');
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const name = submission.full_name.replace(/\s+/g, '-').toLowerCase();
+      const date = new Date(submission.submitted_at).toISOString().split('T')[0];
+      a.href = url;
+      a.download = `intake-${name}-${date}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Network error downloading PDF.');
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
   useEffect(() => {
-    if (authed) loadTokens();
+    if (authed) {
+      loadTokens();
+      loadSubmissions();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed]);
 
@@ -123,6 +186,12 @@ export default function AdminIntakePage() {
     if (new Date(row.expires_at) < new Date()) return { label: 'Expired', color: '#999' };
     return { label: 'Pending', color: '#C85A1A' };
   }
+
+  const FORMAT_LABELS: Record<string, string> = {
+    in_person: 'In Person',
+    online: 'Online',
+    no_preference: 'No Preference',
+  };
 
   if (!authed) {
     return (
@@ -154,10 +223,10 @@ export default function AdminIntakePage() {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '48px 24px' }}>
+    <div style={{ maxWidth: 860, margin: '0 auto', padding: '48px 24px' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 32 }}>
         <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 300, fontSize: 30, color: '#2A4D3C', margin: 0 }}>
-          Intake Links
+          Intake Admin
         </h1>
         <button
           onClick={() => { sessionStorage.removeItem(STORAGE_KEY); setAuthed(false); }}
@@ -168,10 +237,8 @@ export default function AdminIntakePage() {
       </div>
 
       {/* Generate token */}
-      <section style={{ background: '#fff', borderRadius: 12, padding: '28px 28px 24px', marginBottom: 32, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-        <h2 style={{ fontSize: 14, fontWeight: 600, color: '#2A4D3C', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 20, marginTop: 0 }}>
-          Generate new link
-        </h2>
+      <section style={cardStyle}>
+        <h2 style={sectionHeadingStyle}>Generate new link</h2>
         <form onSubmit={generateToken} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
@@ -219,16 +286,87 @@ export default function AdminIntakePage() {
         )}
       </section>
 
-      {/* Recent tokens */}
-      <section style={{ background: '#fff', borderRadius: 12, padding: '28px 28px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+      {/* Submitted forms */}
+      <section style={{ ...cardStyle, marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h2 style={{ fontSize: 14, fontWeight: 600, color: '#2A4D3C', letterSpacing: '1.5px', textTransform: 'uppercase', margin: 0 }}>
-            Recent links
-          </h2>
+          <h2 style={sectionHeadingStyle}>Submitted forms</h2>
+          <button
+            onClick={loadSubmissions}
+            disabled={loadingSubmissions}
+            style={refreshBtnStyle}
+          >
+            {loadingSubmissions ? 'Loading…' : 'Refresh'}
+          </button>
+        </div>
+
+        {submissionsError && <p style={{ color: '#C85A1A', fontSize: 13 }}>{submissionsError}</p>}
+
+        {submissions.length === 0 && !loadingSubmissions && (
+          <p style={{ fontSize: 14, color: '#999' }}>No intake forms submitted yet.</p>
+        )}
+
+        {submissions.length > 0 && (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid #E0D8CE' }}>
+                {['Client', 'Email', 'Format', 'Submitted', 'PDF'].map(h => (
+                  <th key={h} style={{ textAlign: 'left', padding: '8px 0', color: '#2A4D3C', fontWeight: 600, fontSize: 11, letterSpacing: '1px', textTransform: 'uppercase' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {submissions.map(sub => (
+                <tr
+                  key={sub.id}
+                  style={{ borderBottom: '1px solid #E0D8CE' }}
+                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FAF7F2')}
+                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <td style={{ padding: '10px 0', color: '#333', fontWeight: 500 }}>
+                    {sub.full_name}
+                  </td>
+                  <td style={{ padding: '10px 12px 10px 0', color: '#666' }}>
+                    {sub.email ?? '—'}
+                  </td>
+                  <td style={{ padding: '10px 12px 10px 0', color: '#666' }}>
+                    {FORMAT_LABELS[sub.session_format] ?? sub.session_format}
+                  </td>
+                  <td style={{ padding: '10px 12px 10px 0', color: '#666', whiteSpace: 'nowrap' }}>
+                    {formatDate(sub.submitted_at)}
+                  </td>
+                  <td style={{ padding: '10px 0' }}>
+                    <button
+                      onClick={() => downloadPDF(sub)}
+                      disabled={downloadingId === sub.id}
+                      style={{
+                        fontSize: 12,
+                        color: downloadingId === sub.id ? '#aaa' : '#C85A1A',
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        cursor: downloadingId === sub.id ? 'default' : 'pointer',
+                        textDecoration: 'underline',
+                        textUnderlineOffset: '2px',
+                      }}
+                    >
+                      {downloadingId === sub.id ? 'Generating…' : 'Download PDF'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      {/* Recent tokens */}
+      <section style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <h2 style={sectionHeadingStyle}>Recent links</h2>
           <button
             onClick={loadTokens}
             disabled={loadingTokens}
-            style={{ fontSize: 12, color: '#666', background: 'none', border: '1px solid #ddd', borderRadius: 6, padding: '4px 12px', cursor: 'pointer' }}
+            style={refreshBtnStyle}
           >
             {loadingTokens ? 'Loading…' : 'Refresh'}
           </button>
@@ -243,9 +381,9 @@ export default function AdminIntakePage() {
         {tokens.length > 0 && (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #eee' }}>
+              <tr style={{ borderBottom: '1px solid #E0D8CE' }}>
                 {['Client', 'Created', 'Expires', 'Status'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', padding: '8px 0', color: '#999', fontWeight: 500, fontSize: 12 }}>{h}</th>
+                  <th key={h} style={{ textAlign: 'left', padding: '8px 0', color: '#2A4D3C', fontWeight: 600, fontSize: 11, letterSpacing: '1px', textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -253,7 +391,7 @@ export default function AdminIntakePage() {
               {tokens.map(row => {
                 const status = tokenStatus(row);
                 return (
-                  <tr key={row.id} style={{ borderBottom: '1px solid #f3f3f3' }}>
+                  <tr key={row.id} style={{ borderBottom: '1px solid #E0D8CE' }}>
                     <td style={{ padding: '10px 0', color: '#333' }}>
                       <div>{row.client_name ?? '—'}</div>
                       {row.client_email && <div style={{ fontSize: 12, color: '#999' }}>{row.client_email}</div>}
@@ -287,6 +425,33 @@ export default function AdminIntakePage() {
     </div>
   );
 }
+
+const cardStyle: React.CSSProperties = {
+  background: '#fff',
+  borderRadius: 12,
+  padding: '28px 28px 24px',
+  marginBottom: 32,
+  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+};
+
+const sectionHeadingStyle: React.CSSProperties = {
+  fontSize: 11,
+  fontWeight: 600,
+  color: '#2A4D3C',
+  letterSpacing: '1.5px',
+  textTransform: 'uppercase',
+  margin: 0,
+};
+
+const refreshBtnStyle: React.CSSProperties = {
+  fontSize: 12,
+  color: '#666',
+  background: 'none',
+  border: '1px solid #ddd',
+  borderRadius: 6,
+  padding: '4px 12px',
+  cursor: 'pointer',
+};
 
 const inputStyle: React.CSSProperties = {
   width: '100%',

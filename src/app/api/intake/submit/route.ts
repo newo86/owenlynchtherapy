@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { generateIntakePDF } from '@/lib/generateIntakePDF';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -102,13 +103,29 @@ export async function POST(req: NextRequest) {
     .update({ is_used: true })
     .eq('token', token);
 
-  // Send email notification (non-blocking — don't fail submission on email error)
+  // Send email notification with PDF attachment (non-blocking)
   try {
+    const { data: savedRow } = await supabaseAdmin
+      .from('intake_submissions')
+      .select('*')
+      .eq('token_id', tokenRow.id)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    const pdfBuffer = savedRow
+      ? await generateIntakePDF(savedRow)
+      : null;
+
+    const fullName = formData.full_name as string;
+    const filename = `intake-${fullName.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
+
     await resend.emails.send({
       from: 'onboarding@resend.dev',
       to: 'owenlynch1310@gmail.com', // TODO: change to info@owenlynchtherapy.com once Resend domain verified
-      subject: `New intake form: ${formData.full_name}`,
+      subject: `New intake form: ${fullName}`,
       html: buildEmailHtml(formData as Record<string, unknown>),
+      ...(pdfBuffer ? { attachments: [{ filename, content: pdfBuffer }] } : {}),
     });
   } catch (emailErr) {
     console.error('[intake email] error:', emailErr);
