@@ -51,7 +51,7 @@ const AI_LABELS: Record<string, string> = {
 };
 
 export async function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
-  const svgPath = path.join(process.cwd(), 'public/images/logo-stacked-light-bg.svg');
+  const svgPath = path.join(process.cwd(), 'public/images/logo-stacked-transparent.svg');
   const logoPng = await sharp(svgPath).resize(480, 560).png().toBuffer();
 
   return new Promise((resolve, reject) => {
@@ -69,13 +69,6 @@ export async function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
     const chunks: Buffer[] = [];
     doc.on('data', (c: Buffer) => chunks.push(c));
     doc.on('error', reject);
-
-    // ── Cream background on every page ─────────────────────────────────────────
-    function paintBackground() {
-      doc.save().rect(0, 0, doc.page.width, doc.page.height).fill('#F5F0E8').restore();
-    }
-    paintBackground();
-    doc.on('pageAdded', () => paintBackground());
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
