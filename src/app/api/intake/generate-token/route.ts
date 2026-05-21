@@ -116,19 +116,24 @@ export async function POST(req: NextRequest) {
   // 4. Create Stripe price + payment link
   let paymentLinkUrl = '';
   let paymentLinkId = '';
+
+  const stripeKeyRaw = process.env.STRIPE_SECRET_KEY ?? '';
+  console.log('[generate-token] Stripe key present:', !!stripeKeyRaw, '| prefix:', stripeKeyRaw.slice(0, 12) || '(empty)');
+
   try {
+    const stripeClient = getStripe();
     console.log('[generate-token] step 4a: creating Stripe price, fee cents:', feeInCents);
-    const price = await getStripe().prices.create({
+    const price = await stripeClient.prices.create({
       currency: 'eur',
       unit_amount: feeInCents,
       product_data: {
         name: `Psychotherapy Session — ${formattedDate} at ${formattedTime}`,
       },
     });
-    console.log('[generate-token] step 4a: done, price id:', price.id);
+    console.log('[generate-token] step 4a: price created, id:', price.id);
 
     console.log('[generate-token] step 4b: creating Stripe payment link');
-    const paymentLink = await getStripe().paymentLinks.create({
+    const paymentLink = await stripeClient.paymentLinks.create({
       line_items: [{ price: price.id, quantity: 1 }],
       after_completion: {
         type: 'redirect',
@@ -140,7 +145,7 @@ export async function POST(req: NextRequest) {
         client_email: client_email.trim(),
       },
     });
-    console.log('[generate-token] step 4b: done, payment link url:', paymentLink.url);
+    console.log('[generate-token] step 4b: payment link created, url:', paymentLink.url, '| id:', paymentLink.id);
 
     paymentLinkUrl = paymentLink.url;
     paymentLinkId = paymentLink.id;
@@ -156,14 +161,18 @@ export async function POST(req: NextRequest) {
       .eq('id', sessionRow.id);
     console.log('[generate-token] step 5: done');
   } catch (stripeErr: unknown) {
-    const e = stripeErr as { message?: string; type?: string; code?: string; statusCode?: number };
-    console.error('[generate-token] Stripe error:', {
-      message: e?.message,
-      type: e?.type,
-      code: e?.code,
-      statusCode: e?.statusCode,
-      raw: String(stripeErr),
-    });
+    // Log full error so it's visible in Vercel function logs
+    console.error('[generate-token] *** STRIPE FAILED ***');
+    if (stripeErr instanceof Error) {
+      console.error('[generate-token] Stripe error name:', stripeErr.name);
+      console.error('[generate-token] Stripe error message:', stripeErr.message);
+      console.error('[generate-token] Stripe error stack:', stripeErr.stack);
+    }
+    try {
+      console.error('[generate-token] Stripe error JSON:', JSON.stringify(stripeErr, Object.getOwnPropertyNames(stripeErr)));
+    } catch {
+      console.error('[generate-token] Stripe error (non-serialisable):', String(stripeErr));
+    }
     paymentLinkUrl = '';
   }
 
