@@ -23,3 +23,8 @@ create policy "no anon access" on public.google_oauth_tokens
   to anon, authenticated
   using (false)
   with check (false);
+
+-- Supabase doesn't auto-grant privileges on tables created via raw SQL the
+-- way it does when you use the table editor. Grant service_role explicitly
+-- so the admin API routes can read/write.
+grant select, insert, update, delete on public.google_oauth_tokens to service_role;

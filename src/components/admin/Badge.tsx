@@ -22,7 +22,7 @@ const STYLES: Record<BadgeKind, { bg: string; fg: string; border: string; label:
   pending:    { bg: `${colors.terracotta}20`, fg: colors.terracottaDark, border: colors.terracotta, label: 'Pending' },
   expired:    { bg: '#9999991A', fg: '#999', border: '#bbb', label: 'Expired' },
   submitted:  { bg: `${colors.sage}20`, fg: colors.sageDark, border: colors.sage, label: 'Submitted' },
-  calendar:   { bg: '#9999991A', fg: '#666', border: '#bbb', label: 'Calendar' },
+  calendar:   { bg: `${colors.sage}1A`, fg: colors.sageDark, border: colors.sage, label: 'Calendar' },
 };
 
 export function Badge({ kind, children, style }: { kind: BadgeKind; children?: React.ReactNode; style?: CSSProperties }) {

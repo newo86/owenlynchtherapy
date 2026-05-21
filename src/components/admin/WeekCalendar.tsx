@@ -143,14 +143,14 @@ export function WeekCalendar({ clients, events, weekOffset = 0 }: Props) {
                   style={{
                     padding: '8px 10px',
                     borderRadius: 5,
-                    background: b.type === 'session' ? `${colors.forest}10` : `${colors.textMuted}10`,
-                    border: b.type === 'gcal' ? `1px dashed ${colors.textFaint}` : 'none',
+                    background: b.type === 'session' ? `${colors.forest}10` : `${colors.sage}15`,
+                    border: b.type === 'gcal' ? `1px dashed ${colors.sage}` : 'none',
                     fontFamily: fonts.sans,
                     fontSize: 12,
                     color: colors.text,
                   }}
                 >
-                  <div style={{ fontWeight: 600, color: b.type === 'session' ? colors.forest : colors.textMuted, fontSize: 11 }}>
+                  <div style={{ fontWeight: 600, color: b.type === 'session' ? colors.forest : colors.sageDark, fontSize: 11 }}>
                     {formatTime(b.start)}
                   </div>
                   <div style={{ marginTop: 2, fontWeight: 500, color: colors.forest }}>
