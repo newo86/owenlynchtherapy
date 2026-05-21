@@ -13,7 +13,6 @@ export async function GET(req: NextRequest) {
   const { data, error } = await supabaseAdmin
     .from('clients')
     .select('*, sessions(*)')
-    .eq('status', 'active')
     .order('created_at', { ascending: false });
 
   if (error) {
