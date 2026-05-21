@@ -177,13 +177,15 @@ export async function POST(req: NextRequest) {
   }
 
   // 6. Send welcome email
-  // TODO: change from to info@owenlynchtherapy.com once Resend domain is verified
+  // NOTE: onboarding@resend.dev can only send to the account owner's verified email until
+  // owenlynchtherapy.com domain is verified in Resend. Change to address and from once verified.
   const firstName = client_name.trim().split(' ')[0];
-  console.log('[generate-token] step 6: sending welcome email to', client_email.trim(), '| paymentLinkUrl:', paymentLinkUrl || '(empty)');
+  const emailTo = 'owenlynch1310@gmail.com';
+  console.log('[generate-token] step 6: sending welcome email to', emailTo, '(client:', client_email.trim(), ') | paymentLinkUrl:', paymentLinkUrl || '(empty)');
   try {
     const emailResult = await resend.emails.send({
       from: 'Owen Lynch Psychotherapy <onboarding@resend.dev>',
-      to: client_email.trim(),
+      to: emailTo,
       subject: 'Your first session with Owen Lynch Psychotherapy',
       html: buildWelcomeHtml({
         firstName,
@@ -202,6 +204,7 @@ export async function POST(req: NextRequest) {
     } else {
       console.log('[generate-token] step 6: done, email id:', emailResult.data?.id);
     }
+    console.log('[generate-token] step 6: full Resend response:', JSON.stringify(emailResult, null, 2));
   } catch (emailErr) {
     console.error('[generate-token] welcome email thrown error:', emailErr);
   }
