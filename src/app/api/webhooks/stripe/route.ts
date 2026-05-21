@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { stripe } from '@/lib/stripe';
+import Stripe from 'stripe';
+import { getStripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase';
 import { Resend } from 'resend';
 
@@ -22,9 +23,9 @@ export async function POST(request: NextRequest) {
     return new Response('Webhook secret not configured', { status: 500 });
   }
 
-  let event: ReturnType<typeof stripe.webhooks.constructEvent>;
+  let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    event = getStripe().webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err) {
     console.error('[stripe-webhook] signature verification failed:', err);
     return new Response('Webhook signature verification failed', { status: 400 });

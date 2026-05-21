@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { supabaseAdmin } from '@/lib/supabase';
-import { stripe } from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import { rateLimit } from '@/lib/rateLimit';
 import { Resend } from 'resend';
 
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
   let paymentLinkUrl = '';
   let paymentLinkId = '';
   try {
-    const price = await stripe.prices.create({
+    const price = await getStripe().prices.create({
       currency: 'eur',
       unit_amount: feeInCents,
       product_data: {
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const paymentLink = await stripe.paymentLinks.create({
+    const paymentLink = await getStripe().paymentLinks.create({
       line_items: [{ price: price.id, quantity: 1 }],
       after_completion: {
         type: 'redirect',
