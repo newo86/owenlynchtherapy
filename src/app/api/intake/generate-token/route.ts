@@ -9,10 +9,13 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const VALID_FORMATS = ['in_person', 'online'];
 
 export async function POST(req: NextRequest) {
+  console.log('[generate-token] request received');
+
   const authHeader = req.headers.get('authorization');
   const secret = process.env.INTAKE_ADMIN_SECRET;
 
   if (!secret || authHeader !== `Bearer ${secret}`) {
+    console.log('[generate-token] unauthorized');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -35,6 +38,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { client_name, client_email, session_date, session_format, session_fee } = body;
+  console.log('[generate-token] body parsed:', { client_name, client_email, session_date, session_format, session_fee });
 
   if (!client_name?.trim()) return NextResponse.json({ error: 'client_name is required' }, { status: 400 });
   if (!client_email?.trim()) return NextResponse.json({ error: 'client_email is required' }, { status: 400 });
@@ -51,7 +55,6 @@ export async function POST(req: NextRequest) {
   const expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   const intakeUrl = `https://owenlynchtherapy.com/intake?token=${token}`;
 
-  // Date formatting for email and Stripe description
   const formattedDate = sessionDateObj.toLocaleDateString('en-IE', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Dublin',
   });
@@ -63,6 +66,7 @@ export async function POST(req: NextRequest) {
     : "I'll send you a link to join shortly before your session.";
 
   // 1. Insert intake token
+  console.log('[generate-token] step 1: inserting intake token');
   const { error: tokenErr } = await supabaseAdmin.from('intake_tokens').insert({
     token,
     client_name: client_name.trim(),
@@ -73,8 +77,10 @@ export async function POST(req: NextRequest) {
     console.error('[generate-token] token insert error:', JSON.stringify(tokenErr, null, 2));
     return NextResponse.json({ error: tokenErr.message ?? 'Failed to create token' }, { status: 500 });
   }
+  console.log('[generate-token] step 1: done');
 
   // 2. Insert client record
+  console.log('[generate-token] step 2: inserting client');
   const { data: clientRow, error: clientErr } = await supabaseAdmin.from('clients').insert({
     full_name: client_name.trim(),
     email: client_email.trim(),
@@ -84,10 +90,12 @@ export async function POST(req: NextRequest) {
 
   if (clientErr || !clientRow) {
     console.error('[generate-token] client insert error:', JSON.stringify(clientErr, null, 2));
-    return NextResponse.json({ error: 'Failed to create client record' }, { status: 500 });
+    return NextResponse.json({ error: clientErr?.message ?? 'Failed to create client record' }, { status: 500 });
   }
+  console.log('[generate-token] step 2: done, client id:', clientRow.id);
 
-  // 3. Insert session record (without payment link yet)
+  // 3. Insert session record
+  console.log('[generate-token] step 3: inserting session');
   const { data: sessionRow, error: sessionErr } = await supabaseAdmin.from('sessions').insert({
     client_id: clientRow.id,
     session_date,
@@ -100,13 +108,15 @@ export async function POST(req: NextRequest) {
 
   if (sessionErr || !sessionRow) {
     console.error('[generate-token] session insert error:', JSON.stringify(sessionErr, null, 2));
-    return NextResponse.json({ error: 'Failed to create session record' }, { status: 500 });
+    return NextResponse.json({ error: sessionErr?.message ?? 'Failed to create session record' }, { status: 500 });
   }
+  console.log('[generate-token] step 3: done, session id:', sessionRow.id);
 
   // 4. Create Stripe price + payment link
   let paymentLinkUrl = '';
   let paymentLinkId = '';
   try {
+    console.log('[generate-token] step 4a: creating Stripe price, fee cents:', feeInCents);
     const price = await getStripe().prices.create({
       currency: 'eur',
       unit_amount: feeInCents,
@@ -114,7 +124,9 @@ export async function POST(req: NextRequest) {
         name: `Psychotherapy Session — ${formattedDate} at ${formattedTime}`,
       },
     });
+    console.log('[generate-token] step 4a: done, price id:', price.id);
 
+    console.log('[generate-token] step 4b: creating Stripe payment link');
     const paymentLink = await getStripe().paymentLinks.create({
       line_items: [{ price: price.id, quantity: 1 }],
       after_completion: {
@@ -127,11 +139,13 @@ export async function POST(req: NextRequest) {
         client_email: client_email.trim(),
       },
     });
+    console.log('[generate-token] step 4b: done, payment link:', paymentLink.url);
 
     paymentLinkUrl = paymentLink.url;
     paymentLinkId = paymentLink.id;
 
     // 5. Update session with payment link details
+    console.log('[generate-token] step 5: updating session with payment link');
     await supabaseAdmin
       .from('sessions')
       .update({
@@ -139,16 +153,16 @@ export async function POST(req: NextRequest) {
         stripe_payment_link_url: paymentLinkUrl,
       })
       .eq('id', sessionRow.id);
+    console.log('[generate-token] step 5: done');
   } catch (stripeErr) {
     console.error('[generate-token] Stripe error:', stripeErr);
-    // Don't fail the whole request — intake link is still usable, Owen can create payment link manually
     paymentLinkUrl = '';
   }
 
-  // 6. Send welcome email to client
-  // TODO: change from to info@owenlynchtherapy.com once Resend domain is verified.
-  // Note: until domain is verified, Resend restricts sending to verified addresses only (owenlynch1310@gmail.com).
+  // 6. Send welcome email
+  // TODO: change from to info@owenlynchtherapy.com once Resend domain is verified
   const firstName = client_name.trim().split(' ')[0];
+  console.log('[generate-token] step 6: sending welcome email to', client_email.trim());
   try {
     const emailResult = await resend.emails.send({
       from: 'Owen Lynch Psychotherapy <onboarding@resend.dev>',
@@ -168,12 +182,13 @@ export async function POST(req: NextRequest) {
     if (emailResult.error) {
       console.error('[generate-token] welcome email error:', JSON.stringify(emailResult.error, null, 2));
     } else {
-      console.log('[generate-token] welcome email sent, id:', emailResult.data?.id);
+      console.log('[generate-token] step 6: done, email id:', emailResult.data?.id);
     }
   } catch (emailErr) {
     console.error('[generate-token] welcome email thrown error:', emailErr);
   }
 
+  console.log('[generate-token] complete — returning success');
   return NextResponse.json(
     { url: intakeUrl, token, expires_at, payment_link_url: paymentLinkUrl },
     { headers: { 'Cache-Control': 'no-store, no-cache' } }
