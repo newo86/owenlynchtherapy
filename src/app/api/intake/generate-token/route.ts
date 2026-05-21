@@ -53,7 +53,8 @@ export async function POST(req: NextRequest) {
   const feeInCents = Math.round(Number(session_fee) * 100);
   const token = `${randomUUID()}-${randomBytes(16).toString('hex')}`;
   const expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-  const intakeUrl = `https://owenlynchtherapy.com/intake?token=${token}`;
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://owenlynchtherapy.vercel.app').replace(/\/$/, '');
+  const intakeUrl = `${siteUrl}/intake?token=${token}`;
 
   const formattedDate = sessionDateObj.toLocaleDateString('en-IE', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Dublin',
@@ -131,7 +132,7 @@ export async function POST(req: NextRequest) {
       line_items: [{ price: price.id, quantity: 1 }],
       after_completion: {
         type: 'redirect',
-        redirect: { url: 'https://owenlynchtherapy.com/payment-confirmed' },
+        redirect: { url: `${siteUrl}/payment-confirmed` },
       },
       metadata: {
         session_id: sessionRow.id,
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
         client_email: client_email.trim(),
       },
     });
-    console.log('[generate-token] step 4b: done, payment link:', paymentLink.url);
+    console.log('[generate-token] step 4b: done, payment link url:', paymentLink.url);
 
     paymentLinkUrl = paymentLink.url;
     paymentLinkId = paymentLink.id;
@@ -154,15 +155,22 @@ export async function POST(req: NextRequest) {
       })
       .eq('id', sessionRow.id);
     console.log('[generate-token] step 5: done');
-  } catch (stripeErr) {
-    console.error('[generate-token] Stripe error:', stripeErr);
+  } catch (stripeErr: unknown) {
+    const e = stripeErr as { message?: string; type?: string; code?: string; statusCode?: number };
+    console.error('[generate-token] Stripe error:', {
+      message: e?.message,
+      type: e?.type,
+      code: e?.code,
+      statusCode: e?.statusCode,
+      raw: String(stripeErr),
+    });
     paymentLinkUrl = '';
   }
 
   // 6. Send welcome email
   // TODO: change from to info@owenlynchtherapy.com once Resend domain is verified
   const firstName = client_name.trim().split(' ')[0];
-  console.log('[generate-token] step 6: sending welcome email to', client_email.trim());
+  console.log('[generate-token] step 6: sending welcome email to', client_email.trim(), '| paymentLinkUrl:', paymentLinkUrl || '(empty)');
   try {
     const emailResult = await resend.emails.send({
       from: 'Owen Lynch Psychotherapy <onboarding@resend.dev>',
@@ -177,6 +185,7 @@ export async function POST(req: NextRequest) {
         feeEuros: Number(session_fee),
         intakeUrl,
         paymentUrl: paymentLinkUrl,
+        siteUrl,
       }),
     });
     if (emailResult.error) {
@@ -204,6 +213,7 @@ interface WelcomeEmailData {
   feeEuros: number;
   intakeUrl: string;
   paymentUrl: string;
+  siteUrl: string;
 }
 
 function buildWelcomeHtml(d: WelcomeEmailData): string {
@@ -215,11 +225,12 @@ function buildWelcomeHtml(d: WelcomeEmailData): string {
     ? `<a href="${d.paymentUrl}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;">PAY €${d.feeEuros}</a>`
     : `<p style="color:#666;font-size:14px;">Owen will send you payment details separately.</p>`;
 
+  const logoUrl = `${d.siteUrl}/images/logo-horizontal-dark-bg.svg`;
+
   return `
 <div style="background-color:#F5F0E8;padding:40px 20px;font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
-  <div style="background-color:#2A4D3C;padding:30px;text-align:center;border-radius:8px 8px 0 0;">
-    <p style="color:#C85A1A;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 8px 0;">Owen Lynch</p>
-    <p style="color:#FFFFFF;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin:0;">Psychotherapy</p>
+  <div style="background-color:#2A4D3C;padding:24px 30px;text-align:center;border-radius:8px 8px 0 0;">
+    <img src="${logoUrl}" alt="Owen Lynch Psychotherapy" width="200" style="max-width:200px;height:auto;display:inline-block;" />
   </div>
   <div style="background-color:#FFFFFF;padding:40px;border-radius:0 0 8px 8px;">
     <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${d.firstName},</p>
