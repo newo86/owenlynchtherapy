@@ -64,7 +64,13 @@ async function main() {
 
   const tokenRes = await post(
     '/api/intake/generate-token',
-    { client_name: 'Test Client', client_email: 'test@example.com' },
+    {
+      client_name: 'Test Client',
+      client_email: 'test@example.com',
+      session_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+      session_format: 'online',
+      session_fee: 80,
+    },
     { Authorization: `Bearer ${ADMIN_SECRET}` },
   );
 

@@ -2,6 +2,31 @@
 
 import { useState, useEffect } from 'react';
 
+interface SessionRow {
+  id: string;
+  client_id: string;
+  session_date: string;
+  session_format: string;
+  location: string | null;
+  fee: number;
+  status: string;
+  payment_status: string;
+  stripe_payment_link_url: string | null;
+  receipt_sent_at: string | null;
+  notes: string | null;
+}
+
+interface ClientRow {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  session_fee: number;
+  status: string;
+  created_at: string;
+  sessions: SessionRow[];
+}
+
 interface TokenRow {
   id: string;
   token: string;
@@ -21,26 +46,60 @@ interface SubmissionRow {
 }
 
 const STORAGE_KEY = 'intake_admin_auth';
+const FORMAT_LABELS: Record<string, string> = {
+  in_person: 'In Person',
+  online: 'Online',
+  no_preference: 'No Preference',
+};
+
+function displayFee(cents: number) {
+  return `€${Math.round(cents / 100)}`;
+}
+
+function nextSession(client: ClientRow): SessionRow | null {
+  const now = new Date();
+  const upcoming = client.sessions
+    .filter(s => s.status === 'scheduled' && new Date(s.session_date) > now)
+    .sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime());
+  if (upcoming.length) return upcoming[0];
+  return client.sessions.sort((a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime())[0] ?? null;
+}
 
 export default function AdminIntakePage() {
   const [authed, setAuthed] = useState(false);
   const [secretInput, setSecretInput] = useState('');
   const [authError, setAuthError] = useState('');
 
+  // Generate form
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
+  const [sessionDate, setSessionDate] = useState('');
+  const [sessionFormat, setSessionFormat] = useState<'in_person' | 'online'>('in_person');
+  const [sessionFee, setSessionFee] = useState('');
   const [generating, setGenerating] = useState(false);
-  const [generated, setGenerated] = useState<{ url: string; expires_at: string } | null>(null);
+  const [generated, setGenerated] = useState<{ url: string; paymentLinkUrl: string; expires_at: string; clientEmail: string } | null>(null);
   const [genError, setGenError] = useState('');
 
-  const [tokens, setTokens] = useState<TokenRow[]>([]);
-  const [loadingTokens, setLoadingTokens] = useState(false);
-  const [tokensError, setTokensError] = useState('');
+  // Clients
+  const [clients, setClients] = useState<ClientRow[]>([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  const [clientsError, setClientsError] = useState('');
+  const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
+  const [markingId, setMarkingId] = useState<string | null>(null);
+  const [attendedConfirmId, setAttendedConfirmId] = useState<string | null>(null);
+  const [sendingReceiptId, setSendingReceiptId] = useState<string | null>(null);
+  const [actionMsg, setActionMsg] = useState<{ id: string; msg: string } | null>(null);
 
+  // Submissions
   const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [submissionsError, setSubmissionsError] = useState('');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  // Tokens
+  const [tokens, setTokens] = useState<TokenRow[]>([]);
+  const [loadingTokens, setLoadingTokens] = useState(false);
+  const [tokensError, setTokensError] = useState('');
 
   useEffect(() => {
     const stored = sessionStorage.getItem(STORAGE_KEY);
@@ -59,6 +118,14 @@ export default function AdminIntakePage() {
     return sessionStorage.getItem(STORAGE_KEY) ?? '';
   }
 
+  function handleUnauth(status: number) {
+    if (status === 401) {
+      sessionStorage.removeItem(STORAGE_KEY);
+      setAuthed(false);
+      setAuthError('Session expired — please re-enter your admin secret.');
+    }
+  }
+
   async function generateToken(e: React.FormEvent) {
     e.preventDefault();
     setGenerating(true);
@@ -67,31 +134,111 @@ export default function AdminIntakePage() {
     try {
       const res = await fetch('/api/intake/generate-token', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${getSecret()}`,
-        },
-        body: JSON.stringify({ client_name: clientName, client_email: clientEmail }),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getSecret()}` },
+        body: JSON.stringify({
+          client_name: clientName,
+          client_email: clientEmail,
+          session_date: sessionDate,
+          session_format: sessionFormat,
+          session_fee: Number(sessionFee),
+        }),
       });
       const json = await res.json();
       if (!res.ok) {
-        if (res.status === 401) {
-          sessionStorage.removeItem(STORAGE_KEY);
-          setAuthed(false);
-          setAuthError('Session expired — please re-enter your admin secret.');
-          return;
-        }
-        setGenError(json.error ?? 'Failed to generate token.');
+        handleUnauth(res.status);
+        setGenError(json.error ?? 'Failed to generate link.');
         return;
       }
-      setGenerated({ url: json.url, expires_at: json.expires_at });
+      setGenerated({ url: json.url, paymentLinkUrl: json.payment_link_url ?? '', expires_at: json.expires_at, clientEmail });
       setClientName('');
       setClientEmail('');
+      setSessionDate('');
+      setSessionFee('');
+      setSessionFormat('in_person');
+      loadClients();
       loadTokens();
     } catch {
       setGenError('Network error. Please try again.');
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function loadClients() {
+    setLoadingClients(true);
+    setClientsError('');
+    try {
+      const res = await fetch('/api/admin/clients', {
+        headers: { Authorization: `Bearer ${getSecret()}` },
+        cache: 'no-store',
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        handleUnauth(res.status);
+        setClientsError(json.error ?? 'Failed to load clients.');
+        return;
+      }
+      setClients(json.clients ?? []);
+    } catch {
+      setClientsError('Network error. Please try again.');
+    } finally {
+      setLoadingClients(false);
+    }
+  }
+
+  async function handleMarkAttended(session: SessionRow) {
+    if (session.payment_status === 'unpaid') {
+      setAttendedConfirmId(session.id);
+      return;
+    }
+    await doMarkAttended(session.id);
+  }
+
+  async function doMarkAttended(sessionId: string) {
+    setMarkingId(sessionId);
+    setAttendedConfirmId(null);
+    try {
+      const res = await fetch('/api/admin/mark-attended', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getSecret()}` },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setActionMsg({ id: sessionId, msg: json.error ?? 'Failed to mark attended.' });
+        return;
+      }
+      setActionMsg({
+        id: sessionId,
+        msg: json.receipt_sent ? 'Marked attended — receipt sent.' : 'Marked attended.',
+      });
+      await loadClients();
+    } catch {
+      setActionMsg({ id: sessionId, msg: 'Network error.' });
+    } finally {
+      setMarkingId(null);
+    }
+  }
+
+  async function handleSendReceipt(sessionId: string) {
+    setSendingReceiptId(sessionId);
+    try {
+      const res = await fetch('/api/admin/send-receipt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getSecret()}` },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setActionMsg({ id: sessionId, msg: json.error ?? 'Failed to send receipt.' });
+        return;
+      }
+      setActionMsg({ id: sessionId, msg: 'Receipt sent.' });
+      await loadClients();
+    } catch {
+      setActionMsg({ id: sessionId, msg: 'Network error.' });
+    } finally {
+      setSendingReceiptId(null);
     }
   }
 
@@ -104,13 +251,10 @@ export default function AdminIntakePage() {
         cache: 'no-store',
       });
       const json = await res.json();
-      if (!res.ok) {
-        setTokensError(json.error ?? 'Failed to load tokens.');
-        return;
-      }
+      if (!res.ok) { setTokensError(json.error ?? 'Failed to load tokens.'); return; }
       setTokens(json.tokens ?? []);
     } catch {
-      setTokensError('Network error. Please try again.');
+      setTokensError('Network error.');
     } finally {
       setLoadingTokens(false);
     }
@@ -125,13 +269,10 @@ export default function AdminIntakePage() {
         cache: 'no-store',
       });
       const json = await res.json();
-      if (!res.ok) {
-        setSubmissionsError(json.error ?? 'Failed to load submissions.');
-        return;
-      }
+      if (!res.ok) { setSubmissionsError(json.error ?? 'Failed to load submissions.'); return; }
       setSubmissions(json.submissions ?? []);
     } catch {
-      setSubmissionsError('Network error. Please try again.');
+      setSubmissionsError('Network error.');
     } finally {
       setLoadingSubmissions(false);
     }
@@ -144,9 +285,7 @@ export default function AdminIntakePage() {
         headers: { Authorization: `Bearer ${getSecret()}` },
       });
       if (!res.ok) {
-        const text = await res.text();
-        console.error('[download-pdf] server error', res.status, text);
-        alert(`Failed to generate PDF (${res.status}). Check the console for details.`);
+        alert(`Failed to generate PDF (${res.status}).`);
         return;
       }
       const blob = await res.blob();
@@ -159,8 +298,8 @@ export default function AdminIntakePage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error('[download-pdf] fetch error:', err);
-      alert('Network error downloading PDF. Check the console for details.');
+      console.error('[download-pdf]:', err);
+      alert('Network error downloading PDF.');
     } finally {
       setDownloadingId(null);
     }
@@ -168,6 +307,7 @@ export default function AdminIntakePage() {
 
   useEffect(() => {
     if (authed) {
+      loadClients();
       loadTokens();
       loadSubmissions();
     }
@@ -176,11 +316,15 @@ export default function AdminIntakePage() {
 
   function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString('en-IE', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  }
+
+  function formatSessionDate(iso: string) {
+    return new Date(iso).toLocaleDateString('en-IE', {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Dublin',
     });
   }
 
@@ -190,11 +334,18 @@ export default function AdminIntakePage() {
     return { label: 'Pending', color: '#C85A1A' };
   }
 
-  const FORMAT_LABELS: Record<string, string> = {
-    in_person: 'In Person',
-    online: 'Online',
-    no_preference: 'No Preference',
-  };
+  function paymentBadge(status: string) {
+    if (status === 'paid') return { label: 'Paid', color: '#4F8A68' };
+    if (status === 'refunded') return { label: 'Refunded', color: '#999' };
+    return { label: 'Unpaid', color: '#C85A1A' };
+  }
+
+  function sessionStatusBadge(status: string) {
+    if (status === 'attended') return { label: 'Attended', color: '#4F8A68' };
+    if (status === 'cancelled') return { label: 'Cancelled', color: '#999' };
+    if (status === 'no_show') return { label: 'No show', color: '#999' };
+    return { label: 'Scheduled', color: '#2A4D3C' };
+  }
 
   if (!authed) {
     return (
@@ -203,9 +354,7 @@ export default function AdminIntakePage() {
           <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 300, fontSize: 28, color: '#2A4D3C', marginBottom: 8 }}>
             Admin Access
           </h1>
-          <p style={{ fontSize: 14, color: '#666', marginBottom: 24 }}>
-            Enter your admin secret to continue.
-          </p>
+          <p style={{ fontSize: 14, color: '#666', marginBottom: 24 }}>Enter your admin secret to continue.</p>
           <form onSubmit={handleAuth}>
             <input
               type="password"
@@ -216,9 +365,7 @@ export default function AdminIntakePage() {
               style={inputStyle}
             />
             {authError && <p style={{ color: '#C85A1A', fontSize: 13, marginTop: 8 }}>{authError}</p>}
-            <button type="submit" style={{ ...btnStyle, marginTop: 16 }}>
-              Continue
-            </button>
+            <button type="submit" style={{ ...btnStyle, marginTop: 16 }}>Continue</button>
           </form>
         </div>
       </div>
@@ -226,7 +373,7 @@ export default function AdminIntakePage() {
   }
 
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto', padding: '48px 24px' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '48px 24px' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 32 }}>
         <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 300, fontSize: 30, color: '#2A4D3C', margin: 0 }}>
           Intake Admin
@@ -239,118 +386,270 @@ export default function AdminIntakePage() {
         </button>
       </div>
 
-      {/* Generate token */}
+      {/* ── Generate new link ── */}
       <section style={cardStyle}>
-        <h2 style={sectionHeadingStyle}>Generate new link</h2>
-        <form onSubmit={generateToken} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <h2 style={sectionHeadingStyle}>Generate new client link</h2>
+        <form onSubmit={generateToken} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
-              <label style={labelStyle}>Client name</label>
-              <input
-                type="text"
-                placeholder="e.g. Jane Smith"
-                value={clientName}
-                onChange={e => setClientName(e.target.value)}
-                style={inputStyle}
-              />
+              <label style={labelStyle}>Client name *</label>
+              <input type="text" placeholder="e.g. Jane Smith" value={clientName} onChange={e => setClientName(e.target.value)} style={inputStyle} required />
             </div>
             <div>
-              <label style={labelStyle}>Client email (optional)</label>
+              <label style={labelStyle}>Client email *</label>
+              <input type="email" placeholder="jane@example.com" value={clientEmail} onChange={e => setClientEmail(e.target.value)} style={inputStyle} required />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <label style={labelStyle}>Session date & time *</label>
+              <input type="datetime-local" value={sessionDate} onChange={e => setSessionDate(e.target.value)} style={inputStyle} required />
+            </div>
+            <div>
+              <label style={labelStyle}>Session fee (€) *</label>
               <input
-                type="email"
-                placeholder="e.g. jane@example.com"
-                value={clientEmail}
-                onChange={e => setClientEmail(e.target.value)}
+                type="number"
+                placeholder="e.g. 80"
+                min="1"
+                step="1"
+                value={sessionFee}
+                onChange={e => setSessionFee(e.target.value)}
                 style={inputStyle}
+                required
               />
             </div>
           </div>
+          <div>
+            <label style={labelStyle}>Session format *</label>
+            <div style={{ display: 'flex', gap: 20, marginTop: 6 }}>
+              {(['in_person', 'online'] as const).map(v => (
+                <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: '#333' }}>
+                  <input
+                    type="radio"
+                    name="sessionFormat"
+                    value={v}
+                    checked={sessionFormat === v}
+                    onChange={() => setSessionFormat(v)}
+                    style={{ accentColor: '#C85A1A' }}
+                  />
+                  {v === 'in_person' ? 'In Person' : 'Online'}
+                </label>
+              ))}
+            </div>
+          </div>
           {genError && <p style={{ color: '#C85A1A', fontSize: 13, margin: 0 }}>{genError}</p>}
-          <button type="submit" disabled={generating || !clientName.trim()} style={{ ...btnStyle, alignSelf: 'flex-start' }}>
-            {generating ? 'Generating…' : 'Generate link'}
+          <button
+            type="submit"
+            disabled={generating || !clientName.trim() || !clientEmail.trim() || !sessionDate || !sessionFee}
+            style={{ ...btnStyle, alignSelf: 'flex-start' }}
+          >
+            {generating ? 'Generating…' : 'Generate link & send welcome email'}
           </button>
         </form>
 
         {generated && (
           <div style={{ marginTop: 20, padding: '16px 18px', backgroundColor: '#F0F7F3', borderRadius: 8, borderLeft: '3px solid #4F8A68' }}>
-            <p style={{ fontSize: 13, color: '#2A4D3C', fontWeight: 600, margin: '0 0 8px' }}>
-              Link generated — valid until {formatDate(generated.expires_at)}
+            <p style={{ fontSize: 13, color: '#2A4D3C', fontWeight: 600, margin: '0 0 12px' }}>
+              ✓ Link generated & welcome email sent to {generated.clientEmail}
             </p>
-            <p style={{ fontSize: 13, color: '#333', wordBreak: 'break-all', margin: '0 0 12px', fontFamily: 'monospace' }}>
-              {generated.url}
-            </p>
-            <button
-              onClick={() => navigator.clipboard.writeText(generated.url)}
-              style={{ fontSize: 12, color: '#4F8A68', background: 'none', border: '1px solid #4F8A68', borderRadius: 6, padding: '4px 12px', cursor: 'pointer' }}
-            >
-              Copy to clipboard
-            </button>
+            <div style={{ marginBottom: 12 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: '#2A4D3C', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 4px' }}>Intake form link</p>
+              <p style={{ fontSize: 13, color: '#333', wordBreak: 'break-all', margin: '0 0 6px', fontFamily: 'monospace' }}>{generated.url}</p>
+              <button
+                onClick={() => navigator.clipboard.writeText(generated.url)}
+                style={{ fontSize: 11, color: '#4F8A68', background: 'none', border: '1px solid #4F8A68', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}
+              >
+                Copy
+              </button>
+            </div>
+            {generated.paymentLinkUrl && (
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 600, color: '#2A4D3C', textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 4px' }}>Stripe payment link</p>
+                <p style={{ fontSize: 13, color: '#333', wordBreak: 'break-all', margin: '0 0 6px', fontFamily: 'monospace' }}>{generated.paymentLinkUrl}</p>
+                <button
+                  onClick={() => navigator.clipboard.writeText(generated.paymentLinkUrl)}
+                  style={{ fontSize: 11, color: '#4F8A68', background: 'none', border: '1px solid #4F8A68', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}
+                >
+                  Copy
+                </button>
+              </div>
+            )}
           </div>
         )}
       </section>
 
-      {/* Submitted forms */}
+      {/* ── Clients ── */}
       <section style={{ ...cardStyle, marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h2 style={sectionHeadingStyle}>Submitted forms</h2>
-          <button
-            onClick={loadSubmissions}
-            disabled={loadingSubmissions}
-            style={refreshBtnStyle}
-          >
-            {loadingSubmissions ? 'Loading…' : 'Refresh'}
+          <h2 style={sectionHeadingStyle}>Clients</h2>
+          <button onClick={loadClients} disabled={loadingClients} style={refreshBtnStyle}>
+            {loadingClients ? 'Loading…' : 'Refresh'}
           </button>
         </div>
 
+        {clientsError && <p style={{ color: '#C85A1A', fontSize: 13 }}>{clientsError}</p>}
+        {clients.length === 0 && !loadingClients && <p style={{ fontSize: 14, color: '#999' }}>No active clients yet.</p>}
+
+        {clients.length > 0 && clients.map(client => {
+          const session = nextSession(client);
+          const expanded = expandedClientId === client.id;
+          const pbadge = session ? paymentBadge(session.payment_status) : null;
+          const sbadge = session ? sessionStatusBadge(session.status) : null;
+          const isMarkingThis = markingId === session?.id;
+          const isSendingThis = sendingReceiptId === session?.id;
+          const isConfirmingThis = attendedConfirmId === session?.id;
+          const msg = actionMsg && actionMsg.id === session?.id ? actionMsg.msg : null;
+
+          return (
+            <div key={client.id} style={{ borderBottom: '1px solid #E0D8CE' }}>
+              <div
+                style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr auto', gap: 12, alignItems: 'center', padding: '12px 0' }}
+              >
+                {/* Name + email */}
+                <div>
+                  <div style={{ fontSize: 14, color: '#333', fontWeight: 500 }}>{client.full_name}</div>
+                  <div style={{ fontSize: 12, color: '#999' }}>{client.email}</div>
+                </div>
+
+                {/* Next session */}
+                <div>
+                  {session ? (
+                    <>
+                      <div style={{ fontSize: 13, color: '#333' }}>{formatSessionDate(session.session_date)}</div>
+                      <div style={{ fontSize: 12, color: '#999' }}>{FORMAT_LABELS[session.session_format] ?? session.session_format} · {displayFee(session.fee)}</div>
+                    </>
+                  ) : (
+                    <div style={{ fontSize: 13, color: '#ccc' }}>—</div>
+                  )}
+                </div>
+
+                {/* Payment status */}
+                <div>
+                  {pbadge && (
+                    <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, color: pbadge.color, backgroundColor: `${pbadge.color}18` }}>
+                      {pbadge.label}
+                    </span>
+                  )}
+                </div>
+
+                {/* Session status */}
+                <div>
+                  {sbadge && (
+                    <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, color: sbadge.color, backgroundColor: `${sbadge.color}18` }}>
+                      {sbadge.label}
+                    </span>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  {session && session.status === 'scheduled' && (
+                    <button
+                      onClick={() => handleMarkAttended(session)}
+                      disabled={isMarkingThis}
+                      style={{ ...smallBtnStyle, backgroundColor: '#2A4D3C', color: '#fff', border: 'none' }}
+                    >
+                      {isMarkingThis ? '…' : 'Attended'}
+                    </button>
+                  )}
+                  {session && (
+                    <button
+                      onClick={() => handleSendReceipt(session.id)}
+                      disabled={isSendingThis}
+                      style={{ ...smallBtnStyle }}
+                    >
+                      {isSendingThis ? '…' : 'Send receipt'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setExpandedClientId(expanded ? null : client.id)}
+                    style={{ ...smallBtnStyle, color: '#666', borderColor: '#ddd' }}
+                  >
+                    {expanded ? '▲' : '▼'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Inline confirmation for unpaid mark-attended */}
+              {isConfirmingThis && (
+                <div style={{ padding: '10px 0 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <p style={{ fontSize: 13, color: '#C85A1A', margin: 0 }}>
+                    Payment not yet received. Send receipt anyway?
+                  </p>
+                  <button onClick={() => doMarkAttended(session!.id)} style={{ ...smallBtnStyle, backgroundColor: '#C85A1A', color: '#fff', border: 'none' }}>Confirm</button>
+                  <button onClick={() => setAttendedConfirmId(null)} style={smallBtnStyle}>Cancel</button>
+                </div>
+              )}
+
+              {/* Action feedback */}
+              {msg && (
+                <p style={{ fontSize: 12, color: '#4F8A68', padding: '0 0 10px', margin: 0 }}>{msg}</p>
+              )}
+
+              {/* Expanded details */}
+              {expanded && (
+                <div style={{ backgroundColor: '#FAF7F2', borderRadius: 6, padding: '16px', margin: '0 0 12px' }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: '#2A4D3C', textTransform: 'uppercase', letterSpacing: '1.2px', margin: '0 0 12px' }}>Session Details</p>
+                  {client.sessions.length === 0 && <p style={{ fontSize: 13, color: '#999' }}>No sessions.</p>}
+                  {client.sessions.map(s => (
+                    <div key={s.id} style={{ marginBottom: 16, fontSize: 13 }}>
+                      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', color: '#333' }}>
+                        <span><strong>{formatSessionDate(s.session_date)}</strong></span>
+                        <span>{FORMAT_LABELS[s.session_format] ?? s.session_format}</span>
+                        <span>{displayFee(s.fee)}</span>
+                        <span style={{ color: sessionStatusBadge(s.status).color }}>{sessionStatusBadge(s.status).label}</span>
+                        <span style={{ color: paymentBadge(s.payment_status).color }}>{paymentBadge(s.payment_status).label}</span>
+                        {s.receipt_sent_at && <span style={{ color: '#999' }}>Receipt sent {formatDate(s.receipt_sent_at)}</span>}
+                      </div>
+                      {s.location && <div style={{ color: '#666', marginTop: 4 }}>{s.location}</div>}
+                      {s.stripe_payment_link_url && (
+                        <div style={{ marginTop: 4 }}>
+                          <a href={s.stripe_payment_link_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#C85A1A', textDecoration: 'underline', textUnderlineOffset: 2 }}>
+                            Payment link ↗
+                          </a>
+                        </div>
+                      )}
+                      {s.notes && <div style={{ color: '#555', marginTop: 4, fontStyle: 'italic' }}>{s.notes}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </section>
+
+      {/* ── Submitted forms ── */}
+      <section style={{ ...cardStyle, marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <h2 style={sectionHeadingStyle}>Submitted forms</h2>
+          <button onClick={loadSubmissions} disabled={loadingSubmissions} style={refreshBtnStyle}>
+            {loadingSubmissions ? 'Loading…' : 'Refresh'}
+          </button>
+        </div>
         {submissionsError && <p style={{ color: '#C85A1A', fontSize: 13 }}>{submissionsError}</p>}
-
-        {submissions.length === 0 && !loadingSubmissions && (
-          <p style={{ fontSize: 14, color: '#999' }}>No intake forms submitted yet.</p>
-        )}
-
+        {submissions.length === 0 && !loadingSubmissions && <p style={{ fontSize: 14, color: '#999' }}>No intake forms submitted yet.</p>}
         {submissions.length > 0 && (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #E0D8CE' }}>
                 {['Client', 'Email', 'Format', 'Submitted', 'PDF'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', padding: '8px 0', color: '#2A4D3C', fontWeight: 600, fontSize: 11, letterSpacing: '1px', textTransform: 'uppercase' }}>{h}</th>
+                  <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {submissions.map(sub => (
-                <tr
-                  key={sub.id}
-                  style={{ borderBottom: '1px solid #E0D8CE' }}
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FAF7F2')}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-                >
-                  <td style={{ padding: '10px 0', color: '#333', fontWeight: 500 }}>
-                    {sub.full_name}
-                  </td>
-                  <td style={{ padding: '10px 12px 10px 0', color: '#666' }}>
-                    {sub.email ?? '—'}
-                  </td>
-                  <td style={{ padding: '10px 12px 10px 0', color: '#666' }}>
-                    {FORMAT_LABELS[sub.session_format] ?? sub.session_format}
-                  </td>
-                  <td style={{ padding: '10px 12px 10px 0', color: '#666', whiteSpace: 'nowrap' }}>
-                    {formatDate(sub.submitted_at)}
-                  </td>
+                <tr key={sub.id} style={{ borderBottom: '1px solid #E0D8CE' }}>
+                  <td style={{ padding: '10px 0', color: '#333', fontWeight: 500 }}>{sub.full_name}</td>
+                  <td style={{ padding: '10px 12px 10px 0', color: '#666' }}>{sub.email ?? '—'}</td>
+                  <td style={{ padding: '10px 12px 10px 0', color: '#666' }}>{FORMAT_LABELS[sub.session_format] ?? sub.session_format}</td>
+                  <td style={{ padding: '10px 12px 10px 0', color: '#666', whiteSpace: 'nowrap' }}>{formatDate(sub.submitted_at)}</td>
                   <td style={{ padding: '10px 0' }}>
                     <button
                       onClick={() => downloadPDF(sub)}
                       disabled={downloadingId === sub.id}
-                      style={{
-                        fontSize: 12,
-                        color: downloadingId === sub.id ? '#aaa' : '#C85A1A',
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                        cursor: downloadingId === sub.id ? 'default' : 'pointer',
-                        textDecoration: 'underline',
-                        textUnderlineOffset: '2px',
-                      }}
+                      style={{ fontSize: 12, color: downloadingId === sub.id ? '#aaa' : '#C85A1A', background: 'none', border: 'none', padding: 0, cursor: downloadingId === sub.id ? 'default' : 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px' }}
                     >
                       {downloadingId === sub.id ? 'Generating…' : 'Download PDF'}
                     </button>
@@ -362,31 +661,22 @@ export default function AdminIntakePage() {
         )}
       </section>
 
-      {/* Recent tokens */}
+      {/* ── Recent links ── */}
       <section style={cardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <h2 style={sectionHeadingStyle}>Recent links</h2>
-          <button
-            onClick={loadTokens}
-            disabled={loadingTokens}
-            style={refreshBtnStyle}
-          >
+          <button onClick={loadTokens} disabled={loadingTokens} style={refreshBtnStyle}>
             {loadingTokens ? 'Loading…' : 'Refresh'}
           </button>
         </div>
-
         {tokensError && <p style={{ color: '#C85A1A', fontSize: 13 }}>{tokensError}</p>}
-
-        {tokens.length === 0 && !loadingTokens && (
-          <p style={{ fontSize: 14, color: '#999' }}>No links generated yet.</p>
-        )}
-
+        {tokens.length === 0 && !loadingTokens && <p style={{ fontSize: 14, color: '#999' }}>No links generated yet.</p>}
         {tokens.length > 0 && (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #E0D8CE' }}>
                 {['Client', 'Created', 'Expires', 'Status'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', padding: '8px 0', color: '#2A4D3C', fontWeight: 600, fontSize: 11, letterSpacing: '1px', textTransform: 'uppercase' }}>{h}</th>
+                  <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -399,22 +689,10 @@ export default function AdminIntakePage() {
                       <div>{row.client_name ?? '—'}</div>
                       {row.client_email && <div style={{ fontSize: 12, color: '#999' }}>{row.client_email}</div>}
                     </td>
-                    <td style={{ padding: '10px 12px 10px 0', color: '#666', whiteSpace: 'nowrap' }}>
-                      {formatDate(row.created_at)}
-                    </td>
-                    <td style={{ padding: '10px 12px 10px 0', color: '#666', whiteSpace: 'nowrap' }}>
-                      {formatDate(row.expires_at)}
-                    </td>
+                    <td style={{ padding: '10px 12px 10px 0', color: '#666', whiteSpace: 'nowrap' }}>{formatDate(row.created_at)}</td>
+                    <td style={{ padding: '10px 12px 10px 0', color: '#666', whiteSpace: 'nowrap' }}>{formatDate(row.expires_at)}</td>
                     <td style={{ padding: '10px 0' }}>
-                      <span style={{
-                        display: 'inline-block',
-                        padding: '2px 10px',
-                        borderRadius: 20,
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: status.color,
-                        backgroundColor: `${status.color}18`,
-                      }}>
+                      <span style={{ display: 'inline-block', padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, color: status.color, backgroundColor: `${status.color}18` }}>
                         {status.label}
                       </span>
                     </td>
@@ -446,45 +724,39 @@ const sectionHeadingStyle: React.CSSProperties = {
   margin: 0,
 };
 
+const thStyle: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '8px 0',
+  color: '#2A4D3C',
+  fontWeight: 600,
+  fontSize: 11,
+  letterSpacing: '1px',
+  textTransform: 'uppercase',
+};
+
 const refreshBtnStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: '#666',
-  background: 'none',
-  border: '1px solid #ddd',
-  borderRadius: 6,
-  padding: '4px 12px',
-  cursor: 'pointer',
+  fontSize: 12, color: '#666', background: 'none', border: '1px solid #ddd',
+  borderRadius: 6, padding: '4px 12px', cursor: 'pointer',
 };
 
 const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 12px',
-  border: '1px solid #E0D8CE',
-  borderRadius: 8,
-  fontSize: 14,
-  color: '#333',
-  backgroundColor: '#fff',
-  outline: 'none',
-  boxSizing: 'border-box',
+  width: '100%', padding: '10px 12px', border: '1px solid #E0D8CE',
+  borderRadius: 8, fontSize: 14, color: '#333', backgroundColor: '#fff',
+  outline: 'none', boxSizing: 'border-box',
 };
 
 const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: 11,
-  fontWeight: 600,
-  textTransform: 'uppercase' as const,
-  letterSpacing: '1.5px',
-  color: '#2D5A42',
-  marginBottom: 6,
+  display: 'block', fontSize: 11, fontWeight: 600,
+  textTransform: 'uppercase' as const, letterSpacing: '1.5px',
+  color: '#2D5A42', marginBottom: 6,
 };
 
 const btnStyle: React.CSSProperties = {
-  padding: '10px 22px',
-  backgroundColor: '#C85A1A',
-  color: '#fff',
-  border: 'none',
-  borderRadius: 8,
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
+  padding: '10px 22px', backgroundColor: '#C85A1A', color: '#fff',
+  border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+};
+
+const smallBtnStyle: React.CSSProperties = {
+  fontSize: 12, padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+  border: '1px solid #2A4D3C', color: '#2A4D3C', background: 'transparent',
 };
