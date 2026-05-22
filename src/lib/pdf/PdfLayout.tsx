@@ -6,8 +6,8 @@ import { colors, fonts } from './pdfBrand';
 
 export const pdfStyles = StyleSheet.create({
   page: {
-    backgroundColor: colors.linen,
-    paddingTop: 44,
+    backgroundColor: colors.white,
+    paddingTop: 110, // banner (84) + breathing room
     paddingBottom: 72, // room for footer
     paddingHorizontal: 50,
     fontFamily: fonts.body,
@@ -15,18 +15,32 @@ export const pdfStyles = StyleSheet.create({
     color: colors.bodyText,
     lineHeight: 1.6,
   },
-  logoWrap: {
-    marginBottom: 6,
+  banner: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 84,
+    backgroundColor: colors.linen,
+    paddingHorizontal: 40,
+    paddingTop: 18,
+    paddingBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  bannerDivider: {
+    position: 'absolute',
+    top: 84,
+    left: 0,
+    right: 0,
+    height: 1.25,
+    backgroundColor: colors.gold,
   },
   logo: {
     width: 200,
     height: 50,
-  },
-  goldDivider: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gold,
-    marginTop: 4,
-    marginBottom: 18,
+    objectFit: 'contain',
   },
   title: {
     fontSize: 20,
@@ -162,19 +176,22 @@ export function HighlightP({ children }: { children: ReactNode }) {
 
 interface BrandedDocProps {
   title: string;
-  logoSrc: string | Buffer;
+  logoSrc: Buffer;
   children: ReactNode;
 }
 
 export function BrandedDoc({ title, logoSrc, children }: BrandedDocProps) {
+  // @react-pdf reliably renders Buffer images when passed as { data, format }
+  const logoImg = { data: logoSrc, format: 'png' as const };
+
   return (
     <Document title={title} author="Owen Lynch Psychotherapy">
       <Page size="A4" style={pdfStyles.page}>
-        <View style={pdfStyles.logoWrap} fixed>
-          {/* @react-pdf accepts Buffer | string | { data, format } for src */}
-          <Image src={logoSrc as unknown as string} style={pdfStyles.logo} />
+        {/* Cream banner with logo — fixed so it repeats on every page */}
+        <View style={pdfStyles.banner} fixed>
+          <Image src={logoImg} style={pdfStyles.logo} />
         </View>
-        <View style={pdfStyles.goldDivider} fixed />
+        <View style={pdfStyles.bannerDivider} fixed />
 
         {children}
 

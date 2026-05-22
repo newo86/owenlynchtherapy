@@ -9,6 +9,8 @@ export async function generateTherapeuticAgreementPDF(): Promise<Buffer> {
     <BrandedDoc title="Client Information & Therapeutic Agreement" logoSrc={logo}>
       <Text style={pdfStyles.title}>Client Information &amp; Therapeutic Agreement</Text>
 
+      <View style={{ height: 14 }} />
+
       <Text style={pdfStyles.intro}>
         Please read this document carefully before our first session. It outlines
         how we will work together, what you can expect from therapy, and some
