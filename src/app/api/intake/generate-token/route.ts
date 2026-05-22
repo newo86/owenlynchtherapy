@@ -287,7 +287,7 @@ function buildWelcomeHtml(d: WelcomeEmailData): string {
   <div style="background-color:#FFFFFF;padding:40px;border-radius:0 0 8px 8px;">
     <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${d.firstName},</p>
     <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 24px;">
-      Thank you for reaching out. I'm looking forward to meeting you.
+      Thank you for reaching out. I've received your details and I'm looking forward to meeting you. Please take your time with the intake form — there are no right or wrong answers, and anything you're unsure about we can explore together in our first session.
     </p>
     <p style="font-size:11px;color:#2A4D3C;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin:0 0 12px;">Your first session</p>
     <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;margin:0 0 32px;">
