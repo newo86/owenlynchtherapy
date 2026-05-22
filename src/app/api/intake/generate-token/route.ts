@@ -97,6 +97,14 @@ export async function POST(req: NextRequest) {
   }
   console.log('[generate-token] step 2: done, client id:', clientRow.id);
 
+  // 2b. Link the token to the client so we can later trace a submission back
+  // to its specific client row (clients can share an email, especially during
+  // testing).
+  await supabaseAdmin
+    .from('intake_tokens')
+    .update({ client_id: clientRow.id })
+    .eq('token', token);
+
   // 3. Insert session record
   console.log('[generate-token] step 3: inserting session');
   const { data: sessionRow, error: sessionErr } = await supabaseAdmin.from('sessions').insert({

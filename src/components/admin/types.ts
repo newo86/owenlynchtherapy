@@ -36,6 +36,7 @@ export interface TokenRow {
 
 export interface SubmissionRow {
   id: string;
+  client_id: string | null;
   full_name: string;
   email: string | null;
   session_format: string;

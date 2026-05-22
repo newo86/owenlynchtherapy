@@ -9,6 +9,25 @@ import { adminFetch, displayFee, formatDateTime } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SubmissionRow } from './types';
 
+/** Pick the submission whose timestamp is closest to (and not before) the
+ *  client's creation. Only used for rows that pre-date the client_id FK. */
+function legacySubmissionMatch(submissions: SubmissionRow[], client: ClientRow): SubmissionRow | undefined {
+  const created = new Date(client.created_at).getTime();
+  const candidates = submissions.filter(s =>
+    !s.client_id
+    && (s.email?.toLowerCase() === client.email.toLowerCase()
+      || s.full_name.toLowerCase() === client.full_name.toLowerCase())
+    && new Date(s.submitted_at).getTime() + 5 * 60_000 >= created
+  );
+  if (candidates.length === 0) return undefined;
+  return candidates
+    .slice()
+    .sort((a, b) =>
+      Math.abs(new Date(a.submitted_at).getTime() - created)
+      - Math.abs(new Date(b.submitted_at).getTime() - created)
+    )[0];
+}
+
 interface Props {
   client: ClientRow | null;
   submissions: SubmissionRow[];
@@ -30,10 +49,11 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
 
   if (!client) return null;
 
-  const submission = submissions.find(s =>
-    s.email?.toLowerCase() === client.email.toLowerCase()
-    || s.full_name.toLowerCase() === client.full_name.toLowerCase()
-  );
+  // Prefer the proper FK link — falls back to email/name temporal match for
+  // legacy submissions that were created before client_id existed on the row.
+  const submission =
+    submissions.find(s => s.client_id && s.client_id === client.id)
+    ?? legacySubmissionMatch(submissions, client);
 
   const sortedSessions = client.sessions
     .slice()

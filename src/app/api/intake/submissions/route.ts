@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('intake_submissions')
-    .select('id, full_name, email, session_format, submitted_at')
+    .select('id, client_id, full_name, email, session_format, submitted_at')
     .order('submitted_at', { ascending: false })
     .limit(50);
 

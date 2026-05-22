@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   // Re-validate token server-side
   const { data: tokenRow, error: tokenErr } = await supabaseAdmin
     .from('intake_tokens')
-    .select('id, client_name, expires_at, is_used')
+    .select('id, client_id, client_name, expires_at, is_used')
     .eq('token', token)
     .single();
 
@@ -147,6 +147,7 @@ export async function POST(req: NextRequest) {
   // Insert submission
   const { error: insertErr } = await supabaseAdmin.from('intake_submissions').insert({
     token_id: tokenRow.id,
+    client_id: tokenRow.client_id ?? null,
     full_name,
     preferred_name: preferred_name || null,
     email,
