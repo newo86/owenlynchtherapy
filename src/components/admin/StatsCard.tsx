@@ -15,14 +15,7 @@ export function StatsCard({ label, value, hint, Icon }: Props) {
           <Icon size={40} strokeWidth={1.4} />
         </div>
       )}
-      <div style={{
-        fontSize: 10,
-        fontWeight: 500,
-        letterSpacing: '2.5px',
-        textTransform: 'uppercase',
-        color: '#C85A1A',
-        marginBottom: 14,
-      }}>{label}</div>
+      <div className="admin-eyebrow-sm" style={{ marginBottom: 14 }}>{label}</div>
       <div style={{
         fontFamily: 'var(--font-montserrat), Montserrat, sans-serif',
         fontWeight: 200,

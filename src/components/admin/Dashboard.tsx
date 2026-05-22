@@ -155,7 +155,7 @@ export function Dashboard({
 
       {/* Today's sessions */}
       <section>
-        <h2 style={eyebrowStyle}>Today</h2>
+        <h2 className="admin-eyebrow">Today</h2>
         {todaySessions.length === 0 ? (
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
             No sessions scheduled for today.
@@ -188,15 +188,6 @@ export function Dashboard({
     </div>
   );
 }
-
-const eyebrowStyle: React.CSSProperties = {
-  fontSize: 10,
-  fontWeight: 500,
-  letterSpacing: '3px',
-  textTransform: 'uppercase',
-  color: '#C85A1A',
-  margin: '0 0 14px',
-};
 
 function WeekNavHeader({ weekOffset, onChange }: { weekOffset: number; onChange: (n: number) => void }) {
   const monday = startOfWeek(new Date());

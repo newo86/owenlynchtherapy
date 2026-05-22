@@ -310,15 +310,17 @@
 
 /* ── Glass card ────────────────────────────────────────────────────────── */
 
+/* Cream-tinted frosted glass — warmth comes from the linen #F5F0E8 alpha
+   layered over the deep forest backdrop. */
 .admin-glass {
-  background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(245, 240, 232, 0.16);
+  backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  border: 1px solid rgba(245, 240, 232, 0.22);
   border-radius: 16px;
   box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.22),
-    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    0 1px 0 rgba(245, 240, 232, 0.10) inset;
   position: relative;
   overflow: hidden;
   transition: background 250ms var(--admin-easing),
@@ -328,20 +330,20 @@
 }
 
 .admin-glass-hover:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(200, 90, 26, 0.4);
+  background: rgba(245, 240, 232, 0.23);
+  border-color: rgba(200, 90, 26, 0.45);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.28),
-    0 0 0 1px rgba(200, 90, 26, 0.2),
-    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+    0 0 0 1px rgba(200, 90, 26, 0.22),
+    0 1px 0 rgba(245, 240, 232, 0.14) inset;
   transform: translateY(-2px);
 }
 
 .admin-glass-light {
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(245, 240, 232, 0.09);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(245, 240, 232, 0.14);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   transition: background 200ms ease,
@@ -350,10 +352,32 @@
 }
 
 .admin-glass-light:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(200, 90, 26, 0.3);
+  background: rgba(245, 240, 232, 0.14);
+  border-color: rgba(200, 90, 26, 0.32);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22),
-              0 0 0 1px rgba(200, 90, 26, 0.16);
+              0 0 0 1px rgba(200, 90, 26, 0.18);
+}
+
+/* ── Terracotta section heading ───────────────────────────────────────── */
+
+.admin-eyebrow {
+  font-family: var(--font-montserrat), Montserrat, sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--admin-terracotta);
+  margin: 0 0 14px;
+}
+
+.admin-eyebrow-sm {
+  font-family: var(--font-montserrat), Montserrat, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--admin-terracotta);
+  margin: 0 0 6px;
 }
 
 /* ── Stat card ────────────────────────────────────────────────────────── */
@@ -380,11 +404,11 @@
   justify-content: space-between;
   margin-bottom: 14px;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(245, 240, 232, 0.10);
+  border: 1px solid rgba(245, 240, 232, 0.16);
   border-radius: 12px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .admin-weeknav-label {
@@ -436,27 +460,30 @@
   color: white;
 }
 
+/* Calendar day card: cream-tinted body, dark green header. Inverted from
+   the rest of the dashboard so the day numerals sit on the brand colour
+   and the schedule space feels lighter and more spacious. */
 .admin-day {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(245, 240, 232, 0.13);
+  border: 1px solid rgba(245, 240, 232, 0.18);
   border-radius: 12px;
   overflow: hidden;
   min-height: 200px;
   display: flex;
   flex-direction: column;
   transition: border-color 200ms ease;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .admin-day:hover {
-  border-color: rgba(255, 255, 255, 0.13);
+  border-color: rgba(245, 240, 232, 0.28);
 }
 
 .admin-day-header {
   padding: 10px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid rgba(245, 240, 232, 0.16);
+  background: rgba(20, 38, 30, 0.7);
 }
 
 .admin-day-name {
@@ -464,29 +491,29 @@
   font-weight: 600;
   letter-spacing: 2.4px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .admin-day-number {
   font-family: var(--font-montserrat), Montserrat, sans-serif;
   font-weight: 200;
   font-size: 22px;
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.95);
   line-height: 1.2;
   margin-top: 2px;
 }
 
 .admin-day.is-today {
-  border-color: rgba(200, 90, 26, 0.4);
+  border-color: rgba(200, 90, 26, 0.5);
 }
 
 .admin-day.is-today .admin-day-header {
-  background: rgba(200, 90, 26, 0.16);
-  border-bottom-color: rgba(200, 90, 26, 0.22);
+  background: rgba(200, 90, 26, 0.85);
+  border-bottom-color: rgba(200, 90, 26, 0.6);
 }
 
 .admin-day.is-today .admin-day-name {
-  color: rgba(255, 220, 200, 0.85);
+  color: rgba(255, 232, 215, 0.95);
 }
 
 .admin-day.is-today .admin-day-number {
@@ -496,19 +523,22 @@
 .admin-day-empty {
   text-align: center;
   padding: 18px 12px;
-  color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.32);
   font-size: 18px;
   font-weight: 200;
 }
 
-/* Session card inside the calendar */
+/* Session card inside the calendar — stays dark frosted forest so it
+   reads as a discrete event on the cream day body. */
 .admin-session {
   position: relative;
   margin: 5px;
   padding: 8px 10px;
   border-radius: 8px;
-  background: rgba(42, 77, 60, 0.6);
-  border: 1px solid rgba(212, 168, 67, 0.22);
+  background: rgba(30, 61, 47, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(212, 168, 67, 0.28);
   cursor: pointer;
   overflow: hidden;
   transition: background 200ms var(--admin-easing),
@@ -547,16 +577,16 @@
 }
 
 .admin-session.is-gcal {
-  background: transparent;
-  border: 1px dashed rgba(79, 138, 104, 0.42);
+  background: rgba(30, 61, 47, 0.18);
+  border: 1px dashed rgba(79, 138, 104, 0.6);
   cursor: default;
 }
 
 .admin-session.is-gcal::after { display: none; }
 
 .admin-session.is-gcal:hover {
-  background: rgba(79, 138, 104, 0.07);
-  border-color: rgba(79, 138, 104, 0.6);
+  background: rgba(30, 61, 47, 0.32);
+  border-color: rgba(79, 138, 104, 0.85);
   transform: none;
   box-shadow: none;
 }
@@ -753,11 +783,11 @@
   display: inline-flex;
   gap: 4px;
   padding: 4px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(245, 240, 232, 0.10);
+  border: 1px solid rgba(245, 240, 232, 0.16);
   border-radius: 10px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .admin-segmented-btn {
@@ -796,16 +826,16 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(245, 240, 232, 0.12);
+  border: 1px solid rgba(245, 240, 232, 0.18);
   border-radius: 14px;
   overflow: hidden;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .admin-table thead {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(20, 38, 30, 0.55);
 }
 
 .admin-table th {
@@ -815,7 +845,7 @@
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.7);
   white-space: nowrap;
 }
 
@@ -823,12 +853,12 @@
   padding: 14px 18px;
   font-size: 13px;
   color: var(--admin-text);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid rgba(245, 240, 232, 0.08);
   vertical-align: middle;
 }
 
 .admin-table tr:hover td {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(245, 240, 232, 0.07);
 }
 
 /* ── Scrollbar ────────────────────────────────────────────────────────── */

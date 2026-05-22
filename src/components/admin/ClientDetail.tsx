@@ -200,7 +200,7 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
           </div>
 
           <section>
-            <div style={eyebrow}>Session history</div>
+            <div className="admin-eyebrow">Session history</div>
             <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {sortedSessions.length === 0 && (
                 <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0 }}>No sessions.</p>
@@ -244,7 +244,7 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
 
           <section>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={eyebrow}>Notes</div>
+              <div className="admin-eyebrow" style={{ margin: 0 }}>Notes</div>
               <div style={{
                 fontSize: 11,
                 color: notesSaved ? '#A6E3BD' : 'rgba(255,255,255,0.4)',
@@ -266,19 +266,10 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
   );
 }
 
-const eyebrow: React.CSSProperties = {
-  fontSize: 10,
-  fontWeight: 500,
-  letterSpacing: '2.4px',
-  textTransform: 'uppercase',
-  color: '#C85A1A',
-  marginBottom: 4,
-};
-
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div style={eyebrow}>{label}</div>
+      <div className="admin-eyebrow-sm">{label}</div>
       <div style={{ fontSize: 14, color: 'white', textTransform: 'capitalize' }}>{value}</div>
     </div>
   );
