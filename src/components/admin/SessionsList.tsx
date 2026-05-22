@@ -13,14 +13,15 @@ import type { ClientRow, SessionRow, CalendarEvent } from './types';
 interface Props {
   clients: ClientRow[];
   events: CalendarEvent[];
+  weekOffset: number;
+  onWeekOffsetChange: (offset: number) => void;
   onReload: () => void;
 }
 
 type View = 'list' | 'calendar';
 
-export function SessionsList({ clients, events, onReload }: Props) {
+export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload }: Props) {
   const [view, setView] = useState<View>('list');
-  const [weekOffset, setWeekOffset] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
@@ -96,7 +97,7 @@ export function SessionsList({ clients, events, onReload }: Props) {
 
         {view === 'calendar' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
-            <button onClick={() => setWeekOffset(o => o - 1)} style={navBtnStyle} aria-label="Previous week">
+            <button onClick={() => onWeekOffsetChange(weekOffset - 1)} style={navBtnStyle} aria-label="Previous week">
               <ChevronLeft size={16} strokeWidth={1.8} />
             </button>
             <div style={{ fontFamily: fonts.sans, fontSize: 13, color: colors.forest, minWidth: 200, textAlign: 'center' }}>
@@ -104,12 +105,12 @@ export function SessionsList({ clients, events, onReload }: Props) {
               {' – '}
               {weekEnd.toLocaleDateString('en-IE', { day: 'numeric', month: 'short', year: 'numeric' })}
             </div>
-            <button onClick={() => setWeekOffset(o => o + 1)} style={navBtnStyle} aria-label="Next week">
+            <button onClick={() => onWeekOffsetChange(weekOffset + 1)} style={navBtnStyle} aria-label="Next week">
               <ChevronRight size={16} strokeWidth={1.8} />
             </button>
             {weekOffset !== 0 && (
               <button
-                onClick={() => setWeekOffset(0)}
+                onClick={() => onWeekOffsetChange(0)}
                 style={{
                   padding: '6px 12px',
                   background: 'transparent',

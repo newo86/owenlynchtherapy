@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CalendarCheck2 } from 'lucide-react';
+import { CalendarCheck2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { colors, fonts, eyebrow } from './theme';
 import { StatsCard } from './StatsCard';
 import { SessionCard } from './SessionCard';
@@ -14,11 +14,17 @@ interface Props {
   tokens: TokenRow[];
   events: CalendarEvent[];
   calendarStatus: CalendarStatus | null;
+  weekOffset: number;
+  onWeekOffsetChange: (offset: number) => void;
   onReload: () => void;
   onConnectCalendar: () => void;
 }
 
-export function Dashboard({ clients, tokens, events, calendarStatus, onReload, onConnectCalendar }: Props) {
+export function Dashboard({
+  clients, tokens, events, calendarStatus,
+  weekOffset, onWeekOffsetChange,
+  onReload, onConnectCalendar,
+}: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; msg: string } | null>(null);
@@ -175,11 +181,71 @@ export function Dashboard({ clients, tokens, events, calendarStatus, onReload, o
         )}
       </section>
 
-      {/* This week */}
+      {/* Week navigation + calendar */}
       <section>
-        <h2 style={{ ...eyebrow, marginBottom: 14 }}>This Week</h2>
-        <WeekCalendar clients={clients} events={events} />
+        <WeekNavHeader weekOffset={weekOffset} onChange={onWeekOffsetChange} />
+        <WeekCalendar clients={clients} events={events} weekOffset={weekOffset} />
       </section>
+    </div>
+  );
+}
+
+function WeekNavHeader({ weekOffset, onChange }: { weekOffset: number; onChange: (n: number) => void }) {
+  const monday = startOfWeek(new Date());
+  monday.setDate(monday.getDate() + weekOffset * 7);
+  const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
+
+  const sameMonth = monday.getMonth() === sunday.getMonth();
+  const sameYear = monday.getFullYear() === sunday.getFullYear();
+  const startLabel = monday.toLocaleDateString('en-IE', {
+    day: 'numeric',
+    month: sameMonth ? undefined : 'short',
+    year: sameYear ? undefined : 'numeric',
+  });
+  const endLabel = sunday.toLocaleDateString('en-IE', {
+    day: 'numeric', month: 'short', year: 'numeric',
+  });
+  const heading = weekOffset === 0
+    ? `This Week · ${startLabel}–${endLabel}`
+    : `Week of ${startLabel}–${endLabel}`;
+
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 14,
+      marginBottom: 14,
+      paddingBottom: 12,
+      borderBottom: `1px solid ${colors.gold}40`,
+      flexWrap: 'wrap',
+    }}>
+      <button type="button" onClick={() => onChange(weekOffset - 1)} className="admin-weeknav-btn" aria-label="Previous week">
+        <ChevronLeft size={14} strokeWidth={1.9} /> Prev
+      </button>
+
+      <div style={{
+        fontFamily: fonts.display,
+        fontWeight: 300,
+        fontSize: 16,
+        color: colors.forest,
+        textAlign: 'center',
+        flex: '1 1 auto',
+        letterSpacing: '0.2px',
+      }}>
+        {heading}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        {weekOffset !== 0 && (
+          <button type="button" onClick={() => onChange(0)} className="admin-weeknav-btn admin-weeknav-today">
+            Today
+          </button>
+        )}
+        <button type="button" onClick={() => onChange(weekOffset + 1)} className="admin-weeknav-btn" aria-label="Next week">
+          Next <ChevronRight size={14} strokeWidth={1.9} />
+        </button>
+      </div>
     </div>
   );
 }

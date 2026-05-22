@@ -82,35 +82,7 @@ export function Sidebar({ active, onNavigate, onSignOut }: Props) {
             <button
               key={id}
               onClick={() => onNavigate(id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                width: '100%',
-                background: isActive ? 'rgba(255,255,255,0.06)' : 'transparent',
-                borderLeft: `3px solid ${isActive ? colors.terracotta : 'transparent'}`,
-                color: 'rgba(255,255,255,1)',
-                opacity: isActive ? 1 : 0.78,
-                border: 'none',
-                borderRightWidth: 0,
-                borderTopWidth: 0,
-                borderBottomWidth: 0,
-                padding: '12px 24px 12px 21px',
-                fontFamily: fonts.sans,
-                fontWeight: 500,
-                fontSize: 12,
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'background 150ms ease, opacity 150ms ease',
-              }}
-              onMouseEnter={e => {
-                if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)';
-              }}
-              onMouseLeave={e => {
-                if (!isActive) (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
-              }}
+              className={`admin-nav-item${isActive ? ' is-active' : ''}`}
             >
               <Icon size={16} strokeWidth={1.8} aria-hidden />
               {label}

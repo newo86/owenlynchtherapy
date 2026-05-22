@@ -35,6 +35,9 @@ export function AdminShell() {
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingAll, setLoadingAll] = useState(false);
   const [flash, setFlash] = useState<{ kind: 'success' | 'error'; msg: string } | null>(null);
+  // Lifted so the Dashboard and Sessions views share the same week navigation
+  // state across section switches.
+  const [weekOffset, setWeekOffset] = useState(0);
 
   // Surface the result of the Google OAuth round-trip on first mount
   useEffect(() => {
@@ -80,7 +83,7 @@ export function AdminShell() {
       setCalStatus(calStatusJson as CalendarStatus);
 
       if ((calStatusJson as CalendarStatus).connected) {
-        const evRes = await adminFetch('/api/admin/calendar');
+        const evRes = await adminFetch(`/api/admin/calendar?weekOffset=${weekOffset}`);
         if (evRes.ok) {
           const evJson = await evRes.json();
           setEvents(evJson.events ?? []);
@@ -91,9 +94,23 @@ export function AdminShell() {
     } finally {
       setLoadingAll(false);
     }
-  }, []);
+  }, [weekOffset]);
 
   useEffect(() => { void reload(); }, [reload]);
+
+  // When week changes (and Google is connected), refetch events for that range
+  // without reloading the rest of the dashboard.
+  useEffect(() => {
+    if (!calStatus?.connected) return;
+    let cancelled = false;
+    (async () => {
+      const evRes = await adminFetch(`/api/admin/calendar?weekOffset=${weekOffset}`);
+      if (!evRes.ok || cancelled) return;
+      const evJson = await evRes.json();
+      setEvents(evJson.events ?? []);
+    })();
+    return () => { cancelled = true; };
+  }, [weekOffset, calStatus?.connected]);
 
   // Keep openClient in sync with reloaded list (notes / sessions updated)
   useEffect(() => {
@@ -230,6 +247,8 @@ export function AdminShell() {
               tokens={tokens}
               events={events}
               calendarStatus={calStatus}
+              weekOffset={weekOffset}
+              onWeekOffsetChange={setWeekOffset}
               onReload={reload}
               onConnectCalendar={connectCalendar}
             />
@@ -247,6 +266,8 @@ export function AdminShell() {
             <SessionsList
               clients={clients}
               events={events}
+              weekOffset={weekOffset}
+              onWeekOffsetChange={setWeekOffset}
               onReload={reload}
             />
           )}

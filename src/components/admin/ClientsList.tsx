@@ -140,26 +140,14 @@ export function ClientsList({ clients, onOpen, onNewClient }: Props) {
                 tabIndex={0}
                 onClick={() => onOpen(c)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onOpen(c); }}
+                className="admin-illum"
                 style={{
-                  background: colors.white,
-                  borderRadius: 8,
-                  borderTop: `3px solid ${colors.gold}`,
-                  boxShadow: shadows.card,
-                  padding: '16px 20px',
+                  padding: '18px 22px',
                   display: 'grid',
                   gridTemplateColumns: 'auto 2.5fr 2fr 1fr 1fr auto',
                   gap: 18,
                   alignItems: 'center',
                   cursor: 'pointer',
-                  transition: 'box-shadow 150ms ease, transform 150ms ease',
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = shadows.cardHover;
-                  (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = shadows.card;
-                  (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
                 }}
               >
                 <Avatar name={c.full_name} size={42} />

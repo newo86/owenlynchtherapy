@@ -27,9 +27,24 @@ export const fonts = {
 } as const;
 
 export const shadows = {
-  card: '0 1px 3px rgba(42,77,60,0.08), 0 1px 2px rgba(42,77,60,0.04)',
-  cardHover: '0 4px 14px rgba(42,77,60,0.10), 0 2px 4px rgba(42,77,60,0.06)',
+  xs: '0 1px 2px rgba(42,77,60,0.04)',
+  sm: '0 2px 4px rgba(42,77,60,0.06), 0 1px 2px rgba(42,77,60,0.04)',
+  md: '0 4px 12px rgba(42,77,60,0.08), 0 2px 4px rgba(42,77,60,0.05)',
+  lg: '0 8px 24px rgba(42,77,60,0.12), 0 4px 8px rgba(42,77,60,0.06)',
+  xl: '0 16px 40px rgba(42,77,60,0.14), 0 8px 16px rgba(42,77,60,0.08)',
+  glowTerracotta: '0 0 0 1px rgba(200,90,26,0.3), 0 4px 16px rgba(200,90,26,0.12)',
+  glowForest: '0 0 0 1px rgba(42,77,60,0.3), 0 4px 16px rgba(42,77,60,0.12)',
+  glowGold: '0 0 0 1px rgba(212,168,67,0.4), 0 4px 16px rgba(212,168,67,0.15)',
+  // Back-compat aliases used by the older components
+  card: '0 2px 4px rgba(42,77,60,0.06), 0 1px 2px rgba(42,77,60,0.04)',
+  cardHover: '0 8px 24px rgba(42,77,60,0.12), 0 4px 8px rgba(42,77,60,0.06)',
   panel: '0 24px 64px rgba(42,77,60,0.18)',
+} as const;
+
+export const easing = {
+  fast: '120ms cubic-bezier(0.4, 0, 0.2, 1)',
+  base: '200ms cubic-bezier(0.4, 0, 0.2, 1)',
+  slow: '350ms cubic-bezier(0.4, 0, 0.2, 1)',
 } as const;
 
 // Reusable style fragments —————————————————————————————————————

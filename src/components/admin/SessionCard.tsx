@@ -68,46 +68,12 @@ export function SessionCard({
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginLeft: 'auto' }}>
         {session.status === 'scheduled' && onMarkAttended && (
-          <button
-            onClick={onMarkAttended}
-            disabled={busy}
-            style={{
-              padding: '7px 14px',
-              background: colors.forest,
-              color: colors.white,
-              border: 'none',
-              borderRadius: 5,
-              fontFamily: fonts.sans,
-              fontSize: 11,
-              fontWeight: 500,
-              letterSpacing: '1.2px',
-              textTransform: 'uppercase',
-              cursor: busy ? 'default' : 'pointer',
-              opacity: busy ? 0.6 : 1,
-            }}
-          >
+          <button onClick={onMarkAttended} disabled={busy} className="admin-btn-primary">
             Mark Attended
           </button>
         )}
         {onSendReceipt && (
-          <button
-            onClick={onSendReceipt}
-            disabled={busy}
-            style={{
-              padding: '7px 14px',
-              background: 'transparent',
-              color: colors.forest,
-              border: `1px solid ${colors.border}`,
-              borderRadius: 5,
-              fontFamily: fonts.sans,
-              fontSize: 11,
-              fontWeight: 500,
-              letterSpacing: '1.2px',
-              textTransform: 'uppercase',
-              cursor: busy ? 'default' : 'pointer',
-              opacity: busy ? 0.6 : 1,
-            }}
-          >
+          <button onClick={onSendReceipt} disabled={busy} className="admin-btn-secondary">
             Send Receipt
           </button>
         )}

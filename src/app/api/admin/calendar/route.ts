@@ -17,20 +17,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ connected: false, events: [] }, { headers: noCache });
   }
 
-  // Window: from start of current week through 28 days out (covers 4 weeks of calendar nav)
-  const weekStart = startOfWeek(new Date());
-  const timeMin = weekStart.toISOString();
-  const end = new Date(weekStart);
-  end.setDate(end.getDate() + 28);
-  const timeMax = end.toISOString();
+  // Window: 4 weeks of events centred on (current week + weekOffset). The
+  // dashboard can navigate back/forward through weeks; this fetch covers
+  // the current view + 3 weeks beyond it in either direction.
+  const weekOffset = parseInt(req.nextUrl.searchParams.get('weekOffset') ?? '0', 10) || 0;
+  const weeks = Math.max(1, Math.min(12, parseInt(req.nextUrl.searchParams.get('weeks') ?? '4', 10) || 4));
 
-  // Allow ?weeks=N to extend if needed
-  const weeksParam = req.nextUrl.searchParams.get('weeks');
-  if (weeksParam) {
-    const weeks = Math.max(1, Math.min(12, parseInt(weeksParam, 10) || 4));
-    end.setTime(weekStart.getTime());
-    end.setDate(end.getDate() + weeks * 7);
-  }
+  const viewStart = startOfWeek(new Date());
+  viewStart.setDate(viewStart.getDate() + weekOffset * 7);
+  const timeMin = viewStart.toISOString();
+  const end = new Date(viewStart);
+  end.setDate(end.getDate() + weeks * 7);
+  const timeMax = end.toISOString();
 
   try {
     const calendar = google.calendar({ version: 'v3', auth: client });
