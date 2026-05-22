@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { X, Check, Copy } from 'lucide-react';
-import { colors, fonts, shadows, input as inputStyle, label as labelStyle } from './theme';
 import { adminFetch } from './api';
 
 interface Props {
@@ -70,35 +69,35 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div>
-          <label style={labelStyle}>Client name *</label>
+          <label className="admin-label">Client name *</label>
           <input type="text" required placeholder="e.g. Jane Smith"
-            value={clientName} onChange={e => setClientName(e.target.value)} style={inputStyle} />
+            value={clientName} onChange={e => setClientName(e.target.value)} className="admin-input" />
         </div>
         <div>
-          <label style={labelStyle}>Client email *</label>
+          <label className="admin-label">Client email *</label>
           <input type="email" required placeholder="jane@example.com"
-            value={clientEmail} onChange={e => setClientEmail(e.target.value)} style={inputStyle} />
+            value={clientEmail} onChange={e => setClientEmail(e.target.value)} className="admin-input" />
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div>
-          <label style={labelStyle}>Session date & time *</label>
+          <label className="admin-label">Session date &amp; time *</label>
           <input type="datetime-local" required value={sessionDate}
-            onChange={e => setSessionDate(e.target.value)} style={inputStyle} />
+            onChange={e => setSessionDate(e.target.value)} className="admin-input" />
         </div>
         <div>
-          <label style={labelStyle}>Session fee (€) *</label>
+          <label className="admin-label">Session fee (€) *</label>
           <input type="number" required placeholder="e.g. 80" min="1" step="1"
-            value={sessionFee} onChange={e => setSessionFee(e.target.value)} style={inputStyle} />
+            value={sessionFee} onChange={e => setSessionFee(e.target.value)} className="admin-input" />
         </div>
       </div>
       <div>
-        <label style={labelStyle}>Session format *</label>
+        <label className="admin-label">Session format *</label>
         <div style={{ display: 'flex', gap: 20, marginTop: 6 }}>
           {(['in_person', 'online'] as const).map(v => (
             <label key={v} style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-              fontFamily: fonts.sans, fontSize: 14, color: colors.text,
+              fontSize: 14, color: 'rgba(255,255,255,0.85)',
             }}>
               <input
                 type="radio"
@@ -106,7 +105,7 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
                 value={v}
                 checked={sessionFormat === v}
                 onChange={() => setSessionFormat(v)}
-                style={{ accentColor: colors.terracotta }}
+                style={{ accentColor: '#C85A1A' }}
               />
               {v === 'in_person' ? 'In Person' : 'Online'}
             </label>
@@ -115,7 +114,7 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
       </div>
 
       {error && (
-        <p style={{ margin: 0, fontFamily: fonts.sans, fontSize: 13, color: colors.terracottaDark }}>{error}</p>
+        <p style={{ margin: 0, fontSize: 13, color: '#F4956A' }}>{error}</p>
       )}
 
       <button
@@ -127,22 +126,21 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
         {busy ? 'Generating PDFs & sending email…' : 'Generate & Send Welcome Email'}
       </button>
       {busy && (
-        <p style={{ margin: '4px 0 0', fontFamily: fonts.sans, fontSize: 12, color: colors.textMuted, fontStyle: 'italic' }}>
+        <p style={{ margin: '4px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.55)', fontStyle: 'italic' }}>
           This can take up to ~10 s the first time; subsequent sends are faster.
         </p>
       )}
 
       {generated && (
         <div style={{
-          marginTop: 8,
-          padding: 18,
-          background: `${colors.sage}15`,
-          border: `1px solid ${colors.sage}`,
-          borderRadius: 6,
+          marginTop: 8, padding: 18,
+          background: 'rgba(79,138,104,0.15)',
+          border: '1px solid rgba(79,138,104,0.4)',
+          borderRadius: 10,
         }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <Check size={16} strokeWidth={2.4} color={colors.sageDark} />
-            <span style={{ fontFamily: fonts.sans, fontSize: 13, fontWeight: 600, color: colors.sageDark }}>
+            <Check size={16} strokeWidth={2.4} color="#A6E3BD" />
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#A6E3BD' }}>
               Link generated · welcome email sent to {generated.clientEmail}
             </span>
           </div>
@@ -168,14 +166,7 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
 
   if (!asModal) {
     return (
-      <div style={{
-        background: colors.white,
-        borderRadius: 8,
-        borderTop: `3px solid ${colors.gold}`,
-        boxShadow: shadows.card,
-        padding: 28,
-        maxWidth: 720,
-      }}>
+      <div className="admin-glass" style={{ padding: 28, maxWidth: 720 }}>
         {form}
       </div>
     );
@@ -184,46 +175,43 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
   return (
     <>
       <div onClick={onClose} style={{
-        position: 'fixed', inset: 0, background: 'rgba(42,77,60,0.32)', zIndex: 90,
-        animation: 'fadeIn 150ms ease',
+        position: 'fixed', inset: 0,
+        background: 'rgba(0,0,0,0.55)',
+        backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+        zIndex: 90,
+        animation: 'admin-fade-in 150ms ease',
       }} />
-      <div style={{
+      <div className="admin-glass" style={{
         position: 'fixed',
         top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
-        background: colors.linen,
-        borderRadius: 10,
-        boxShadow: shadows.panel,
+        background: 'rgba(30, 61, 47, 0.92)',
+        borderRadius: 16,
         zIndex: 100,
         width: 'min(640px, 92vw)',
         maxHeight: '92vh',
         overflowY: 'auto',
-        animation: 'popIn 180ms ease',
+        animation: 'admin-pop-in 180ms ease',
       }}>
         <div style={{
           padding: '18px 24px',
-          background: colors.forest,
-          color: colors.white,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderRadius: '10px 10px 0 0',
+          background: 'rgba(0,0,0,0.25)',
+          color: 'white',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}>
-          <h2 style={{ margin: 0, fontFamily: fonts.display, fontWeight: 300, fontSize: 22 }}>New client</h2>
-          <button
-            onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: colors.white, cursor: 'pointer', padding: 6 }}
-            aria-label="Close"
-          >
+          <h2 style={{
+            margin: 0,
+            fontFamily: 'var(--font-montserrat), Montserrat, sans-serif',
+            fontWeight: 300, fontSize: 22,
+          }}>New client</h2>
+          <button onClick={onClose} aria-label="Close"
+            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: 6 }}>
             <X size={20} strokeWidth={1.8} />
           </button>
         </div>
         <div style={{ padding: 28 }}>{form}</div>
       </div>
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes popIn { from { transform: translate(-50%, -50%) scale(0.96); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
-      `}</style>
     </>
   );
 }
@@ -232,10 +220,9 @@ function LinkRow({ label, value, copied, onCopy }: { label: string; value: strin
   return (
     <div style={{ marginBottom: 10 }}>
       <div style={{
-        fontFamily: fonts.sans,
         fontSize: 10, fontWeight: 500,
         letterSpacing: '2px', textTransform: 'uppercase',
-        color: colors.forest,
+        color: 'rgba(255,255,255,0.55)',
         marginBottom: 4,
       }}>{label}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -243,29 +230,14 @@ function LinkRow({ label, value, copied, onCopy }: { label: string; value: strin
           flex: 1,
           fontFamily: 'SF Mono, Menlo, monospace',
           fontSize: 12,
-          color: colors.text,
-          background: colors.white,
-          border: `1px solid ${colors.border}`,
-          borderRadius: 4,
+          color: 'rgba(255,255,255,0.88)',
+          background: 'rgba(0,0,0,0.25)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 6,
           padding: '6px 10px',
           wordBreak: 'break-all',
         }}>{value}</code>
-        <button
-          onClick={onCopy}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center', gap: 6,
-            padding: '6px 12px',
-            background: copied ? colors.sageDark : 'transparent',
-            color: copied ? colors.white : colors.forest,
-            border: `1px solid ${copied ? colors.sageDark : colors.border}`,
-            borderRadius: 4,
-            fontFamily: fonts.sans, fontSize: 11, fontWeight: 500,
-            letterSpacing: '1px', textTransform: 'uppercase',
-            cursor: 'pointer',
-            transition: 'background 150ms ease, color 150ms ease',
-          }}
-        >
+        <button onClick={onCopy} className={copied ? 'admin-btn-primary' : 'admin-btn-secondary'}>
           {copied ? <Check size={12} /> : <Copy size={12} />}
           {copied ? 'Copied' : 'Copy'}
         </button>

@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CalendarCheck2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { colors, fonts, eyebrow } from './theme';
+import {
+  CalendarCheck2, ChevronLeft, ChevronRight,
+  CalendarDays, Wallet, FileText, UsersRound,
+} from 'lucide-react';
 import { StatsCard } from './StatsCard';
 import { SessionCard } from './SessionCard';
 import { WeekCalendar } from './WeekCalendar';
@@ -29,7 +31,6 @@ export function Dashboard({
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; msg: string } | null>(null);
 
-  // Build flat session list with client reference
   const allSessions = useMemo(() => {
     const out: Array<{ s: SessionRow; c: ClientRow }> = [];
     for (const c of clients) for (const s of c.sessions) out.push({ s, c });
@@ -54,7 +55,6 @@ export function Dashboard({
     return d >= monday && d < sunday;
   });
 
-  // Stats
   const totalThisWeek = sessionsThisWeek.length;
   const outstanding = allSessions.filter(({ s }) =>
     s.payment_status === 'unpaid' && s.status !== 'cancelled' && new Date(s.session_date) <= today
@@ -99,66 +99,65 @@ export function Dashboard({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-      {/* Stats row */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
         gap: 16,
       }}>
-        <StatsCard label="Sessions This Week" value={totalThisWeek} hint={eventsThisWeek.length > 0 ? `+${eventsThisWeek.length} calendar events` : undefined} />
-        <StatsCard label="Outstanding Payments" value={outstanding} accent="terracotta" hint={outstanding > 0 ? 'Past sessions, unpaid' : 'All clear'} />
-        <StatsCard label="Forms Pending" value={formsPending} accent="gold" hint="Links sent, not yet submitted" />
-        <StatsCard label="Active Clients" value={activeClients} accent="sage" />
+        <StatsCard
+          label="Sessions This Week"
+          value={totalThisWeek}
+          hint={eventsThisWeek.length > 0 ? `+${eventsThisWeek.length} calendar events` : undefined}
+          Icon={CalendarDays}
+        />
+        <StatsCard
+          label="Outstanding Payments"
+          value={outstanding}
+          hint={outstanding > 0 ? 'Past sessions, unpaid' : 'All clear'}
+          Icon={Wallet}
+        />
+        <StatsCard
+          label="Forms Pending"
+          value={formsPending}
+          hint="Links sent, not yet submitted"
+          Icon={FileText}
+        />
+        <StatsCard
+          label="Active Clients"
+          value={activeClients}
+          Icon={UsersRound}
+        />
       </div>
 
       {/* Connect Google Calendar banner */}
       {calendarStatus && !calendarStatus.connected && (
-        <div style={{
-          background: `${colors.gold}18`,
-          border: `1px solid ${colors.gold}`,
-          borderRadius: 8,
-          padding: '16px 20px',
+        <div className="admin-glass" style={{
+          padding: '14px 18px',
           display: 'flex',
           alignItems: 'center',
           gap: 14,
           flexWrap: 'wrap',
+          border: '1px solid rgba(212, 168, 67, 0.45)',
         }}>
-          <CalendarCheck2 size={20} strokeWidth={1.8} color={colors.goldDark} aria-hidden />
+          <CalendarCheck2 size={20} strokeWidth={1.8} color="#D4A843" aria-hidden />
           <div style={{ flex: 1, minWidth: 240 }}>
-            <div style={{ fontFamily: fonts.sans, fontSize: 13, fontWeight: 600, color: colors.forest }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'white' }}>
               Connect Google Calendar
             </div>
-            <div style={{ fontFamily: fonts.sans, fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
               See your Google Calendar events alongside scheduled sessions.
             </div>
           </div>
-          <button
-            onClick={onConnectCalendar}
-            style={{
-              padding: '8px 16px',
-              background: colors.terracotta,
-              color: colors.white,
-              border: 'none',
-              borderRadius: 5,
-              fontFamily: fonts.sans,
-              fontSize: 11,
-              fontWeight: 500,
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-            }}
-          >
-            Connect
-          </button>
+          <button onClick={onConnectCalendar} className="admin-btn-primary">Connect</button>
         </div>
       )}
 
       {/* Today's sessions */}
       <section>
-        <h2 style={{ ...eyebrow, marginBottom: 14 }}>Today</h2>
+        <h2 style={eyebrowStyle}>Today</h2>
         {todaySessions.length === 0 ? (
-          <p style={{ fontFamily: fonts.sans, fontSize: 14, color: colors.textMuted, margin: 0 }}>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
             No sessions scheduled for today.
           </p>
         ) : (
@@ -190,6 +189,15 @@ export function Dashboard({
   );
 }
 
+const eyebrowStyle: React.CSSProperties = {
+  fontSize: 10,
+  fontWeight: 500,
+  letterSpacing: '3px',
+  textTransform: 'uppercase',
+  color: '#C85A1A',
+  margin: '0 0 14px',
+};
+
 function WeekNavHeader({ weekOffset, onChange }: { weekOffset: number; onChange: (n: number) => void }) {
   const monday = startOfWeek(new Date());
   monday.setDate(monday.getDate() + weekOffset * 7);
@@ -210,31 +218,12 @@ function WeekNavHeader({ weekOffset, onChange }: { weekOffset: number; onChange:
     : `Week of ${startLabel}–${endLabel}`;
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: 14,
-      marginBottom: 14,
-      paddingBottom: 12,
-      borderBottom: `1px solid ${colors.gold}40`,
-      flexWrap: 'wrap',
-    }}>
+    <div className="admin-weeknav">
       <button type="button" onClick={() => onChange(weekOffset - 1)} className="admin-weeknav-btn" aria-label="Previous week">
         <ChevronLeft size={14} strokeWidth={1.9} /> Prev
       </button>
 
-      <div style={{
-        fontFamily: fonts.display,
-        fontWeight: 300,
-        fontSize: 16,
-        color: colors.forest,
-        textAlign: 'center',
-        flex: '1 1 auto',
-        letterSpacing: '0.2px',
-      }}>
-        {heading}
-      </div>
+      <div className="admin-weeknav-label">{heading}</div>
 
       <div style={{ display: 'flex', gap: 8 }}>
         {weekOffset !== 0 && (

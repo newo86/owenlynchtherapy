@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { colors, fonts, input as inputStyle, btnPrimary } from './theme';
 import { setSecret, clearSecret, getSecret } from './api';
 
 interface Props {
@@ -25,43 +24,39 @@ export function AuthGate({ children }: Props) {
   }, []);
 
   if (authed === null) {
-    return <div style={{ minHeight: '100vh', background: colors.linen }} />;
+    return <div className="admin-root"><div className="admin-bg" /></div>;
   }
 
   if (!authed) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: colors.linen,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 20px',
-      }}>
-        <div style={{
-          background: colors.white,
-          borderRadius: 8,
-          borderTop: `3px solid ${colors.gold}`,
-          boxShadow: '0 8px 32px rgba(42,77,60,0.10)',
-          padding: '36px 36px 32px',
+      <div className="admin-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+        <div className="admin-bg">
+          <div className="admin-bg-circle admin-bg-circle-1" />
+          <div className="admin-bg-circle admin-bg-circle-2" />
+          <div className="admin-bg-circle admin-bg-circle-3" />
+          <div className="admin-bg-grain" />
+        </div>
+        <div className="admin-glass" style={{
+          position: 'relative',
+          zIndex: 1,
+          padding: '38px 38px 32px',
           width: '100%',
           maxWidth: 420,
         }}>
           <div style={{
-            fontFamily: fonts.sans, fontSize: 10, fontWeight: 500,
+            fontSize: 10, fontWeight: 500,
             letterSpacing: '3px', textTransform: 'uppercase',
-            color: colors.terracotta, marginBottom: 10,
+            color: '#C85A1A', marginBottom: 10,
           }}>
             Owen Lynch · Admin
           </div>
           <h1 style={{
             margin: '0 0 8px',
-            fontFamily: fonts.display, fontWeight: 300, fontSize: 26, color: colors.forest,
-            letterSpacing: '-0.01em',
-          }}>
-            Sign in
-          </h1>
-          <p style={{ margin: '0 0 22px', fontFamily: fonts.sans, fontSize: 13, color: colors.textMuted }}>
+            fontFamily: 'var(--font-montserrat), Montserrat, sans-serif',
+            fontWeight: 300, fontSize: 26, color: 'white',
+            letterSpacing: '-0.4px',
+          }}>Sign in</h1>
+          <p style={{ margin: '0 0 22px', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
             Enter the admin secret to continue.
           </p>
           <form onSubmit={e => {
@@ -77,12 +72,12 @@ export function AuthGate({ children }: Props) {
               value={value}
               onChange={e => setValue(e.target.value)}
               autoFocus
-              style={inputStyle}
+              className="admin-input"
             />
             {error && (
-              <p style={{ margin: '10px 0 0', fontFamily: fonts.sans, fontSize: 13, color: colors.terracottaDark }}>{error}</p>
+              <p style={{ margin: '10px 0 0', fontSize: 13, color: '#F4956A' }}>{error}</p>
             )}
-            <button type="submit" style={{ ...btnPrimary, marginTop: 18, width: '100%', justifyContent: 'center' }}>
+            <button type="submit" className="admin-btn-primary" style={{ marginTop: 18, width: '100%', justifyContent: 'center' }}>
               Continue
             </button>
           </form>

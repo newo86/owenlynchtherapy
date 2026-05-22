@@ -1,11 +1,12 @@
 'use client';
 
 import { LayoutDashboard, UsersRound, CalendarDays, FileText, UserRoundPlus, LogOut } from 'lucide-react';
-import { colors, fonts } from './theme';
 import type { AdminSection } from './types';
 
 interface Props {
   active: AdminSection;
+  expanded: boolean;
+  onToggle: () => void;
   onNavigate: (s: AdminSection) => void;
   onSignOut: () => void;
 }
@@ -18,64 +19,22 @@ const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutDashboard
   { id: 'new-client', label: 'New Client', Icon: UserRoundPlus },
 ];
 
-export function Sidebar({ active, onNavigate, onSignOut }: Props) {
+export function Sidebar({ active, expanded, onToggle, onNavigate, onSignOut }: Props) {
   return (
-    <aside
-      style={{
-        width: 240,
-        minWidth: 240,
-        background: colors.forest,
-        color: colors.white,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        position: 'sticky',
-        top: 0,
-        flexShrink: 0,
-      }}
-    >
-      {/* Brand */}
-      <div style={{ padding: '28px 24px 20px' }}>
-        <div
-          aria-hidden
-          style={{
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            border: `1.5px solid ${colors.gold}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: fonts.display,
-            fontWeight: 300,
-            fontSize: 18,
-            color: colors.white,
-            letterSpacing: '1px',
-            marginBottom: 14,
-          }}
-        >
-          OL
-        </div>
-        <div style={{ fontFamily: fonts.display, fontWeight: 300, fontSize: 16, color: colors.white, letterSpacing: '0.5px' }}>
-          Owen Lynch
-        </div>
-        <div style={{
-          fontFamily: fonts.sans,
-          fontWeight: 400,
-          fontSize: 10,
-          color: colors.terracotta,
-          letterSpacing: '3px',
-          textTransform: 'uppercase',
-          marginTop: 4,
-        }}>
-          Psychotherapy
-        </div>
-      </div>
+    <aside className={`admin-sidebar${expanded ? ' is-expanded' : ''}`} aria-label="Admin navigation">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={expanded ? 'Close menu' : 'Open menu'}
+        aria-expanded={expanded}
+        className={`admin-hamburger${expanded ? ' is-open' : ''}`}
+      >
+        <span className="admin-hamburger-line" />
+        <span className="admin-hamburger-line" />
+        <span className="admin-hamburger-line" />
+      </button>
 
-      <div style={{ height: 1, background: colors.gold, opacity: 0.55, margin: '0 24px' }} />
-
-      {/* Nav */}
-      <nav style={{ flex: 1, marginTop: 16, display: 'flex', flexDirection: 'column' }}>
+      <nav className="admin-nav">
         {NAV.map(({ id, label, Icon }) => {
           const isActive = id === active;
           return (
@@ -83,35 +42,44 @@ export function Sidebar({ active, onNavigate, onSignOut }: Props) {
               key={id}
               onClick={() => onNavigate(id)}
               className={`admin-nav-item${isActive ? ' is-active' : ''}`}
+              title={!expanded ? label : undefined}
             >
-              <Icon size={16} strokeWidth={1.8} aria-hidden />
-              {label}
+              <Icon size={18} strokeWidth={1.8} className="admin-nav-icon" aria-hidden />
+              <span className="admin-nav-label">{label}</span>
             </button>
           );
         })}
       </nav>
 
-      {/* Sign out */}
-      <div style={{ padding: '12px 24px 24px' }}>
-        <button
-          onClick={onSignOut}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            background: 'transparent',
-            color: 'rgba(255,255,255,0.55)',
-            border: 'none',
-            padding: 0,
-            cursor: 'pointer',
-            fontFamily: fonts.sans,
-            fontSize: 11,
-            letterSpacing: '1.5px',
-            textTransform: 'uppercase',
-          }}
-        >
-          <LogOut size={14} strokeWidth={1.8} aria-hidden /> Sign out
-        </button>
+      <div className="admin-sidebar-foot">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div className="admin-brand-mark">OL</div>
+          {expanded && (
+            <div style={{ minWidth: 0, overflow: 'hidden' }}>
+              <div style={{
+                fontFamily: 'var(--font-montserrat), Montserrat, sans-serif',
+                fontWeight: 300,
+                fontSize: 14,
+                color: 'white',
+                letterSpacing: '0.3px',
+                whiteSpace: 'nowrap',
+              }}>Owen Lynch</div>
+              <div style={{
+                fontSize: 9,
+                color: '#C85A1A',
+                letterSpacing: '2.8px',
+                textTransform: 'uppercase',
+                marginTop: 2,
+                whiteSpace: 'nowrap',
+              }}>Psychotherapy</div>
+            </div>
+          )}
+        </div>
+        {expanded && (
+          <button onClick={onSignOut} className="admin-signout-btn">
+            <LogOut size={13} strokeWidth={1.8} aria-hidden /> Sign out
+          </button>
+        )}
       </div>
     </aside>
   );

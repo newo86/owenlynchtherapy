@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { colors, fonts } from './theme';
 import { Sidebar } from './Sidebar';
 import { Dashboard } from './Dashboard';
 import { ClientsList } from './ClientsList';
@@ -38,6 +37,7 @@ export function AdminShell() {
   // Lifted so the Dashboard and Sessions views share the same week navigation
   // state across section switches.
   const [weekOffset, setWeekOffset] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Surface the result of the Google OAuth round-trip on first mount
   useEffect(() => {
@@ -138,51 +138,38 @@ export function AdminShell() {
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      background: colors.linen,
-      color: colors.text,
-      fontFamily: fonts.sans,
-    }}>
+    <div className="admin-root">
+      {/* Atmospheric background */}
+      <div className="admin-bg">
+        <div className="admin-bg-circle admin-bg-circle-1" />
+        <div className="admin-bg-circle admin-bg-circle-2" />
+        <div className="admin-bg-circle admin-bg-circle-3" />
+        <div className="admin-bg-grain" />
+      </div>
+
       <Sidebar
         active={section}
+        expanded={sidebarOpen}
+        onToggle={() => setSidebarOpen(o => !o)}
         onNavigate={s => {
-          if (s === 'new-client') setModalOpen(true);
-          else setSection(s);
+          if (s === 'new-client') {
+            setModalOpen(true);
+          } else {
+            setSection(s);
+          }
+          setSidebarOpen(false);
         }}
         onSignOut={() => { clearSecret(); window.location.reload(); }}
       />
 
-      <main style={{
-        flex: 1,
-        minWidth: 0,
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
+      <main className="admin-main">
         {/* Top bar */}
-        <header style={{
-          padding: '24px 32px 18px',
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'space-between',
-          gap: 16,
-          borderBottom: `1px solid ${colors.linenDeep}`,
-        }}>
+        <header className="admin-topbar">
           <div>
-            <h1 style={{
-              margin: 0,
-              fontFamily: fonts.display,
-              fontWeight: 300,
-              fontSize: 28,
-              color: colors.forest,
-              letterSpacing: '-0.01em',
-            }}>
-              {SECTION_TITLES[section]}
-            </h1>
-            <div style={{ marginTop: 4, fontFamily: fonts.sans, fontSize: 13, color: colors.textMuted }}>
+            <h1 className="admin-page-title">{SECTION_TITLES[section]}</h1>
+            <div className="admin-page-sub">
               {todayInDublin()}
-              {loadingAll && <span style={{ marginLeft: 12, color: colors.textFaint }}>· Refreshing…</span>}
+              {loadingAll && <span style={{ marginLeft: 12, opacity: 0.6 }}>· Refreshing…</span>}
             </div>
           </div>
 
@@ -190,34 +177,18 @@ export function AdminShell() {
             {calStatus?.connected && (
               <button
                 onClick={disconnectCalendar}
-                style={{
-                  padding: '8px 14px',
-                  background: 'transparent',
-                  color: colors.textMuted,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: 5,
-                  fontFamily: fonts.sans, fontSize: 11, fontWeight: 500,
-                  letterSpacing: '1.2px', textTransform: 'uppercase',
-                  cursor: 'pointer',
-                }}
+                className="admin-btn-ghost"
                 title={calStatus.email ? `Connected as ${calStatus.email}` : 'Connected'}
               >
+                <span style={{
+                  width: 6, height: 6, borderRadius: '50%',
+                  background: '#7DC49A', boxShadow: '0 0 8px #7DC49A',
+                  display: 'inline-block',
+                }} />
                 Calendar Connected
               </button>
             )}
-            <button
-              onClick={() => setModalOpen(true)}
-              style={{
-                padding: '9px 18px',
-                background: colors.terracotta,
-                color: colors.white,
-                border: 'none',
-                borderRadius: 6,
-                fontFamily: fonts.sans, fontSize: 11, fontWeight: 500,
-                letterSpacing: '1.5px', textTransform: 'uppercase',
-                cursor: 'pointer',
-              }}
-            >
+            <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
               + New Client
             </button>
           </div>
@@ -225,22 +196,19 @@ export function AdminShell() {
 
         {flash && (
           <div style={{
-            margin: '0 32px',
-            marginTop: 16,
+            margin: '0 32px 8px',
             padding: '12px 18px',
-            borderRadius: 6,
-            background: flash.kind === 'success' ? `${colors.sage}1A` : `${colors.terracotta}1A`,
-            border: `1px solid ${flash.kind === 'success' ? colors.sage : colors.terracotta}`,
-            color: flash.kind === 'success' ? colors.sageDark : colors.terracottaDark,
-            fontFamily: fonts.sans,
+            borderRadius: 10,
+            background: flash.kind === 'success' ? 'rgba(79,138,104,0.18)' : 'rgba(200,90,26,0.22)',
+            border: `1px solid ${flash.kind === 'success' ? 'rgba(79,138,104,0.5)' : 'rgba(200,90,26,0.5)'}`,
+            color: flash.kind === 'success' ? '#A6E3BD' : '#F4956A',
             fontSize: 13,
           }}>
             {flash.msg}
           </div>
         )}
 
-        {/* Section content */}
-        <div style={{ padding: 32, flex: 1, overflow: 'auto' }}>
+        <div className="admin-content">
           {section === 'dashboard' && (
             <Dashboard
               clients={clients}

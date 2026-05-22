@@ -1,7 +1,5 @@
 'use client';
 
-import { colors, fonts, shadows } from './theme';
-import { Badge } from './Badge';
 import { Avatar } from './Avatar';
 import { displayFee, formatTime } from './api';
 import type { SessionRow, ClientRow } from './types';
@@ -18,6 +16,28 @@ interface Props {
   onSendReceipt?: () => void;
 }
 
+const PAYMENT_TONES: Record<string, { bg: string; fg: string; border: string; label: string }> = {
+  paid:     { bg: 'rgba(79,138,104,0.2)',  fg: '#A6E3BD', border: 'rgba(79,138,104,0.35)', label: 'Paid' },
+  unpaid:   { bg: 'rgba(200,90,26,0.22)',  fg: '#F4956A', border: 'rgba(200,90,26,0.4)',   label: 'Unpaid' },
+  refunded: { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.55)', border: 'rgba(255,255,255,0.15)', label: 'Refunded' },
+};
+const FORMAT_TONES: Record<string, { bg: string; fg: string; border: string; label: string }> = {
+  in_person: { bg: 'rgba(255,255,255,0.07)', fg: 'rgba(255,255,255,0.75)', border: 'rgba(255,255,255,0.14)', label: 'In Person' },
+  online:    { bg: 'rgba(79,138,104,0.15)',  fg: '#A6E3BD',                border: 'rgba(79,138,104,0.3)',   label: 'Online' },
+};
+
+function Pill({ tones, kind }: { tones: typeof PAYMENT_TONES; kind: string }) {
+  const t = tones[kind] ?? tones[Object.keys(tones)[0]];
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      padding: '3px 8px', borderRadius: 5,
+      background: t.bg, color: t.fg, border: `1px solid ${t.border}`,
+      fontSize: 9, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
+    }}>{t.label}</span>
+  );
+}
+
 export function SessionCard({
   session, client, busy, feedback,
   needsAttendedConfirm,
@@ -28,85 +48,62 @@ export function SessionCard({
     : session.payment_status === 'refunded' ? 'refunded' : 'unpaid';
 
   return (
-    <div
-      style={{
-        background: colors.white,
-        borderRadius: 8,
-        borderTop: `3px solid ${colors.gold}`,
-        boxShadow: shadows.card,
-        padding: '16px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 16,
-        flexWrap: 'wrap',
-      }}
-    >
+    <div className="admin-glass admin-glass-hover" style={{
+      padding: '16px 20px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 16,
+      flexWrap: 'wrap',
+    }}>
       <Avatar name={client.full_name} size={42} />
 
       <div style={{ flex: 1, minWidth: 180 }}>
-        <div style={{ fontFamily: fonts.sans, fontWeight: 500, fontSize: 15, color: colors.forest }}>
+        <div style={{ fontWeight: 500, fontSize: 15, color: 'white' }}>
           {client.full_name}
         </div>
-        <div style={{ fontFamily: fonts.sans, fontSize: 12, color: colors.textMuted, marginTop: 2 }}>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
           {client.email}
         </div>
       </div>
 
       <div style={{ minWidth: 90 }}>
-        <div style={{ fontFamily: fonts.display, fontWeight: 300, fontSize: 22, color: colors.forest }}>
+        <div style={{
+          fontFamily: 'var(--font-montserrat), Montserrat, sans-serif',
+          fontWeight: 200, fontSize: 22, color: 'white',
+        }}>
           {formatTime(session.session_date)}
         </div>
-        <div style={{ fontFamily: fonts.sans, fontSize: 11, color: colors.textMuted, letterSpacing: '0.5px' }}>
+        <div style={{ fontSize: 11, color: '#D4A843', letterSpacing: '0.5px' }}>
           {displayFee(session.fee)}
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <Badge kind={formatKind} />
-        <Badge kind={paymentKind} />
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <Pill tones={FORMAT_TONES} kind={formatKind} />
+        <Pill tones={PAYMENT_TONES} kind={paymentKind} />
       </div>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginLeft: 'auto' }}>
         {session.status === 'scheduled' && onMarkAttended && (
-          <button onClick={onMarkAttended} disabled={busy} className="admin-btn-primary">
-            Mark Attended
-          </button>
+          <button onClick={onMarkAttended} disabled={busy} className="admin-btn-primary">Mark Attended</button>
         )}
         {onSendReceipt && (
-          <button onClick={onSendReceipt} disabled={busy} className="admin-btn-secondary">
-            Send Receipt
-          </button>
+          <button onClick={onSendReceipt} disabled={busy} className="admin-btn-secondary">Send Receipt</button>
         )}
       </div>
 
       {needsAttendedConfirm && (
-        <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0 0', flexWrap: 'wrap' }}>
-          <p style={{ margin: 0, fontFamily: fonts.sans, fontSize: 13, color: colors.terracottaDark }}>
+        <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, paddingTop: 10, flexWrap: 'wrap' }}>
+          <p style={{ margin: 0, fontSize: 13, color: '#F4956A' }}>
             Payment not yet received. Mark attended anyway?
           </p>
-          <button
-            onClick={onConfirmAttended}
-            style={{
-              padding: '6px 12px', background: colors.terracotta, color: colors.white,
-              border: 'none', borderRadius: 5,
-              fontFamily: fonts.sans, fontSize: 11, fontWeight: 500, letterSpacing: '1.2px',
-              textTransform: 'uppercase', cursor: 'pointer',
-            }}
-          >Confirm</button>
-          <button
-            onClick={onCancelConfirm}
-            style={{
-              padding: '6px 12px', background: 'transparent', color: colors.textMuted,
-              border: `1px solid ${colors.border}`, borderRadius: 5,
-              fontFamily: fonts.sans, fontSize: 11, fontWeight: 500, letterSpacing: '1.2px',
-              textTransform: 'uppercase', cursor: 'pointer',
-            }}
-          >Cancel</button>
+          <button onClick={onConfirmAttended} className="admin-btn-primary">Confirm</button>
+          <button onClick={onCancelConfirm} className="admin-btn-ghost">Cancel</button>
         </div>
       )}
 
       {feedback && (
-        <p style={{ width: '100%', margin: 0, fontFamily: fonts.sans, fontSize: 12, color: colors.sageDark, paddingTop: 4 }}>
+        <p style={{ width: '100%', margin: 0, fontSize: 12, color: '#A6E3BD', paddingTop: 4 }}>
           {feedback}
         </p>
       )}

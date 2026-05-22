@@ -2,15 +2,18 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { X, Download } from 'lucide-react';
-import { colors, fonts, shadows } from './theme';
 import { Avatar } from './Avatar';
-import { Badge } from './Badge';
 import { adminFetch, displayFee, formatDateTime } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SubmissionRow } from './types';
 
-/** Pick the submission whose timestamp is closest to (and not before) the
- *  client's creation. Only used for rows that pre-date the client_id FK. */
+interface Props {
+  client: ClientRow | null;
+  submissions: SubmissionRow[];
+  onClose: () => void;
+  onReload: () => void;
+}
+
 function legacySubmissionMatch(submissions: SubmissionRow[], client: ClientRow): SubmissionRow | undefined {
   const created = new Date(client.created_at).getTime();
   const candidates = submissions.filter(s =>
@@ -28,11 +31,28 @@ function legacySubmissionMatch(submissions: SubmissionRow[], client: ClientRow):
     )[0];
 }
 
-interface Props {
-  client: ClientRow | null;
-  submissions: SubmissionRow[];
-  onClose: () => void;
-  onReload: () => void;
+const STATUS_TONES: Record<string, { bg: string; fg: string; border: string; label: string }> = {
+  scheduled: { bg: 'rgba(255,255,255,0.07)', fg: 'rgba(255,255,255,0.65)', border: 'rgba(255,255,255,0.14)', label: 'Scheduled' },
+  attended:  { bg: 'rgba(212,168,67,0.15)',  fg: '#D4A843',                border: 'rgba(212,168,67,0.3)',   label: 'Attended' },
+  cancelled: { bg: 'rgba(255,255,255,0.05)', fg: 'rgba(255,255,255,0.4)',  border: 'rgba(255,255,255,0.1)',  label: 'Cancelled' },
+  no_show:   { bg: 'rgba(255,255,255,0.05)', fg: 'rgba(255,255,255,0.4)',  border: 'rgba(255,255,255,0.1)',  label: 'No show' },
+};
+const PAYMENT_TONES: Record<string, { bg: string; fg: string; border: string; label: string }> = {
+  paid:     { bg: 'rgba(79,138,104,0.2)',  fg: '#A6E3BD', border: 'rgba(79,138,104,0.35)', label: 'Paid' },
+  unpaid:   { bg: 'rgba(200,90,26,0.22)',  fg: '#F4956A', border: 'rgba(200,90,26,0.4)',   label: 'Unpaid' },
+  refunded: { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.55)', border: 'rgba(255,255,255,0.15)', label: 'Refunded' },
+};
+
+function Pill({ tones, kind }: { tones: typeof STATUS_TONES; kind: string }) {
+  const t = tones[kind] ?? tones[Object.keys(tones)[0]];
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      padding: '3px 8px', borderRadius: 5,
+      background: t.bg, color: t.fg, border: `1px solid ${t.border}`,
+      fontSize: 9, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
+    }}>{t.label}</span>
+  );
 }
 
 export function ClientDetail({ client, submissions, onClose, onReload }: Props) {
@@ -49,8 +69,6 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
 
   if (!client) return null;
 
-  // Prefer the proper FK link — falls back to email/name temporal match for
-  // legacy submissions that were created before client_id existed on the row.
   const submission =
     submissions.find(s => s.client_id && s.client_id === client.id)
     ?? legacySubmissionMatch(submissions, client);
@@ -108,53 +126,55 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
       <div
         onClick={onClose}
         style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(42,77,60,0.32)',
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.55)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
           zIndex: 90,
-          animation: 'fadeIn 150ms ease',
+          animation: 'admin-fade-in 150ms ease',
         }}
       />
       <aside
+        className="admin-glass"
         style={{
           position: 'fixed',
-          top: 0,
-          right: 0,
+          top: 0, right: 0,
           height: '100vh',
           width: 'min(560px, 100vw)',
-          background: colors.linen,
-          boxShadow: shadows.panel,
+          borderRadius: 0,
+          borderLeft: '1px solid rgba(255,255,255,0.14)',
+          borderRight: 'none', borderTop: 'none', borderBottom: 'none',
+          background: 'rgba(30, 61, 47, 0.85)',
           zIndex: 100,
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
-          animation: 'slideIn 220ms ease',
+          animation: 'admin-slide-in-right 220ms ease',
         }}
       >
-        {/* Header */}
         <div style={{
           padding: '20px 28px',
-          background: colors.forest,
-          color: colors.white,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          position: 'sticky',
-          top: 0,
-          zIndex: 2,
+          background: 'rgba(0,0,0,0.25)',
+          display: 'flex', alignItems: 'center', gap: 16,
+          position: 'sticky', top: 0, zIndex: 2,
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}>
           <Avatar name={client.full_name} size={48} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: fonts.display, fontWeight: 300, fontSize: 22 }}>
-              {client.full_name}
-            </div>
-            <div style={{ fontFamily: fonts.sans, fontSize: 12, opacity: 0.8, marginTop: 2 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontFamily: 'var(--font-montserrat), Montserrat, sans-serif',
+              fontWeight: 300, fontSize: 22, color: 'white',
+            }}>{client.full_name}</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
               {client.email}{client.phone ? ` · ${client.phone}` : ''}
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: colors.white, cursor: 'pointer', padding: 6 }}
+            style={{
+              background: 'transparent', border: 'none',
+              color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: 6,
+            }}
             aria-label="Close"
           >
             <X size={20} strokeWidth={1.8} />
@@ -162,42 +182,16 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
         </div>
 
         <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Summary */}
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            <div>
-              <div style={eyebrowSm}>Status</div>
-              <div style={dataSm}>{client.status}</div>
-            </div>
-            <div>
-              <div style={eyebrowSm}>Default fee</div>
-              <div style={dataSm}>{displayFee(client.session_fee)}</div>
-            </div>
-            <div>
-              <div style={eyebrowSm}>Joined</div>
-              <div style={dataSm}>{new Date(client.created_at).toLocaleDateString('en-IE')}</div>
-            </div>
+            <Field label="Status" value={client.status} />
+            <Field label="Default fee" value={displayFee(client.session_fee)} />
+            <Field label="Joined" value={new Date(client.created_at).toLocaleDateString('en-IE')} />
             {submission && (
               <button
                 onClick={downloadPdf}
                 disabled={downloading}
-                style={{
-                  marginLeft: 'auto',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '8px 14px',
-                  background: 'transparent',
-                  color: colors.forest,
-                  border: `1px solid ${colors.forest}`,
-                  borderRadius: 5,
-                  fontFamily: fonts.sans,
-                  fontSize: 11,
-                  fontWeight: 500,
-                  letterSpacing: '1.2px',
-                  textTransform: 'uppercase',
-                  cursor: downloading ? 'default' : 'pointer',
-                  alignSelf: 'flex-end',
-                }}
+                className="admin-btn-secondary"
+                style={{ marginLeft: 'auto', alignSelf: 'flex-end' }}
               >
                 <Download size={14} strokeWidth={1.8} />
                 {downloading ? 'Generating…' : 'Intake PDF'}
@@ -205,68 +199,56 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
             )}
           </div>
 
-          {/* Sessions */}
           <section>
-            <div style={eyebrowSm}>Session history</div>
+            <div style={eyebrow}>Session history</div>
             <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {sortedSessions.length === 0 && (
-                <p style={{ fontFamily: fonts.sans, fontSize: 13, color: colors.textMuted, margin: 0 }}>No sessions.</p>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0 }}>No sessions.</p>
               )}
               {sortedSessions.map(s => (
-                <div key={s.id} style={{
-                  background: colors.white,
-                  borderRadius: 6,
-                  border: `1px solid ${colors.border}`,
-                  padding: '12px 14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 6,
-                }}>
+                <div key={s.id} className="admin-glass-light" style={{ padding: '12px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <strong style={{ fontFamily: fonts.sans, fontSize: 13, color: colors.forest, fontWeight: 500 }}>
+                    <strong style={{ fontSize: 13, color: 'white', fontWeight: 500 }}>
                       {formatDateTime(s.session_date)}
                     </strong>
-                    <span style={{ fontFamily: fonts.sans, fontSize: 12, color: colors.textMuted }}>
+                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
                       {FORMAT_LABELS[s.session_format] ?? s.session_format} · {displayFee(s.fee)}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <Badge kind={s.status === 'attended' ? 'attended'
-                      : s.status === 'cancelled' ? 'cancelled'
-                      : s.status === 'no_show' ? 'no_show' : 'scheduled'} />
-                    <Badge kind={s.payment_status === 'paid' ? 'paid'
-                      : s.payment_status === 'refunded' ? 'refunded' : 'unpaid'} />
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                    <Pill tones={STATUS_TONES} kind={s.status} />
+                    <Pill tones={PAYMENT_TONES} kind={s.payment_status} />
                   </div>
                   {s.receipt_sent_at && (
-                    <div style={{ fontFamily: fonts.sans, fontSize: 11, color: colors.textFaint }}>
+                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>
                       Receipt sent {formatDateTime(s.receipt_sent_at)}
                     </div>
                   )}
                   {s.stripe_payment_link_url && (
-                    <a
-                      href={s.stripe_payment_link_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ fontFamily: fonts.sans, fontSize: 11, color: colors.terracotta, textDecoration: 'underline' }}
-                    >
-                      Payment link ↗
-                    </a>
+                    <a href={s.stripe_payment_link_url} target="_blank" rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-block', marginTop: 6,
+                        fontSize: 11, color: '#F4956A', textDecoration: 'underline',
+                      }}>Payment link ↗</a>
                   )}
                   {s.notes && (
-                    <div style={{ fontFamily: fonts.sans, fontSize: 12, color: colors.textMuted, fontStyle: 'italic' }}>
-                      {s.notes}
-                    </div>
+                    <div style={{
+                      fontSize: 12, color: 'rgba(255,255,255,0.55)',
+                      fontStyle: 'italic', marginTop: 6,
+                    }}>{s.notes}</div>
                   )}
                 </div>
               ))}
             </div>
           </section>
 
-          {/* Notes */}
           <section>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={eyebrowSm}>Notes</div>
-              <div style={{ fontFamily: fonts.sans, fontSize: 11, color: notesSaved ? colors.sageDark : colors.textFaint }}>
+              <div style={eyebrow}>Notes</div>
+              <div style={{
+                fontSize: 11,
+                color: notesSaved ? '#A6E3BD' : 'rgba(255,255,255,0.4)',
+              }}>
                 {notesSaving ? 'Saving…' : notesSaved ? 'Saved' : 'Auto-saves'}
               </div>
             </div>
@@ -275,44 +257,29 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
               onChange={e => handleNotesChange(e.target.value)}
               placeholder="Private notes about this client. Auto-saves as you type."
               rows={6}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                fontFamily: fonts.sans,
-                fontSize: 14,
-                color: colors.text,
-                background: colors.white,
-                border: `1px solid ${colors.border}`,
-                borderRadius: 6,
-                outline: 'none',
-                resize: 'vertical',
-                boxSizing: 'border-box',
-              }}
+              className="admin-textarea"
             />
           </section>
         </div>
-
-        <style>{`
-          @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-          @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        `}</style>
       </aside>
     </>
   );
 }
 
-const eyebrowSm = {
-  fontFamily: fonts.sans,
+const eyebrow: React.CSSProperties = {
   fontSize: 10,
   fontWeight: 500,
-  letterSpacing: '2px',
-  textTransform: 'uppercase' as const,
-  color: colors.terracotta,
+  letterSpacing: '2.4px',
+  textTransform: 'uppercase',
+  color: '#C85A1A',
   marginBottom: 4,
 };
 
-const dataSm = {
-  fontFamily: fonts.sans,
-  fontSize: 14,
-  color: colors.forest,
-};
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div style={eyebrow}>{label}</div>
+      <div style={{ fontSize: 14, color: 'white', textTransform: 'capitalize' }}>{value}</div>
+    </div>
+  );
+}

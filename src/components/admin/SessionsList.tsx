@@ -2,8 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import { List, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
-import { colors, fonts, shadows, tableHeader } from './theme';
-import { Badge } from './Badge';
 import { Avatar } from './Avatar';
 import { WeekCalendar } from './WeekCalendar';
 import { adminFetch, displayFee, formatDateTime, startOfWeek } from './api';
@@ -19,6 +17,30 @@ interface Props {
 }
 
 type View = 'list' | 'calendar';
+
+const STATUS_TONES: Record<string, { bg: string; fg: string; border: string; label: string }> = {
+  scheduled: { bg: 'rgba(255,255,255,0.07)', fg: 'rgba(255,255,255,0.7)',  border: 'rgba(255,255,255,0.14)', label: 'Scheduled' },
+  attended:  { bg: 'rgba(212,168,67,0.15)',  fg: '#D4A843',                border: 'rgba(212,168,67,0.3)',   label: 'Attended' },
+  cancelled: { bg: 'rgba(255,255,255,0.05)', fg: 'rgba(255,255,255,0.4)',  border: 'rgba(255,255,255,0.1)',  label: 'Cancelled' },
+  no_show:   { bg: 'rgba(255,255,255,0.05)', fg: 'rgba(255,255,255,0.4)',  border: 'rgba(255,255,255,0.1)',  label: 'No show' },
+};
+const PAYMENT_TONES: Record<string, { bg: string; fg: string; border: string; label: string }> = {
+  paid:     { bg: 'rgba(79,138,104,0.2)',  fg: '#A6E3BD', border: 'rgba(79,138,104,0.35)', label: 'Paid' },
+  unpaid:   { bg: 'rgba(200,90,26,0.22)',  fg: '#F4956A', border: 'rgba(200,90,26,0.4)',   label: 'Unpaid' },
+  refunded: { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.55)', border: 'rgba(255,255,255,0.15)', label: 'Refunded' },
+};
+
+function Pill({ tones, kind }: { tones: typeof STATUS_TONES; kind: string }) {
+  const t = tones[kind] ?? tones[Object.keys(tones)[0]];
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center',
+      padding: '3px 8px', borderRadius: 5,
+      background: t.bg, color: t.fg, border: `1px solid ${t.border}`,
+      fontSize: 9, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
+    }}>{t.label}</span>
+  );
+}
 
 export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload }: Props) {
   const [view, setView] = useState<View>('list');
@@ -36,8 +58,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
     await doMark(sessionId);
   }
   async function doMark(sessionId: string) {
-    setBusyId(sessionId);
-    setConfirmId(null);
+    setBusyId(sessionId); setConfirmId(null);
     try {
       await adminFetch('/api/admin/mark-attended', {
         method: 'POST', body: JSON.stringify({ session_id: sessionId }),
@@ -65,7 +86,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 4, padding: 4, background: colors.white, borderRadius: 6, border: `1px solid ${colors.border}` }}>
+        <div className="admin-segmented">
           {([
             { id: 'list', label: 'List', Icon: List },
             { id: 'calendar', label: 'Calendar', Icon: CalendarRange },
@@ -73,22 +94,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
             <button
               key={id}
               onClick={() => setView(id)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 14px',
-                background: view === id ? colors.forest : 'transparent',
-                color: view === id ? colors.white : colors.forest,
-                border: 'none',
-                borderRadius: 4,
-                fontFamily: fonts.sans,
-                fontSize: 11,
-                fontWeight: 500,
-                letterSpacing: '1.2px',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-              }}
+              className={`admin-segmented-btn${view === id ? ' is-active' : ''}`}
             >
               <Icon size={13} strokeWidth={1.8} aria-hidden /> {label}
             </button>
@@ -97,118 +103,87 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
 
         {view === 'calendar' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
-            <button onClick={() => onWeekOffsetChange(weekOffset - 1)} style={navBtnStyle} aria-label="Previous week">
-              <ChevronLeft size={16} strokeWidth={1.8} />
+            <button onClick={() => onWeekOffsetChange(weekOffset - 1)} className="admin-weeknav-btn" aria-label="Previous week">
+              <ChevronLeft size={14} strokeWidth={1.9} />
             </button>
-            <div style={{ fontFamily: fonts.sans, fontSize: 13, color: colors.forest, minWidth: 200, textAlign: 'center' }}>
+            <div className="admin-weeknav-label" style={{ minWidth: 200, textAlign: 'center' }}>
               {weekStart.toLocaleDateString('en-IE', { day: 'numeric', month: 'short' })}
               {' – '}
               {weekEnd.toLocaleDateString('en-IE', { day: 'numeric', month: 'short', year: 'numeric' })}
             </div>
-            <button onClick={() => onWeekOffsetChange(weekOffset + 1)} style={navBtnStyle} aria-label="Next week">
-              <ChevronRight size={16} strokeWidth={1.8} />
+            <button onClick={() => onWeekOffsetChange(weekOffset + 1)} className="admin-weeknav-btn" aria-label="Next week">
+              <ChevronRight size={14} strokeWidth={1.9} />
             </button>
             {weekOffset !== 0 && (
-              <button
-                onClick={() => onWeekOffsetChange(0)}
-                style={{
-                  padding: '6px 12px',
-                  background: 'transparent',
-                  color: colors.terracotta,
-                  border: 'none',
-                  fontFamily: fonts.sans,
-                  fontSize: 11,
-                  fontWeight: 500,
-                  letterSpacing: '1.2px',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                }}
-              >Today</button>
+              <button onClick={() => onWeekOffsetChange(0)} className="admin-weeknav-btn admin-weeknav-today">
+                Today
+              </button>
             )}
           </div>
         )}
       </div>
 
       {view === 'list' && (
-        <div style={{
-          background: colors.white,
-          borderRadius: 8,
-          borderTop: `3px solid ${colors.gold}`,
-          boxShadow: shadows.card,
-          overflow: 'hidden',
-        }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: fonts.sans }}>
-            <thead style={{ background: `${colors.linen}80` }}>
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Date &amp; Time</th>
+              <th>Format</th>
+              <th>Fee</th>
+              <th>Payment</th>
+              <th>Status</th>
+              <th style={{ textAlign: 'right' as const }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length === 0 && (
               <tr>
-                <th style={tableHeader}>Client</th>
-                <th style={tableHeader}>Date & Time</th>
-                <th style={tableHeader}>Format</th>
-                <th style={tableHeader}>Fee</th>
-                <th style={tableHeader}>Payment</th>
-                <th style={tableHeader}>Status</th>
-                <th style={{ ...tableHeader, textAlign: 'right' as const }}>Actions</th>
+                <td colSpan={7} style={{ textAlign: 'center' as const, padding: 28, color: 'rgba(255,255,255,0.4)' }}>
+                  No sessions yet.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 && (
-                <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: colors.textMuted, fontSize: 14 }}>No sessions yet.</td></tr>
-              )}
-              {rows.map(({ s, c }) => (
-                <tr key={s.id} style={{ borderTop: `1px solid ${colors.border}` }}>
-                  <td style={tdStyle}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Avatar name={c.full_name} size={32} />
-                      <div>
-                        <div style={{ fontWeight: 500, color: colors.forest, fontSize: 13 }}>{c.full_name}</div>
-                        <div style={{ fontSize: 11, color: colors.textMuted }}>{c.email}</div>
-                      </div>
+            )}
+            {rows.map(({ s, c }) => (
+              <tr key={s.id}>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Avatar name={c.full_name} size={32} />
+                    <div>
+                      <div style={{ fontWeight: 500, color: 'white' }}>{c.full_name}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{c.email}</div>
                     </div>
-                  </td>
-                  <td style={{ ...tdStyle, whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date)}</td>
-                  <td style={tdStyle}>{FORMAT_LABELS[s.session_format] ?? s.session_format}</td>
-                  <td style={tdStyle}>{displayFee(s.fee)}</td>
-                  <td style={tdStyle}>
-                    <Badge kind={s.payment_status === 'paid' ? 'paid'
-                      : s.payment_status === 'refunded' ? 'refunded' : 'unpaid'} />
-                  </td>
-                  <td style={tdStyle}>
-                    <Badge kind={s.status === 'attended' ? 'attended'
-                      : s.status === 'cancelled' ? 'cancelled'
-                      : s.status === 'no_show' ? 'no_show' : 'scheduled'} />
-                  </td>
-                  <td style={{ ...tdStyle, textAlign: 'right' as const }}>
-                    <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                      {s.status === 'scheduled' && (
-                        <button
-                          onClick={() => markAttended(s.id, s.payment_status)}
-                          disabled={busyId === s.id}
-                          style={primaryBtn}
-                        >
-                          Attended
-                        </button>
-                      )}
-                      <button
-                        onClick={() => sendReceipt(s.id)}
-                        disabled={busyId === s.id}
-                        style={ghostBtn}
-                      >
-                        Receipt
+                  </div>
+                </td>
+                <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date)}</td>
+                <td>{FORMAT_LABELS[s.session_format] ?? s.session_format}</td>
+                <td>{displayFee(s.fee)}</td>
+                <td><Pill tones={PAYMENT_TONES} kind={s.payment_status} /></td>
+                <td><Pill tones={STATUS_TONES} kind={s.status} /></td>
+                <td style={{ textAlign: 'right' as const }}>
+                  <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {s.status === 'scheduled' && (
+                      <button onClick={() => markAttended(s.id, s.payment_status)} disabled={busyId === s.id} className="admin-btn-primary">
+                        Attended
                       </button>
-                    </div>
-                    {confirmId === s.id && (
-                      <div style={{ marginTop: 6, fontSize: 11, color: colors.terracottaDark }}>
-                        Unpaid.{' '}
-                        <button onClick={() => doMark(s.id)} style={confirmYes}>Confirm</button>
-                        {' '}
-                        <button onClick={() => setConfirmId(null)} style={confirmNo}>Cancel</button>
-                      </div>
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <button onClick={() => sendReceipt(s.id)} disabled={busyId === s.id} className="admin-btn-secondary">
+                      Receipt
+                    </button>
+                  </div>
+                  {confirmId === s.id && (
+                    <div style={{ marginTop: 8, fontSize: 11, color: '#F4956A' }}>
+                      Unpaid.{' '}
+                      <button onClick={() => doMark(s.id)} style={confirmYes}>Confirm</button>
+                      {' '}
+                      <button onClick={() => setConfirmId(null)} style={confirmNo}>Cancel</button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
 
       {view === 'calendar' && (
@@ -218,69 +193,14 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
   );
 }
 
-const tdStyle = {
-  padding: '14px 16px',
-  fontFamily: fonts.sans,
-  fontSize: 13,
-  color: colors.text,
-  verticalAlign: 'middle' as const,
+const confirmYes: React.CSSProperties = {
+  background: 'transparent', border: 'none',
+  color: '#F4956A', textDecoration: 'underline',
+  cursor: 'pointer', fontSize: 11, padding: 0,
 };
 
-const navBtnStyle = {
-  padding: 6,
-  background: 'transparent',
-  border: `1px solid ${colors.border}`,
-  borderRadius: 5,
-  color: colors.forest,
-  cursor: 'pointer',
-  display: 'inline-flex',
-  alignItems: 'center' as const,
-};
-
-const primaryBtn = {
-  padding: '5px 10px',
-  background: colors.forest,
-  color: colors.white,
-  border: 'none',
-  borderRadius: 4,
-  fontFamily: fonts.sans,
-  fontSize: 10,
-  fontWeight: 500,
-  letterSpacing: '1.2px',
-  textTransform: 'uppercase' as const,
-  cursor: 'pointer' as const,
-};
-
-const ghostBtn = {
-  padding: '5px 10px',
-  background: 'transparent',
-  color: colors.forest,
-  border: `1px solid ${colors.border}`,
-  borderRadius: 4,
-  fontFamily: fonts.sans,
-  fontSize: 10,
-  fontWeight: 500,
-  letterSpacing: '1.2px',
-  textTransform: 'uppercase' as const,
-  cursor: 'pointer' as const,
-};
-
-const confirmYes = {
-  background: 'transparent',
-  border: 'none',
-  color: colors.terracotta,
-  textDecoration: 'underline',
-  cursor: 'pointer' as const,
-  fontSize: 11,
-  padding: 0,
-};
-
-const confirmNo = {
-  background: 'transparent',
-  border: 'none',
-  color: colors.textMuted,
-  textDecoration: 'underline',
-  cursor: 'pointer' as const,
-  fontSize: 11,
-  padding: 0,
+const confirmNo: React.CSSProperties = {
+  background: 'transparent', border: 'none',
+  color: 'rgba(255,255,255,0.45)', textDecoration: 'underline',
+  cursor: 'pointer', fontSize: 11, padding: 0,
 };

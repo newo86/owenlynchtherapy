@@ -1,39 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
-import { colors, fonts } from './theme';
 import { displayFee, formatTime, isSameDay, startOfWeek } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, CalendarEvent } from './types';
-
-/** Compact badge styled for the dark forest-green session card. */
-function DarkBadge({ tone }: { tone: 'paid' | 'unpaid' | 'refunded' | 'in_person' | 'online' }) {
-  const tones: Record<string, { bg: string; fg: string; border: string; label: string }> = {
-    paid:      { bg: 'rgba(79,138,104,0.3)',  fg: '#A6E3BD', border: 'rgba(79,138,104,0.45)', label: 'Paid' },
-    unpaid:    { bg: 'rgba(200,90,26,0.25)',  fg: '#F4956A', border: 'rgba(200,90,26,0.4)',   label: 'Unpaid' },
-    refunded:  { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.55)', border: 'rgba(255,255,255,0.15)', label: 'Refunded' },
-    in_person: { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.7)',  border: 'rgba(255,255,255,0.12)', label: 'In Person' },
-    online:    { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.7)',  border: 'rgba(255,255,255,0.12)', label: 'Online' },
-  };
-  const t = tones[tone];
-  return (
-    <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      padding: '2px 6px',
-      borderRadius: 4,
-      background: t.bg,
-      color: t.fg,
-      border: `1px solid ${t.border}`,
-      fontFamily: fonts.sans,
-      fontSize: 9,
-      fontWeight: 600,
-      letterSpacing: '1px',
-      textTransform: 'uppercase',
-      whiteSpace: 'nowrap',
-    }}>{t.label}</span>
-  );
-}
 
 interface Props {
   clients: ClientRow[];
@@ -57,7 +27,6 @@ export function WeekCalendar({ clients, events, weekOffset = 0 }: Props) {
   const days = useMemo(() => {
     const monday = startOfWeek(new Date());
     monday.setDate(monday.getDate() + weekOffset * 7);
-
     return Array.from({ length: 7 }, (_, i) => {
       const day = new Date(monday);
       day.setDate(monday.getDate() + i);
@@ -112,75 +81,41 @@ export function WeekCalendar({ clients, events, weekOffset = 0 }: Props) {
   }
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-        gap: 10,
-      }}
-    >
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+      gap: 10,
+    }}>
       {days.map((day, i) => {
         const blocks = blocksForDay(day);
         const isToday = isSameDay(day, new Date());
 
         return (
-          <div
-            key={i}
-            className={`admin-day${isToday ? ' is-today' : ''}`}
-          >
+          <div key={i} className={`admin-day${isToday ? ' is-today' : ''}`}>
             <div className="admin-day-header">
-              <div className="admin-day-name" style={{
-                fontFamily: fonts.sans,
-                fontSize: 10,
-                fontWeight: 500,
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                color: 'rgba(42,77,60,0.5)',
-              }}>
-                {DAY_NAMES[i]}
-              </div>
-              <div className="admin-day-number" style={{
-                fontFamily: fonts.display,
-                fontWeight: 300,
-                fontSize: 20,
-                color: colors.forest,
-                lineHeight: 1.2,
-              }}>
-                {day.getDate()}
-              </div>
+              <div className="admin-day-name">{DAY_NAMES[i]}</div>
+              <div className="admin-day-number">{day.getDate()}</div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', padding: '2px 0 6px', flex: 1 }}>
               {blocks.length === 0 && (
-                <div style={{
-                  padding: '12px',
-                  textAlign: 'center',
-                  color: 'rgba(42,77,60,0.25)',
-                  fontSize: 20,
-                  fontFamily: fonts.display,
-                  fontWeight: 300,
-                }}>—</div>
+                <div className="admin-day-empty">—</div>
               )}
               {blocks.map((b, idx) => (
-                <div
-                  key={idx}
-                  className={`admin-session${b.type === 'gcal' ? ' is-gcal' : ''}`}
-                >
+                <div key={idx} className={`admin-session${b.type === 'gcal' ? ' is-gcal' : ''}`}>
                   <div style={{
-                    fontFamily: fonts.sans,
-                    fontSize: 10,
+                    fontSize: 9,
                     fontWeight: 600,
                     letterSpacing: '1px',
-                    color: b.type === 'gcal' ? colors.sage : colors.gold,
-                    marginBottom: 3,
+                    color: b.type === 'gcal' ? 'rgba(79,138,104,0.85)' : '#D4A843',
+                    marginBottom: 2,
                   }}>
                     {formatTime(b.start)}
                   </div>
                   <div style={{
-                    fontFamily: fonts.sans,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: 500,
-                    color: b.type === 'gcal' ? colors.forest : colors.white,
+                    color: b.type === 'gcal' ? 'rgba(255,255,255,0.62)' : 'white',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -190,20 +125,17 @@ export function WeekCalendar({ clients, events, weekOffset = 0 }: Props) {
                   {b.subtitle && (
                     <div style={{
                       marginTop: 2,
-                      fontFamily: fonts.sans,
                       fontSize: 10,
-                      color: b.type === 'gcal' ? 'rgba(42,77,60,0.55)' : 'rgba(255,255,255,0.6)',
+                      color: 'rgba(255,255,255,0.42)',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                    }}>
-                      {b.subtitle}
-                    </div>
+                    }}>{b.subtitle}</div>
                   )}
                   {b.type === 'session' && (
                     <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
-                      {b.format && <DarkBadge tone={b.format} />}
-                      {b.payment && <DarkBadge tone={b.payment} />}
+                      {b.format && <CalBadge tone={b.format} />}
+                      {b.payment && <CalBadge tone={b.payment} />}
                     </div>
                   )}
                 </div>
@@ -213,5 +145,33 @@ export function WeekCalendar({ clients, events, weekOffset = 0 }: Props) {
         );
       })}
     </div>
+  );
+}
+
+const TONE: Record<string, { bg: string; fg: string; border: string; label: string }> = {
+  paid:      { bg: 'rgba(79,138,104,0.25)',  fg: '#A6E3BD', border: 'rgba(79,138,104,0.45)', label: 'Paid' },
+  unpaid:    { bg: 'rgba(200,90,26,0.25)',   fg: '#F4956A', border: 'rgba(200,90,26,0.4)',   label: 'Unpaid' },
+  refunded:  { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.55)', border: 'rgba(255,255,255,0.15)', label: 'Refunded' },
+  in_person: { bg: 'rgba(255,255,255,0.07)', fg: 'rgba(255,255,255,0.7)',  border: 'rgba(255,255,255,0.12)', label: 'In Person' },
+  online:    { bg: 'rgba(79,138,104,0.15)',  fg: 'rgba(166,227,189,0.95)', border: 'rgba(79,138,104,0.3)',  label: 'Online' },
+};
+
+function CalBadge({ tone }: { tone: keyof typeof TONE }) {
+  const t = TONE[tone];
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      padding: '2px 6px',
+      borderRadius: 4,
+      background: t.bg,
+      color: t.fg,
+      border: `1px solid ${t.border}`,
+      fontSize: 9,
+      fontWeight: 600,
+      letterSpacing: '1px',
+      textTransform: 'uppercase',
+      whiteSpace: 'nowrap',
+    }}>{t.label}</span>
   );
 }
