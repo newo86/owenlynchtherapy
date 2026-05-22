@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
   }
 
   const submissionId = req.nextUrl.searchParams.get('submission_id');
+  console.log('[download-pdf] Requested submission_id:', submissionId);
   if (!submissionId) {
     return new Response(JSON.stringify({ error: 'submission_id required' }), {
       status: 400,
@@ -35,6 +36,8 @@ export async function GET(req: NextRequest) {
     .select('*')
     .eq('id', submissionId)
     .single();
+
+  console.log('[download-pdf] Fetched submission for client:', data?.full_name);
 
   if (error || !data) {
     console.error('[download-pdf] Supabase error:', JSON.stringify(error, null, 2));

@@ -1,5 +1,5 @@
 import PDFDocument from 'pdfkit';
-import sharp from 'sharp';
+import fs from 'fs';
 import path from 'path';
 
 export interface SubmissionData {
@@ -55,8 +55,20 @@ const AI_LABELS: Record<string, string> = {
 };
 
 export async function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
-  const svgPath = path.join(process.cwd(), 'public/images/logo-stacked-transparent.svg');
-  const logoPng = await sharp(svgPath).resize(480, 560).png().toBuffer();
+  // Use the pre-rendered horizontal logo PNG. Sharp can't reliably rasterise
+  // the SVG on Vercel because the SVG references Avenir/Poppins/Georgia,
+  // which aren't installed there — the result was an almost-empty PNG.
+  const logoPath = path.join(process.cwd(), 'public', 'images', 'logo-horizontal-pdf.png');
+  let logoPng: Buffer | null = null;
+  if (fs.existsSync(logoPath)) {
+    logoPng = fs.readFileSync(logoPath);
+  } else {
+    console.error('[PDF] Logo file not found at:', logoPath);
+    const dir = path.join(process.cwd(), 'public', 'images');
+    if (fs.existsSync(dir)) {
+      console.log('[PDF] Files in public/images:', fs.readdirSync(dir));
+    }
+  }
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -120,11 +132,18 @@ export async function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
 
     // ── Header ─────────────────────────────────────────────────────────────────
 
-    const logoW = 108;
-    const logoH = Math.round(logoW * 280 / 240); // preserve 240×280 aspect ratio
+    // Horizontal logo (960×240 source, embedded at 200×50pt, centred)
+    const logoW = 220;
+    const logoH = Math.round(logoW * 240 / 960); // ~55pt at 220 wide
     const logoX = (doc.page.width - logoW) / 2;
-    doc.image(logoPng, logoX, 44, { width: logoW });
-    doc.y = 44 + logoH + 10;
+    if (logoPng) {
+      doc.image(logoPng, logoX, 44, { width: logoW });
+      doc.y = 44 + logoH + 10;
+    } else {
+      doc.font('Helvetica-Bold').fontSize(16).fillColor(FOREST)
+        .text('Owen Lynch Psychotherapy', { align: 'center' });
+      doc.moveDown(0.3);
+    }
 
     doc.font('Helvetica').fontSize(9).fillColor(MUTED)
       .text('Client Intake Form', { align: 'center' });
