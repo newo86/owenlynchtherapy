@@ -41,6 +41,8 @@ interface FormState {
   gp_name: string;
   gp_practice: string;
   additional_info: string;
+  consent_therapeutic_agreement: boolean;
+  consent_privacy_policy: boolean;
   consent_data_storage: boolean;
   consent_age_confirmation: boolean;
 }
@@ -69,6 +71,8 @@ const initialState = (name: string, email: string): FormState => ({
   gp_name: '',
   gp_practice: '',
   additional_info: '',
+  consent_therapeutic_agreement: false,
+  consent_privacy_policy: false,
   consent_data_storage: false,
   consent_age_confirmation: false,
 });
@@ -128,6 +132,8 @@ function validate(step: number, d: FormState): Record<string, string> {
     if (!d.emergency_contact_relationship.trim()) e.emergency_contact_relationship = 'Relationship is required';
   }
   if (step === 6) {
+    if (!d.consent_therapeutic_agreement) e.consent_therapeutic_agreement = 'You must agree to the Therapeutic Agreement to proceed';
+    if (!d.consent_privacy_policy) e.consent_privacy_policy = 'You must agree to the Privacy Policy to proceed';
     if (!d.consent_data_storage) e.consent_data_storage = 'You must agree to this to proceed';
     if (!d.consent_age_confirmation) e.consent_age_confirmation = 'You must confirm you are 18 or over';
   }
@@ -613,7 +619,73 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                   className="pt-4 mt-2 space-y-5"
                   style={{ borderTop: '1px solid #F0EAE0' }}
                 >
-                  {/* Consent 1 */}
+                  {/* Consent: Therapeutic Agreement */}
+                  <div>
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <span
+                        className="mt-0.5 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors"
+                        style={{
+                          borderColor: form.consent_therapeutic_agreement ? '#C85A1A' : '#D0C8BC',
+                          backgroundColor: form.consent_therapeutic_agreement ? '#C85A1A' : 'white',
+                        }}
+                      >
+                        {form.consent_therapeutic_agreement && (
+                          <svg width="11" height="9" viewBox="0 0 11 9" fill="none" aria-hidden="true">
+                            <path d="M1 4L4 7.5L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={form.consent_therapeutic_agreement}
+                        onChange={e => set('consent_therapeutic_agreement', e.target.checked)}
+                        className="sr-only"
+                      />
+                      <span className="text-sm leading-relaxed" style={{ color: '#555', lineHeight: 1.8 }}>
+                        I confirm I have read and agree to the{' '}
+                        <span style={{ color: '#C85A1A', fontWeight: 500 }}>Therapeutic Agreement</span>
+                        {' '}(attached to your welcome email). <span style={{ color: '#C85A1A' }}>*</span>
+                      </span>
+                    </label>
+                    {errors.consent_therapeutic_agreement && (
+                      <p className="mt-1.5 text-xs text-orange ml-8" role="alert">{errors.consent_therapeutic_agreement}</p>
+                    )}
+                  </div>
+
+                  {/* Consent: Privacy Policy */}
+                  <div>
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <span
+                        className="mt-0.5 w-5 h-5 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors"
+                        style={{
+                          borderColor: form.consent_privacy_policy ? '#C85A1A' : '#D0C8BC',
+                          backgroundColor: form.consent_privacy_policy ? '#C85A1A' : 'white',
+                        }}
+                      >
+                        {form.consent_privacy_policy && (
+                          <svg width="11" height="9" viewBox="0 0 11 9" fill="none" aria-hidden="true">
+                            <path d="M1 4L4 7.5L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={form.consent_privacy_policy}
+                        onChange={e => set('consent_privacy_policy', e.target.checked)}
+                        className="sr-only"
+                      />
+                      <span className="text-sm leading-relaxed" style={{ color: '#555', lineHeight: 1.8 }}>
+                        I confirm I have read and agree to the{' '}
+                        <span style={{ color: '#C85A1A', fontWeight: 500 }}>Privacy Policy</span>
+                        {' '}(attached to your welcome email). <span style={{ color: '#C85A1A' }}>*</span>
+                      </span>
+                    </label>
+                    {errors.consent_privacy_policy && (
+                      <p className="mt-1.5 text-xs text-orange ml-8" role="alert">{errors.consent_privacy_policy}</p>
+                    )}
+                  </div>
+
+                  {/* Consent: Data storage */}
                   <div>
                     <label className="flex items-start gap-3 cursor-pointer">
                       <span

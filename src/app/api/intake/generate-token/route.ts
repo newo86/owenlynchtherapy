@@ -3,6 +3,8 @@ import { randomUUID, randomBytes } from 'node:crypto';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getStripe } from '@/lib/stripe';
 import { rateLimit } from '@/lib/rateLimit';
+import { generateTherapeuticAgreementPDF } from '@/lib/pdf/generateTherapeuticAgreementPDF';
+import { generatePrivacyPolicyPDF } from '@/lib/pdf/generatePrivacyPolicyPDF';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -176,12 +178,41 @@ export async function POST(req: NextRequest) {
     paymentLinkUrl = '';
   }
 
-  // 6. Send welcome email
+  // 6. Send welcome email with Therapeutic Agreement + Privacy Policy attached
   // NOTE: onboarding@resend.dev can only send to the account owner's verified email until
   // owenlynchtherapy.com domain is verified in Resend. Change to address and from once verified.
   const firstName = client_name.trim().split(' ')[0];
   const emailTo = 'owenlynch1310@gmail.com';
   console.log('[generate-token] step 6: sending welcome email to', emailTo, '(client:', client_email.trim(), ') | paymentLinkUrl:', paymentLinkUrl || '(empty)');
+
+  let therapeuticAgreementBuffer: Buffer | null = null;
+  let privacyPolicyBuffer: Buffer | null = null;
+  try {
+    [therapeuticAgreementBuffer, privacyPolicyBuffer] = await Promise.all([
+      generateTherapeuticAgreementPDF(),
+      generatePrivacyPolicyPDF(),
+    ]);
+    console.log('[generate-token] step 6a: PDFs generated',
+      'agreement bytes:', therapeuticAgreementBuffer?.length,
+      'privacy bytes:', privacyPolicyBuffer?.length);
+  } catch (pdfErr) {
+    console.error('[generate-token] PDF generation failed:', pdfErr);
+  }
+
+  const attachments: Array<{ filename: string; content: Buffer }> = [];
+  if (therapeuticAgreementBuffer) {
+    attachments.push({
+      filename: 'Owen-Lynch-Psychotherapy-Therapeutic-Agreement.pdf',
+      content: therapeuticAgreementBuffer,
+    });
+  }
+  if (privacyPolicyBuffer) {
+    attachments.push({
+      filename: 'Owen-Lynch-Psychotherapy-Privacy-Policy.pdf',
+      content: privacyPolicyBuffer,
+    });
+  }
+
   try {
     const emailResult = await resend.emails.send({
       from: 'Owen Lynch Psychotherapy <onboarding@resend.dev>',
@@ -198,6 +229,7 @@ export async function POST(req: NextRequest) {
         paymentUrl: paymentLinkUrl,
         siteUrl,
       }),
+      ...(attachments.length ? { attachments } : {}),
     });
     if (emailResult.error) {
       console.error('[generate-token] welcome email error:', JSON.stringify(emailResult.error, null, 2));
@@ -259,6 +291,21 @@ function buildWelcomeHtml(d: WelcomeEmailData): string {
         ${d.sessionFormat === 'online' ? `<td colspan="2" style="padding:8px 0;color:#555;font-size:13px;font-style:italic;">I'll send you a link to join shortly before your session.</td>` : '<td></td><td></td>'}
       </tr>
     </table>
+
+    <div style="background-color:#F5F0E8;border:1px solid #E0D8CE;border-left:3px solid #D4A843;border-radius:6px;padding:18px 20px;margin:0 0 24px;">
+      <p style="font-size:11px;color:#2A4D3C;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin:0 0 10px;">Attached to this email</p>
+      <p style="color:#555;font-size:13px;line-height:1.7;margin:0 0 10px;">
+        I've attached two documents to this email for you to read before our first session:
+      </p>
+      <ul style="margin:0 0 10px;padding:0 0 0 18px;color:#555;font-size:13px;line-height:1.7;">
+        <li><strong style="color:#2A4D3C;">Client Information &amp; Therapeutic Agreement</strong> — this outlines how we work together, confidentiality, cancellation policy, and other important information.</li>
+        <li><strong style="color:#2A4D3C;">Privacy Policy</strong> — this explains how I store and protect your data.</li>
+      </ul>
+      <p style="color:#666;font-size:12px;line-height:1.6;margin:0;font-style:italic;">
+        Your agreement to both documents is confirmed via the intake form.
+      </p>
+    </div>
+
     <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 8px;">Before we meet, I'd ask you to do two things:</p>
 
     <div style="margin:24px 0;">

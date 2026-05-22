@@ -27,6 +27,10 @@ export interface SubmissionData {
   gp_name: string | null;
   gp_practice: string | null;
   additional_info: string | null;
+  consent_therapeutic_agreement: boolean | null;
+  consent_privacy_policy: boolean | null;
+  consent_data_storage: boolean | null;
+  consent_age_confirmation: boolean | null;
   submitted_at: string;
 }
 
@@ -183,6 +187,13 @@ export async function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
         addField('Notes', data.additional_info);
       });
     }
+
+    addSection('CONSENT & AGREEMENTS', () => {
+      addField('Therapeutic Agreement', data.consent_therapeutic_agreement);
+      addField('Privacy Policy', data.consent_privacy_policy);
+      addField('Data Storage', data.consent_data_storage);
+      addField('Age Confirmation (18+)', data.consent_age_confirmation);
+    });
 
     // ── Footer on every page ───────────────────────────────────────────────────
 

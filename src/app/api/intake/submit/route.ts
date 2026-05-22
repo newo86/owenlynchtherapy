@@ -128,7 +128,12 @@ export async function POST(req: NextRequest) {
   if (!emergency_contact_relationship) return NextResponse.json({ error: 'Emergency contact relationship is required' }, { status: 400 });
   if (emergency_contact_relationship.length > 100) return NextResponse.json({ error: 'Relationship is too long' }, { status: 400 });
 
-  if (!rawForm.consent_data_storage || !rawForm.consent_age_confirmation) {
+  if (
+    !rawForm.consent_therapeutic_agreement
+    || !rawForm.consent_privacy_policy
+    || !rawForm.consent_data_storage
+    || !rawForm.consent_age_confirmation
+  ) {
     return NextResponse.json({ error: 'Consent fields required' }, { status: 400 });
   }
 
@@ -164,6 +169,8 @@ export async function POST(req: NextRequest) {
     emergency_contact_relationship,
     gp_name: gp_name || null,
     gp_practice: gp_practice || null,
+    consent_therapeutic_agreement: Boolean(rawForm.consent_therapeutic_agreement),
+    consent_privacy_policy: Boolean(rawForm.consent_privacy_policy),
     consent_data_storage: Boolean(rawForm.consent_data_storage),
     consent_age_confirmation: Boolean(rawForm.consent_age_confirmation),
     additional_info: additional_info || null,
@@ -193,6 +200,7 @@ export async function POST(req: NextRequest) {
     const pdfBuffer = savedRow ? await generateIntakePDF(savedRow) : null;
     const filename = `intake-${full_name.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
 
+    const yn = (v: unknown) => v ? 'Yes' : 'No';
     const sanitisedData = {
       full_name, preferred_name, email, phone, date_of_birth, pronouns,
       session_format, referral_source, referral_source_other, reason_for_therapy,
@@ -200,6 +208,10 @@ export async function POST(req: NextRequest) {
       current_medication, seeing_psychiatrist, psychiatrist_details, uses_ai_tools,
       emergency_contact_name, emergency_contact_phone, emergency_contact_relationship,
       gp_name, gp_practice, additional_info,
+      consent_therapeutic_agreement: yn(rawForm.consent_therapeutic_agreement),
+      consent_privacy_policy: yn(rawForm.consent_privacy_policy),
+      consent_data_storage: yn(rawForm.consent_data_storage),
+      consent_age_confirmation: yn(rawForm.consent_age_confirmation),
     };
 
     const emailResult = await resend.emails.send({
@@ -279,6 +291,12 @@ function buildEmailHtml(d: Record<string, string>): string {
     ].join(''))}
     ${section('Additional Info', [
       row('Notes', d.additional_info),
+    ].join(''))}
+    ${section('Consent', [
+      row('Therapeutic Agreement', d.consent_therapeutic_agreement),
+      row('Privacy Policy', d.consent_privacy_policy),
+      row('Data Storage', d.consent_data_storage),
+      row('Age Confirmation (18+)', d.consent_age_confirmation),
     ].join(''))}
   </table>`;
 }
