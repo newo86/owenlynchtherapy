@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, Check, Copy } from 'lucide-react';
-import { colors, fonts, shadows, input as inputStyle, label as labelStyle, btnPrimary } from './theme';
+import { colors, fonts, shadows, input as inputStyle, label as labelStyle } from './theme';
 import { adminFetch } from './api';
 
 interface Props {
@@ -121,10 +121,16 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
       <button
         type="submit"
         disabled={busy || !clientName.trim() || !clientEmail.trim() || !sessionDate || !sessionFee}
-        style={{ ...btnPrimary, alignSelf: 'flex-start', opacity: busy ? 0.6 : 1, cursor: busy ? 'default' : 'pointer' }}
+        className="admin-btn-primary"
+        style={{ alignSelf: 'flex-start' }}
       >
-        {busy ? 'Generating…' : 'Generate & Send Welcome Email'}
+        {busy ? 'Generating PDFs & sending email…' : 'Generate & Send Welcome Email'}
       </button>
+      {busy && (
+        <p style={{ margin: '4px 0 0', fontFamily: fonts.sans, fontSize: 12, color: colors.textMuted, fontStyle: 'italic' }}>
+          This can take up to ~10 s the first time; subsequent sends are faster.
+        </p>
+      )}
 
       {generated && (
         <div style={{

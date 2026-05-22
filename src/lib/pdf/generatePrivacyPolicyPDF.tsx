@@ -2,10 +2,15 @@ import { renderToBuffer, View, Text } from '@react-pdf/renderer';
 import { BrandedDoc, H1, P, Bullet, pdfStyles } from './PdfLayout';
 import { loadHorizontalLogoPng } from './loadLogo';
 
+// Static document — memoised after first render to keep welcome-email
+// sends fast (saves ~2–3 s per call).
+let cached: Buffer | null = null;
+
 export async function generatePrivacyPolicyPDF(): Promise<Buffer> {
+  if (cached) return cached;
   const logo = await loadHorizontalLogoPng();
 
-  return renderToBuffer(
+  cached = await renderToBuffer(
     <BrandedDoc title="Privacy Policy — Owen Lynch Psychotherapy" logoSrc={logo}>
       <Text style={pdfStyles.title}>Privacy Policy</Text>
       <Text style={pdfStyles.subtitle}>Last updated: May 2026</Text>
@@ -171,4 +176,5 @@ export async function generatePrivacyPolicyPDF(): Promise<Buffer> {
       </P>
     </BrandedDoc>
   );
+  return cached;
 }

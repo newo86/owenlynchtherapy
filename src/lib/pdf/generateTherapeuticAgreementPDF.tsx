@@ -2,10 +2,16 @@ import { renderToBuffer, View, Text } from '@react-pdf/renderer';
 import { BrandedDoc, H1, P, Bullet, HighlightBox, HighlightP, pdfStyles } from './PdfLayout';
 import { loadHorizontalLogoPng } from './loadLogo';
 
+// The document is static — same bytes for every call. Memoise after the
+// first render so subsequent welcome emails go out in milliseconds instead
+// of the ~3 s it takes to lay out the PDF.
+let cached: Buffer | null = null;
+
 export async function generateTherapeuticAgreementPDF(): Promise<Buffer> {
+  if (cached) return cached;
   const logo = await loadHorizontalLogoPng();
 
-  return renderToBuffer(
+  cached = await renderToBuffer(
     <BrandedDoc title="Client Information & Therapeutic Agreement" logoSrc={logo}>
       <Text style={pdfStyles.title}>Client Information &amp; Therapeutic Agreement</Text>
 
@@ -277,4 +283,5 @@ export async function generateTherapeuticAgreementPDF(): Promise<Buffer> {
       </View>
     </BrandedDoc>
   );
+  return cached;
 }
