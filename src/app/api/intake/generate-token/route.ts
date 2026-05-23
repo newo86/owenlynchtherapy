@@ -5,10 +5,64 @@ import { getStripe } from '@/lib/stripe';
 import { rateLimit } from '@/lib/rateLimit';
 import { generateTherapeuticAgreementPDF } from '@/lib/pdf/generateTherapeuticAgreementPDF';
 import { generatePrivacyPolicyPDF } from '@/lib/pdf/generatePrivacyPolicyPDF';
+import { createCalendarEvent } from '@/lib/googleOAuth';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const VALID_FORMATS = ['in_person', 'online'];
+const VALID_RECURRENCE = ['once', 'weekly', 'biweekly', 'monthly'] as const;
+type Recurrence = typeof VALID_RECURRENCE[number];
+
+interface OccurrencePlan {
+  isoDates: string[];        // one per session, ISO strings preserving the local datetime
+  rrule: string | null;      // Google Calendar RRULE for the recurrence, or null for a one-off
+  scheduleLabel: string;     // human label for the welcome email ("Weekly · 12 sessions")
+}
+
+function buildOccurrences(firstIsoLocal: string, recurrence: Recurrence, count: number): OccurrencePlan {
+  // Treat the datetime-local input as local Dublin time, but keep the wall-
+  // clock identical when we step forward — Date math on a JS Date is in UTC
+  // ms so weekly/biweekly just need +N*7 days. For monthly we shift the
+  // month index; if the day-of-month doesn't exist the result naturally
+  // overflows (eg 31 Jan → 3 Mar) — fine for now.
+  const first = new Date(firstIsoLocal);
+  const isoDates: string[] = [];
+
+  function pushOccurrence(d: Date) {
+    // Re-build the local ISO so timezone offset stays consistent with what
+    // the admin typed in the form.
+    const pad = (n: number) => String(n).padStart(2, '0');
+    isoDates.push(
+      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T` +
+      `${pad(d.getHours())}:${pad(d.getMinutes())}:00`
+    );
+  }
+
+  if (recurrence === 'once') {
+    pushOccurrence(first);
+    return { isoDates, rrule: null, scheduleLabel: 'One-off session' };
+  }
+
+  for (let i = 0; i < count; i++) {
+    const d = new Date(first);
+    if (recurrence === 'weekly')   d.setDate(first.getDate() + i * 7);
+    if (recurrence === 'biweekly') d.setDate(first.getDate() + i * 14);
+    if (recurrence === 'monthly')  d.setMonth(first.getMonth() + i);
+    pushOccurrence(d);
+  }
+
+  const rrule =
+    recurrence === 'weekly'   ? `RRULE:FREQ=WEEKLY;COUNT=${count}` :
+    recurrence === 'biweekly' ? `RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=${count}` :
+                                `RRULE:FREQ=MONTHLY;COUNT=${count}`;
+
+  const cadence =
+    recurrence === 'weekly'   ? 'Weekly' :
+    recurrence === 'biweekly' ? 'Every two weeks' :
+                                'Monthly';
+
+  return { isoDates, rrule, scheduleLabel: `${cadence} · ${count} sessions` };
+}
 
 export async function POST(req: NextRequest) {
   console.log('[generate-token] request received');
@@ -32,6 +86,8 @@ export async function POST(req: NextRequest) {
     session_date?: string;
     session_format?: string;
     session_fee?: number;
+    recurrence?: string;
+    occurrence_count?: number;
   };
   try {
     body = await req.json();
@@ -40,7 +96,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { client_name, client_email, session_date, session_format, session_fee } = body;
-  console.log('[generate-token] body parsed:', { client_name, client_email, session_date, session_format, session_fee });
+  console.log('[generate-token] body parsed:', { client_name, client_email, session_date, session_format, session_fee, recurrence: body.recurrence, occurrence_count: body.occurrence_count });
 
   if (!client_name?.trim()) return NextResponse.json({ error: 'client_name is required' }, { status: 400 });
   if (!client_email?.trim()) return NextResponse.json({ error: 'client_email is required' }, { status: 400 });
@@ -48,9 +104,18 @@ export async function POST(req: NextRequest) {
   if (!session_format || !VALID_FORMATS.includes(session_format)) return NextResponse.json({ error: 'session_format must be in_person or online' }, { status: 400 });
   if (!session_fee || Number(session_fee) <= 0) return NextResponse.json({ error: 'session_fee is required and must be positive' }, { status: 400 });
 
+  const recurrence: Recurrence = (body.recurrence && (VALID_RECURRENCE as readonly string[]).includes(body.recurrence))
+    ? (body.recurrence as Recurrence)
+    : 'once';
+  const occurrenceCount = recurrence === 'once'
+    ? 1
+    : Math.max(1, Math.min(52, Math.floor(Number(body.occurrence_count) || 12)));
+
   const sessionDateObj = new Date(session_date);
   if (isNaN(sessionDateObj.getTime())) return NextResponse.json({ error: 'Invalid session_date' }, { status: 400 });
   if (sessionDateObj < new Date()) return NextResponse.json({ error: 'session_date must be in the future' }, { status: 400 });
+
+  const plan = buildOccurrences(session_date, recurrence, occurrenceCount);
 
   const feeInCents = Math.round(Number(session_fee) * 100);
   const token = `${randomUUID()}-${randomBytes(16).toString('hex')}`;
@@ -105,23 +170,61 @@ export async function POST(req: NextRequest) {
     .update({ client_id: clientRow.id })
     .eq('token', token);
 
-  // 3. Insert session record
-  console.log('[generate-token] step 3: inserting session');
-  const { data: sessionRow, error: sessionErr } = await supabaseAdmin.from('sessions').insert({
+  // 3. Insert one session row per planned occurrence. The first row is the
+  // "anchor" — it carries the Stripe payment link for the first session and
+  // we return its id to wire things up later.
+  console.log('[generate-token] step 3: inserting', plan.isoDates.length, 'session(s)');
+  const sessionRowsPayload = plan.isoDates.map(iso => ({
     client_id: clientRow.id,
-    session_date,
+    session_date: iso,
     session_format,
     location,
     fee: feeInCents,
     status: 'scheduled',
     payment_status: 'unpaid',
-  }).select().single();
+  }));
 
-  if (sessionErr || !sessionRow) {
+  const { data: sessionRows, error: sessionErr } = await supabaseAdmin
+    .from('sessions')
+    .insert(sessionRowsPayload)
+    .select();
+
+  if (sessionErr || !sessionRows || sessionRows.length === 0) {
     console.error('[generate-token] session insert error:', JSON.stringify(sessionErr, null, 2));
-    return NextResponse.json({ error: sessionErr?.message ?? 'Failed to create session record' }, { status: 500 });
+    return NextResponse.json({ error: sessionErr?.message ?? 'Failed to create session record(s)' }, { status: 500 });
   }
-  console.log('[generate-token] step 3: done, session id:', sessionRow.id);
+  // Anchor row = the earliest session by date (matches the first occurrence)
+  const sessionRow = sessionRows
+    .slice()
+    .sort((a, b) => new Date(a.session_date as string).getTime() - new Date(b.session_date as string).getTime())[0];
+  console.log('[generate-token] step 3: done, anchor session id:', sessionRow.id, '· total rows:', sessionRows.length);
+
+  // 3b. Push the session(s) to Google Calendar if connected. One event with
+  // an RRULE covers the whole recurrence — way cleaner in the user's calendar
+  // than N independent events. Failures here are logged and ignored — Supabase
+  // is the source of truth.
+  try {
+    const eventId = await createCalendarEvent({
+      summary: `Session — ${client_name.trim()}`,
+      description: [
+        `Client: ${client_name.trim()} <${client_email.trim()}>`,
+        `Format: ${session_format === 'in_person' ? 'In Person' : 'Online'}`,
+        `Fee: €${Math.round(Number(session_fee))}`,
+        plan.scheduleLabel,
+      ].join('\n'),
+      location: session_format === 'in_person' ? location : undefined,
+      startIso: plan.isoDates[0],
+      durationMinutes: 50,
+      recurrence: plan.rrule ? [plan.rrule] : undefined,
+    });
+    if (eventId) {
+      console.log('[generate-token] step 3b: google calendar event created', eventId);
+    } else {
+      console.log('[generate-token] step 3b: google calendar skipped (not connected or scope insufficient)');
+    }
+  } catch (calErr) {
+    console.error('[generate-token] step 3b: google calendar error:', calErr);
+  }
 
   // 4. Create Stripe price + payment link
   let paymentLinkUrl = '';
@@ -236,6 +339,7 @@ export async function POST(req: NextRequest) {
         intakeUrl,
         paymentUrl: paymentLinkUrl,
         siteUrl,
+        scheduleLabel: plan.scheduleLabel,
       }),
       ...(attachments.length ? { attachments } : {}),
     });
@@ -266,6 +370,7 @@ interface WelcomeEmailData {
   intakeUrl: string;
   paymentUrl: string;
   siteUrl: string;
+  scheduleLabel: string;
 }
 
 function buildWelcomeHtml(d: WelcomeEmailData): string {
@@ -294,6 +399,7 @@ function buildWelcomeHtml(d: WelcomeEmailData): string {
       <tr><td style="padding:8px 0;color:#777;border-bottom:1px solid #F0EAE0;">Date</td><td style="padding:8px 0;border-bottom:1px solid #F0EAE0;">${d.formattedDate}</td></tr>
       <tr><td style="padding:8px 0;color:#777;border-bottom:1px solid #F0EAE0;">Time</td><td style="padding:8px 0;border-bottom:1px solid #F0EAE0;">${d.formattedTime}</td></tr>
       <tr><td style="padding:8px 0;color:#777;border-bottom:1px solid #F0EAE0;">Format</td><td style="padding:8px 0;border-bottom:1px solid #F0EAE0;">${d.sessionFormat === 'in_person' ? 'In Person' : 'Online'}</td></tr>
+      <tr><td style="padding:8px 0;color:#777;border-bottom:1px solid #F0EAE0;">Schedule</td><td style="padding:8px 0;border-bottom:1px solid #F0EAE0;">${d.scheduleLabel}</td></tr>
       ${locationLine}
       <tr>
         ${d.sessionFormat === 'online' ? `<td colspan="2" style="padding:8px 0;color:#555;font-size:13px;font-style:italic;">I'll send you a link to join shortly before your session.</td>` : '<td></td><td></td>'}

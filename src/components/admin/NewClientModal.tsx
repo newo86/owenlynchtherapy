@@ -22,6 +22,8 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
   const [sessionDate, setSessionDate] = useState('');
   const [sessionFormat, setSessionFormat] = useState<'in_person' | 'online'>('in_person');
   const [sessionFee, setSessionFee] = useState('');
+  const [recurrence, setRecurrence] = useState<'once' | 'weekly' | 'biweekly' | 'monthly'>('once');
+  const [occurrenceCount, setOccurrenceCount] = useState('12');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [generated, setGenerated] = useState<Generated | null>(null);
@@ -47,6 +49,8 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
           session_date: sessionDate,
           session_format: sessionFormat,
           session_fee: Number(sessionFee),
+          recurrence,
+          occurrence_count: recurrence === 'once' ? 1 : Number(occurrenceCount) || 12,
         }),
       });
       const json = await res.json();
@@ -57,6 +61,7 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
         clientEmail,
       });
       setClientName(''); setClientEmail(''); setSessionDate(''); setSessionFee(''); setSessionFormat('in_person');
+      setRecurrence('once'); setOccurrenceCount('12');
       onSuccess?.();
     } catch {
       setError('Network error. Please try again.');
@@ -111,6 +116,39 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
             </label>
           ))}
         </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: recurrence === 'once' ? '1fr' : '1fr 1fr', gap: 16 }}>
+        <div>
+          <label className="admin-label">Schedule *</label>
+          <select
+            value={recurrence}
+            onChange={e => setRecurrence(e.target.value as typeof recurrence)}
+            className="admin-input"
+          >
+            <option value="once">Does not repeat</option>
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Every two weeks</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+        {recurrence !== 'once' && (
+          <div>
+            <label className="admin-label">Number of sessions *</label>
+            <input
+              type="number"
+              min={2}
+              max={52}
+              step={1}
+              value={occurrenceCount}
+              onChange={e => setOccurrenceCount(e.target.value)}
+              className="admin-input"
+            />
+            <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--ink-muted)' }}>
+              Adds {occurrenceCount || '12'} sessions to the schedule and a recurring event on Google Calendar.
+            </p>
+          </div>
+        )}
       </div>
 
       {error && (

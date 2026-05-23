@@ -3,7 +3,9 @@ import { supabaseAdmin } from './supabase';
 
 const OWNER = 'admin';
 const SCOPES = [
-  'https://www.googleapis.com/auth/calendar.events.readonly',
+  // Read + write events — needed so the admin can both display the week and
+  // push newly-created sessions to the practice's Google Calendar.
+  'https://www.googleapis.com/auth/calendar.events',
   'https://www.googleapis.com/auth/userinfo.email',
 ];
 
@@ -126,6 +128,57 @@ export async function getConnectedEmail(): Promise<string | null> {
     return data.email ?? null;
   } catch (err) {
     console.error('[googleOAuth] getConnectedEmail error:', err);
+    return null;
+  }
+}
+
+interface CreateEventInput {
+  summary: string;
+  description?: string;
+  location?: string;
+  /** ISO local datetime (without zone) — combined with timeZone below. */
+  startIso: string;
+  /** Session length in minutes (defaults to 50). */
+  durationMinutes?: number;
+  /** RRULE strings, e.g. ['RRULE:FREQ=WEEKLY;COUNT=12']. Omit for a one-off. */
+  recurrence?: string[];
+  timeZone?: string;
+}
+
+/** Creates an event on the practice's primary Google Calendar. Returns the
+ *  event ID on success, or null if the user hasn't connected Google or the
+ *  request fails. We swallow errors so a failed calendar push never blocks
+ *  client onboarding — the Supabase sessions are the source of truth. */
+export async function createCalendarEvent(input: CreateEventInput): Promise<string | null> {
+  const client = await getAuthorizedClient();
+  if (!client) return null;
+
+  const tz = input.timeZone ?? 'Europe/Dublin';
+  const duration = input.durationMinutes ?? 50;
+
+  const start = new Date(input.startIso);
+  const end = new Date(start.getTime() + duration * 60_000);
+
+  try {
+    // The calendar.events.readonly scope we requested at connect time does
+    // NOT permit insert. Try the write path; if Google returns 403/insufficient
+    // scope, surface a clear log and bail.
+    const calendar = google.calendar({ version: 'v3', auth: client });
+    const { data } = await calendar.events.insert({
+      calendarId: 'primary',
+      requestBody: {
+        summary: input.summary,
+        description: input.description,
+        location: input.location,
+        start: { dateTime: start.toISOString(), timeZone: tz },
+        end:   { dateTime: end.toISOString(),   timeZone: tz },
+        recurrence: input.recurrence?.length ? input.recurrence : undefined,
+      },
+    });
+    return data.id ?? null;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[googleOAuth] createCalendarEvent error:', msg);
     return null;
   }
 }
