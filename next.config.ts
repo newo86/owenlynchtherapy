@@ -34,9 +34,19 @@ const nextConfig: NextConfig = {
     return [
       // Service detail sub-pages — not built yet
       { source: '/services/:slug',              destination: '/contact', permanent: false },
-      // Placeholder blog posts — not written yet
-      { source: '/blog/what-does-adhd-feel-like',    destination: '/contact', permanent: false },
-      { source: '/blog/finding-the-right-therapist', destination: '/contact', permanent: false },
+
+      // Placeholder articles not written yet — keep both old /blog/ and new
+      // /articles/ paths routing to /contact (more specific rules must come
+      // before the /blog → /articles catch-all below or they'd be swallowed).
+      { source: '/blog/what-does-adhd-feel-like',        destination: '/contact', permanent: false },
+      { source: '/blog/finding-the-right-therapist',     destination: '/contact', permanent: false },
+      { source: '/articles/what-does-adhd-feel-like',    destination: '/contact', permanent: false },
+      { source: '/articles/finding-the-right-therapist', destination: '/contact', permanent: false },
+
+      // Old /blog URL space → /articles. 301 permanent so search engines
+      // transfer the old listing/post URLs over.
+      { source: '/blog',        destination: '/articles',        permanent: true },
+      { source: '/blog/:slug*', destination: '/articles/:slug*', permanent: true },
     ];
   },
 };
