@@ -3,9 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { generateIntakePDF } from '@/lib/generateIntakePDF';
 import { sanitiseInput } from '@/lib/sanitise';
 import { rateLimit } from '@/lib/rateLimit';
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { getResend } from '@/lib/resend';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
@@ -215,8 +213,8 @@ export async function POST(req: NextRequest) {
       consent_age_confirmation: yn(rawForm.consent_age_confirmation),
     };
 
-    const emailResult = await resend.emails.send({
-      from: 'info@owenlynchtherapy.com',
+    const emailResult = await getResend().emails.send({
+      from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
       to: 'info@owenlynchtherapy.com',
       subject: `New intake form: ${full_name}`,
       html: buildEmailHtml(sanitisedData),

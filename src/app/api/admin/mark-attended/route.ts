@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { getResend } from '@/lib/resend';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 export async function POST(req: NextRequest) {
@@ -57,8 +55,8 @@ export async function POST(req: NextRequest) {
         hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
       });
 
-      const emailResult = await resend.emails.send({
-        from: 'Owen Lynch Psychotherapy <info@owenlynchtherapy.com>',
+      const emailResult = await getResend().emails.send({
+        from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
         to: client.email,
         subject: 'Receipt — Psychotherapy Session with Owen Lynch',
         html: buildReceiptHtml(firstName, formattedDate, formattedTime, feeEuros),

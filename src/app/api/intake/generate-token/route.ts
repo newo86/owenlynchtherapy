@@ -6,9 +6,7 @@ import { rateLimit } from '@/lib/rateLimit';
 import { generateTherapeuticAgreementPDF } from '@/lib/pdf/generateTherapeuticAgreementPDF';
 import { generatePrivacyPolicyPDF } from '@/lib/pdf/generatePrivacyPolicyPDF';
 import { createCalendarEvent } from '@/lib/googleOAuth';
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { getResend } from '@/lib/resend';
 const VALID_FORMATS = ['in_person', 'online'];
 const VALID_RECURRENCE = ['once', 'weekly', 'biweekly', 'monthly'] as const;
 type Recurrence = typeof VALID_RECURRENCE[number];
@@ -323,8 +321,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const emailResult = await resend.emails.send({
-      from: 'Owen Lynch Psychotherapy <info@owenlynchtherapy.com>',
+    const emailResult = await getResend().emails.send({
+      from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
       to: emailTo,
       subject: 'Your first session with Owen Lynch Psychotherapy',
       html: buildWelcomeHtml({

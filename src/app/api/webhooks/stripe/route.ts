@@ -2,12 +2,11 @@ import { NextRequest } from 'next/server';
 import Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase';
-import { Resend } from 'resend';
+import { getResend } from '@/lib/resend';
 
 // App Router route handlers receive a raw Request — no body-parser config needed.
 // We read the raw body with request.text() which Stripe webhook verification requires.
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
@@ -97,8 +96,8 @@ async function sendReceipt(
     hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
   });
 
-  const emailResult = await resend.emails.send({
-    from: 'Owen Lynch Psychotherapy <info@owenlynchtherapy.com>',
+  const emailResult = await getResend().emails.send({
+    from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
     to: client.email,
     subject: 'Receipt — Psychotherapy Session with Owen Lynch',
     html: buildReceiptHtml(firstName, formattedDate, formattedTime, feeEuros),

@@ -1,7 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { Resend } from 'resend';
+import { getResend } from '@/lib/resend';
 
 export async function submitContactForm(formData: FormData) {
   // Honeypot: if bot filled the hidden field, silently redirect as success
@@ -20,10 +20,8 @@ export async function submitContactForm(formData: FormData) {
     redirect('/contact?error=1');
   }
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
-
-  const { error } = await resend.emails.send({
-    from: 'info@owenlynchtherapy.com',
+  const { error } = await getResend().emails.send({
+    from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
     to: 'info@owenlynchtherapy.com',
     subject: `New enquiry from ${firstName} ${lastName}`,
     html: `
