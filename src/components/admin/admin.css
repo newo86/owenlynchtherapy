@@ -148,9 +148,11 @@
   transition: background 180ms ease, color 180ms ease, box-shadow 220ms ease;
 }
 
-.admin-nav-btn:hover:not(.is-active) {
+@media (hover: hover) {
+  .admin-nav-btn:hover:not(.is-active) {
   background: rgba(255, 255, 255, 0.06);
   color: white;
+}
 }
 
 .admin-nav-btn.is-active {
@@ -247,7 +249,9 @@
   padding: 0;
 }
 
-.admin-link:hover { color: #a04714; }
+@media (hover: hover) {
+  .admin-link:hover { color: #a04714; }
+}
 
 /* ── Cards ────────────────────────────────────────────────────────────── */
 
@@ -328,9 +332,11 @@
   transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
-.admin-btn-primary:hover:not(:disabled) {
+@media (hover: hover) {
+  .admin-btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(200, 90, 27, 0.34);
+}
 }
 
 .admin-btn-primary:active:not(:disabled) {
@@ -362,11 +368,13 @@
   transition: all 180ms ease;
 }
 
-.admin-btn-secondary:hover:not(:disabled) {
+@media (hover: hover) {
+  .admin-btn-secondary:hover:not(:disabled) {
   border-color: var(--terracotta);
   color: var(--terracotta);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(42, 77, 60, 0.08);
+}
 }
 
 .admin-btn-secondary:disabled { opacity: 0.5; cursor: default; }
@@ -377,10 +385,12 @@
   border-color: var(--forest-deep);
 }
 
-.admin-btn-secondary.is-filled:hover {
+@media (hover: hover) {
+  .admin-btn-secondary.is-filled:hover {
   background: var(--forest);
   color: white;
   border-color: var(--forest);
+}
 }
 
 /* ── Stats ────────────────────────────────────────────────────────────── */
@@ -403,9 +413,11 @@
   transition: transform 200ms ease, box-shadow 200ms ease;
 }
 
-.admin-stat:hover {
+@media (hover: hover) {
+  .admin-stat:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-card-hover);
+}
 }
 
 .admin-stat-accent {
@@ -528,10 +540,12 @@
   cursor: default;
 }
 
-.admin-session-row:hover {
+@media (hover: hover) {
+  .admin-session-row:hover {
   background: white;
   border-color: var(--gold-soft);
   box-shadow: 0 4px 12px rgba(42, 77, 60, 0.06);
+}
 }
 
 .admin-session-time {
@@ -610,9 +624,11 @@
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
-.admin-task:hover {
+@media (hover: hover) {
+  .admin-task:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(42, 77, 60, 0.08);
+}
 }
 
 .admin-task.warn  { background: linear-gradient(140deg, #fbeadb 0%, #f6dfd0 100%); }
@@ -686,7 +702,21 @@
   gap: 8px;
 }
 
-.admin-day:hover { border-color: var(--gold-soft); }
+@media (hover: hover) {
+  .admin-day:hover { border-color: var(--gold-soft); }
+
+.admin-day-clickable {
+  cursor: pointer;
+}
+
+.admin-day-clickable:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.admin-day-clickable.is-today:hover {
+  background: linear-gradient(180deg, #fdebda 0%, #f6dcc4 100%);
+}
+}
 
 .admin-day-head {
   display: flex;
@@ -729,7 +759,9 @@
   cursor: default;
 }
 
-.admin-event:hover { transform: translateX(2px); }
+@media (hover: hover) {
+  .admin-event:hover { transform: translateX(2px); }
+}
 
 .admin-event-time {
   font-family: var(--font-poppins), sans-serif;
@@ -879,7 +911,9 @@
 }
 
 .admin-clientrow:last-child { border-bottom: none; }
-.admin-clientrow:hover { background: rgba(245, 240, 232, 0.6); }
+@media (hover: hover) {
+  .admin-clientrow:hover { background: rgba(245, 240, 232, 0.6); }
+}
 
 .admin-clientrow-name {
   font-size: 14px;
@@ -992,7 +1026,9 @@
   transition: background 150ms ease, color 150ms ease;
 }
 
-.admin-segmented-btn:hover:not(.is-active) { color: var(--forest-deep); }
+@media (hover: hover) {
+  .admin-segmented-btn:hover:not(.is-active) { color: var(--forest-deep); }
+}
 
 .admin-segmented-btn.is-active {
   background: var(--forest-deep);
@@ -1037,7 +1073,9 @@
 
 .admin-table tr:first-child td { border-top: none; }
 
-.admin-table tr:hover td { background: rgba(245, 240, 232, 0.5); }
+@media (hover: hover) {
+  .admin-table tr:hover td { background: rgba(245, 240, 232, 0.5); }
+}
 
 /* ── Modal animations ───────────────────────────────────────────────── */
 
@@ -1064,7 +1102,9 @@
   background: rgba(42, 77, 60, 0.18);
   border-radius: 4px;
 }
-.admin-root ::-webkit-scrollbar-thumb:hover { background: rgba(42, 77, 60, 0.32); }
+@media (hover: hover) {
+  .admin-root ::-webkit-scrollbar-thumb:hover { background: rgba(42, 77, 60, 0.32); }
+}
 
 /* ── Footer ──────────────────────────────────────────────────────────── */
 

@@ -15,6 +15,15 @@
   --font-montserrat: var(--font-montserrat), 'Montserrat', system-ui, sans-serif;
 }
 
+@custom-variant h-hover {
+  @media (hover: hover) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+@custom-variant h-can (@media (hover: hover));
+
 /* ── Base typography ── */
 body {
   font-family: var(--font-poppins), system-ui, sans-serif;
@@ -84,9 +93,11 @@ h6 {
   z-index: 0;
 }
 
-.service-card-border:hover::before {
-  opacity: 1;
-  animation: border-spin 3s linear infinite;
+@media (hover: hover) {
+  .service-card-border:hover::before {
+    opacity: 1;
+    animation: border-spin 3s linear infinite;
+  }
 }
 
 /* ── Floating circles ambient background ── */

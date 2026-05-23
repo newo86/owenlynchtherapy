@@ -8,9 +8,11 @@ import { ClientDetail } from './ClientDetail';
 import { SessionsList } from './SessionsList';
 import { FormsTable } from './FormsTable';
 import { NewClientModal } from './NewClientModal';
+import { ScheduleSessionModal } from './ScheduleSessionModal';
 import { adminFetch, clearSecret } from './api';
 import type {
   AdminSection, ClientRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
+  SessionFilter, FormsTab,
 } from './types';
 
 const SECTION_TITLES: Record<AdminSection, string> = {
@@ -49,6 +51,17 @@ export function AdminShell() {
   const [, setLoadingAll] = useState(false);
   const [flash, setFlash] = useState<{ kind: 'success' | 'error'; msg: string } | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleInitialIso, setScheduleInitialIso] = useState<string | undefined>();
+  // Filter intents carried when a Quick Action card navigates between sections.
+  const [sessionsFilter, setSessionsFilter] = useState<SessionFilter | undefined>();
+  const [formsTab, setFormsTab] = useState<FormsTab | undefined>();
+
+  function navigateSection(section: 'sessions' | 'forms', opts?: { sessionsFilter?: SessionFilter; formsTab?: FormsTab }) {
+    if (opts?.sessionsFilter) setSessionsFilter(opts.sessionsFilter);
+    if (opts?.formsTab) setFormsTab(opts.formsTab);
+    setSection(section);
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -169,7 +182,6 @@ export function AdminShell() {
             <Dashboard
               clients={clients}
               tokens={tokens}
-              submissions={submissions}
               events={events}
               calendarStatus={calStatus}
               weekOffset={weekOffset}
@@ -178,6 +190,8 @@ export function AdminShell() {
               onConnectCalendar={connectCalendar}
               onDisconnectCalendar={disconnectCalendar}
               onNewClient={() => setModalOpen(true)}
+              onScheduleDay={iso => { setScheduleInitialIso(iso); setScheduleOpen(true); }}
+              onNavigateSection={navigateSection}
               greeting={greet()}
               dateLine={dateLine()}
               flash={flash}
@@ -240,11 +254,12 @@ export function AdminShell() {
                   weekOffset={weekOffset}
                   onWeekOffsetChange={setWeekOffset}
                   onReload={reload}
+                  initialFilter={sessionsFilter}
                 />
               )}
 
               {section === 'forms' && (
-                <FormsTable submissions={submissions} tokens={tokens} />
+                <FormsTable submissions={submissions} tokens={tokens} initialTab={formsTab} />
               )}
             </>
           )}
@@ -266,6 +281,15 @@ export function AdminShell() {
         <NewClientModal
           asModal
           onClose={() => setModalOpen(false)}
+          onSuccess={() => { reload(); }}
+        />
+      )}
+
+      {scheduleOpen && (
+        <ScheduleSessionModal
+          clients={clients}
+          initialIsoDate={scheduleInitialIso}
+          onClose={() => setScheduleOpen(false)}
           onSuccess={() => { reload(); }}
         />
       )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Search, Download } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { adminFetch, formatDateTime } from './api';
@@ -10,6 +10,7 @@ import type { SubmissionRow, TokenRow } from './types';
 interface Props {
   submissions: SubmissionRow[];
   tokens: TokenRow[];
+  initialTab?: TabId;
 }
 
 type TabId = 'submitted' | 'pending';
@@ -26,8 +27,13 @@ const TOKEN_TAG = {
   expired:   { cls: 'admin-tag-pause',  label: 'Expired' },
 };
 
-export function FormsTable({ submissions, tokens }: Props) {
-  const [tab, setTab] = useState<TabId>('submitted');
+export function FormsTable({ submissions, tokens, initialTab }: Props) {
+  const [tab, setTab] = useState<TabId>(initialTab ?? 'submitted');
+
+  useEffect(() => {
+    if (initialTab) setTab(initialTab);
+  }, [initialTab]);
+
   const [q, setQ] = useState('');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 

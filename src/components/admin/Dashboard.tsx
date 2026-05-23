@@ -9,12 +9,14 @@ import {
 } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatTime, isSameDay, startOfWeek } from './api';
-import type { ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus } from './types';
+import type {
+  ClientRow, SessionRow, TokenRow,
+  CalendarEvent, CalendarStatus, SessionFilter, FormsTab,
+} from './types';
 
 interface Props {
   clients: ClientRow[];
   tokens: TokenRow[];
-  submissions: SubmissionRow[];
   events: CalendarEvent[];
   calendarStatus: CalendarStatus | null;
   weekOffset: number;
@@ -23,11 +25,22 @@ interface Props {
   onConnectCalendar: () => void;
   onDisconnectCalendar: () => void;
   onNewClient: () => void;
+  /** Called when the user clicks an empty calendar day. Receives a
+   *  pre-filled "YYYY-MM-DDTHH:MM" string for the schedule modal. */
+  onScheduleDay: (iso: string) => void;
+  /** Navigate the admin to another section, optionally carrying a filter
+   *  intent (sessions tab + initial filter / forms tab). */
+  onNavigateSection: (section: 'sessions' | 'forms', opts?: {
+    sessionsFilter?: SessionFilter;
+    formsTab?: FormsTab;
+  }) => void;
   greeting: string;
   dateLine: string;
   flash: { kind: 'success' | 'error'; msg: string } | null;
   sectionTitle: string;
 }
+
+type OutstandingScope = 'week' | 'month' | 'all';
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -41,6 +54,13 @@ function accentForName(name: string): Accent {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   return ACCENTS[h % ACCENTS.length];
+}
+
+/** Build a datetime-local string ("YYYY-MM-DDTHH:MM") for a clicked day,
+ *  defaulting the time to 17:00 — a sensible "let me adjust this" placeholder. */
+function buildClickIso(day: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T17:00`;
 }
 
 function meridiem(iso: string) {
@@ -57,14 +77,16 @@ function shortTime(iso: string) {
 // ── component ──────────────────────────────────────────────────────────────
 
 export function Dashboard({
-  clients, tokens, submissions, events, calendarStatus,
+  clients, tokens, events, calendarStatus,
   weekOffset, onWeekOffsetChange,
   onReload, onConnectCalendar, onDisconnectCalendar, onNewClient,
+  onScheduleDay, onNavigateSection,
   greeting, dateLine, flash, sectionTitle,
 }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; msg: string } | null>(null);
+  const [outstandingScope, setOutstandingScope] = useState<OutstandingScope>('week');
 
   const today = new Date();
   const allSessions = useMemo(() => {
@@ -90,12 +112,31 @@ export function Dashboard({
     return clients.filter(c => new Date(c.created_at) >= startOfMonth).length;
   }, [clients]);
 
-  const outstandingCents = allSessions
-    .filter(({ s }) => s.payment_status === 'unpaid' && s.status !== 'cancelled')
-    .reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
+  // Outstanding payments scoped by the active filter pill (Week / Month / All).
+  const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+  const inScope = (iso: string) => {
+    const d = new Date(iso);
+    if (outstandingScope === 'all')   return true;
+    if (outstandingScope === 'week')  return d >= monday && d < sunday;
+    return d >= startOfMonth;
+  };
+  const outstandingScoped = allSessions.filter(({ s }) =>
+    s.payment_status !== 'paid' && s.payment_status !== 'refunded'
+    && s.status !== 'cancelled' && inScope(s.session_date)
+  );
+  const outstandingCents = outstandingScoped.reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
+  const outstandingCount = outstandingScoped.length;
 
-  const outstandingCount = allSessions.filter(({ s }) =>
-    s.payment_status === 'unpaid' && s.status !== 'cancelled'
+  // Unpaid this week — fixed scope, used by the Quick Actions "Unpaid" tile.
+  const unpaidThisWeekCount = allSessions.filter(({ s }) => {
+    const d = new Date(s.session_date);
+    return s.payment_status !== 'paid' && s.payment_status !== 'refunded'
+      && s.status !== 'cancelled' && d >= monday && d < sunday;
+  }).length;
+
+  // Attended sessions that haven't had a receipt emailed yet.
+  const needsReceiptCount = allSessions.filter(({ s }) =>
+    s.status === 'attended' && !s.receipt_sent_at
   ).length;
 
   const formsPending = tokens.filter(t => !t.is_used && new Date(t.expires_at) > today).length;
@@ -214,8 +255,32 @@ export function Dashboard({
           accent="lilac"
           value={`€${Math.round(outstandingCents / 100)}`}
           Icon={Wallet}
-          foot={outstandingCount > 0 ? `${outstandingCount} invoice${outstandingCount === 1 ? '' : 's'} outstanding` : 'All paid'}
+          foot={
+            outstandingCount > 0
+              ? `${outstandingCount} invoice${outstandingCount === 1 ? '' : 's'} · ${
+                  outstandingScope === 'week' ? 'this week'
+                  : outstandingScope === 'month' ? 'this month'
+                  : 'all time'
+                }`
+              : `All clear · ${outstandingScope === 'week' ? 'this week' : outstandingScope === 'month' ? 'this month' : 'all time'}`
+          }
           footKind={outstandingCount > 0 ? 'warn' : 'ok'}
+          pills={(
+            <div style={{ display: 'flex', gap: 4, marginTop: 12 }}>
+              {([
+                { id: 'week',  label: 'Week' },
+                { id: 'month', label: 'Month' },
+                { id: 'all',   label: 'All' },
+              ] as const).map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setOutstandingScope(p.id)}
+                  className={`admin-segmented-btn${outstandingScope === p.id ? ' is-active' : ''}`}
+                  style={{ padding: '5px 10px', fontSize: 9, letterSpacing: '1.5px' }}
+                >{p.label}</button>
+              ))}
+            </div>
+          )}
         />
       </div>
 
@@ -274,11 +339,11 @@ export function Dashboard({
         </section>
 
         <QuickActions
-          unpaidOldest={pickOldestUnpaid(allSessions, today)}
+          unpaidThisWeek={unpaidThisWeekCount}
+          needsReceipt={needsReceiptCount}
           formsPending={formsPending}
           pendingNames={tokens.filter(t => !t.is_used && new Date(t.expires_at) > today).map(t => t.client_name ?? '—')}
-          recentSubmission={submissions[0]}
-          attendedWithoutNotes={countAttendedWithoutNotes(clients)}
+          onNavigateSection={onNavigateSection}
         />
       </div>
 
@@ -302,7 +367,7 @@ export function Dashboard({
           </div>
         </div>
 
-        <WeekGrid clients={clients} events={events} weekOffset={weekOffset} />
+        <WeekGrid clients={clients} events={events} weekOffset={weekOffset} onClickDay={onScheduleDay} />
       </section>
 
       {/* Revenue + Recent clients */}
@@ -323,9 +388,10 @@ interface StatProps {
   Icon: typeof CalendarDays;
   foot: string;
   footKind?: 'ok' | 'warn' | 'neutral';
+  pills?: React.ReactNode;
 }
 
-function StatCard({ label, value, accent, Icon, foot, footKind = 'neutral' }: StatProps) {
+function StatCard({ label, value, accent, Icon, foot, footKind = 'neutral', pills }: StatProps) {
   const palette = {
     terracotta: { strip: 'var(--terracotta)',  blob: '#f6dfd0', iconBg: 'rgba(200,90,27,0.12)', iconFg: 'var(--terracotta)' },
     sage:       { strip: 'var(--sage)',        blob: '#d8e8de', iconBg: 'rgba(79,138,104,0.14)', iconFg: 'var(--sage)' },
@@ -348,6 +414,7 @@ function StatCard({ label, value, accent, Icon, foot, footKind = 'neutral' }: St
         {footKind === 'ok' && <CheckCircle2 size={13} strokeWidth={2} />}
         {foot}
       </div>
+      {pills}
     </div>
   );
 }
@@ -433,14 +500,14 @@ const confirmLinkMuted: React.CSSProperties = {
 };
 
 interface QuickProps {
-  unpaidOldest: { client_name: string; fee: number; daysAgo: number } | null;
+  unpaidThisWeek: number;
+  needsReceipt: number;
   formsPending: number;
   pendingNames: string[];
-  recentSubmission?: SubmissionRow;
-  attendedWithoutNotes: number;
+  onNavigateSection: (section: 'sessions' | 'forms', opts?: { sessionsFilter?: SessionFilter; formsTab?: FormsTab }) => void;
 }
 
-function QuickActions({ unpaidOldest, formsPending, pendingNames, recentSubmission, attendedWithoutNotes }: QuickProps) {
+function QuickActions({ unpaidThisWeek, needsReceipt, formsPending, pendingNames, onNavigateSection }: QuickProps) {
   return (
     <section className="admin-card">
       <div className="admin-card-head">
@@ -451,25 +518,48 @@ function QuickActions({ unpaidOldest, formsPending, pendingNames, recentSubmissi
       </div>
 
       <div className="admin-quickgrid">
-        {unpaidOldest ? (
-          <div className="admin-task warn">
-            <div className="admin-task-eyebrow">Overdue · {unpaidOldest.daysAgo}d</div>
-            <div className="admin-task-title">Chase {unpaidOldest.client_name}</div>
-            <div className="admin-task-body">
-              €{Math.round(unpaidOldest.fee / 100)} · session {unpaidOldest.daysAgo} day{unpaidOldest.daysAgo === 1 ? '' : 's'} ago
-            </div>
-            <div className="admin-task-cta">Send reminder</div>
+        {/* Unpaid sessions this week */}
+        <button
+          type="button"
+          onClick={() => onNavigateSection('sessions', { sessionsFilter: 'unpaid' })}
+          className="admin-task warn"
+        >
+          <div className="admin-task-eyebrow">Unpaid · {unpaidThisWeek}</div>
+          <div className="admin-task-title">
+            {unpaidThisWeek === 0 ? 'All clear this week' : 'Unpaid this week'}
           </div>
-        ) : (
-          <div className="admin-task info">
-            <div className="admin-task-eyebrow">All paid</div>
-            <div className="admin-task-title">No overdue invoices</div>
-            <div className="admin-task-body">Every attended session is settled.</div>
-            <div className="admin-task-cta">View payments</div>
+          <div className="admin-task-body">
+            {unpaidThisWeek === 0
+              ? 'No unpaid sessions in the current week.'
+              : `${unpaidThisWeek} unpaid this week`}
           </div>
-        )}
+          <div className="admin-task-cta">View unpaid</div>
+        </button>
 
-        <div className="admin-task gold">
+        {/* Attendance + receipts */}
+        <button
+          type="button"
+          onClick={() => onNavigateSection('sessions', { sessionsFilter: 'needs_receipt' })}
+          className="admin-task info"
+        >
+          <div className="admin-task-eyebrow">Attendance · {needsReceipt}</div>
+          <div className="admin-task-title">
+            {needsReceipt === 0 ? 'Receipts up to date' : 'Mark attended &amp; send receipts'}
+          </div>
+          <div className="admin-task-body">
+            {needsReceipt === 0
+              ? 'Every attended session has its receipt logged.'
+              : `${needsReceipt} attended session${needsReceipt === 1 ? '' : 's'} need${needsReceipt === 1 ? 's' : ''} a receipt sent.`}
+          </div>
+          <div className="admin-task-cta">Open sessions</div>
+        </button>
+
+        {/* Forms pending */}
+        <button
+          type="button"
+          onClick={() => onNavigateSection('forms', { formsTab: 'pending' })}
+          className="admin-task gold"
+        >
           <div className="admin-task-eyebrow">Forms pending · {formsPending}</div>
           <div className="admin-task-title">
             {formsPending === 0 ? 'All caught up' : 'Intake forms outstanding'}
@@ -480,33 +570,23 @@ function QuickActions({ unpaidOldest, formsPending, pendingNames, recentSubmissi
               : `${pendingNames.slice(0, 2).join(' & ')}${pendingNames.length > 2 ? ` and ${pendingNames.length - 2} other${pendingNames.length - 2 === 1 ? '' : 's'}` : ''} haven't returned theirs.`}
           </div>
           <div className="admin-task-cta">Review status</div>
-        </div>
+        </button>
 
-        <div className="admin-task info">
-          <div className="admin-task-eyebrow">Notes · {attendedWithoutNotes}</div>
-          <div className="admin-task-title">
-            {attendedWithoutNotes === 0 ? 'Notes up to date' : `Add notes for ${attendedWithoutNotes} client${attendedWithoutNotes === 1 ? '' : 's'}`}
-          </div>
+        {/* Inbox — opens Gmail in a new tab */}
+        <a
+          href="https://mail.google.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="admin-task lilac"
+          style={{ textDecoration: 'none' }}
+        >
+          <div className="admin-task-eyebrow">Inbox</div>
+          <div className="admin-task-title">Open Gmail</div>
           <div className="admin-task-body">
-            {attendedWithoutNotes === 0
-              ? 'Every client has notes against their attended sessions.'
-              : 'A few attended clients still need a session note.'}
+            Jump to your inbox at info@owenlynchtherapy.com.
           </div>
-          <div className="admin-task-cta">Open clients</div>
-        </div>
-
-        <div className="admin-task lilac">
-          <div className="admin-task-eyebrow">{recentSubmission ? 'New submission' : 'Inbox'}</div>
-          <div className="admin-task-title">
-            {recentSubmission ? `Reply to ${recentSubmission.full_name}` : 'No new enquiries'}
-          </div>
-          <div className="admin-task-body">
-            {recentSubmission
-              ? `Intake submitted ${timeAgo(recentSubmission.submitted_at)}.`
-              : 'Submissions show up here as clients return their intake form.'}
-          </div>
-          <div className="admin-task-cta">Open message</div>
-        </div>
+          <div className="admin-task-cta">Open inbox</div>
+        </a>
       </div>
     </section>
   );
@@ -514,7 +594,12 @@ function QuickActions({ unpaidOldest, formsPending, pendingNames, recentSubmissi
 
 // ── Week grid (light-themed) ───────────────────────────────────────────────
 
-function WeekGrid({ clients, events, weekOffset }: { clients: ClientRow[]; events: CalendarEvent[]; weekOffset: number }) {
+function WeekGrid({ clients, events, weekOffset, onClickDay }: {
+  clients: ClientRow[];
+  events: CalendarEvent[];
+  weekOffset: number;
+  onClickDay?: (iso: string) => void;
+}) {
   const days = useMemo(() => {
     const monday = startOfWeek(new Date());
     monday.setDate(monday.getDate() + weekOffset * 7);
@@ -564,8 +649,22 @@ function WeekGrid({ clients, events, weekOffset }: { clients: ClientRow[]; event
       {days.map((day, i) => {
         const dayEvents = eventsForDay(day);
         const isToday = isSameDay(day, new Date());
+        const clickable = !!onClickDay;
+        const handleClick = clickable
+          ? () => onClickDay!(buildClickIso(day))
+          : undefined;
         return (
-          <div key={i} className={`admin-day${isToday ? ' is-today' : ''}`}>
+          <div
+            key={i}
+            className={`admin-day${isToday ? ' is-today' : ''}${clickable ? ' admin-day-clickable' : ''}`}
+            onClick={handleClick}
+            role={clickable ? 'button' : undefined}
+            tabIndex={clickable ? 0 : undefined}
+            onKeyDown={clickable
+              ? e => { if (e.key === 'Enter' || e.key === ' ') handleClick!(); }
+              : undefined}
+            title={clickable ? `Schedule a session on ${day.toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'short' })}` : undefined}
+          >
             <div className="admin-day-head">
               <div className="admin-day-name">{DAY_NAMES[i]}</div>
               <div className="admin-day-num">{day.getDate()}</div>
@@ -743,22 +842,6 @@ function RecentClientsCard({ clients }: { clients: ClientRow[] }) {
 }
 
 // ── Derivations ───────────────────────────────────────────────────────────
-
-function pickOldestUnpaid(all: Array<{ s: SessionRow; c: ClientRow }>, now: Date) {
-  const unpaid = all
-    .filter(({ s }) => s.payment_status === 'unpaid' && s.status !== 'cancelled' && new Date(s.session_date) <= now)
-    .sort((a, b) => new Date(a.s.session_date).getTime() - new Date(b.s.session_date).getTime());
-  if (unpaid.length === 0) return null;
-  const { s, c } = unpaid[0];
-  const daysAgo = Math.max(0, Math.floor((now.getTime() - new Date(s.session_date).getTime()) / (1000 * 60 * 60 * 24)));
-  return { client_name: c.full_name, fee: s.fee, daysAgo };
-}
-
-function countAttendedWithoutNotes(clients: ClientRow[]) {
-  return clients.filter(c =>
-    !c.notes?.trim() && c.sessions.some(s => s.status === 'attended')
-  ).length;
-}
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();

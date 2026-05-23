@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { X, Download } from 'lucide-react';
+import { X, Download, Trash2 } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatDateTime } from './api';
 import { FORMAT_LABELS } from './types';
@@ -154,6 +154,31 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
               {client.email}{client.phone ? ` · ${client.phone}` : ''}
             </div>
           </div>
+          <button
+            onClick={async () => {
+              if (!confirm(`Are you sure you want to delete ${client.full_name}? This will permanently delete all their sessions and intake data. This cannot be undone.`)) return;
+              const res = await adminFetch('/api/admin/clients/delete', {
+                method: 'POST',
+                body: JSON.stringify({ client_id: client.id }),
+              });
+              if (!res.ok) {
+                const json = await res.json().catch(() => ({}));
+                alert(`Failed to delete client: ${json.error ?? res.status}`);
+                return;
+              }
+              onReload();
+              onClose();
+            }}
+            aria-label="Delete client"
+            title="Delete client"
+            style={{
+              background: 'transparent', border: 'none',
+              color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: 6,
+              marginRight: 4,
+            }}
+          >
+            <Trash2 size={18} strokeWidth={1.8} />
+          </button>
           <button onClick={onClose} aria-label="Close"
             style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', padding: 6 }}>
             <X size={20} strokeWidth={1.8} />

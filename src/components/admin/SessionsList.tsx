@@ -1,11 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { List, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatDateTime, startOfWeek, isSameDay, formatTime } from './api';
 import { FORMAT_LABELS } from './types';
-import type { ClientRow, SessionRow, CalendarEvent } from './types';
+import type { ClientRow, SessionRow, CalendarEvent, SessionFilter } from './types';
 
 interface Props {
   clients: ClientRow[];
@@ -13,6 +13,8 @@ interface Props {
   weekOffset: number;
   onWeekOffsetChange: (offset: number) => void;
   onReload: () => void;
+  /** Initial filter when the section is opened (e.g. via a Quick Action card). */
+  initialFilter?: SessionFilter;
 }
 
 type View = 'list' | 'calendar';
@@ -44,16 +46,42 @@ function accentForName(name: string): typeof ACCENTS[number] {
   return ACCENTS[h % ACCENTS.length];
 }
 
-export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload }: Props) {
+export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter }: Props) {
   const [view, setView] = useState<View>('list');
+  const [filter, setFilter] = useState<SessionFilter>(initialFilter ?? 'all');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  // Sync the local filter if a parent navigates here with a different intent.
+  useEffect(() => {
+    if (initialFilter) setFilter(initialFilter);
+  }, [initialFilter]);
 
   const rows = useMemo(() => {
     const out: Array<{ s: SessionRow; c: ClientRow }> = [];
     for (const c of clients) for (const s of c.sessions) out.push({ s, c });
     return out.sort((a, b) => new Date(a.s.session_date).getTime() - new Date(b.s.session_date).getTime());
   }, [clients]);
+
+  const filtered = useMemo(() => {
+    if (filter === 'all') return rows;
+    const now = new Date();
+    const monday = startOfWeek(now);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 7);
+    return rows.filter(({ s }) => {
+      if (filter === 'unpaid') {
+        return s.payment_status !== 'paid' && s.payment_status !== 'refunded' && s.status !== 'cancelled';
+      }
+      if (filter === 'needs_receipt') {
+        return s.status === 'attended' && !s.receipt_sent_at;
+      }
+      if (filter === 'this_week') {
+        const d = new Date(s.session_date);
+        return d >= monday && d < sunday;
+      }
+      return true;
+    });
+  }, [rows, filter]);
 
   async function markAttended(sessionId: string, paymentStatus: string) {
     if (paymentStatus === 'unpaid') { setConfirmId(sessionId); return; }
@@ -103,6 +131,23 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
           ))}
         </div>
 
+        {view === 'list' && (
+          <div className="admin-segmented">
+            {([
+              { id: 'all',           label: 'All' },
+              { id: 'unpaid',        label: 'Unpaid' },
+              { id: 'needs_receipt', label: 'Needs receipt' },
+              { id: 'this_week',     label: 'This week' },
+            ] as const).map(t => (
+              <button
+                key={t.id}
+                onClick={() => setFilter(t.id)}
+                className={`admin-segmented-btn${filter === t.id ? ' is-active' : ''}`}
+              >{t.label}</button>
+            ))}
+          </div>
+        )}
+
         {view === 'calendar' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
             <button onClick={() => onWeekOffsetChange(weekOffset - 1)} className="admin-btn-secondary" aria-label="Previous week">
@@ -139,14 +184,14 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && (
+            {filtered.length === 0 && (
               <tr>
                 <td colSpan={7} style={{ textAlign: 'center' as const, padding: 28, color: 'var(--ink-muted)' }}>
-                  No sessions yet.
+                  {rows.length === 0 ? 'No sessions yet.' : `No sessions match the ${filter.replace('_', ' ')} filter.`}
                 </td>
               </tr>
             )}
-            {rows.map(({ s, c }) => (
+            {filtered.map(({ s, c }) => (
               <tr key={s.id}>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

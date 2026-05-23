@@ -156,13 +156,17 @@ export async function createCalendarEvent(input: CreateEventInput): Promise<stri
   const tz = input.timeZone ?? 'Europe/Dublin';
   const duration = input.durationMinutes ?? 50;
 
-  const start = new Date(input.startIso);
-  const end = new Date(start.getTime() + duration * 60_000);
+  // Parse the local wall-clock components from the input. Format is
+  // "YYYY-MM-DDTHH:MM" or "YYYY-MM-DDTHH:MM:SS" — no zone. We must NOT push
+  // these through Date.toISOString() because that emits a Z-suffixed UTC
+  // string, which Google would then interpret as UTC and re-render in
+  // Europe/Dublin (shifting the displayed time by the BST offset). The
+  // Calendar API expects an unsuffixed local datetime alongside the
+  // timeZone field, so we just normalise the format.
+  const localIso = normaliseLocalDateTime(input.startIso);
+  const endLocalIso = addMinutesLocal(localIso, duration);
 
   try {
-    // The calendar.events.readonly scope we requested at connect time does
-    // NOT permit insert. Try the write path; if Google returns 403/insufficient
-    // scope, surface a clear log and bail.
     const calendar = google.calendar({ version: 'v3', auth: client });
     const { data } = await calendar.events.insert({
       calendarId: 'primary',
@@ -170,8 +174,8 @@ export async function createCalendarEvent(input: CreateEventInput): Promise<stri
         summary: input.summary,
         description: input.description,
         location: input.location,
-        start: { dateTime: start.toISOString(), timeZone: tz },
-        end:   { dateTime: end.toISOString(),   timeZone: tz },
+        start: { dateTime: localIso,    timeZone: tz },
+        end:   { dateTime: endLocalIso, timeZone: tz },
         recurrence: input.recurrence?.length ? input.recurrence : undefined,
       },
     });
@@ -181,4 +185,32 @@ export async function createCalendarEvent(input: CreateEventInput): Promise<stri
     console.error('[googleOAuth] createCalendarEvent error:', msg);
     return null;
   }
+}
+
+// ── Local datetime helpers ────────────────────────────────────────────────
+// These operate purely on the wall-clock components of an ISO string so we
+// never accidentally apply the host's timezone offset.
+
+function normaliseLocalDateTime(iso: string): string {
+  // Accepts "YYYY-MM-DD", "YYYY-MM-DDTHH:MM", "YYYY-MM-DDTHH:MM:SS", or with
+  // a fractional seconds/Z suffix — returns "YYYY-MM-DDTHH:MM:SS".
+  const stripped = iso.replace(/\.\d+/, '').replace(/Z$/, '').replace(/[+-]\d{2}:?\d{2}$/, '');
+  const [datePart, timePart = '00:00:00'] = stripped.split('T');
+  const [h = '00', m = '00', s = '00'] = timePart.split(':');
+  const pad = (n: string) => n.padStart(2, '0');
+  return `${datePart}T${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+function addMinutesLocal(iso: string, minutes: number): string {
+  const norm = normaliseLocalDateTime(iso);
+  const [datePart, timePart] = norm.split('T');
+  const [y, mo, d] = datePart.split('-').map(Number);
+  const [h, mi, s] = timePart.split(':').map(Number);
+  // Use Date in UTC to do calendar arithmetic without DST surprises, then
+  // read the wall-clock components back out as UTC.
+  const ms = Date.UTC(y, mo - 1, d, h, mi, s) + minutes * 60_000;
+  const dt = new Date(ms);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}T` +
+    `${pad(dt.getUTCHours())}:${pad(dt.getUTCMinutes())}:${pad(dt.getUTCSeconds())}`;
 }
