@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Poppins, Montserrat } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 import ScrollToTop from '@/components/ui/ScrollToTop';
 
@@ -81,6 +82,7 @@ export default function RootLayout({
         <noscript dangerouslySetInnerHTML={{ __html: `<iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PT5KPMD3" height="0" width="0" style="display:none;visibility:hidden"></iframe>` }} />
         {children}
         <ScrollToTop />
+        <Analytics />
       </body>
     </html>
   );
