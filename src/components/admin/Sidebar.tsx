@@ -1,86 +1,61 @@
 'use client';
 
-import { LayoutDashboard, UsersRound, CalendarDays, FileText, UserRoundPlus, LogOut } from 'lucide-react';
+import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus } from 'lucide-react';
 import type { AdminSection } from './types';
 
 interface Props {
   active: AdminSection;
-  expanded: boolean;
-  onToggle: () => void;
   onNavigate: (s: AdminSection) => void;
   onSignOut: () => void;
 }
 
-const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutDashboard }> = [
-  { id: 'dashboard',  label: 'Dashboard',  Icon: LayoutDashboard },
-  { id: 'clients',    label: 'Clients',    Icon: UsersRound },
-  { id: 'sessions',   label: 'Sessions',   Icon: CalendarDays },
+const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> = [
+  { id: 'dashboard',  label: 'Dashboard',  Icon: LayoutGrid },
+  { id: 'clients',    label: 'Clients',    Icon: UserRound },
+  { id: 'sessions',   label: 'Calendar',   Icon: CalendarDays },
   { id: 'forms',      label: 'Forms',      Icon: FileText },
-  { id: 'new-client', label: 'New Client', Icon: UserRoundPlus },
+  { id: 'new-client', label: 'Onboarding', Icon: UserRoundPlus },
 ];
 
-export function Sidebar({ active, expanded, onToggle, onNavigate, onSignOut }: Props) {
+export function Sidebar({ active, onNavigate, onSignOut }: Props) {
   return (
-    <aside className={`admin-sidebar${expanded ? ' is-expanded' : ''}`} aria-label="Admin navigation">
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-label={expanded ? 'Close menu' : 'Open menu'}
-        aria-expanded={expanded}
-        className={`admin-hamburger${expanded ? ' is-open' : ''}`}
-      >
-        <span className="admin-hamburger-line" />
-        <span className="admin-hamburger-line" />
-        <span className="admin-hamburger-line" />
-      </button>
+    <aside className="admin-sidebar" aria-label="Admin navigation">
+      <div className="admin-sidebar-logo" aria-hidden>
+        <svg viewBox="0 0 200 200" width="44" height="44" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="78" fill="none" stroke="#C85A1B" strokeWidth="10"
+                  strokeLinecap="round" strokeDasharray="312.8 157.5" transform="rotate(70,100,100)"/>
+          <circle cx="100" cy="100" r="46" fill="none" stroke="#ffffff" strokeWidth="6"
+                  strokeLinecap="round" strokeDasharray="184.5 92.9" transform="rotate(70,100,100)"/>
+          <text x="100" y="106" fontFamily="Avenir,'Avenir Next',Montserrat,sans-serif"
+                fontSize="42" fontWeight="300" fill="#ffffff"
+                textAnchor="middle" dominantBaseline="middle">OL</text>
+        </svg>
+      </div>
 
-      <nav className="admin-nav">
-        {NAV.map(({ id, label, Icon }) => {
-          const isActive = id === active;
-          return (
-            <button
-              key={id}
-              onClick={() => onNavigate(id)}
-              className={`admin-nav-item${isActive ? ' is-active' : ''}`}
-              title={!expanded ? label : undefined}
-            >
-              <Icon size={18} strokeWidth={1.8} className="admin-nav-icon" aria-hidden />
-              <span className="admin-nav-label">{label}</span>
-            </button>
-          );
-        })}
+      <nav className="admin-sidebar-nav">
+        {NAV.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            onClick={() => onNavigate(id)}
+            className={`admin-nav-btn${active === id ? ' is-active' : ''}`}
+            title={label}
+            aria-label={label}
+          >
+            <Icon size={22} strokeWidth={1.6} aria-hidden />
+          </button>
+        ))}
       </nav>
 
-      <div className="admin-sidebar-foot">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div className="admin-brand-mark">OL</div>
-          {expanded && (
-            <div style={{ minWidth: 0, overflow: 'hidden' }}>
-              <div style={{
-                fontFamily: 'var(--font-montserrat), Montserrat, sans-serif',
-                fontWeight: 300,
-                fontSize: 14,
-                color: 'white',
-                letterSpacing: '0.3px',
-                whiteSpace: 'nowrap',
-              }}>Owen Lynch</div>
-              <div style={{
-                fontSize: 9,
-                color: '#C85A1A',
-                letterSpacing: '2.8px',
-                textTransform: 'uppercase',
-                marginTop: 2,
-                whiteSpace: 'nowrap',
-              }}>Psychotherapy</div>
-            </div>
-          )}
-        </div>
-        {expanded && (
-          <button onClick={onSignOut} className="admin-signout-btn">
-            <LogOut size={13} strokeWidth={1.8} aria-hidden /> Sign out
-          </button>
-        )}
-      </div>
+      <button
+        type="button"
+        onClick={onSignOut}
+        className="admin-sidebar-avatar"
+        title="Sign out"
+        aria-label="Sign out"
+        style={{ cursor: 'pointer', border: '2px solid var(--terracotta)', background: 'var(--cream)' }}
+      >
+        OL
+      </button>
     </aside>
   );
 }

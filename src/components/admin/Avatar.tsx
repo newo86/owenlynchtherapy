@@ -1,6 +1,23 @@
 import { initials } from './api';
 
-export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
+// Rotate avatar colour based on the name so the same person stays in the same
+// hue across the dashboard.
+const PALETTE = [
+  { bg: '#4F8A68', fg: '#FFFFFF' }, // sage
+  { bg: '#C85A1B', fg: '#FFFFFF' }, // terracotta
+  { bg: '#a87cb9', fg: '#FFFFFF' }, // lilac
+  { bg: '#a3801a', fg: '#FFFFFF' }, // gold-dark
+  { bg: '#2A4D3C', fg: '#FFFFFF' }, // forest
+];
+
+function tone(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return PALETTE[h % PALETTE.length];
+}
+
+export function Avatar({ name, size = 38 }: { name: string; size?: number }) {
+  const t = tone(name);
   return (
     <div
       aria-hidden
@@ -8,8 +25,8 @@ export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
         width: size,
         height: size,
         borderRadius: '50%',
-        background: 'linear-gradient(135deg, #2D5A42, #4F8A68)',
-        color: 'white',
+        background: t.bg,
+        color: t.fg,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -18,7 +35,6 @@ export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
         fontSize: Math.round(size * 0.36),
         letterSpacing: '0.4px',
         flexShrink: 0,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
       }}
     >
       {initials(name)}

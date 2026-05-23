@@ -97,7 +97,7 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
           {(['in_person', 'online'] as const).map(v => (
             <label key={v} style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-              fontSize: 14, color: 'rgba(255,255,255,0.85)',
+              fontSize: 14, color: 'var(--forest-deep)',
             }}>
               <input
                 type="radio"
@@ -105,7 +105,7 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
                 value={v}
                 checked={sessionFormat === v}
                 onChange={() => setSessionFormat(v)}
-                style={{ accentColor: '#C85A1A' }}
+                style={{ accentColor: 'var(--terracotta)' }}
               />
               {v === 'in_person' ? 'In Person' : 'Online'}
             </label>
@@ -114,7 +114,7 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
       </div>
 
       {error && (
-        <p style={{ margin: 0, fontSize: 13, color: '#F4956A' }}>{error}</p>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>
       )}
 
       <button
@@ -126,7 +126,7 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
         {busy ? 'Generating PDFs & sending email…' : 'Generate & Send Welcome Email'}
       </button>
       {busy && (
-        <p style={{ margin: '4px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.55)', fontStyle: 'italic' }}>
+        <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--ink-muted)', fontStyle: 'italic' }}>
           This can take up to ~10 s the first time; subsequent sends are faster.
         </p>
       )}
@@ -134,13 +134,13 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
       {generated && (
         <div style={{
           marginTop: 8, padding: 18,
-          background: 'rgba(79,138,104,0.15)',
-          border: '1px solid rgba(79,138,104,0.4)',
-          borderRadius: 10,
+          background: 'rgba(79,138,104,0.10)',
+          border: '1px solid rgba(79,138,104,0.35)',
+          borderRadius: 12,
         }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <Check size={16} strokeWidth={2.4} color="#A6E3BD" />
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#A6E3BD' }}>
+            <Check size={16} strokeWidth={2.4} color="var(--sage)" />
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--sage)' }}>
               Link generated · welcome email sent to {generated.clientEmail}
             </span>
           </div>
@@ -166,7 +166,7 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
 
   if (!asModal) {
     return (
-      <div className="admin-glass" style={{ padding: 28, maxWidth: 720 }}>
+      <div className="admin-card" style={{ padding: 28, maxWidth: 720 }}>
         {form}
       </div>
     );
@@ -176,17 +176,17 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
     <>
       <div onClick={onClose} style={{
         position: 'fixed', inset: 0,
-        background: 'rgba(0,0,0,0.55)',
-        backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+        background: 'rgba(42, 77, 60, 0.32)',
         zIndex: 90,
         animation: 'admin-fade-in 150ms ease',
       }} />
-      <div className="admin-glass" style={{
+      <div style={{
         position: 'fixed',
         top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
-        background: 'rgba(30, 61, 47, 0.92)',
-        borderRadius: 16,
+        background: 'white',
+        borderRadius: 18,
+        boxShadow: '0 24px 64px rgba(42, 77, 60, 0.18)',
         zIndex: 100,
         width: 'min(640px, 92vw)',
         maxHeight: '92vh',
@@ -194,19 +194,27 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
         animation: 'admin-pop-in 180ms ease',
       }}>
         <div style={{
-          padding: '18px 24px',
-          background: 'rgba(0,0,0,0.25)',
+          padding: '20px 26px',
+          background: 'var(--forest-deep)',
           color: 'white',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '18px 18px 0 0',
         }}>
-          <h2 style={{
-            margin: 0,
-            fontFamily: 'var(--font-montserrat), Montserrat, sans-serif',
-            fontWeight: 300, fontSize: 22,
-          }}>New client</h2>
+          <div>
+            <p style={{
+              margin: 0,
+              fontSize: 10, fontWeight: 500,
+              letterSpacing: '4px', textTransform: 'uppercase',
+              color: 'var(--terracotta-soft)',
+            }}>Onboarding</p>
+            <h2 style={{
+              margin: '4px 0 0',
+              fontFamily: 'var(--font-montserrat), Avenir, sans-serif',
+              fontWeight: 300, fontSize: 22, color: 'white', letterSpacing: '0.5px',
+            }}>New client</h2>
+          </div>
           <button onClick={onClose} aria-label="Close"
-            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: 6 }}>
+            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', padding: 6 }}>
             <X size={20} strokeWidth={1.8} />
           </button>
         </div>
@@ -222,7 +230,7 @@ function LinkRow({ label, value, copied, onCopy }: { label: string; value: strin
       <div style={{
         fontSize: 10, fontWeight: 500,
         letterSpacing: '2px', textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.55)',
+        color: 'var(--ink-muted)',
         marginBottom: 4,
       }}>{label}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -230,14 +238,14 @@ function LinkRow({ label, value, copied, onCopy }: { label: string; value: strin
           flex: 1,
           fontFamily: 'SF Mono, Menlo, monospace',
           fontSize: 12,
-          color: 'rgba(255,255,255,0.88)',
-          background: 'rgba(0,0,0,0.25)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 6,
-          padding: '6px 10px',
+          color: 'var(--ink)',
+          background: 'var(--cream)',
+          border: '1px solid var(--line)',
+          borderRadius: 8,
+          padding: '7px 10px',
           wordBreak: 'break-all',
         }}>{value}</code>
-        <button onClick={onCopy} className={copied ? 'admin-btn-primary' : 'admin-btn-secondary'}>
+        <button onClick={onCopy} className={copied ? 'admin-btn-primary' : 'admin-btn-secondary'} style={{ padding: '8px 12px' }}>
           {copied ? <Check size={12} /> : <Copy size={12} />}
           {copied ? 'Copied' : 'Copy'}
         </button>

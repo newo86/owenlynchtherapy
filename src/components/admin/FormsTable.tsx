@@ -14,10 +14,16 @@ interface Props {
 
 type TabId = 'submitted' | 'pending';
 
-const TOKEN_TONES = {
-  submitted: { bg: 'rgba(79,138,104,0.2)',  fg: '#A6E3BD', border: 'rgba(79,138,104,0.35)', label: 'Submitted' },
-  pending:   { bg: 'rgba(200,90,26,0.22)',  fg: '#F4956A', border: 'rgba(200,90,26,0.4)',   label: 'Pending' },
-  expired:   { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.4)', border: 'rgba(255,255,255,0.12)', label: 'Expired' },
+function tokenKind(t: TokenRow): 'submitted' | 'pending' | 'expired' {
+  if (t.is_used) return 'submitted';
+  if (new Date(t.expires_at) < new Date()) return 'expired';
+  return 'pending';
+}
+
+const TOKEN_TAG = {
+  submitted: { cls: 'admin-tag-active', label: 'Submitted' },
+  pending:   { cls: 'admin-tag-new',    label: 'Pending' },
+  expired:   { cls: 'admin-tag-pause',  label: 'Expired' },
 };
 
 export function FormsTable({ submissions, tokens }: Props) {
@@ -62,12 +68,6 @@ export function FormsTable({ submissions, tokens }: Props) {
     }
   }
 
-  function tokenKind(t: TokenRow): keyof typeof TOKEN_TONES {
-    if (t.is_used) return 'submitted';
-    if (new Date(t.expires_at) < new Date()) return 'expired';
-    return 'pending';
-  }
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
@@ -109,14 +109,14 @@ export function FormsTable({ submissions, tokens }: Props) {
           </thead>
           <tbody>
             {filteredSubs.length === 0 && (
-              <tr><td colSpan={5} style={{ textAlign: 'center' as const, padding: 28, color: 'rgba(255,255,255,0.4)' }}>No submitted forms.</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: 'center' as const, padding: 28, color: 'var(--ink-muted)' }}>No submitted forms.</td></tr>
             )}
             {filteredSubs.map(sub => (
               <tr key={sub.id}>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <Avatar name={sub.full_name} size={32} />
-                    <div style={{ fontWeight: 500, color: 'white' }}>{sub.full_name}</div>
+                    <div style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{sub.full_name}</div>
                   </div>
                 </td>
                 <td>{sub.email ?? '—'}</td>
@@ -146,29 +146,22 @@ export function FormsTable({ submissions, tokens }: Props) {
           </thead>
           <tbody>
             {filteredTokens.length === 0 && (
-              <tr><td colSpan={4} style={{ textAlign: 'center' as const, padding: 28, color: 'rgba(255,255,255,0.4)' }}>No intake links generated yet.</td></tr>
+              <tr><td colSpan={4} style={{ textAlign: 'center' as const, padding: 28, color: 'var(--ink-muted)' }}>No intake links generated yet.</td></tr>
             )}
             {filteredTokens.map(row => {
               const k = tokenKind(row);
-              const t = TOKEN_TONES[k];
+              const t = TOKEN_TAG[k];
               return (
                 <tr key={row.id}>
                   <td>
-                    <div style={{ fontWeight: 500, color: 'white' }}>{row.client_name ?? '—'}</div>
+                    <div style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{row.client_name ?? '—'}</div>
                     {row.client_email && (
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{row.client_email}</div>
+                      <div style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{row.client_email}</div>
                     )}
                   </td>
                   <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(row.created_at)}</td>
                   <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(row.expires_at)}</td>
-                  <td>
-                    <span style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      padding: '3px 8px', borderRadius: 5,
-                      background: t.bg, color: t.fg, border: `1px solid ${t.border}`,
-                      fontSize: 9, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
-                    }}>{t.label}</span>
-                  </td>
+                  <td><span className={`admin-tag ${t.cls}`}>{t.label}</span></td>
                 </tr>
               );
             })}

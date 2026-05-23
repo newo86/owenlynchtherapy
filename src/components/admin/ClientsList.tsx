@@ -26,12 +26,6 @@ function nextSession(c: ClientRow): SessionRow | null {
     .sort((a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime())[0] ?? null;
 }
 
-const PAYMENT_TONES = {
-  paid:     { bg: 'rgba(79,138,104,0.2)',  fg: '#A6E3BD', border: 'rgba(79,138,104,0.35)', label: 'Paid' },
-  unpaid:   { bg: 'rgba(200,90,26,0.22)',  fg: '#F4956A', border: 'rgba(200,90,26,0.4)',   label: 'Unpaid' },
-  refunded: { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.55)', border: 'rgba(255,255,255,0.15)', label: 'Refunded' },
-};
-
 export function ClientsList({ clients, onOpen, onNewClient }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
   const [q, setQ] = useState('');
@@ -78,24 +72,20 @@ export function ClientsList({ clients, onOpen, onNewClient }: Props) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="admin-glass" style={{
-          padding: '48px 24px',
-          textAlign: 'center',
-        }}>
+        <div className="admin-card" style={{ padding: '48px 24px', textAlign: 'center' }}>
           <div style={{
             width: 48, height: 48, margin: '0 auto 16px',
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,0.06)',
+            borderRadius: '50%', background: 'var(--cream)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'rgba(255,255,255,0.3)',
+            color: 'var(--ink-muted)',
           }}>
             <UsersRound size={20} />
           </div>
-          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: 300, margin: 0 }}>
+          <p style={{ color: 'var(--forest-deep)', fontSize: 14, margin: 0 }}>
             {clients.length === 0 ? 'No clients yet' : 'No clients match your search'}
           </p>
           {clients.length === 0 && (
-            <p style={{ color: 'rgba(255,255,255,0.32)', fontSize: 12, marginTop: 6 }}>
+            <p style={{ color: 'var(--ink-muted)', fontSize: 12, marginTop: 6 }}>
               Generate a new client link to get started
             </p>
           )}
@@ -104,10 +94,14 @@ export function ClientsList({ clients, onOpen, onNewClient }: Props) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {filtered.map(c => {
             const s = nextSession(c);
-            const payment = s
-              ? (s.payment_status === 'paid' ? 'paid'
-                : s.payment_status === 'refunded' ? 'refunded' : 'unpaid')
-              : null;
+            const paymentTag = !s ? null
+              : s.payment_status === 'paid' ? 'admin-tag-paid'
+              : s.payment_status === 'refunded' ? 'admin-tag-scheduled'
+              : 'admin-tag-unpaid';
+            const paymentLabel = !s ? null
+              : s.payment_status === 'paid' ? 'Paid'
+              : s.payment_status === 'refunded' ? 'Refunded'
+              : 'Unpaid';
 
             return (
               <div
@@ -116,7 +110,7 @@ export function ClientsList({ clients, onOpen, onNewClient }: Props) {
                 tabIndex={0}
                 onClick={() => onOpen(c)}
                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onOpen(c); }}
-                className="admin-glass admin-glass-hover"
+                className="admin-card"
                 style={{
                   padding: '18px 22px',
                   display: 'grid',
@@ -124,56 +118,43 @@ export function ClientsList({ clients, onOpen, onNewClient }: Props) {
                   gap: 18,
                   alignItems: 'center',
                   cursor: 'pointer',
+                  borderRadius: 16,
                 }}
               >
                 <Avatar name={c.full_name} size={42} />
 
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'white' }}>{c.full_name}</div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{c.email}</div>
+                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--forest-deep)' }}>{c.full_name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{c.email}</div>
                 </div>
 
                 <div>
                   {s ? (
                     <>
-                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>{formatDate(s.session_date)}</div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.42)', marginTop: 2 }}>
+                      <div style={{ fontSize: 13, color: 'var(--forest-deep)' }}>{formatDate(s.session_date)}</div>
+                      <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginTop: 2 }}>
                         {FORMAT_LABELS[s.session_format] ?? s.session_format} · {displayFee(s.fee)}
                       </div>
                     </>
                   ) : (
-                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)' }}>—</div>
+                    <div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>—</div>
                   )}
                 </div>
 
                 <div>
-                  {payment && (
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '3px 8px',
-                      borderRadius: 5,
-                      background: PAYMENT_TONES[payment].bg,
-                      color: PAYMENT_TONES[payment].fg,
-                      border: `1px solid ${PAYMENT_TONES[payment].border}`,
-                      fontSize: 9,
-                      fontWeight: 600,
-                      letterSpacing: '1px',
-                      textTransform: 'uppercase',
-                    }}>{PAYMENT_TONES[payment].label}</span>
+                  {paymentTag && paymentLabel && (
+                    <span className={`admin-tag ${paymentTag}`}>{paymentLabel}</span>
                   )}
                 </div>
 
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+                <div style={{ fontSize: 12, color: 'var(--ink-muted)' }}>
                   {c.sessions.length} session{c.sessions.length === 1 ? '' : 's'}
                 </div>
 
                 <button
                   onClick={e => { e.stopPropagation(); onOpen(c); }}
-                  className="admin-btn-ghost"
-                >
-                  View
-                </button>
+                  className="admin-btn-secondary"
+                >View</button>
               </div>
             );
           })}

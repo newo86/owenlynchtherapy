@@ -24,48 +24,40 @@ export function AuthGate({ children }: Props) {
   }, []);
 
   if (authed === null) {
-    return <div className="admin-root"><div className="admin-bg" /></div>;
+    return <div className="admin-root" />;
   }
 
   if (!authed) {
     return (
       <div className="admin-root" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
-        <div className="admin-bg">
-          <div className="admin-bg-circle admin-bg-circle-1" />
-          <div className="admin-bg-circle admin-bg-circle-2" />
-          <div className="admin-bg-circle admin-bg-circle-3" />
-          <div className="admin-bg-grain" />
+        <div className="admin-bg-shapes" aria-hidden>
+          <div className="admin-blob admin-blob-1" />
+          <div className="admin-blob admin-blob-2" />
+          <div className="admin-blob admin-blob-3" />
+          <div className="admin-blob admin-blob-4" />
+          <div className="admin-blob admin-blob-5" />
         </div>
-        <div className="admin-glass" style={{
+        <div className="admin-card" style={{
           position: 'relative',
           zIndex: 1,
-          padding: '38px 38px 32px',
+          padding: '40px 36px 32px',
           width: '100%',
           maxWidth: 420,
+          borderRadius: 22,
         }}>
-          <div style={{
-            fontSize: 10, fontWeight: 500,
-            letterSpacing: '3px', textTransform: 'uppercase',
-            color: '#C85A1A', marginBottom: 10,
-          }}>
-            Owen Lynch · Admin
-          </div>
-          <h1 style={{
-            margin: '0 0 8px',
-            fontFamily: 'var(--font-montserrat), Montserrat, sans-serif',
-            fontWeight: 300, fontSize: 26, color: 'white',
-            letterSpacing: '-0.4px',
-          }}>Sign in</h1>
-          <p style={{ margin: '0 0 22px', fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>
-            Enter the admin secret to continue.
-          </p>
-          <form onSubmit={e => {
-            e.preventDefault();
-            if (!value.trim()) return;
-            setSecret(value.trim());
-            setAuthed(true);
-            setError('');
-          }}>
+          <p className="admin-eyebrow" style={{ marginBottom: 10 }}>Owen Lynch · Admin</p>
+          <h1 className="admin-h1" style={{ fontSize: 28, margin: '6px 0 4px' }}>Sign in</h1>
+          <p className="admin-subline">Enter the admin secret to continue.</p>
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              if (!value.trim()) return;
+              setSecret(value.trim());
+              setAuthed(true);
+              setError('');
+            }}
+            style={{ marginTop: 22 }}
+          >
             <input
               type="password"
               placeholder="Admin secret"
@@ -75,7 +67,7 @@ export function AuthGate({ children }: Props) {
               className="admin-input"
             />
             {error && (
-              <p style={{ margin: '10px 0 0', fontSize: 13, color: '#F4956A' }}>{error}</p>
+              <p style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>
             )}
             <button type="submit" className="admin-btn-primary" style={{ marginTop: 18, width: '100%', justifyContent: 'center' }}>
               Continue

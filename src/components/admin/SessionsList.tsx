@@ -3,8 +3,7 @@
 import { useMemo, useState } from 'react';
 import { List, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { WeekCalendar } from './WeekCalendar';
-import { adminFetch, displayFee, formatDateTime, startOfWeek } from './api';
+import { adminFetch, displayFee, formatDateTime, startOfWeek, isSameDay, formatTime } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SessionRow, CalendarEvent } from './types';
 
@@ -18,28 +17,31 @@ interface Props {
 
 type View = 'list' | 'calendar';
 
-const STATUS_TONES: Record<string, { bg: string; fg: string; border: string; label: string }> = {
-  scheduled: { bg: 'rgba(255,255,255,0.07)', fg: 'rgba(255,255,255,0.7)',  border: 'rgba(255,255,255,0.14)', label: 'Scheduled' },
-  attended:  { bg: 'rgba(212,168,67,0.15)',  fg: '#D4A843',                border: 'rgba(212,168,67,0.3)',   label: 'Attended' },
-  cancelled: { bg: 'rgba(255,255,255,0.05)', fg: 'rgba(255,255,255,0.4)',  border: 'rgba(255,255,255,0.1)',  label: 'Cancelled' },
-  no_show:   { bg: 'rgba(255,255,255,0.05)', fg: 'rgba(255,255,255,0.4)',  border: 'rgba(255,255,255,0.1)',  label: 'No show' },
-};
-const PAYMENT_TONES: Record<string, { bg: string; fg: string; border: string; label: string }> = {
-  paid:     { bg: 'rgba(79,138,104,0.2)',  fg: '#A6E3BD', border: 'rgba(79,138,104,0.35)', label: 'Paid' },
-  unpaid:   { bg: 'rgba(200,90,26,0.22)',  fg: '#F4956A', border: 'rgba(200,90,26,0.4)',   label: 'Unpaid' },
-  refunded: { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.55)', border: 'rgba(255,255,255,0.15)', label: 'Refunded' },
-};
+function statusTag(status: string) {
+  if (status === 'attended') return 'admin-tag-attended';
+  if (status === 'cancelled' || status === 'no_show') return 'admin-tag-pause';
+  return 'admin-tag-scheduled';
+}
+function statusLabel(status: string) {
+  return status === 'attended' ? 'Attended'
+    : status === 'cancelled' ? 'Cancelled'
+    : status === 'no_show' ? 'No show'
+    : 'Scheduled';
+}
+function payTag(status: string) {
+  return status === 'paid' ? 'admin-tag-paid'
+    : status === 'refunded' ? 'admin-tag-pause'
+    : 'admin-tag-unpaid';
+}
+function payLabel(status: string) {
+  return status === 'paid' ? 'Paid' : status === 'refunded' ? 'Refunded' : 'Unpaid';
+}
 
-function Pill({ tones, kind }: { tones: typeof STATUS_TONES; kind: string }) {
-  const t = tones[kind] ?? tones[Object.keys(tones)[0]];
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center',
-      padding: '3px 8px', borderRadius: 5,
-      background: t.bg, color: t.fg, border: `1px solid ${t.border}`,
-      fontSize: 9, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
-    }}>{t.label}</span>
-  );
+const ACCENTS = ['e-sage', 'e-terra', 'e-gold', 'e-lilac'] as const;
+function accentForName(name: string): typeof ACCENTS[number] {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return ACCENTS[h % ACCENTS.length];
 }
 
 export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload }: Props) {
@@ -102,20 +104,20 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
         </div>
 
         {view === 'calendar' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 'auto' }}>
-            <button onClick={() => onWeekOffsetChange(weekOffset - 1)} className="admin-weeknav-btn" aria-label="Previous week">
-              <ChevronLeft size={14} strokeWidth={1.9} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+            <button onClick={() => onWeekOffsetChange(weekOffset - 1)} className="admin-btn-secondary" aria-label="Previous week">
+              <ChevronLeft size={13} />
             </button>
-            <div className="admin-weeknav-label" style={{ minWidth: 200, textAlign: 'center' }}>
+            <div style={{ fontSize: 12, color: 'var(--forest-deep)', minWidth: 200, textAlign: 'center', letterSpacing: '0.4px' }}>
               {weekStart.toLocaleDateString('en-IE', { day: 'numeric', month: 'short' })}
               {' – '}
               {weekEnd.toLocaleDateString('en-IE', { day: 'numeric', month: 'short', year: 'numeric' })}
             </div>
-            <button onClick={() => onWeekOffsetChange(weekOffset + 1)} className="admin-weeknav-btn" aria-label="Next week">
-              <ChevronRight size={14} strokeWidth={1.9} />
+            <button onClick={() => onWeekOffsetChange(weekOffset + 1)} className="admin-btn-secondary" aria-label="Next week">
+              <ChevronRight size={13} />
             </button>
             {weekOffset !== 0 && (
-              <button onClick={() => onWeekOffsetChange(0)} className="admin-weeknav-btn admin-weeknav-today">
+              <button onClick={() => onWeekOffsetChange(0)} className="admin-btn-secondary is-filled">
                 Today
               </button>
             )}
@@ -139,7 +141,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center' as const, padding: 28, color: 'rgba(255,255,255,0.4)' }}>
+                <td colSpan={7} style={{ textAlign: 'center' as const, padding: 28, color: 'var(--ink-muted)' }}>
                   No sessions yet.
                 </td>
               </tr>
@@ -150,20 +152,20 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <Avatar name={c.full_name} size={32} />
                     <div>
-                      <div style={{ fontWeight: 500, color: 'white' }}>{c.full_name}</div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{c.email}</div>
+                      <div style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{c.full_name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{c.email}</div>
                     </div>
                   </div>
                 </td>
                 <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date)}</td>
                 <td>{FORMAT_LABELS[s.session_format] ?? s.session_format}</td>
                 <td>{displayFee(s.fee)}</td>
-                <td><Pill tones={PAYMENT_TONES} kind={s.payment_status} /></td>
-                <td><Pill tones={STATUS_TONES} kind={s.status} /></td>
+                <td><span className={`admin-tag ${payTag(s.payment_status)}`}>{payLabel(s.payment_status)}</span></td>
+                <td><span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span></td>
                 <td style={{ textAlign: 'right' as const }}>
                   <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {s.status === 'scheduled' && (
-                      <button onClick={() => markAttended(s.id, s.payment_status)} disabled={busyId === s.id} className="admin-btn-primary">
+                      <button onClick={() => markAttended(s.id, s.payment_status)} disabled={busyId === s.id} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
                         Attended
                       </button>
                     )}
@@ -172,11 +174,11 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     </button>
                   </div>
                   {confirmId === s.id && (
-                    <div style={{ marginTop: 8, fontSize: 11, color: '#F4956A' }}>
+                    <div style={{ marginTop: 8, fontSize: 11, color: 'var(--terracotta)' }}>
                       Unpaid.{' '}
-                      <button onClick={() => doMark(s.id)} style={confirmYes}>Confirm</button>
+                      <button onClick={() => doMark(s.id)} style={confirmLink}>Confirm</button>
                       {' '}
-                      <button onClick={() => setConfirmId(null)} style={confirmNo}>Cancel</button>
+                      <button onClick={() => setConfirmId(null)} style={confirmLinkMuted}>Cancel</button>
                     </div>
                   )}
                 </td>
@@ -187,20 +189,85 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
       )}
 
       {view === 'calendar' && (
-        <WeekCalendar clients={clients} events={events} weekOffset={weekOffset} />
+        <CalendarGrid clients={clients} events={events} weekOffset={weekOffset} />
       )}
     </div>
   );
 }
 
-const confirmYes: React.CSSProperties = {
-  background: 'transparent', border: 'none',
-  color: '#F4956A', textDecoration: 'underline',
-  cursor: 'pointer', fontSize: 11, padding: 0,
-};
+function CalendarGrid({ clients, events, weekOffset }: { clients: ClientRow[]; events: CalendarEvent[]; weekOffset: number }) {
+  const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const days = useMemo(() => {
+    const monday = startOfWeek(new Date());
+    monday.setDate(monday.getDate() + weekOffset * 7);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday); d.setDate(monday.getDate() + i); return d;
+    });
+  }, [weekOffset]);
 
-const confirmNo: React.CSSProperties = {
-  background: 'transparent', border: 'none',
-  color: 'rgba(255,255,255,0.45)', textDecoration: 'underline',
-  cursor: 'pointer', fontSize: 11, padding: 0,
+  function eventsForDay(day: Date) {
+    const matched = new Set<string>();
+    const out: Array<{ time: string; label: string; accent: typeof ACCENTS[number]; start: string }> = [];
+    for (const c of clients) {
+      for (const s of c.sessions) {
+        const d = new Date(s.session_date);
+        if (!isSameDay(d, day) || s.status === 'cancelled') continue;
+        const ev = events.find(e => {
+          const eStart = new Date(e.start);
+          if (!isSameDay(eStart, d)) return false;
+          const sameTitle = e.title?.toLowerCase().includes(c.full_name.toLowerCase().split(' ')[0]);
+          const closeInTime = Math.abs(eStart.getTime() - d.getTime()) < 30 * 60 * 1000;
+          return sameTitle || closeInTime;
+        });
+        if (ev) matched.add(ev.id);
+        out.push({
+          time: formatTime(s.session_date),
+          label: c.full_name,
+          accent: accentForName(c.full_name),
+          start: s.session_date,
+        });
+      }
+    }
+    for (const e of events) {
+      if (matched.has(e.id)) continue;
+      if (!isSameDay(new Date(e.start), day)) continue;
+      out.push({ time: formatTime(e.start), label: e.title || '(no title)', accent: 'e-gold', start: e.start });
+    }
+    return out.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  }
+
+  return (
+    <div className="admin-week-grid">
+      {days.map((day, i) => {
+        const dayEvents = eventsForDay(day);
+        const isToday = isSameDay(day, new Date());
+        return (
+          <div key={i} className={`admin-day${isToday ? ' is-today' : ''}`}>
+            <div className="admin-day-head">
+              <div className="admin-day-name">{DAY_NAMES[i]}</div>
+              <div className="admin-day-num">{day.getDate()}</div>
+            </div>
+            {dayEvents.length === 0 ? (
+              <div className="admin-event-empty">No sessions</div>
+            ) : (
+              dayEvents.map((e, idx) => (
+                <div key={idx} className={`admin-event ${e.accent}`}>
+                  <div className="admin-event-time">{e.time}</div>
+                  <div className="admin-event-name">{e.label}</div>
+                </div>
+              ))
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const confirmLink: React.CSSProperties = {
+  background: 'none', border: 'none', padding: 0,
+  color: 'var(--terracotta)', textDecoration: 'underline', cursor: 'pointer', fontSize: 11,
+};
+const confirmLinkMuted: React.CSSProperties = {
+  ...confirmLink, color: 'var(--ink-muted)',
 };

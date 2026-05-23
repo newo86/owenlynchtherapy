@@ -8,18 +8,32 @@ import { ClientDetail } from './ClientDetail';
 import { SessionsList } from './SessionsList';
 import { FormsTable } from './FormsTable';
 import { NewClientModal } from './NewClientModal';
-import { adminFetch, clearSecret, todayInDublin } from './api';
+import { adminFetch, clearSecret } from './api';
 import type {
   AdminSection, ClientRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
 } from './types';
 
 const SECTION_TITLES: Record<AdminSection, string> = {
-  dashboard: 'Dashboard',
+  dashboard: 'Practice Overview',
   clients: 'Clients',
-  sessions: 'Sessions',
+  sessions: 'Calendar',
   forms: 'Forms',
-  'new-client': 'New Client',
+  'new-client': 'Onboarding',
 };
+
+function greet() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function dateLine() {
+  return new Date().toLocaleDateString('en-IE', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    timeZone: 'Europe/Dublin',
+  });
+}
 
 export function AdminShell() {
   const [section, setSection] = useState<AdminSection>('dashboard');
@@ -32,14 +46,10 @@ export function AdminShell() {
 
   const [openClient, setOpenClient] = useState<ClientRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [loadingAll, setLoadingAll] = useState(false);
+  const [, setLoadingAll] = useState(false);
   const [flash, setFlash] = useState<{ kind: 'success' | 'error'; msg: string } | null>(null);
-  // Lifted so the Dashboard and Sessions views share the same week navigation
-  // state across section switches.
   const [weekOffset, setWeekOffset] = useState(0);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Surface the result of the Google OAuth round-trip on first mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const gcal = params.get('gcal');
@@ -68,7 +78,7 @@ export function AdminShell() {
         adminFetch('/api/auth/google/status'),
       ]);
 
-      if (cRes.status === 401) { dispatchUnauth(); return; }
+      if (cRes.status === 401) { window.dispatchEvent(new Event('admin-unauthorized')); return; }
 
       const [cJson, tJson, sJson, calStatusJson] = await Promise.all([
         cRes.ok ? cRes.json() : { clients: [] },
@@ -98,8 +108,6 @@ export function AdminShell() {
 
   useEffect(() => { void reload(); }, [reload]);
 
-  // When week changes (and Google is connected), refetch events for that range
-  // without reloading the rest of the dashboard.
   useEffect(() => {
     if (!calStatus?.connected) return;
     let cancelled = false;
@@ -112,7 +120,6 @@ export function AdminShell() {
     return () => { cancelled = true; };
   }, [weekOffset, calStatus?.connected]);
 
-  // Keep openClient in sync with reloaded list (notes / sessions updated)
   useEffect(() => {
     if (!openClient) return;
     const refreshed = clients.find(c => c.id === openClient.id);
@@ -139,112 +146,112 @@ export function AdminShell() {
 
   return (
     <div className="admin-root">
-      {/* Atmospheric background */}
-      <div className="admin-bg">
-        <div className="admin-bg-circle admin-bg-circle-1" />
-        <div className="admin-bg-circle admin-bg-circle-2" />
-        <div className="admin-bg-circle admin-bg-circle-3" />
-        <div className="admin-bg-grain" />
+      <div className="admin-bg-shapes" aria-hidden>
+        <div className="admin-blob admin-blob-1" />
+        <div className="admin-blob admin-blob-2" />
+        <div className="admin-blob admin-blob-3" />
+        <div className="admin-blob admin-blob-4" />
+        <div className="admin-blob admin-blob-5" />
       </div>
 
-      <Sidebar
-        active={section}
-        expanded={sidebarOpen}
-        onToggle={() => setSidebarOpen(o => !o)}
-        onNavigate={s => {
-          if (s === 'new-client') {
-            setModalOpen(true);
-          } else {
-            setSection(s);
-          }
-          setSidebarOpen(false);
-        }}
-        onSignOut={() => { clearSecret(); window.location.reload(); }}
-      />
+      <div className="admin-shell">
+        <Sidebar
+          active={section}
+          onNavigate={s => {
+            if (s === 'new-client') setModalOpen(true);
+            else setSection(s);
+          }}
+          onSignOut={() => { clearSecret(); window.location.reload(); }}
+        />
 
-      <main className="admin-main">
-        {/* Top bar */}
-        <header className="admin-topbar">
-          <div>
-            <h1 className="admin-page-title">{SECTION_TITLES[section]}</h1>
-            <div className="admin-page-sub">
-              {todayInDublin()}
-              {loadingAll && <span style={{ marginLeft: 12, opacity: 0.6 }}>· Refreshing…</span>}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            {calStatus?.connected && (
-              <button
-                onClick={disconnectCalendar}
-                className="admin-btn-ghost"
-                title={calStatus.email ? `Connected as ${calStatus.email}` : 'Connected'}
-              >
-                <span style={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  background: '#7DC49A', boxShadow: '0 0 8px #7DC49A',
-                  display: 'inline-block',
-                }} />
-                Calendar Connected
-              </button>
-            )}
-            <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
-              + New Client
-            </button>
-          </div>
-        </header>
-
-        {flash && (
-          <div style={{
-            margin: '0 32px 8px',
-            padding: '12px 18px',
-            borderRadius: 10,
-            background: flash.kind === 'success' ? 'rgba(79,138,104,0.18)' : 'rgba(200,90,26,0.22)',
-            border: `1px solid ${flash.kind === 'success' ? 'rgba(79,138,104,0.5)' : 'rgba(200,90,26,0.5)'}`,
-            color: flash.kind === 'success' ? '#A6E3BD' : '#F4956A',
-            fontSize: 13,
-          }}>
-            {flash.msg}
-          </div>
-        )}
-
-        <div className="admin-content">
+        <main className="admin-main">
           {section === 'dashboard' && (
             <Dashboard
               clients={clients}
               tokens={tokens}
+              submissions={submissions}
               events={events}
               calendarStatus={calStatus}
               weekOffset={weekOffset}
               onWeekOffsetChange={setWeekOffset}
               onReload={reload}
               onConnectCalendar={connectCalendar}
-            />
-          )}
-
-          {section === 'clients' && (
-            <ClientsList
-              clients={clients}
-              onOpen={setOpenClient}
+              onDisconnectCalendar={disconnectCalendar}
               onNewClient={() => setModalOpen(true)}
+              greeting={greet()}
+              dateLine={dateLine()}
+              flash={flash}
+              sectionTitle={SECTION_TITLES[section]}
             />
           )}
 
-          {section === 'sessions' && (
-            <SessionsList
-              clients={clients}
-              events={events}
-              weekOffset={weekOffset}
-              onWeekOffsetChange={setWeekOffset}
-              onReload={reload}
-            />
+          {section !== 'dashboard' && (
+            <>
+              <header className="admin-topbar">
+                <div>
+                  <p className="admin-eyebrow">{SECTION_TITLES[section]}</p>
+                  <h1 className="admin-h1">{SECTION_TITLES[section]}</h1>
+                  <p className="admin-subline">{dateLine()}</p>
+                </div>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {calStatus?.connected && (
+                    <button
+                      onClick={disconnectCalendar}
+                      className="admin-status-pill"
+                      style={{ cursor: 'pointer' }}
+                      title={calStatus.email ? `Connected as ${calStatus.email}` : 'Connected'}
+                    >
+                      <span className="admin-status-dot" />
+                      Calendar Connected
+                    </button>
+                  )}
+                  <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
+                    + New Client
+                  </button>
+                </div>
+              </header>
+
+              {flash && (
+                <div style={{
+                  margin: '0 0 18px',
+                  padding: '12px 18px',
+                  borderRadius: 12,
+                  background: flash.kind === 'success' ? 'rgba(79,138,104,0.12)' : 'rgba(200,90,27,0.12)',
+                  border: `1px solid ${flash.kind === 'success' ? 'rgba(79,138,104,0.35)' : 'rgba(200,90,27,0.4)'}`,
+                  color: flash.kind === 'success' ? '#2D5A42' : '#A04714',
+                  fontSize: 13,
+                }}>
+                  {flash.msg}
+                </div>
+              )}
+
+              {section === 'clients' && (
+                <ClientsList
+                  clients={clients}
+                  onOpen={setOpenClient}
+                  onNewClient={() => setModalOpen(true)}
+                />
+              )}
+
+              {section === 'sessions' && (
+                <SessionsList
+                  clients={clients}
+                  events={events}
+                  weekOffset={weekOffset}
+                  onWeekOffsetChange={setWeekOffset}
+                  onReload={reload}
+                />
+              )}
+
+              {section === 'forms' && (
+                <FormsTable submissions={submissions} tokens={tokens} />
+              )}
+            </>
           )}
 
-          {section === 'forms' && (
-            <FormsTable submissions={submissions} tokens={tokens} />
-          )}
-        </div>
-      </main>
+          <div className="admin-foot">Owen Lynch Psychotherapy · Practice Management</div>
+        </main>
+      </div>
 
       {openClient && (
         <ClientDetail
@@ -264,8 +271,4 @@ export function AdminShell() {
       )}
     </div>
   );
-}
-
-function dispatchUnauth() {
-  window.dispatchEvent(new Event('admin-unauthorized'));
 }

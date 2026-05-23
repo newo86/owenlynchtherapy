@@ -31,28 +31,24 @@ function legacySubmissionMatch(submissions: SubmissionRow[], client: ClientRow):
     )[0];
 }
 
-const STATUS_TONES: Record<string, { bg: string; fg: string; border: string; label: string }> = {
-  scheduled: { bg: 'rgba(255,255,255,0.07)', fg: 'rgba(255,255,255,0.65)', border: 'rgba(255,255,255,0.14)', label: 'Scheduled' },
-  attended:  { bg: 'rgba(212,168,67,0.15)',  fg: '#D4A843',                border: 'rgba(212,168,67,0.3)',   label: 'Attended' },
-  cancelled: { bg: 'rgba(255,255,255,0.05)', fg: 'rgba(255,255,255,0.4)',  border: 'rgba(255,255,255,0.1)',  label: 'Cancelled' },
-  no_show:   { bg: 'rgba(255,255,255,0.05)', fg: 'rgba(255,255,255,0.4)',  border: 'rgba(255,255,255,0.1)',  label: 'No show' },
-};
-const PAYMENT_TONES: Record<string, { bg: string; fg: string; border: string; label: string }> = {
-  paid:     { bg: 'rgba(79,138,104,0.2)',  fg: '#A6E3BD', border: 'rgba(79,138,104,0.35)', label: 'Paid' },
-  unpaid:   { bg: 'rgba(200,90,26,0.22)',  fg: '#F4956A', border: 'rgba(200,90,26,0.4)',   label: 'Unpaid' },
-  refunded: { bg: 'rgba(255,255,255,0.08)', fg: 'rgba(255,255,255,0.55)', border: 'rgba(255,255,255,0.15)', label: 'Refunded' },
-};
-
-function Pill({ tones, kind }: { tones: typeof STATUS_TONES; kind: string }) {
-  const t = tones[kind] ?? tones[Object.keys(tones)[0]];
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center',
-      padding: '3px 8px', borderRadius: 5,
-      background: t.bg, color: t.fg, border: `1px solid ${t.border}`,
-      fontSize: 9, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase',
-    }}>{t.label}</span>
-  );
+function statusTag(status: string) {
+  if (status === 'attended') return 'admin-tag-attended';
+  if (status === 'cancelled' || status === 'no_show') return 'admin-tag-pause';
+  return 'admin-tag-scheduled';
+}
+function statusLabel(status: string) {
+  return status === 'attended' ? 'Attended'
+    : status === 'cancelled' ? 'Cancelled'
+    : status === 'no_show' ? 'No show'
+    : 'Scheduled';
+}
+function payTag(status: string) {
+  return status === 'paid' ? 'admin-tag-paid'
+    : status === 'refunded' ? 'admin-tag-pause'
+    : 'admin-tag-unpaid';
+}
+function payLabel(status: string) {
+  return status === 'paid' ? 'Paid' : status === 'refunded' ? 'Refunded' : 'Unpaid';
 }
 
 export function ClientDetail({ client, submissions, onClose, onReload }: Props) {
@@ -92,13 +88,8 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
         method: 'POST',
         body: JSON.stringify({ client_id: client.id, notes: v }),
       });
-      if (res.ok) {
-        setNotesSaved(true);
-        onReload();
-      }
-    } finally {
-      setNotesSaving(false);
-    }
+      if (res.ok) { setNotesSaved(true); onReload(); }
+    } finally { setNotesSaving(false); }
   }
 
   async function downloadPdf() {
@@ -116,9 +107,7 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
       a.download = `intake-${name}-${date}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
-    } finally {
-      setDownloading(false);
-    }
+    } finally { setDownloading(false); }
   }
 
   return (
@@ -127,24 +116,19 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.55)',
-          backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
+          background: 'rgba(42, 77, 60, 0.32)',
           zIndex: 90,
           animation: 'admin-fade-in 150ms ease',
         }}
       />
       <aside
-        className="admin-glass"
         style={{
           position: 'fixed',
           top: 0, right: 0,
           height: '100vh',
           width: 'min(560px, 100vw)',
-          borderRadius: 0,
-          borderLeft: '1px solid rgba(255,255,255,0.14)',
-          borderRight: 'none', borderTop: 'none', borderBottom: 'none',
-          background: 'rgba(30, 61, 47, 0.85)',
+          background: 'var(--cream)',
+          boxShadow: '0 24px 64px rgba(42, 77, 60, 0.18)',
           zIndex: 100,
           overflowY: 'auto',
           display: 'flex',
@@ -153,36 +137,31 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
         }}
       >
         <div style={{
-          padding: '20px 28px',
-          background: 'rgba(0,0,0,0.25)',
+          padding: '22px 28px',
+          background: 'var(--forest-deep)',
+          color: 'white',
           display: 'flex', alignItems: 'center', gap: 16,
           position: 'sticky', top: 0, zIndex: 2,
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}>
           <Avatar name={client.full_name} size={48} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
-              fontFamily: 'var(--font-montserrat), Montserrat, sans-serif',
+              fontFamily: 'var(--font-montserrat), Avenir, sans-serif',
               fontWeight: 300, fontSize: 22, color: 'white',
+              letterSpacing: '0.5px',
             }}>{client.full_name}</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>
               {client.email}{client.phone ? ` · ${client.phone}` : ''}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'transparent', border: 'none',
-              color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: 6,
-            }}
-            aria-label="Close"
-          >
+          <button onClick={onClose} aria-label="Close"
+            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', padding: 6 }}>
             <X size={20} strokeWidth={1.8} />
           </button>
         </div>
 
-        <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+        <div style={{ padding: '26px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
             <Field label="Status" value={client.status} />
             <Field label="Default fee" value={displayFee(client.session_fee)} />
             <Field label="Joined" value={new Date(client.created_at).toLocaleDateString('en-IE')} />
@@ -200,27 +179,30 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
           </div>
 
           <section>
-            <div className="admin-eyebrow">Session history</div>
-            <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <p className="admin-eyebrow" style={{ marginBottom: 10 }}>Session history</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {sortedSessions.length === 0 && (
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0 }}>No sessions.</p>
+                <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: 0 }}>No sessions.</p>
               )}
               {sortedSessions.map(s => (
-                <div key={s.id} className="admin-glass-light" style={{ padding: '12px 14px' }}>
+                <div key={s.id} style={{
+                  padding: '14px 16px', borderRadius: 12,
+                  background: 'white', border: '1px solid var(--line)',
+                }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <strong style={{ fontSize: 13, color: 'white', fontWeight: 500 }}>
+                    <strong style={{ fontSize: 13, color: 'var(--forest-deep)', fontWeight: 500 }}>
                       {formatDateTime(s.session_date)}
                     </strong>
-                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>
+                    <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>
                       {FORMAT_LABELS[s.session_format] ?? s.session_format} · {displayFee(s.fee)}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
-                    <Pill tones={STATUS_TONES} kind={s.status} />
-                    <Pill tones={PAYMENT_TONES} kind={s.payment_status} />
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                    <span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span>
+                    <span className={`admin-tag ${payTag(s.payment_status)}`}>{payLabel(s.payment_status)}</span>
                   </div>
                   {s.receipt_sent_at && (
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>
+                    <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginTop: 8 }}>
                       Receipt sent {formatDateTime(s.receipt_sent_at)}
                     </div>
                   )}
@@ -228,12 +210,12 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
                     <a href={s.stripe_payment_link_url} target="_blank" rel="noopener noreferrer"
                       style={{
                         display: 'inline-block', marginTop: 6,
-                        fontSize: 11, color: '#F4956A', textDecoration: 'underline',
+                        fontSize: 11, color: 'var(--terracotta)', textDecoration: 'underline',
                       }}>Payment link ↗</a>
                   )}
                   {s.notes && (
                     <div style={{
-                      fontSize: 12, color: 'rgba(255,255,255,0.55)',
+                      fontSize: 12, color: 'var(--ink-muted)',
                       fontStyle: 'italic', marginTop: 6,
                     }}>{s.notes}</div>
                   )}
@@ -244,10 +226,10 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
 
           <section>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div className="admin-eyebrow" style={{ margin: 0 }}>Notes</div>
+              <p className="admin-eyebrow" style={{ margin: 0 }}>Notes</p>
               <div style={{
                 fontSize: 11,
-                color: notesSaved ? '#A6E3BD' : 'rgba(255,255,255,0.4)',
+                color: notesSaved ? 'var(--sage)' : 'var(--ink-muted)',
               }}>
                 {notesSaving ? 'Saving…' : notesSaved ? 'Saved' : 'Auto-saves'}
               </div>
@@ -269,8 +251,8 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="admin-eyebrow-sm">{label}</div>
-      <div style={{ fontSize: 14, color: 'white', textTransform: 'capitalize' }}>{value}</div>
+      <p className="admin-eyebrow" style={{ marginBottom: 4 }}>{label}</p>
+      <div style={{ fontSize: 14, color: 'var(--forest-deep)', textTransform: 'capitalize' }}>{value}</div>
     </div>
   );
 }
