@@ -287,10 +287,13 @@ export async function POST(req: NextRequest) {
     paymentLinkUrl = '';
   }
 
-  // 6. Send welcome email with Therapeutic Agreement + Privacy Policy attached
+  // 6. Send welcome email with Therapeutic Agreement + Privacy Policy attached.
+  // Now that the owenlynchtherapy.com domain is verified in Resend the welcome
+  // email goes directly to the client (it carries their intake link and Stripe
+  // payment link, which would be useless landing in info@).
   const firstName = client_name.trim().split(' ')[0];
-  const emailTo = 'info@owenlynchtherapy.com';
-  console.log('[generate-token] step 6: sending welcome email to', emailTo, '(client:', client_email.trim(), ') | paymentLinkUrl:', paymentLinkUrl || '(empty)');
+  const emailTo = client_email.trim();
+  console.log('[generate-token] step 6: sending welcome email to', emailTo, '| paymentLinkUrl:', paymentLinkUrl || '(empty)');
 
   let therapeuticAgreementBuffer: Buffer | null = null;
   let privacyPolicyBuffer: Buffer | null = null;
