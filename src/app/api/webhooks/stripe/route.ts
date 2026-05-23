@@ -97,9 +97,8 @@ async function sendReceipt(
     hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
   });
 
-  // TODO: change from to info@owenlynchtherapy.com once Resend domain is verified
   const emailResult = await resend.emails.send({
-    from: 'Owen Lynch Psychotherapy <onboarding@resend.dev>',
+    from: 'Owen Lynch Psychotherapy <info@owenlynchtherapy.com>',
     to: client.email,
     subject: 'Receipt — Psychotherapy Session with Owen Lynch',
     html: buildReceiptHtml(firstName, formattedDate, formattedTime, feeEuros),

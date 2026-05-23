@@ -23,8 +23,8 @@ export async function submitContactForm(formData: FormData) {
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   const { error } = await resend.emails.send({
-    from: 'onboarding@resend.dev',
-    to: 'owenlynch1310@gmail.com',
+    from: 'info@owenlynchtherapy.com',
+    to: 'info@owenlynchtherapy.com',
     subject: `New enquiry from ${firstName} ${lastName}`,
     html: `
       <table style="font-family:sans-serif;font-size:14px;color:#333;max-width:560px;width:100%">

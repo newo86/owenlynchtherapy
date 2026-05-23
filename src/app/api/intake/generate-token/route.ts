@@ -290,10 +290,8 @@ export async function POST(req: NextRequest) {
   }
 
   // 6. Send welcome email with Therapeutic Agreement + Privacy Policy attached
-  // NOTE: onboarding@resend.dev can only send to the account owner's verified email until
-  // owenlynchtherapy.com domain is verified in Resend. Change to address and from once verified.
   const firstName = client_name.trim().split(' ')[0];
-  const emailTo = 'owenlynch1310@gmail.com';
+  const emailTo = 'info@owenlynchtherapy.com';
   console.log('[generate-token] step 6: sending welcome email to', emailTo, '(client:', client_email.trim(), ') | paymentLinkUrl:', paymentLinkUrl || '(empty)');
 
   let therapeuticAgreementBuffer: Buffer | null = null;
@@ -326,7 +324,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const emailResult = await resend.emails.send({
-      from: 'Owen Lynch Psychotherapy <onboarding@resend.dev>',
+      from: 'Owen Lynch Psychotherapy <info@owenlynchtherapy.com>',
       to: emailTo,
       subject: 'Your first session with Owen Lynch Psychotherapy',
       html: buildWelcomeHtml({

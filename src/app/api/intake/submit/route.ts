@@ -216,8 +216,8 @@ export async function POST(req: NextRequest) {
     };
 
     const emailResult = await resend.emails.send({
-      from: 'onboarding@resend.dev',
-      to: 'owenlynch1310@gmail.com', // TODO: change to info@owenlynchtherapy.com once Resend domain verified
+      from: 'info@owenlynchtherapy.com',
+      to: 'info@owenlynchtherapy.com',
       subject: `New intake form: ${full_name}`,
       html: buildEmailHtml(sanitisedData),
       ...(pdfBuffer ? { attachments: [{ filename, content: pdfBuffer }] } : {}),
