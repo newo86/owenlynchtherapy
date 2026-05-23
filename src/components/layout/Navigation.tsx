@@ -7,7 +7,7 @@ const links = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/services', label: 'Services' },
-  { href: '/blog', label: 'Blog' },
+  { href: '/articles', label: 'Articles' },
   { href: '/faq', label: 'FAQ' },
   { href: '/contact', label: 'Contact' },
 ] as const;
@@ -25,7 +25,7 @@ export default function Navigation() {
               className={`text-sm font-normal transition-colors ${
                 pathname === href
                   ? 'text-orange underline decoration-orange underline-offset-4 decoration-[1.5px]'
-                  : 'text-gray-600 hover:text-forest'
+                  : 'text-gray-600 h-hover:text-forest'
               }`}
               aria-current={pathname === href ? 'page' : undefined}
             >

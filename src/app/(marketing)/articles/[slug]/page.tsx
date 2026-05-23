@@ -17,9 +17,9 @@ const BASE_URL = 'https://owenlynchtherapy.com';
 
 // ── JSON-LD ──────────────────────────────────────────────────────────────────
 
-const blogPostingJsonLd = {
+const articleJsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'BlogPosting',
+  '@type': 'Article',
   headline: 'How OCD Therapy Works: An Evidence-Based Guide',
   description:
     'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment.',
@@ -46,7 +46,7 @@ const blogPostingJsonLd = {
   dateModified: '2026-05-13',
   mainEntityOfPage: {
     '@type': 'WebPage',
-    '@id': `${BASE_URL}/blog/how-ocd-therapy-works`,
+    '@id': `${BASE_URL}/articles/how-ocd-therapy-works`,
   },
   wordCount: 3200,
   articleSection: 'OCD',
@@ -90,7 +90,7 @@ const breadcrumbJsonLd = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL },
-    { '@type': 'ListItem', position: 2, name: 'Blog', item: `${BASE_URL}/blog` },
+    { '@type': 'ListItem', position: 2, name: 'Articles', item: `${BASE_URL}/articles` },
     {
       '@type': 'ListItem',
       position: 3,
@@ -124,10 +124,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description:
       'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment. Written by Owen Lynch, psychotherapist in Dublin, Ireland.',
     alternates: {
-      canonical: `${BASE_URL}/blog/how-ocd-therapy-works`,
+      canonical: `${BASE_URL}/articles/how-ocd-therapy-works`,
       languages: {
-        'en-IE': `${BASE_URL}/blog/how-ocd-therapy-works`,
-        'x-default': `${BASE_URL}/blog/how-ocd-therapy-works`,
+        'en-IE': `${BASE_URL}/articles/how-ocd-therapy-works`,
+        'x-default': `${BASE_URL}/articles/how-ocd-therapy-works`,
       },
     },
     openGraph: {
@@ -135,7 +135,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description:
         'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment. Written by Owen Lynch, psychotherapist in Dublin, Ireland.',
       type: 'article',
-      url: `${BASE_URL}/blog/how-ocd-therapy-works`,
+      url: `${BASE_URL}/articles/how-ocd-therapy-works`,
       images: [{ url: `${BASE_URL}/images/blog-hero-ocd-therapy.png`, width: 3200, height: 1800, alt: 'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta with a figure, symbolising the cycle of obsessive thoughts' }],
       publishedTime: '2026-05-13T00:00:00Z',
       authors: [`${BASE_URL}/about`],
@@ -156,11 +156,11 @@ const p = 'font-normal text-base text-gray-700 leading-[1.75] mb-6';
 const h2 =
   'font-heading font-light text-2xl sm:text-[1.75rem] text-forest mt-14 mb-5 leading-snug';
 const inlineLink =
-  'underline underline-offset-2 decoration-orange/60 hover:decoration-orange transition-colors';
+  'underline underline-offset-2 decoration-orange/60 h-hover:decoration-orange h-can:transition-colors';
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default async function BlogPostPage({ params }: Props) {
+export default async function ArticlePage({ params }: Props) {
   const { slug } = await params;
 
   // TODO: fetch post from Sanity; call notFound() if no result returned
@@ -172,7 +172,7 @@ export default async function BlogPostPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(blogPostingJsonLd).replace(/</g, '\\u003c'),
+          __html: JSON.stringify(articleJsonLd).replace(/</g, '\\u003c'),
         }}
       />
       <script
@@ -195,14 +195,14 @@ export default async function BlogPostPage({ params }: Props) {
           <nav aria-label="Breadcrumb" className="mb-6">
             <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 list-none text-xs text-cream/60">
               <li>
-                <Link href="/" className="hover:text-cream transition-colors">
+                <Link href="/" className="h-hover:text-cream h-can:transition-colors">
                   Home
                 </Link>
               </li>
               <li aria-hidden="true">/</li>
               <li>
-                <Link href="/blog" className="hover:text-cream transition-colors">
-                  Blog
+                <Link href="/articles" className="h-hover:text-cream h-can:transition-colors">
+                  Articles
                 </Link>
               </li>
               <li aria-hidden="true">/</li>
@@ -227,7 +227,7 @@ export default async function BlogPostPage({ params }: Props) {
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-cream/70">
             <span>
               By{' '}
-              <Link href="/about" className="text-cream/90 hover:text-cream transition-colors underline underline-offset-2">
+              <Link href="/about" className="text-cream/90 h-hover:text-cream h-can:transition-colors underline underline-offset-2">
                 Owen Lynch
               </Link>
             </span>
@@ -502,10 +502,10 @@ export default async function BlogPostPage({ params }: Props) {
 
             {/* ── References ── */}
             <details className="mt-16 border-t border-gray-200 pt-8 group">
-              <summary className="font-heading font-light text-xl text-forest cursor-pointer select-none hover:text-orange transition-colors list-none flex items-center gap-2">
+              <summary className="font-heading font-light text-xl text-forest cursor-pointer select-none h-hover:text-orange h-can:transition-colors list-none flex items-center gap-2">
                 <span>References</span>
                 <svg
-                  className="w-4 h-4 text-orange transition-transform group-open:rotate-180"
+                  className="w-4 h-4 text-orange h-can:transition-transform group-open:rotate-180"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -616,7 +616,7 @@ export default async function BlogPostPage({ params }: Props) {
           </h2>
           <p className="font-normal text-sm text-cream/75 leading-[1.8] mb-10">
             {`If you're in Ireland or the UK and think therapy might help with OCD, I offer `}
-            <Link href="/ocd-therapy-dublin" className="underline underline-offset-2 decoration-cream/40 hover:decoration-cream transition-colors text-cream/90">
+            <Link href="/ocd-therapy-dublin" className="underline underline-offset-2 decoration-cream/40 h-hover:decoration-cream h-can:transition-colors text-cream/90">
               OCD-informed therapy in Dublin and online
             </Link>
             {`. There's no pressure and no obligation — the first step is simply a conversation.`}
@@ -628,7 +628,7 @@ export default async function BlogPostPage({ params }: Props) {
           />
           <Link
             href="/contact"
-            className="inline-block bg-orange text-white px-10 py-4 rounded-md text-xs uppercase tracking-normal font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#2A4D3C]"
+            className="inline-block bg-orange text-white px-10 py-4 rounded-md text-xs uppercase tracking-normal font-normal h-hover:opacity-90 h-can:transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#2A4D3C]"
           >
             Get in Touch
           </Link>

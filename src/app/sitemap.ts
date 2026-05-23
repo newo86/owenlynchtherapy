@@ -23,13 +23,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
-      url: `${BASE_URL}/blog`,
+      url: `${BASE_URL}/articles`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: `${BASE_URL}/blog/how-ocd-therapy-works`,
+      url: `${BASE_URL}/articles/how-ocd-therapy-works`,
       lastModified: new Date('2026-05-13'),
       changeFrequency: 'monthly',
       priority: 0.7,

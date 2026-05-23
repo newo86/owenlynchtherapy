@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { label: "Home", href: "/", icon: <Home size={20} /> },
   { label: "About", href: "/about", icon: <User size={20} /> },
   { label: "Services", href: "/services", icon: <Layers size={20} /> },
-  { label: "Blog", href: "/blog", icon: <BookOpen size={20} /> },
+  { label: "Articles", href: "/articles", icon: <BookOpen size={20} /> },
   { label: "FAQ", href: "/faq", icon: <HelpCircle size={20} /> },
   { label: "Contact", href: "/contact", icon: <Mail size={20} /> },
 ] as const
@@ -23,7 +23,7 @@ export default function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-forest/10 px-2 pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-[100] bg-cream border-t border-forest/10 px-2 pb-[env(safe-area-inset-bottom)] md:hidden shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]"
       aria-label="Mobile navigation"
     >
       <ul className="flex justify-around items-center py-2">
@@ -34,7 +34,7 @@ export default function MobileBottomNav() {
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-colors duration-200 ${
+                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl h-can:transition-colors h-can:duration-200 ${
                   active ? "text-white bg-orange" : "text-forest/60"
                 }`}
               >

@@ -5,7 +5,7 @@ const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/about', label: 'About' },
   { href: '/services', label: 'Services' },
-  { href: '/blog', label: 'Blog' },
+  { href: '/articles', label: 'Articles' },
   { href: '/faq', label: 'FAQ' },
   { href: '/contact', label: 'Contact' },
 ];
@@ -32,7 +32,7 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Owen Lynch Psychotherapy on Instagram"
-              className="inline-flex text-white/50 hover:text-white transition-colors w-fit"
+              className="inline-flex text-white/50 h-hover:text-white h-can:transition-colors w-fit"
             >
               {/* Instagram icon */}
               <svg
@@ -63,7 +63,7 @@ export default function Footer() {
                 <li key={href}>
                   <Link
                     href={href}
-                    className="text-sm text-cream/70 hover:text-white transition-colors"
+                    className="text-sm text-cream/70 h-hover:text-white h-can:transition-colors"
                   >
                     {label}
                   </Link>
@@ -80,7 +80,7 @@ export default function Footer() {
             <div className="flex flex-col gap-3 items-start">
               <Link
                 href="/contact"
-                className="inline-block bg-[#C85A1A] text-white px-6 py-3 rounded-md text-xs uppercase tracking-normal font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                className="inline-block bg-[#C85A1A] text-white px-6 py-3 rounded-md text-xs uppercase tracking-normal font-normal h-hover:opacity-90 h-can:transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
                 Get in touch
               </Link>
@@ -102,7 +102,7 @@ export default function Footer() {
               href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center hover:opacity-80 transition-opacity"
+              className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
               style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
               aria-label="IAHIP accredited psychotherapist — view directory listing"
             >
@@ -119,7 +119,7 @@ export default function Footer() {
               href="https://psychotherapycouncil.ie/therapist/owen-lynch/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center hover:opacity-80 transition-opacity"
+              className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
               style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
               aria-label="Irish Council for Psychotherapy member — view directory listing"
             >
@@ -136,7 +136,7 @@ export default function Footer() {
               href="https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity"
+              className="inline-flex items-center gap-2 h-hover:opacity-80 h-can:transition-opacity"
               style={{ background: '#c85a1a', borderRadius: '6px', padding: '5px 12px' }}
               aria-label="Verified by Psychology Today"
             >

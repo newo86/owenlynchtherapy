@@ -74,7 +74,7 @@ const p = 'font-normal text-base text-gray-700 leading-[1.75] mb-6';
 const h2 =
   'font-heading font-light text-2xl sm:text-[1.75rem] text-forest mt-14 mb-5 leading-snug';
 const inlineLink =
-  'underline underline-offset-2 decoration-orange/60 hover:decoration-orange transition-colors';
+  'underline underline-offset-2 decoration-orange/60 h-hover:decoration-orange h-can:transition-colors';
 
 export default function OcdTherapyPage() {
   return (
@@ -174,7 +174,7 @@ export default function OcdTherapyPage() {
             <p className={p}>
               For a more detailed look at how these approaches work and what the research says, you
               can read{' '}
-              <Link href="/blog/how-ocd-therapy-works" className={inlineLink}>
+              <Link href="/articles/how-ocd-therapy-works" className={inlineLink}>
                 my evidence-based guide to OCD therapy
               </Link>
               .

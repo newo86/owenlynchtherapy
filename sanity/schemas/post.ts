@@ -2,7 +2,7 @@ import { defineField, defineType } from 'sanity';
 
 export const postSchema = defineType({
   name: 'post',
-  title: 'Blog Post',
+  title: 'Article',
   type: 'document',
   fields: [
     defineField({
@@ -35,7 +35,7 @@ export const postSchema = defineType({
       title: 'Excerpt',
       type: 'text',
       rows: 3,
-      description: 'Short summary shown on blog listing cards and in meta description. Max 200 characters.',
+      description: 'Short summary shown on article listing cards and in meta description. Max 200 characters.',
       validation: (r) => r.max(200),
     }),
     defineField({
