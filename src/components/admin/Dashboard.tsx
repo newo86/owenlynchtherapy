@@ -208,7 +208,7 @@ export function Dashboard({
             </button>
           )}
           <button onClick={onNewClient} className="admin-btn-primary">
-            + New Client
+            + Add Client
           </button>
         </div>
       </header>

@@ -222,7 +222,7 @@ export function AdminShell() {
                     </button>
                   )}
                   <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
-                    + New Client
+                    + Add Client
                   </button>
                 </div>
               </header>

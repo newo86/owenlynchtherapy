@@ -67,7 +67,7 @@ export function ClientsList({ clients, onOpen, onNewClient }: Props) {
         </div>
 
         <button onClick={onNewClient} className="admin-btn-primary" style={{ marginLeft: 'auto' }}>
-          + New Client
+          + Add new client
         </button>
       </div>
 
