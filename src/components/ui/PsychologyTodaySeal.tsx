@@ -6,8 +6,10 @@ export default function PsychologyTodaySeal() {
   return (
     <>
       <a
-        href="https://www.psychologytoday.com/profile/1745757"
+        href="https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757"
         className="sx-verified-seal"
+        target="_blank"
+        rel="noopener noreferrer"
         aria-label="Psychology Today verified therapist"
       />
       <Script
