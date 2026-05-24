@@ -227,13 +227,14 @@ export default function AboutPage() {
               it&apos;s needed.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col items-center gap-5">
               <Link
                 href="/contact"
                 className="inline-block bg-orange text-white px-8 py-3.5 rounded-md text-xs uppercase tracking-normal font-normal h-hover:opacity-90 h-can:transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
               >
                 Get in touch
               </Link>
+              <div className="flex flex-wrap items-center justify-center gap-4">
               <a
                 href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch"
                 target="_blank"
@@ -267,6 +268,7 @@ export default function AboutPage() {
                 />
               </a>
               <PsychologyTodayBadge />
+              </div>
             </div>
           </div>
         </div>
