@@ -160,9 +160,9 @@ export default function AboutPage() {
 
         <div className="relative z-10 max-w-6xl mx-auto">
           <p className="relative z-10 text-white text-sm font-semibold uppercase tracking-normal mb-5">
-            <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="hover:underline">IAHIP</a>
+            <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="h-hover:underline">IAHIP</a>
             {' & '}
-            <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="hover:underline">ICP</a>
+            <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="h-hover:underline">ICP</a>
             {' Accredited Psychotherapist'}
           </p>
           <h1
@@ -210,9 +210,9 @@ export default function AboutPage() {
 
             <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-5">
               I&apos;m an{' '}
-              <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 hover:decoration-orange transition-colors">IAHIP</a>
+              <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 h-hover:decoration-orange h-can:transition-colors">IAHIP</a>
               {' '}and{' '}
-              <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 hover:decoration-orange transition-colors">ICP</a>
+              <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 h-hover:decoration-orange h-can:transition-colors">ICP</a>
               {' '}accredited integrative psychotherapist based in Dublin. I work with
               adults in person and online across Ireland and the UK.
             </p>
@@ -230,10 +230,42 @@ export default function AboutPage() {
             <div className="flex flex-wrap items-center gap-4">
               <Link
                 href="/contact"
-                className="inline-block bg-orange text-white px-8 py-3.5 rounded-md text-xs uppercase tracking-normal font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+                className="inline-block bg-orange text-white px-8 py-3.5 rounded-md text-xs uppercase tracking-normal font-normal h-hover:opacity-90 h-can:transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
               >
                 Get in touch
               </Link>
+              <a
+                href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
+                style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
+                aria-label="IAHIP accredited psychotherapist — view directory listing"
+              >
+                <Image
+                  src="/images/IAHIPLogo.jpg"
+                  alt="IAHIP accredited psychotherapist"
+                  width={962}
+                  height={437}
+                  className="h-10 w-auto object-contain"
+                />
+              </a>
+              <a
+                href="https://psychotherapycouncil.ie/therapist/owen-lynch/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
+                style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
+                aria-label="Irish Council for Psychotherapy member — view directory listing"
+              >
+                <Image
+                  src="/images/ICP.png"
+                  alt="Irish Council for Psychotherapy member"
+                  width={324}
+                  height={90}
+                  className="h-10 w-auto object-contain"
+                />
+              </a>
               <PsychologyTodayBadge />
             </div>
           </div>
@@ -307,7 +339,7 @@ export default function AboutPage() {
                     href={link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-normal text-sm text-gray-700 leading-[1.8] underline underline-offset-2 decoration-orange/50 hover:decoration-orange transition-colors"
+                    className="font-normal text-sm text-gray-700 leading-[1.8] underline underline-offset-2 decoration-orange/50 h-hover:decoration-orange h-can:transition-colors"
                   >
                     {text}
                   </a>
@@ -326,7 +358,7 @@ export default function AboutPage() {
               href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center hover:opacity-80 transition-opacity"
+              className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
               style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
               aria-label="IAHIP accredited psychotherapist — view directory listing"
             >
@@ -342,7 +374,7 @@ export default function AboutPage() {
               href="https://psychotherapycouncil.ie/therapist/owen-lynch/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center hover:opacity-80 transition-opacity"
+              className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
               style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
               aria-label="Irish Council for Psychotherapy member — view directory listing"
             >
@@ -358,7 +390,7 @@ export default function AboutPage() {
               href="https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity"
+              className="inline-flex items-center gap-2 h-hover:opacity-80 h-can:transition-opacity"
               style={{ background: '#c85a1a', borderRadius: '6px', padding: '6px 14px' }}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -396,7 +428,7 @@ export default function AboutPage() {
           <span className="block w-12 h-px mx-auto mb-8" style={{ backgroundColor: '#d4a843' }} aria-hidden="true" />
           <Link
             href="/contact"
-            className="inline-block bg-orange text-white px-10 py-4 rounded-md text-xs uppercase tracking-normal font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#2A4D3C]"
+            className="inline-block bg-orange text-white px-10 py-4 rounded-md text-xs uppercase tracking-normal font-normal h-hover:opacity-90 h-can:transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#2A4D3C]"
           >
             Get in touch
           </Link>
