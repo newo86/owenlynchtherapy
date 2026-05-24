@@ -38,43 +38,59 @@ export const metadata: Metadata = {
 
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'Person',
-      '@id': 'https://owenlynchtherapy.com/#person',
-      name: 'Owen Lynch',
-      jobTitle: 'Psychotherapist',
-      url: 'https://owenlynchtherapy.com',
-      worksFor: { '@id': 'https://owenlynchtherapy.com/#business' },
-      sameAs: [
-        'https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757',
-        'https://psychotherapistdirectory.iahip.org/therapist/owen-lynch',
-        'https://psychotherapycouncil.ie/therapist/owen-lynch/',
-      ],
-    },
-    {
-      '@type': ['MedicalBusiness', 'LocalBusiness'],
-      '@id': 'https://owenlynchtherapy.com/#business',
-      name: 'Owen Lynch Psychotherapy',
-      description:
-        'IAHIP and ICP accredited psychotherapist in Dublin offering in-person and online therapy for anxiety, OCD, ADHD, autism, depression, relationships and LGBTQIA+ mental health.',
-      url: 'https://owenlynchtherapy.com',
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: 'Dublin',
-        addressCountry: 'IE',
-      },
-      areaServed: [
-        { '@type': 'City', name: 'Dublin' },
-        { '@type': 'Country', name: 'Ireland' },
-      ],
-      availableService: [
-        { '@type': 'MedicalTherapy', name: 'Psychotherapy' },
-        { '@type': 'MedicalTherapy', name: 'Online Therapy' },
-      ],
-      employee: { '@id': 'https://owenlynchtherapy.com/#person' },
-    },
+  '@type': 'MedicalBusiness',
+  '@id': 'https://www.owenlynchtherapy.com/#medicalbusiness',
+  name: 'Owen Lynch Psychotherapy',
+  url: 'https://www.owenlynchtherapy.com',
+  logo: 'https://www.owenlynchtherapy.com/logo.png',
+  image: 'https://www.owenlynchtherapy.com/therapy-room.jpg',
+  description:
+    'Accredited integrative psychotherapist in Dublin specializing in evidence-based treatments for Anxiety, OCD, ADHD, Autism, and Trauma.',
+  telephone: '+353851471689',
+  email: 'info@owenlynchtherapy.com',
+  priceRange: '€70-€80',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: '106 Capel Street',
+    addressLocality: 'Rotunda',
+    addressRegion: 'Dublin 1',
+    postalCode: 'D01 WY40',
+    addressCountry: 'IE',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: '53.3498',
+    longitude: '-6.2674',
+  },
+  openingHoursSpecification: [
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Friday', opens: '16:00', closes: '20:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Saturday', opens: '10:00', closes: '15:00' },
   ],
+  medicalSpecialty: ['MedicalPsychology', 'MentalHealth'],
+  knowsAbout: [
+    'Psychotherapy',
+    'Cognitive Behavioral Therapy',
+    'Acceptance and Commitment Therapy',
+    'Exposure and Response Prevention',
+    'Obsessive-Compulsive Disorder',
+    'Anxiety Management',
+    'ADHD Support',
+  ],
+  founder: {
+    '@type': 'Person',
+    name: 'Owen Lynch',
+    jobTitle: 'Accredited Psychotherapist',
+    alumniOf: {
+      '@type': 'EducationalOrganization',
+      name: 'National University of Ireland Maynooth',
+    },
+    award: ['IAHIP Accredited', 'ICP Accredited'],
+    sameAs: [
+      'https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757',
+      'https://psychotherapistdirectory.iahip.org/therapist/owen-lynch',
+      'https://psychotherapycouncil.ie/therapist/owen-lynch/',
+    ],
+  },
 };
 
 export default function HomePage() {
