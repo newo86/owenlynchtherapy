@@ -23,6 +23,13 @@ export async function POST(req: NextRequest) {
     is_low_cost?: boolean;
     first_session_date?: string;    // optional
     first_session_format?: string;  // 'in_person' | 'online' — only used if first_session_date present
+    // Contact / personal detail fields (all optional)
+    phone?: string;
+    date_of_birth?: string;
+    emergency_contact_name?: string;
+    emergency_contact_phone?: string;
+    gp_name?: string;
+    gp_phone?: string;
   };
   try {
     body = await req.json();
@@ -30,10 +37,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { client_name, client_email, session_fee, is_low_cost, first_session_date, first_session_format } = body;
+  const {
+    client_name, client_email, session_fee, is_low_cost,
+    first_session_date, first_session_format,
+    phone, date_of_birth, emergency_contact_name,
+    emergency_contact_phone, gp_name, gp_phone,
+  } = body;
 
   if (!client_name?.trim()) return NextResponse.json({ error: 'client_name is required' }, { status: 400 });
-  if (!client_email?.trim()) return NextResponse.json({ error: 'client_email is required' }, { status: 400 });
   if (!session_fee || Number(session_fee) <= 0) return NextResponse.json({ error: 'session_fee is required and must be positive' }, { status: 400 });
 
   const feeInCents = Math.round(Number(session_fee) * 100);
@@ -42,10 +53,16 @@ export async function POST(req: NextRequest) {
     .from('clients')
     .insert({
       full_name: client_name.trim(),
-      email: client_email.trim(),
+      email: client_email?.trim() ?? '',
       session_fee: feeInCents,
       status: 'active',
       is_low_cost: Boolean(is_low_cost),
+      phone: phone?.trim() || null,
+      date_of_birth: date_of_birth?.trim() || null,
+      emergency_contact_name: emergency_contact_name?.trim() || null,
+      emergency_contact_phone: emergency_contact_phone?.trim() || null,
+      gp_name: gp_name?.trim() || null,
+      gp_phone: gp_phone?.trim() || null,
     })
     .select()
     .single();
@@ -85,7 +102,7 @@ export async function POST(req: NextRequest) {
         await createCalendarEvent({
           summary: `Session — ${client_name.trim()}`,
           description: [
-            `Client: ${client_name.trim()} <${client_email.trim()}>`,
+            `Client: ${client_name.trim()}${client_email ? ` <${client_email.trim()}>` : ''}`,
             `Format: ${format === 'in_person' ? 'In Person' : 'Online'}`,
             `Fee: €${Math.round(Number(session_fee))}`,
             'One-off session',

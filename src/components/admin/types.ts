@@ -17,6 +17,11 @@ export interface ClientRow {
   full_name: string;
   email: string;
   phone: string | null;
+  date_of_birth: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  gp_name: string | null;
+  gp_phone: string | null;
   session_fee: number;
   status: 'active' | 'new' | 'completed' | string;
   created_at: string;

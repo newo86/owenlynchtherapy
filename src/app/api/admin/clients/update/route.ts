@@ -19,6 +19,13 @@ export async function POST(req: NextRequest) {
     session_fee?: number;  // euros
     notes?: string;
     status?: 'active' | 'new' | 'completed';
+    // Contact / personal detail fields
+    phone?: string;
+    date_of_birth?: string;
+    emergency_contact_name?: string;
+    emergency_contact_phone?: string;
+    gp_name?: string;
+    gp_phone?: string;
   };
   try {
     body = await req.json();
@@ -37,6 +44,13 @@ export async function POST(req: NextRequest) {
   }
   if (typeof body.notes === 'string') patch.notes = body.notes;
   if (body.status && ['active', 'new', 'completed'].includes(body.status)) patch.status = body.status;
+  // Contact / personal detail fields (empty string clears the value)
+  if (typeof body.phone === 'string') patch.phone = body.phone || null;
+  if (typeof body.date_of_birth === 'string') patch.date_of_birth = body.date_of_birth || null;
+  if (typeof body.emergency_contact_name === 'string') patch.emergency_contact_name = body.emergency_contact_name || null;
+  if (typeof body.emergency_contact_phone === 'string') patch.emergency_contact_phone = body.emergency_contact_phone || null;
+  if (typeof body.gp_name === 'string') patch.gp_name = body.gp_name || null;
+  if (typeof body.gp_phone === 'string') patch.gp_phone = body.gp_phone || null;
 
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: 'No updatable fields in body' }, { status: 400 });

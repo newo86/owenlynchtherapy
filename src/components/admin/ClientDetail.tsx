@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { X, Download, Trash2 } from 'lucide-react';
+import { X, Download, Trash2, Pencil, Check } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatDateTime } from './api';
 import { FORMAT_LABELS } from './types';
@@ -51,6 +51,28 @@ function payLabel(status: string) {
   return status === 'paid' ? 'Paid' : status === 'refunded' ? 'Refunded' : 'Unpaid';
 }
 
+interface ContactFields {
+  email: string;
+  phone: string;
+  date_of_birth: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  gp_name: string;
+  gp_phone: string;
+}
+
+function toContactFields(c: ClientRow): ContactFields {
+  return {
+    email: c.email ?? '',
+    phone: c.phone ?? '',
+    date_of_birth: c.date_of_birth ?? '',
+    emergency_contact_name: c.emergency_contact_name ?? '',
+    emergency_contact_phone: c.emergency_contact_phone ?? '',
+    gp_name: c.gp_name ?? '',
+    gp_phone: c.gp_phone ?? '',
+  };
+}
+
 export function ClientDetail({ client, submissions, onClose, onReload }: Props) {
   const [notes, setNotes] = useState('');
   const [notesSaving, setNotesSaving] = useState(false);
@@ -58,9 +80,16 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
   const [downloading, setDownloading] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [editingContact, setEditingContact] = useState(false);
+  const [contactFields, setContactFields] = useState<ContactFields>({ email: '', phone: '', date_of_birth: '', emergency_contact_name: '', emergency_contact_phone: '', gp_name: '', gp_phone: '' });
+  const [contactSaving, setContactSaving] = useState(false);
+  const [contactSaved, setContactSaved] = useState(false);
+
   useEffect(() => {
     setNotes(client?.notes ?? '');
     setNotesSaved(false);
+    setEditingContact(false);
+    if (client) setContactFields(toContactFields(client));
   }, [client]);
 
   if (!client) return null;
@@ -90,6 +119,31 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
       });
       if (res.ok) { setNotesSaved(true); onReload(); }
     } finally { setNotesSaving(false); }
+  }
+
+  async function saveContact() {
+    if (!client) return;
+    setContactSaving(true);
+    try {
+      const res = await adminFetch('/api/admin/clients/update', {
+        method: 'POST',
+        body: JSON.stringify({
+          client_id: client.id,
+          phone: contactFields.phone,
+          date_of_birth: contactFields.date_of_birth,
+          emergency_contact_name: contactFields.emergency_contact_name,
+          emergency_contact_phone: contactFields.emergency_contact_phone,
+          gp_name: contactFields.gp_name,
+          gp_phone: contactFields.gp_phone,
+        }),
+      });
+      if (res.ok) {
+        setContactSaved(true);
+        setEditingContact(false);
+        onReload();
+        setTimeout(() => setContactSaved(false), 2500);
+      }
+    } finally { setContactSaving(false); }
   }
 
   async function downloadPdf() {
@@ -222,6 +276,49 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
             )}
           </div>
 
+          {/* Contact details */}
+          <section style={{ background: 'white', border: '1px solid var(--line)', borderRadius: 14, padding: '18px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <p className="admin-eyebrow" style={{ margin: 0 }}>Contact details</p>
+              {!editingContact ? (
+                <button
+                  type="button"
+                  onClick={() => { setEditingContact(true); setContactSaved(false); }}
+                  className="admin-btn-secondary"
+                  style={{ padding: '6px 12px', fontSize: 11 }}
+                >
+                  <Pencil size={11} strokeWidth={1.8} /> Edit
+                </button>
+              ) : (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {contactSaved && <span style={{ fontSize: 11, color: 'var(--sage)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={11} /> Saved</span>}
+                  <button type="button" onClick={() => { setEditingContact(false); if (client) setContactFields(toContactFields(client)); }} className="admin-btn-secondary" style={{ padding: '6px 12px', fontSize: 11 }}>Cancel</button>
+                  <button type="button" onClick={saveContact} disabled={contactSaving} className="admin-btn-primary" style={{ padding: '6px 14px', fontSize: 11 }}>
+                    {contactSaving ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <ContactField label="Email" value={contactFields.email} editing={editingContact} type="email"
+                onChange={v => setContactFields(f => ({ ...f, email: v }))} />
+              <ContactField label="Phone" value={contactFields.phone} editing={editingContact} type="tel"
+                onChange={v => setContactFields(f => ({ ...f, phone: v }))} />
+              <ContactField label="Date of birth" value={contactFields.date_of_birth} editing={editingContact} type="date"
+                onChange={v => setContactFields(f => ({ ...f, date_of_birth: v }))} />
+              <div />
+              <ContactField label="Emergency contact name" value={contactFields.emergency_contact_name} editing={editingContact}
+                onChange={v => setContactFields(f => ({ ...f, emergency_contact_name: v }))} />
+              <ContactField label="Emergency contact phone" value={contactFields.emergency_contact_phone} editing={editingContact} type="tel"
+                onChange={v => setContactFields(f => ({ ...f, emergency_contact_phone: v }))} />
+              <ContactField label="GP name" value={contactFields.gp_name} editing={editingContact}
+                onChange={v => setContactFields(f => ({ ...f, gp_name: v }))} />
+              <ContactField label="GP phone" value={contactFields.gp_phone} editing={editingContact} type="tel"
+                onChange={v => setContactFields(f => ({ ...f, gp_phone: v }))} />
+            </div>
+          </section>
+
           <section>
             <p className="admin-eyebrow" style={{ marginBottom: 10 }}>Session history</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -297,6 +394,35 @@ function Field({ label, value }: { label: string; value: string }) {
     <div>
       <p className="admin-eyebrow" style={{ marginBottom: 4 }}>{label}</p>
       <div style={{ fontSize: 14, color: 'var(--forest-deep)', textTransform: 'capitalize' }}>{value}</div>
+    </div>
+  );
+}
+
+interface ContactFieldProps {
+  label: string;
+  value: string;
+  editing: boolean;
+  type?: string;
+  onChange: (v: string) => void;
+}
+
+function ContactField({ label, value, editing, type = 'text', onChange }: ContactFieldProps) {
+  return (
+    <div>
+      <p className="admin-eyebrow" style={{ marginBottom: 4 }}>{label}</p>
+      {editing ? (
+        <input
+          type={type}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className="admin-input"
+          style={{ padding: '8px 10px', fontSize: 13 }}
+        />
+      ) : (
+        <div style={{ fontSize: 13, color: value ? 'var(--forest-deep)' : 'var(--ink-muted)', minHeight: 20 }}>
+          {value || <span style={{ fontStyle: 'italic' }}>—</span>}
+        </div>
+      )}
     </div>
   );
 }

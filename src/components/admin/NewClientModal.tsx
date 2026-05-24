@@ -24,6 +24,13 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
   const [sessionFee, setSessionFee] = useState('');
   const [sendIntake, setSendIntake] = useState(true);
   const [isLowCost, setIsLowCost] = useState(false);
+  // Optional contact / personal detail fields
+  const [phone, setPhone] = useState('');
+  const [dob, setDob] = useState('');
+  const [emergencyName, setEmergencyName] = useState('');
+  const [emergencyPhone, setEmergencyPhone] = useState('');
+  const [gpName, setGpName] = useState('');
+  const [gpPhone, setGpPhone] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [generated, setGenerated] = useState<Generated | null>(null);
@@ -57,12 +64,22 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
         });
         const json = await res.json();
         if (!res.ok) { setError(json.error ?? 'Failed to generate link.'); return; }
-        // Mark low-cost via the update endpoint if requested.
-        if (isLowCost && json.client_id) {
-          await adminFetch('/api/admin/clients/update', {
-            method: 'POST',
-            body: JSON.stringify({ client_id: json.client_id, is_low_cost: true }),
-          });
+        // Save optional contact fields + low-cost flag via update endpoint.
+        if (json.client_id) {
+          const extras: Record<string, unknown> = {};
+          if (isLowCost) extras.is_low_cost = true;
+          if (phone.trim()) extras.phone = phone.trim();
+          if (dob.trim()) extras.date_of_birth = dob.trim();
+          if (emergencyName.trim()) extras.emergency_contact_name = emergencyName.trim();
+          if (emergencyPhone.trim()) extras.emergency_contact_phone = emergencyPhone.trim();
+          if (gpName.trim()) extras.gp_name = gpName.trim();
+          if (gpPhone.trim()) extras.gp_phone = gpPhone.trim();
+          if (Object.keys(extras).length > 0) {
+            await adminFetch('/api/admin/clients/update', {
+              method: 'POST',
+              body: JSON.stringify({ client_id: json.client_id, ...extras }),
+            });
+          }
         }
         setGenerated({
           url: json.url,
@@ -75,11 +92,17 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
           method: 'POST',
           body: JSON.stringify({
             client_name: clientName,
-            client_email: clientEmail,
+            client_email: clientEmail || undefined,
             session_fee: Number(sessionFee),
             is_low_cost: isLowCost,
             first_session_date: sessionDate || undefined,
             first_session_format: sessionFormat,
+            phone: phone.trim() || undefined,
+            date_of_birth: dob.trim() || undefined,
+            emergency_contact_name: emergencyName.trim() || undefined,
+            emergency_contact_phone: emergencyPhone.trim() || undefined,
+            gp_name: gpName.trim() || undefined,
+            gp_phone: gpPhone.trim() || undefined,
           }),
         });
         const json = await res.json();
@@ -88,6 +111,7 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
       }
       setClientName(''); setClientEmail(''); setSessionDate(''); setSessionFee(''); setSessionFormat('in_person');
       setIsLowCost(false);
+      setPhone(''); setDob(''); setEmergencyName(''); setEmergencyPhone(''); setGpName(''); setGpPhone('');
       onSuccess?.();
     } catch {
       setError('Network error. Please try again.');
@@ -137,8 +161,10 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
             value={clientName} onChange={e => setClientName(e.target.value)} className="admin-input" />
         </div>
         <div>
-          <label className="admin-label">Client email *</label>
-          <input type="email" required placeholder="jane@example.com"
+          <label className="admin-label">
+            Client email{sendIntake ? ' *' : <span style={{ color: 'var(--ink-muted)' }}> (optional)</span>}
+          </label>
+          <input type="email" required={sendIntake} placeholder="jane@example.com"
             value={clientEmail} onChange={e => setClientEmail(e.target.value)} className="admin-input" />
         </div>
       </div>
@@ -199,13 +225,51 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
         </span>
       </label>
 
+      {/* Optional contact / personal fields */}
+      <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <p className="admin-eyebrow" style={{ margin: 0 }}>Personal details <span style={{ fontStyle: 'italic', textTransform: 'none', letterSpacing: 0, color: 'var(--ink-muted)', fontSize: 11 }}>— all optional</span></p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div>
+            <label className="admin-label">Date of birth</label>
+            <input type="date" value={dob} onChange={e => setDob(e.target.value)} className="admin-input" />
+          </div>
+          <div>
+            <label className="admin-label">Phone number</label>
+            <input type="tel" placeholder="e.g. 085 123 4567" value={phone} onChange={e => setPhone(e.target.value)} className="admin-input" />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div>
+            <label className="admin-label">Emergency contact name</label>
+            <input type="text" placeholder="e.g. Mary Smith" value={emergencyName} onChange={e => setEmergencyName(e.target.value)} className="admin-input" />
+          </div>
+          <div>
+            <label className="admin-label">Emergency contact phone</label>
+            <input type="tel" placeholder="e.g. 086 987 6543" value={emergencyPhone} onChange={e => setEmergencyPhone(e.target.value)} className="admin-input" />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div>
+            <label className="admin-label">GP name</label>
+            <input type="text" placeholder="e.g. Dr. O'Brien" value={gpName} onChange={e => setGpName(e.target.value)} className="admin-input" />
+          </div>
+          <div>
+            <label className="admin-label">GP phone</label>
+            <input type="tel" placeholder="e.g. 01 234 5678" value={gpPhone} onChange={e => setGpPhone(e.target.value)} className="admin-input" />
+          </div>
+        </div>
+      </div>
+
       {error && (
         <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>
       )}
 
       <button
         type="submit"
-        disabled={busy || !clientName.trim() || !clientEmail.trim() || (sendIntake && !sessionDate) || !sessionFee}
+        disabled={busy || !clientName.trim() || (sendIntake && !clientEmail.trim()) || (sendIntake && !sessionDate) || !sessionFee}
         className="admin-btn-primary"
         style={{ alignSelf: 'flex-start' }}
       >
