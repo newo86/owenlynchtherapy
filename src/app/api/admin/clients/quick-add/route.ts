@@ -1,0 +1,104 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase';
+import { createCalendarEvent } from '@/lib/googleOAuth';
+
+const noCache = { 'Cache-Control': 'no-store, no-cache' };
+const VALID_FORMATS = ['in_person', 'online'];
+
+// Creates a client (and optionally a first session) without sending an
+// intake link, welcome email, or generating a Stripe payment link. The
+// counterpart to /api/intake/generate-token for clients who already exist
+// in Owen's practice from before this admin existed.
+export async function POST(req: NextRequest) {
+  const authHeader = req.headers.get('authorization');
+  const secret = process.env.INTAKE_ADMIN_SECRET;
+  if (!secret || authHeader !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  let body: {
+    client_name?: string;
+    client_email?: string;
+    session_fee?: number;           // euros, will be stored as cents
+    is_low_cost?: boolean;
+    first_session_date?: string;    // optional
+    first_session_format?: string;  // 'in_person' | 'online' — only used if first_session_date present
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { client_name, client_email, session_fee, is_low_cost, first_session_date, first_session_format } = body;
+
+  if (!client_name?.trim()) return NextResponse.json({ error: 'client_name is required' }, { status: 400 });
+  if (!client_email?.trim()) return NextResponse.json({ error: 'client_email is required' }, { status: 400 });
+  if (!session_fee || Number(session_fee) <= 0) return NextResponse.json({ error: 'session_fee is required and must be positive' }, { status: 400 });
+
+  const feeInCents = Math.round(Number(session_fee) * 100);
+
+  const { data: clientRow, error: clientErr } = await supabaseAdmin
+    .from('clients')
+    .insert({
+      full_name: client_name.trim(),
+      email: client_email.trim(),
+      session_fee: feeInCents,
+      status: 'active',
+      is_low_cost: Boolean(is_low_cost),
+    })
+    .select()
+    .single();
+
+  if (clientErr || !clientRow) {
+    console.error('[clients/quick-add] client insert error:', clientErr);
+    return NextResponse.json({ error: clientErr?.message ?? 'Failed to create client' }, { status: 500 });
+  }
+
+  // Optional first session.
+  if (first_session_date) {
+    const format = VALID_FORMATS.includes(first_session_format ?? '') ? first_session_format! : 'in_person';
+    const location = format === 'in_person'
+      ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
+      : "I'll send you a link to join shortly before your session.";
+
+    const { data: sessionRow, error: sessionErr } = await supabaseAdmin
+      .from('sessions')
+      .insert({
+        client_id: clientRow.id,
+        session_date: first_session_date,
+        session_format: format,
+        location,
+        fee: feeInCents,
+        status: 'scheduled',
+        payment_status: 'unpaid',
+      })
+      .select()
+      .single();
+
+    if (sessionErr) {
+      console.error('[clients/quick-add] session insert error:', sessionErr);
+      // Continue — the client row exists, that's the main thing.
+    } else if (sessionRow) {
+      // Push to Google Calendar (silent failure ok).
+      try {
+        await createCalendarEvent({
+          summary: `Session — ${client_name.trim()}`,
+          description: [
+            `Client: ${client_name.trim()} <${client_email.trim()}>`,
+            `Format: ${format === 'in_person' ? 'In Person' : 'Online'}`,
+            `Fee: €${Math.round(Number(session_fee))}`,
+            'One-off session',
+          ].join('\n'),
+          location: format === 'in_person' ? location : undefined,
+          startIso: first_session_date,
+          durationMinutes: 50,
+        });
+      } catch (calErr) {
+        console.error('[clients/quick-add] google calendar error:', calErr);
+      }
+    }
+  }
+
+  return NextResponse.json({ client: clientRow }, { headers: noCache });
+}

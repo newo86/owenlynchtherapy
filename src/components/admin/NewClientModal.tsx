@@ -22,9 +22,12 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
   const [sessionDate, setSessionDate] = useState('');
   const [sessionFormat, setSessionFormat] = useState<'in_person' | 'online'>('in_person');
   const [sessionFee, setSessionFee] = useState('');
+  const [sendIntake, setSendIntake] = useState(true);
+  const [isLowCost, setIsLowCost] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [generated, setGenerated] = useState<Generated | null>(null);
+  const [quickAddDone, setQuickAddDone] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   function copy(value: string, key: string) {
@@ -38,25 +41,53 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
     setBusy(true);
     setError('');
     setGenerated(null);
+    setQuickAddDone(false);
     try {
-      const res = await adminFetch('/api/intake/generate-token', {
-        method: 'POST',
-        body: JSON.stringify({
-          client_name: clientName,
-          client_email: clientEmail,
-          session_date: sessionDate,
-          session_format: sessionFormat,
-          session_fee: Number(sessionFee),
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) { setError(json.error ?? 'Failed to generate link.'); return; }
-      setGenerated({
-        url: json.url,
-        paymentLinkUrl: json.payment_link_url ?? '',
-        clientEmail,
-      });
+      if (sendIntake) {
+        // Full intake flow — generates token, creates Stripe link, emails client.
+        const res = await adminFetch('/api/intake/generate-token', {
+          method: 'POST',
+          body: JSON.stringify({
+            client_name: clientName,
+            client_email: clientEmail,
+            session_date: sessionDate,
+            session_format: sessionFormat,
+            session_fee: Number(sessionFee),
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) { setError(json.error ?? 'Failed to generate link.'); return; }
+        // Mark low-cost via the update endpoint if requested.
+        if (isLowCost && json.client_id) {
+          await adminFetch('/api/admin/clients/update', {
+            method: 'POST',
+            body: JSON.stringify({ client_id: json.client_id, is_low_cost: true }),
+          });
+        }
+        setGenerated({
+          url: json.url,
+          paymentLinkUrl: json.payment_link_url ?? '',
+          clientEmail,
+        });
+      } else {
+        // Quick add — no token, no Stripe, no welcome email.
+        const res = await adminFetch('/api/admin/clients/quick-add', {
+          method: 'POST',
+          body: JSON.stringify({
+            client_name: clientName,
+            client_email: clientEmail,
+            session_fee: Number(sessionFee),
+            is_low_cost: isLowCost,
+            first_session_date: sessionDate || undefined,
+            first_session_format: sessionFormat,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) { setError(json.error ?? 'Failed to add client.'); return; }
+        setQuickAddDone(true);
+      }
       setClientName(''); setClientEmail(''); setSessionDate(''); setSessionFee(''); setSessionFormat('in_person');
+      setIsLowCost(false);
       onSuccess?.();
     } catch {
       setError('Network error. Please try again.');
@@ -67,6 +98,38 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
 
   const form = (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Mode toggle */}
+      <div style={{
+        background: 'var(--cream)',
+        border: '1px solid var(--line)',
+        borderRadius: 12,
+        padding: '12px 14px',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 12,
+      }}>
+        <input
+          id="send-intake"
+          type="checkbox"
+          checked={sendIntake}
+          onChange={e => setSendIntake(e.target.checked)}
+          style={{ accentColor: 'var(--terracotta)', marginTop: 3 }}
+        />
+        <div style={{ flex: 1 }}>
+          <label htmlFor="send-intake" style={{
+            display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--forest-deep)',
+            cursor: 'pointer',
+          }}>
+            Send intake link &amp; welcome email
+          </label>
+          <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--ink-muted)' }}>
+            {sendIntake
+              ? 'New client gets an intake form, Stripe payment link, and welcome email.'
+              : 'Quick add — just create the record. No intake link, Stripe link, or email sent. Useful for clients already onboarded outside this dashboard.'}
+          </p>
+        </div>
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div>
           <label className="admin-label">Client name *</label>
@@ -81,9 +144,16 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div>
-          <label className="admin-label">Session date &amp; time *</label>
-          <input type="datetime-local" required value={sessionDate}
-            onChange={e => setSessionDate(e.target.value)} className="admin-input" />
+          <label className="admin-label">
+            Session date &amp; time {sendIntake ? '*' : <span style={{ color: 'var(--ink-muted)' }}>(optional)</span>}
+          </label>
+          <input
+            type="datetime-local"
+            required={sendIntake}
+            value={sessionDate}
+            onChange={e => setSessionDate(e.target.value)}
+            className="admin-input"
+          />
         </div>
         <div>
           <label className="admin-label">Session fee (€) *</label>
@@ -113,21 +183,48 @@ export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
         </div>
       </div>
 
+      <label style={{
+        display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+        fontSize: 13, color: 'var(--forest-deep)',
+      }}>
+        <input
+          type="checkbox"
+          checked={isLowCost}
+          onChange={e => setIsLowCost(e.target.checked)}
+          style={{ accentColor: 'var(--terracotta)' }}
+        />
+        Mark as low-cost client
+        <span style={{ fontSize: 12, color: 'var(--ink-muted)', fontStyle: 'italic' }}>
+          (kept separate in revenue stats)
+        </span>
+      </label>
+
       {error && (
         <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>
       )}
 
       <button
         type="submit"
-        disabled={busy || !clientName.trim() || !clientEmail.trim() || !sessionDate || !sessionFee}
+        disabled={busy || !clientName.trim() || !clientEmail.trim() || (sendIntake && !sessionDate) || !sessionFee}
         className="admin-btn-primary"
         style={{ alignSelf: 'flex-start' }}
       >
-        {busy ? 'Generating PDFs & sending email…' : 'Generate & Send Welcome Email'}
+        {busy
+          ? (sendIntake ? 'Generating PDFs & sending email…' : 'Adding client…')
+          : (sendIntake ? 'Generate & Send Welcome Email' : 'Add client')}
       </button>
-      {busy && (
+      {busy && sendIntake && (
         <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--ink-muted)', fontStyle: 'italic' }}>
           This can take up to ~10 s the first time; subsequent sends are faster.
+        </p>
+      )}
+
+      {quickAddDone && (
+        <p style={{
+          margin: 0, fontSize: 13, color: 'var(--sage)',
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+        }}>
+          <Check size={14} strokeWidth={2.4} /> Client added.
         </p>
       )}
 

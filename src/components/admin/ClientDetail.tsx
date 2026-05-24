@@ -186,16 +186,35 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
         </div>
 
         <div style={{ padding: '26px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-          <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <Field label="Status" value={client.status} />
             <Field label="Default fee" value={displayFee(client.session_fee)} />
             <Field label="Joined" value={new Date(client.created_at).toLocaleDateString('en-IE')} />
+            <div>
+              <p className="admin-eyebrow" style={{ marginBottom: 4 }}>Pricing tier</p>
+              <button
+                type="button"
+                onClick={async () => {
+                  const next = !client.is_low_cost;
+                  const res = await adminFetch('/api/admin/clients/update', {
+                    method: 'POST',
+                    body: JSON.stringify({ client_id: client.id, is_low_cost: next }),
+                  });
+                  if (res.ok) onReload();
+                }}
+                className={`admin-tag ${client.is_low_cost ? 'admin-tag-new' : 'admin-tag-active'}`}
+                style={{ cursor: 'pointer', border: 'none' }}
+                title="Click to toggle"
+              >
+                {client.is_low_cost ? 'Low cost · click to unmark' : 'Full-paying · click to mark low cost'}
+              </button>
+            </div>
             {submission && (
               <button
                 onClick={downloadPdf}
                 disabled={downloading}
                 className="admin-btn-secondary"
-                style={{ marginLeft: 'auto', alignSelf: 'flex-end' }}
+                style={{ marginLeft: 'auto' }}
               >
                 <Download size={14} strokeWidth={1.8} />
                 {downloading ? 'Generating…' : 'Intake PDF'}

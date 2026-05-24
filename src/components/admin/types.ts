@@ -21,6 +21,7 @@ export interface ClientRow {
   status: 'active' | 'new' | 'completed' | string;
   created_at: string;
   notes?: string | null;
+  is_low_cost?: boolean;
   sessions: SessionRow[];
 }
 
@@ -58,7 +59,7 @@ export interface CalendarStatus {
   email?: string;
 }
 
-export type AdminSection = 'dashboard' | 'clients' | 'sessions' | 'forms' | 'new-client';
+export type AdminSection = 'dashboard' | 'clients' | 'sessions' | 'revenue' | 'forms' | 'new-client';
 
 export type SessionFilter = 'all' | 'unpaid' | 'needs_receipt' | 'this_week';
 export type FormsTab = 'submitted' | 'pending';

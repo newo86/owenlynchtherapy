@@ -354,7 +354,7 @@ export async function POST(req: NextRequest) {
 
   console.log('[generate-token] complete — returning success');
   return NextResponse.json(
-    { url: intakeUrl, token, expires_at, payment_link_url: paymentLinkUrl },
+    { url: intakeUrl, token, expires_at, payment_link_url: paymentLinkUrl, client_id: clientRow.id },
     { headers: { 'Cache-Control': 'no-store, no-cache' } }
   );
 }

@@ -700,10 +700,14 @@ function weekLabel(weekOffset: number) {
 // ── Revenue + Recent clients cards ────────────────────────────────────────
 
 interface Revenue {
-  monthTotalCents: number;
+  monthGrossCents: number;
+  monthNetCents: number;
+  monthLowCostCents: number;
   prevMonthCents: number;
   weekBars: Array<{ day: string; value: number; cents: number }>;
 }
+
+const ROOM_COST_CENTS_DASH = 2000;
 
 function computeRevenue(all: Array<{ s: SessionRow; c: ClientRow }>): Revenue {
   const now = new Date();
@@ -711,17 +715,28 @@ function computeRevenue(all: Array<{ s: SessionRow; c: ClientRow }>): Revenue {
   const startOfPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const endOfPrev = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const monthCents = all
-    .filter(({ s }) => {
-      const d = new Date(s.session_date);
-      return d >= startOfMonth && d <= now && s.status === 'attended' && s.payment_status === 'paid';
-    })
-    .reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
+  // Headline figure = full-paying attended sessions this month. Low-cost
+  // sits underneath so the dashboard "what am I making" number stays clean.
+  let monthGross = 0;
+  let monthNet = 0;
+  let monthLowCost = 0;
+  for (const { s, c } of all) {
+    const d = new Date(s.session_date);
+    if (d < startOfMonth || d > now) continue;
+    if (s.status !== 'attended') continue;
+    if (c.is_low_cost) {
+      monthLowCost += s.fee ?? 0;
+      continue;
+    }
+    const gross = s.fee ?? 0;
+    monthGross += gross;
+    monthNet += s.session_format === 'in_person' ? Math.max(0, gross - ROOM_COST_CENTS_DASH) : gross;
+  }
 
   const prevCents = all
-    .filter(({ s }) => {
+    .filter(({ s, c }) => {
       const d = new Date(s.session_date);
-      return d >= startOfPrev && d < endOfPrev && s.status === 'attended' && s.payment_status === 'paid';
+      return !c.is_low_cost && d >= startOfPrev && d < endOfPrev && s.status === 'attended';
     })
     .reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
 
@@ -732,24 +747,25 @@ function computeRevenue(all: Array<{ s: SessionRow; c: ClientRow }>): Revenue {
 
   const weekBars = weekDays.map(d => {
     const cents = all
-      .filter(({ s }) => {
+      .filter(({ s, c }) => {
         const sd = new Date(s.session_date);
-        return isSameDay(sd, d) && s.status !== 'cancelled';
+        return !c.is_low_cost && isSameDay(sd, d) && s.status !== 'cancelled';
       })
       .reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
     return { day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][weekDays.indexOf(d)], value: cents, cents };
   });
 
-  return { monthTotalCents: monthCents, prevMonthCents: prevCents, weekBars };
+  return { monthGrossCents: monthGross, monthNetCents: monthNet, monthLowCostCents: monthLowCost, prevMonthCents: prevCents, weekBars };
 }
 
 function RevenueCard({ revenue }: { revenue: Revenue }) {
-  const { monthTotalCents, prevMonthCents, weekBars } = revenue;
+  const { monthGrossCents, monthNetCents, monthLowCostCents, prevMonthCents, weekBars } = revenue;
   const max = Math.max(...weekBars.map(b => b.cents), 1);
   const peakIdx = weekBars.reduce((pi, b, i, arr) => arr[pi].cents >= b.cents ? pi : i, 0);
   const delta = prevMonthCents > 0
-    ? Math.round(((monthTotalCents - prevMonthCents) / prevMonthCents) * 100)
+    ? Math.round(((monthGrossCents - prevMonthCents) / prevMonthCents) * 100)
     : null;
+  const roomCosts = monthGrossCents - monthNetCents;
 
   return (
     <section className="admin-card">
@@ -758,10 +774,26 @@ function RevenueCard({ revenue }: { revenue: Revenue }) {
           <p className="admin-eyebrow">Revenue · this month</p>
           <div className="admin-revenue-value">
             <span className="currency">€</span>
-            <span>{Math.round(monthTotalCents / 100).toLocaleString('en-IE')}</span>
+            <span>{Math.round(monthGrossCents / 100).toLocaleString('en-IE')}</span>
             {delta !== null && (
               <span className="admin-revenue-delta" style={{ color: delta >= 0 ? 'var(--sage)' : 'var(--terracotta)' }}>
                 {delta >= 0 ? '+' : ''}{delta}% vs {prevMonthLabel()}
+              </span>
+            )}
+          </div>
+          <div style={{ marginTop: 6, fontSize: 12, color: 'var(--ink-muted)' }}>
+            Full-paying · attended this month
+          </div>
+          <div style={{ marginTop: 8, fontSize: 13, fontWeight: 500, color: 'var(--forest-deep)' }}>
+            Net €{Math.round(monthNetCents / 100).toLocaleString('en-IE')}
+            {roomCosts > 0 && (
+              <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--ink-muted)', fontWeight: 400 }}>
+                (after €{Math.round(roomCosts / 100)} room costs)
+              </span>
+            )}
+            {monthLowCostCents > 0 && (
+              <span style={{ marginLeft: 12, fontSize: 11, color: 'var(--lilac-dark)', fontWeight: 500 }}>
+                + €{Math.round(monthLowCostCents / 100)} low-cost
               </span>
             )}
           </div>

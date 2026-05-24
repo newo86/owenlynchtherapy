@@ -7,6 +7,7 @@ import { ClientsList } from './ClientsList';
 import { ClientDetail } from './ClientDetail';
 import { SessionsList } from './SessionsList';
 import { FormsTable } from './FormsTable';
+import { Revenue } from './Revenue';
 import { NewClientModal } from './NewClientModal';
 import { ScheduleSessionModal } from './ScheduleSessionModal';
 import { adminFetch, clearSecret } from './api';
@@ -19,6 +20,7 @@ const SECTION_TITLES: Record<AdminSection, string> = {
   dashboard: 'Practice Overview',
   clients: 'Clients',
   sessions: 'Calendar',
+  revenue: 'Revenue',
   forms: 'Forms',
   'new-client': 'Onboarding',
 };
@@ -256,6 +258,10 @@ export function AdminShell() {
                   onReload={reload}
                   initialFilter={sessionsFilter}
                 />
+              )}
+
+              {section === 'revenue' && (
+                <Revenue clients={clients} />
               )}
 
               {section === 'forms' && (
