@@ -47,8 +47,9 @@ export async function POST(req: NextRequest) {
     session_format: string;
     fee: number;
     notes?: string;
-    recurrence?: string;            // 'once' | 'weekly' | 'biweekly'
+    recurrence?: string;            // 'once' | 'weekly' | 'biweekly' | 'monthly'
     occurrence_count?: number;      // applies when recurrence != 'once'
+    continuous?: boolean;           // open-ended recurrence (no COUNT in RRULE)
   };
   try {
     body = await req.json();
@@ -67,9 +68,12 @@ export async function POST(req: NextRequest) {
   const recurrence: Recurrence = body.recurrence && (VALID_RECURRENCE as readonly string[]).includes(body.recurrence)
     ? body.recurrence as Recurrence
     : 'once';
+  const isContinuous = !!body.continuous && recurrence !== 'once';
   const occurrenceCount = recurrence === 'once'
     ? 1
-    : Math.max(1, Math.min(52, Math.floor(Number(body.occurrence_count) || 6)));
+    : isContinuous
+      ? 52
+      : Math.max(1, Math.min(200, Math.floor(Number(body.occurrence_count) || 6)));
 
   // Pull the client's name so the Google Calendar event has a useful summary.
   const { data: clientRow } = await supabaseAdmin
@@ -89,10 +93,10 @@ export async function POST(req: NextRequest) {
   const rrule = recurrence === 'once'
     ? null
     : recurrence === 'weekly'
-      ? `RRULE:FREQ=WEEKLY;COUNT=${occurrenceCount}`
+      ? (isContinuous ? 'RRULE:FREQ=WEEKLY' : `RRULE:FREQ=WEEKLY;COUNT=${occurrenceCount}`)
       : recurrence === 'biweekly'
-        ? `RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=${occurrenceCount}`
-        : `RRULE:FREQ=MONTHLY;COUNT=${occurrenceCount}`;
+        ? (isContinuous ? 'RRULE:FREQ=WEEKLY;INTERVAL=2' : `RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=${occurrenceCount}`)
+        : (isContinuous ? 'RRULE:FREQ=MONTHLY' : `RRULE:FREQ=MONTHLY;COUNT=${occurrenceCount}`);
 
   const payload = utcDates.map(d => ({
     client_id,
@@ -122,11 +126,13 @@ export async function POST(req: NextRequest) {
   try {
     const cadenceLabel = recurrence === 'once'
       ? 'One-off session'
-      : recurrence === 'weekly'
-        ? `Weekly · ${occurrenceCount} sessions`
-        : recurrence === 'biweekly'
-          ? `Fortnightly · ${occurrenceCount} sessions`
-          : `Monthly · ${occurrenceCount} sessions`;
+      : isContinuous
+        ? `${recurrence === 'weekly' ? 'Weekly' : recurrence === 'biweekly' ? 'Fortnightly' : 'Monthly'} · ongoing`
+        : recurrence === 'weekly'
+          ? `Weekly · ${occurrenceCount} sessions`
+          : recurrence === 'biweekly'
+            ? `Fortnightly · ${occurrenceCount} sessions`
+            : `Monthly · ${occurrenceCount} sessions`;
     const eventId = await createCalendarEvent({
       summary: `Session — ${clientRow?.full_name ?? 'Client'}`,
       description: [

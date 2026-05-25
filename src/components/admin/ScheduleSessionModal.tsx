@@ -23,6 +23,7 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
   const [fee, setFee] = useState('');
   const [recurrence, setRecurrence] = useState<Recurrence>('once');
   const [occurrenceCount, setOccurrenceCount] = useState<number>(6);
+  const [continuous, setContinuous] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
@@ -46,12 +47,13 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
       const res = await adminFetch('/api/admin/sessions', {
         method: 'POST',
         body: JSON.stringify({
-          client_id: clientId,
-          session_date: sessionDate,
-          session_format: sessionFormat,
-          fee: Math.round(Number(fee) * 100),
+          client_id:        clientId,
+          session_date:     sessionDate,
+          session_format:   sessionFormat,
+          fee:              Math.round(Number(fee) * 100),
           recurrence,
-          occurrence_count: recurrence === 'once' ? 1 : occurrenceCount,
+          occurrence_count: recurrence === 'once' ? 1 : continuous ? 52 : occurrenceCount,
+          continuous:       recurrence !== 'once' && continuous,
         }),
       });
       const json = await res.json();
@@ -192,7 +194,7 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
                 <button
                   key={opt.id}
                   type="button"
-                  onClick={() => setRecurrence(opt.id)}
+                  onClick={() => { setRecurrence(opt.id); if (opt.id === 'once') setContinuous(false); }}
                   className={`admin-segmented-btn${recurrence === opt.id ? ' is-active' : ''}`}
                   style={{ padding: '8px 14px' }}
                 >{opt.label}</button>
@@ -204,26 +206,37 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
             <div>
               <label className="admin-label">Number of sessions</label>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setContinuous(true)}
+                  className={`admin-segmented-btn${continuous ? ' is-active' : ''}`}
+                  style={{ padding: '8px 14px' }}
+                >Continuous</button>
                 {COUNT_PRESETS.map(n => (
                   <button
                     key={n}
                     type="button"
-                    onClick={() => setOccurrenceCount(n)}
-                    className={`admin-segmented-btn${occurrenceCount === n ? ' is-active' : ''}`}
+                    onClick={() => { setContinuous(false); setOccurrenceCount(n); }}
+                    className={`admin-segmented-btn${!continuous && occurrenceCount === n ? ' is-active' : ''}`}
                     style={{ padding: '8px 14px' }}
                   >{n}</button>
                 ))}
-                <input
-                  type="number" min={2} max={52} step={1}
-                  value={occurrenceCount}
-                  onChange={e => setOccurrenceCount(Math.max(2, Math.min(52, Number(e.target.value) || 6)))}
-                  className="admin-input"
-                  style={{ width: 90 }}
-                  aria-label="Custom number of sessions"
-                />
+                {!continuous && (
+                  <input
+                    type="number" min={2} max={200} step={1}
+                    value={occurrenceCount}
+                    onChange={e => setOccurrenceCount(Math.max(2, Math.min(200, Number(e.target.value) || 6)))}
+                    className="admin-input"
+                    style={{ width: 90 }}
+                    aria-label="Custom number of sessions"
+                  />
+                )}
               </div>
               <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--ink-muted)' }}>
-                Creates {occurrenceCount} sessions and a recurring event on Google Calendar.
+                {continuous
+                  ? 'Schedules ongoing sessions indefinitely until cancelled.'
+                  : `Creates ${occurrenceCount} sessions and a recurring event on Google Calendar.`
+                }
               </p>
             </div>
           )}

@@ -65,8 +65,9 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
       : 'scheduled'
   );
   const [notes, setNotes]                 = useState(session.notes ?? '');
-  const [followUpCadence, setFollowUpCadence] = useState<FollowUpCadence>('none');
-  const [followUpCount, setFollowUpCount]     = useState(6);
+  const [followUpCadence, setFollowUpCadence]     = useState<FollowUpCadence>('none');
+  const [followUpCount, setFollowUpCount]         = useState(6);
+  const [followUpContinuous, setFollowUpContinuous] = useState(false);
   const [busy, setBusy]   = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
@@ -106,12 +107,13 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
         const fuRes = await adminFetch('/api/admin/sessions', {
           method: 'POST',
           body: JSON.stringify({
-            client_id:      client.id,
-            session_date:   nextDate,
-            session_format: format,
-            fee:            Number(fee) * 100,
-            recurrence:     apiCadence,
-            occurrence_count: followUpCount,
+            client_id:        client.id,
+            session_date:     nextDate,
+            session_format:   format,
+            fee:              Number(fee) * 100,
+            recurrence:       apiCadence,
+            occurrence_count: followUpContinuous ? 52 : followUpCount,
+            continuous:       followUpContinuous,
           }),
         });
         if (!fuRes.ok) {
@@ -338,7 +340,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                 <button
                   key={opt.id}
                   type="button"
-                  onClick={() => setFollowUpCadence(opt.id)}
+                  onClick={() => { setFollowUpCadence(opt.id); if (opt.id === 'none') setFollowUpContinuous(false); }}
                   className={`admin-segmented-btn${followUpCadence === opt.id ? ' is-active' : ''}`}
                   style={{ padding: '8px 14px' }}
                 >
@@ -351,26 +353,37 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
               <div style={{ marginTop: 12 }}>
                 <label className="admin-label">Number of follow-up sessions</label>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => setFollowUpContinuous(true)}
+                    className={`admin-segmented-btn${followUpContinuous ? ' is-active' : ''}`}
+                    style={{ padding: '8px 14px' }}
+                  >Continuous</button>
                   {COUNT_PRESETS.map(n => (
                     <button
                       key={n}
                       type="button"
-                      onClick={() => setFollowUpCount(n)}
-                      className={`admin-segmented-btn${followUpCount === n ? ' is-active' : ''}`}
+                      onClick={() => { setFollowUpContinuous(false); setFollowUpCount(n); }}
+                      className={`admin-segmented-btn${!followUpContinuous && followUpCount === n ? ' is-active' : ''}`}
                       style={{ padding: '8px 14px' }}
                     >{n}</button>
                   ))}
-                  <input
-                    type="number" min={1} max={52} step={1}
-                    value={followUpCount}
-                    onChange={e => setFollowUpCount(Math.max(1, Math.min(52, Number(e.target.value) || 6)))}
-                    className="admin-input"
-                    style={{ width: 80 }}
-                    aria-label="Custom number of follow-up sessions"
-                  />
+                  {!followUpContinuous && (
+                    <input
+                      type="number" min={1} max={200} step={1}
+                      value={followUpCount}
+                      onChange={e => setFollowUpCount(Math.max(1, Math.min(200, Number(e.target.value) || 6)))}
+                      className="admin-input"
+                      style={{ width: 80 }}
+                      aria-label="Custom number of follow-up sessions"
+                    />
+                  )}
                 </div>
                 <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--ink-muted)' }}>
-                  Creates {followUpCount} {followUpCadence} sessions starting the {followUpCadence === 'weekly' ? 'next week' : followUpCadence === 'fortnightly' ? 'next fortnight' : 'next month'}.
+                  {followUpContinuous
+                    ? `Schedules ongoing ${followUpCadence} sessions indefinitely until cancelled.`
+                    : `Creates ${followUpCount} ${followUpCadence} sessions starting the ${followUpCadence === 'weekly' ? 'next week' : followUpCadence === 'fortnightly' ? 'next fortnight' : 'next month'}.`
+                  }
                 </p>
               </div>
             )}
