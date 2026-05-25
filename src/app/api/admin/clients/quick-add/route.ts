@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { createCalendarEvent } from '@/lib/googleOAuth';
+import { localDublinToUtcIso } from '@/lib/dateUtils';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
@@ -79,11 +80,16 @@ export async function POST(req: NextRequest) {
       ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
       : "I'll send you a link to join shortly before your session.";
 
+    // Convert wall-clock Dublin time to UTC for Supabase timestamptz storage.
+    // Keep the original wall-clock string for Google Calendar (which expects
+    // wall-clock + timeZone, not a UTC string).
+    const sessionDateUtc = localDublinToUtcIso(first_session_date);
+
     const { data: sessionRow, error: sessionErr } = await supabaseAdmin
       .from('sessions')
       .insert({
         client_id: clientRow.id,
-        session_date: first_session_date,
+        session_date: sessionDateUtc,
         session_format: format,
         location,
         fee: feeInCents,
@@ -99,7 +105,7 @@ export async function POST(req: NextRequest) {
     } else if (sessionRow) {
       // Push to Google Calendar (silent failure ok).
       try {
-        await createCalendarEvent({
+        const eventId = await createCalendarEvent({
           summary: `Session — ${client_name.trim()}`,
           description: [
             `Client: ${client_name.trim()}${client_email ? ` <${client_email.trim()}>` : ''}`,
@@ -111,6 +117,12 @@ export async function POST(req: NextRequest) {
           startIso: first_session_date,
           durationMinutes: 50,
         });
+        if (eventId) {
+          await supabaseAdmin
+            .from('sessions')
+            .update({ gcal_event_id: eventId })
+            .eq('id', sessionRow.id);
+        }
       } catch (calErr) {
         console.error('[clients/quick-add] google calendar error:', calErr);
       }

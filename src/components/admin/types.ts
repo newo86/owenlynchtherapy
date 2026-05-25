@@ -10,6 +10,7 @@ export interface SessionRow {
   stripe_payment_link_url: string | null;
   receipt_sent_at: string | null;
   notes: string | null;
+  gcal_event_id?: string | null;
 }
 
 export interface ClientRow {

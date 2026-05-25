@@ -10,9 +10,10 @@ import { FormsTable } from './FormsTable';
 import { Revenue } from './Revenue';
 import { NewClientModal } from './NewClientModal';
 import { ScheduleSessionModal } from './ScheduleSessionModal';
+import { SessionEditModal } from './SessionEditModal';
 import { adminFetch, clearSecret } from './api';
 import type {
-  AdminSection, ClientRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
+  AdminSection, ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
   SessionFilter, FormsTab,
 } from './types';
 
@@ -55,6 +56,7 @@ export function AdminShell() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleInitialIso, setScheduleInitialIso] = useState<string | undefined>();
+  const [editSession, setEditSession] = useState<{ session: SessionRow; client: ClientRow } | null>(null);
   // Filter intents carried when a Quick Action card navigates between sections.
   const [sessionsFilter, setSessionsFilter] = useState<SessionFilter | undefined>();
   const [formsTab, setFormsTab] = useState<FormsTab | undefined>();
@@ -193,6 +195,7 @@ export function AdminShell() {
               onDisconnectCalendar={disconnectCalendar}
               onNewClient={() => setModalOpen(true)}
               onScheduleDay={iso => { setScheduleInitialIso(iso); setScheduleOpen(true); }}
+              onClickSession={(session, client) => setEditSession({ session, client })}
               onNavigateSection={navigateSection}
               greeting={greet()}
               dateLine={dateLine()}
@@ -296,6 +299,15 @@ export function AdminShell() {
           clients={clients}
           initialIsoDate={scheduleInitialIso}
           onClose={() => setScheduleOpen(false)}
+          onSuccess={() => { reload(); }}
+        />
+      )}
+
+      {editSession && (
+        <SessionEditModal
+          session={editSession.session}
+          client={editSession.client}
+          onClose={() => setEditSession(null)}
           onSuccess={() => { reload(); }}
         />
       )}

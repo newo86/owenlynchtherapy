@@ -28,6 +28,8 @@ interface Props {
   /** Called when the user clicks an empty calendar day. Receives a
    *  pre-filled "YYYY-MM-DDTHH:MM" string for the schedule modal. */
   onScheduleDay: (iso: string) => void;
+  /** Called when the user clicks an existing session event on the calendar. */
+  onClickSession: (session: SessionRow, client: ClientRow) => void;
   /** Navigate the admin to another section, optionally carrying a filter
    *  intent (sessions tab + initial filter / forms tab). */
   onNavigateSection: (section: 'sessions' | 'forms', opts?: {
@@ -80,7 +82,7 @@ export function Dashboard({
   clients, tokens, events, calendarStatus,
   weekOffset, onWeekOffsetChange,
   onReload, onConnectCalendar, onDisconnectCalendar, onNewClient,
-  onScheduleDay, onNavigateSection,
+  onScheduleDay, onClickSession, onNavigateSection,
   greeting, dateLine, flash, sectionTitle,
 }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -367,7 +369,7 @@ export function Dashboard({
           </div>
         </div>
 
-        <WeekGrid clients={clients} events={events} weekOffset={weekOffset} onClickDay={onScheduleDay} />
+        <WeekGrid clients={clients} events={events} weekOffset={weekOffset} onClickDay={onScheduleDay} onClickSession={onClickSession} />
       </section>
 
       {/* Revenue + Recent clients */}
@@ -594,11 +596,12 @@ function QuickActions({ unpaidThisWeek, needsReceipt, formsPending, pendingNames
 
 // ── Week grid (light-themed) ───────────────────────────────────────────────
 
-function WeekGrid({ clients, events, weekOffset, onClickDay }: {
+function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession }: {
   clients: ClientRow[];
   events: CalendarEvent[];
   weekOffset: number;
   onClickDay?: (iso: string) => void;
+  onClickSession?: (session: SessionRow, client: ClientRow) => void;
 }) {
   const days = useMemo(() => {
     const monday = startOfWeek(new Date());
@@ -610,7 +613,14 @@ function WeekGrid({ clients, events, weekOffset, onClickDay }: {
 
   function eventsForDay(day: Date) {
     const matched = new Set<string>();
-    const out: Array<{ time: string; label: string; accent: Accent; start: string }> = [];
+    const out: Array<{
+      time: string;
+      label: string;
+      accent: Accent;
+      start: string;
+      session?: SessionRow;
+      client?: ClientRow;
+    }> = [];
     for (const c of clients) {
       for (const s of c.sessions) {
         const d = new Date(s.session_date);
@@ -628,6 +638,8 @@ function WeekGrid({ clients, events, weekOffset, onClickDay }: {
           label: c.full_name,
           accent: accentForName(c.full_name),
           start: s.session_date,
+          session: s,
+          client: c,
         });
       }
     }
@@ -650,18 +662,18 @@ function WeekGrid({ clients, events, weekOffset, onClickDay }: {
         const dayEvents = eventsForDay(day);
         const isToday = isSameDay(day, new Date());
         const clickable = !!onClickDay;
-        const handleClick = clickable
+        const handleDayClick = clickable
           ? () => onClickDay!(buildClickIso(day))
           : undefined;
         return (
           <div
             key={i}
             className={`admin-day${isToday ? ' is-today' : ''}${clickable ? ' admin-day-clickable' : ''}`}
-            onClick={handleClick}
+            onClick={handleDayClick}
             role={clickable ? 'button' : undefined}
             tabIndex={clickable ? 0 : undefined}
             onKeyDown={clickable
-              ? e => { if (e.key === 'Enter' || e.key === ' ') handleClick!(); }
+              ? e => { if (e.key === 'Enter' || e.key === ' ') handleDayClick!(); }
               : undefined}
             title={clickable ? `Schedule a session on ${day.toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'short' })}` : undefined}
           >
@@ -672,12 +684,28 @@ function WeekGrid({ clients, events, weekOffset, onClickDay }: {
             {dayEvents.length === 0 ? (
               <div className="admin-event-empty">No sessions</div>
             ) : (
-              dayEvents.map((e, idx) => (
-                <div key={idx} className={`admin-event ${e.accent}`}>
-                  <div className="admin-event-time">{e.time}</div>
-                  <div className="admin-event-name">{e.label}</div>
-                </div>
-              ))
+              dayEvents.map((e, idx) => {
+                const isSession = !!e.session && !!e.client;
+                return (
+                  <div
+                    key={idx}
+                    className={`admin-event ${e.accent}`}
+                    style={isSession && onClickSession ? { cursor: 'pointer' } : undefined}
+                    onClick={isSession && onClickSession
+                      ? ev => { ev.stopPropagation(); onClickSession(e.session!, e.client!); }
+                      : undefined}
+                    role={isSession && onClickSession ? 'button' : undefined}
+                    tabIndex={isSession && onClickSession ? 0 : undefined}
+                    onKeyDown={isSession && onClickSession
+                      ? ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.stopPropagation(); onClickSession(e.session!, e.client!); } }
+                      : undefined}
+                    title={isSession ? `Edit: ${e.label}` : undefined}
+                  >
+                    <div className="admin-event-time">{e.time}</div>
+                    <div className="admin-event-name">{e.label}</div>
+                  </div>
+                );
+              })
             )}
           </div>
         );

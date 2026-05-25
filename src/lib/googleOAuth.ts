@@ -145,6 +145,41 @@ interface CreateEventInput {
   timeZone?: string;
 }
 
+/** Updates an existing event on the practice's primary Google Calendar.
+ *  Returns true on success, false on failure. Silent failure — Supabase is
+ *  the source of truth. */
+export async function updateCalendarEvent(
+  eventId: string,
+  input: CreateEventInput,
+): Promise<boolean> {
+  const client = await getAuthorizedClient();
+  if (!client) return false;
+
+  const tz = input.timeZone ?? 'Europe/Dublin';
+  const duration = input.durationMinutes ?? 50;
+  const localIso = normaliseLocalDateTime(input.startIso);
+  const endLocalIso = addMinutesLocal(localIso, duration);
+
+  try {
+    const calendar = google.calendar({ version: 'v3', auth: client });
+    await calendar.events.patch({
+      calendarId: 'primary',
+      eventId,
+      requestBody: {
+        summary: input.summary,
+        description: input.description,
+        location: input.location,
+        start: { dateTime: localIso,    timeZone: tz },
+        end:   { dateTime: endLocalIso, timeZone: tz },
+      },
+    });
+    return true;
+  } catch (err: unknown) {
+    console.error('[googleOAuth] updateCalendarEvent error:', err instanceof Error ? err.message : String(err));
+    return false;
+  }
+}
+
 /** Creates an event on the practice's primary Google Calendar. Returns the
  *  event ID on success, or null if the user hasn't connected Google or the
  *  request fails. We swallow errors so a failed calendar push never blocks

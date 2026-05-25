@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { createCalendarEvent } from '@/lib/googleOAuth';
+import { localDublinToUtcIso } from '@/lib/dateUtils';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
@@ -81,14 +82,17 @@ export async function POST(req: NextRequest) {
     ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
     : "I'll send you a link to join shortly before your session.";
 
+  // isoDates = wall-clock Dublin strings (used as-is for Google Calendar).
+  // utcDates  = UTC ISO strings for Supabase timestamptz storage.
   const isoDates = buildOccurrences(session_date, recurrence, occurrenceCount);
+  const utcDates = isoDates.map(localDublinToUtcIso);
   const rrule = recurrence === 'once'
     ? null
     : recurrence === 'weekly'
       ? `RRULE:FREQ=WEEKLY;COUNT=${occurrenceCount}`
       : `RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=${occurrenceCount}`;
 
-  const payload = isoDates.map(d => ({
+  const payload = utcDates.map(d => ({
     client_id,
     session_date: d,
     session_format,
@@ -111,6 +115,8 @@ export async function POST(req: NextRequest) {
 
   // Push to Google Calendar — one recurring event spans the whole series.
   // Failures are logged and ignored: Supabase is the source of truth.
+  // startIso uses the original wall-clock Dublin string (Google Calendar API
+  // expects wall-clock + timeZone, not a UTC string).
   try {
     const cadenceLabel = recurrence === 'once'
       ? 'One-off session'
@@ -131,6 +137,12 @@ export async function POST(req: NextRequest) {
       recurrence: rrule ? [rrule] : undefined,
     });
     console.log('[sessions POST] google event:', eventId ?? 'skipped');
+    if (eventId) {
+      await supabaseAdmin
+        .from('sessions')
+        .update({ gcal_event_id: eventId })
+        .in('id', sessions.map((s: { id: string }) => s.id));
+    }
   } catch (calErr) {
     console.error('[sessions POST] google calendar error:', calErr);
   }
