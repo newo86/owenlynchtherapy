@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 const p = 'font-normal text-base text-gray-700 leading-[1.75] mb-6';
 const inlineLink =
-  'underline underline-offset-2 decoration-orange/60 hover:decoration-orange transition-colors';
+  'underline underline-offset-2 decoration-orange/60 h-hover:decoration-orange h-can:transition-colors';
 
 export default function ServiceHowSessionsWork() {
   return (

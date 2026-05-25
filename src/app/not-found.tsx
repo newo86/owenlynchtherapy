@@ -64,7 +64,7 @@ export default function NotFound() {
 
       <Link
         href="/contact"
-        className="inline-block text-white px-10 py-4 rounded-md text-xs uppercase tracking-normal font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#F5F0E8]"
+        className="inline-block text-white px-10 py-4 rounded-md text-xs uppercase tracking-normal font-normal h-hover:opacity-90 h-can:transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#F5F0E8]"
         style={{ backgroundColor: '#C85A1A' }}
       >
         Get in Touch

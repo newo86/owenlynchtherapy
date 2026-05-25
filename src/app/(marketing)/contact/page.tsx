@@ -67,7 +67,7 @@ const reassurance = [
 const inputClass =
   'w-full rounded-md px-3 py-3 text-sm font-normal bg-white text-gray-800 ' +
   'border border-[#D0C8BC] focus:outline-none focus:border-[#2a4d3c] ' +
-  'focus:ring-1 focus:ring-[#2a4d3c] transition-colors placeholder:text-gray-400';
+  'focus:ring-1 focus:ring-[#2a4d3c] h-can:transition-colors placeholder:text-gray-400';
 
 const labelClass =
   'block text-xs font-normal uppercase tracking-normal text-gray-500 mb-1.5';
@@ -192,7 +192,7 @@ export default async function ContactPage({ searchParams }: Props) {
                 <p className={labelClass}>Email</p>
                 <a
                   href="mailto:info@owenlynchtherapy.com"
-                  className="font-normal text-sm text-orange hover:underline"
+                  className="font-normal text-sm text-orange h-hover:underline"
                 >
                   info@owenlynchtherapy.com
                 </a>
@@ -201,7 +201,7 @@ export default async function ContactPage({ searchParams }: Props) {
                 <p className={labelClass}>Phone</p>
                 <a
                   href="tel:+353851471689"
-                  className="font-normal text-sm text-orange hover:underline"
+                  className="font-normal text-sm text-orange h-hover:underline"
                 >
                   085 147 1689
                 </a>
@@ -353,7 +353,7 @@ export default async function ContactPage({ searchParams }: Props) {
 
                   <button
                     type="submit"
-                    className="w-full bg-orange text-white py-3.5 rounded-md text-xs uppercase tracking-normal font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+                    className="w-full bg-orange text-white py-3.5 rounded-md text-xs uppercase tracking-normal font-normal h-hover:opacity-90 h-can:transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
                   >
                     Send Message
                   </button>

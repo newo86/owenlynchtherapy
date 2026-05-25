@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
 };
 
-const linkClass = 'underline underline-offset-2 decoration-orange/50 hover:decoration-orange transition-colors';
+const linkClass = 'underline underline-offset-2 decoration-orange/50 h-hover:decoration-orange h-can:transition-colors';
 const IAHIP = <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className={linkClass}>IAHIP</a>;
 const ICP   = <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className={linkClass}>ICP</a>;
 
@@ -42,20 +42,20 @@ const crisisContent = (
       </li>
       <li>
         <a href="https://www.samaritans.org/ireland/" target="_blank" rel="noopener noreferrer"
-          className="text-orange hover:underline">Samaritans</a>
+          className="text-orange h-hover:underline">Samaritans</a>
         {': '}
         <span className="font-medium" style={{ color: '#2D5A42' }}>116 123</span>
         {', available 24/7'}
       </li>
       <li>
         <a href="https://www.textaboutit.ie/" target="_blank" rel="noopener noreferrer"
-          className="text-orange hover:underline">Text About It</a>
+          className="text-orange h-hover:underline">Text About It</a>
         {': Text '}
         <span className="font-medium" style={{ color: '#2D5A42' }}>HELLO to 50808</span>
       </li>
       <li>
         <a href="https://www.pieta.ie/" target="_blank" rel="noopener noreferrer"
-          className="text-orange hover:underline">Pieta</a>
+          className="text-orange h-hover:underline">Pieta</a>
         {': '}
         <span className="font-medium" style={{ color: '#2D5A42' }}>1800 247 247</span>
         {' or text '}
@@ -63,13 +63,13 @@ const crisisContent = (
       </li>
       <li>
         <a href="https://www2.hse.ie/mental-health/" target="_blank" rel="noopener noreferrer"
-          className="text-orange hover:underline">HSE YourMentalHealth</a>
+          className="text-orange h-hover:underline">HSE YourMentalHealth</a>
         {': '}
         <span className="font-medium" style={{ color: '#2D5A42' }}>1800 742 444</span>
       </li>
       <li>
         <a href="https://www.childline.ie/" target="_blank" rel="noopener noreferrer"
-          className="text-orange hover:underline">Childline</a>
+          className="text-orange h-hover:underline">Childline</a>
         {' (under 18s): '}
         <span className="font-medium" style={{ color: '#2D5A42' }}>1800 66 66 66</span>
       </li>
@@ -317,7 +317,7 @@ export default function FaqPage() {
           />
           <Link
             href="/contact"
-            className="inline-block bg-orange text-white px-10 py-4 rounded-md text-xs uppercase tracking-normal font-normal hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#2A4D3C]"
+            className="inline-block bg-orange text-white px-10 py-4 rounded-md text-xs uppercase tracking-normal font-normal h-hover:opacity-90 h-can:transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-[#2A4D3C]"
           >
             Get in Touch
           </Link>

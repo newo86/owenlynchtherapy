@@ -13,7 +13,7 @@
     "@react-pdf/renderer": "^4.5.1",
     "@sanity/client": "^7.22.0",
     "@sanity/image-url": "^2.1.1",
-    "@sanity/vision": "^5.25.1",
+    "@sanity/vision": "^5.26.0",
     "@supabase/supabase-js": "^2.106.1",
     "@types/pdfkit": "^0.17.6",
     "@vercel/analytics": "^2.0.1",
@@ -29,8 +29,9 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "resend": "^6.12.3",
-    "sanity": "^5.25.1",
+    "sanity": "^5.26.0",
     "stripe": "^22.1.1",
+    "styled-components": "^6.4.2",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {

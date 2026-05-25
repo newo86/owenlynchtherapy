@@ -40,9 +40,9 @@ export default function AboutTeaser() {
 
           <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-5">
             I&apos;m Owen Lynch, an{' '}
-            <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 hover:decoration-orange transition-colors">IAHIP</a>
+            <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 h-hover:decoration-orange h-can:transition-colors">IAHIP</a>
             {' '}and{' '}
-            <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 hover:decoration-orange transition-colors">ICP</a>
+            <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 h-hover:decoration-orange h-can:transition-colors">ICP</a>
             {' '}accredited psychotherapist based in Dublin. I work with adults
             navigating anxiety, identity, relationships, and the quieter struggles that are often
             hardest to name.
@@ -55,7 +55,7 @@ export default function AboutTeaser() {
 
           <Link
             href="/about"
-            className="inline-flex items-center gap-2 text-forest text-xs font-normal uppercase tracking-normal border-b border-forest/40 pb-0.5 hover:border-forest transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest rounded-sm"
+            className="inline-flex items-center gap-2 text-forest text-xs font-normal uppercase tracking-normal border-b border-forest/40 pb-0.5 h-hover:border-forest h-can:transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest rounded-sm"
           >
             Read more about my approach <span aria-hidden="true">→</span>
           </Link>
