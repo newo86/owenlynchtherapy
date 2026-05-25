@@ -452,36 +452,34 @@ function SessionRow({
         <span className="admin-session-time-meridiem">{meridiem(session.session_date)}</span>
       </div>
 
-      <button
-        type="button"
-        onClick={onEdit}
-        disabled={!onEdit}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 12, minWidth: 0,
-          background: 'none', border: 'none', padding: 0, textAlign: 'left',
-          cursor: onEdit ? 'pointer' : 'default',
-        }}
-        title={onEdit ? `Edit session for ${client.full_name}` : undefined}
-      >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
         <Avatar name={client.full_name} size={38} />
         <div style={{ minWidth: 0 }}>
-          <div className="admin-session-name" style={onEdit ? { textDecoration: 'underline', textDecorationColor: 'rgba(42,77,60,0.3)', textUnderlineOffset: 3 } : undefined}>{client.full_name}</div>
-          <div className="admin-session-meta">
-            {displayFee(session.fee)} · 50 min
-          </div>
+          <button
+            type="button"
+            onClick={onEdit}
+            disabled={!onEdit}
+            style={{
+              background: 'none', border: 'none', padding: 0,
+              cursor: onEdit ? 'pointer' : 'default', textAlign: 'left', display: 'block',
+            }}
+            title={onEdit ? `Edit session for ${client.full_name}` : undefined}
+          >
+            <div className="admin-session-name" style={onEdit ? { textDecoration: 'underline', textDecorationColor: 'rgba(42,77,60,0.3)', textUnderlineOffset: 3 } : undefined}>{client.full_name}</div>
+          </button>
+          <div className="admin-session-meta">{displayFee(session.fee)} · 50 min</div>
           {session.session_format === 'online' && (
             <a
               href="https://doxy.me/owenlynchtherapy"
               target="_blank"
               rel="noopener noreferrer"
-              onClick={e => e.stopPropagation()}
               style={{ fontSize: 11, color: 'var(--sage)', textDecoration: 'underline', textUnderlineOffset: 2, display: 'inline-block', marginTop: 2 }}
             >
               doxy.me room ↗
             </a>
           )}
         </div>
-      </button>
+      </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>

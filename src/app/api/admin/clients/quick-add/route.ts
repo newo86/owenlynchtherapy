@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     const format = VALID_FORMATS.includes(first_session_format ?? '') ? first_session_format! : 'in_person';
     const location = format === 'in_person'
       ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
-      : "I'll send you a link to join shortly before your session.";
+      : 'https://doxy.me/owenlynchtherapy';
 
     // Convert wall-clock Dublin time to UTC for Supabase timestamptz storage.
     // Keep the original wall-clock string for Google Calendar (which expects
@@ -110,10 +110,11 @@ export async function POST(req: NextRequest) {
           description: [
             `Client: ${client_name.trim()}${client_email ? ` <${client_email.trim()}>` : ''}`,
             `Format: ${format === 'in_person' ? 'In Person' : 'Online'}`,
+            format === 'online' ? 'Join: https://doxy.me/owenlynchtherapy' : '',
             `Fee: €${Math.round(Number(session_fee))}`,
             'One-off session',
-          ].join('\n'),
-          location: format === 'in_person' ? location : undefined,
+          ].filter(Boolean).join('\n'),
+          location,
           startIso: first_session_date,
           durationMinutes: 50,
         });

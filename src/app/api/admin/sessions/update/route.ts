@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     sessionPatch.session_format = body.session_format;
     sessionPatch.location = body.session_format === 'in_person'
       ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
-      : "I'll send you a link to join shortly before your session.";
+      : 'https://doxy.me/owenlynchtherapy';
   }
   if (typeof body.payment_status === 'string' && VALID_PAYMENT.includes(body.payment_status)) {
     sessionPatch.payment_status = body.payment_status;
@@ -109,11 +109,12 @@ export async function POST(req: NextRequest) {
     const format = (sessionPatch.session_format ?? existing.session_format) as string;
     const location = format === 'in_person'
       ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
-      : undefined;
+      : 'https://doxy.me/owenlynchtherapy';
     const clientName = (clientPatch.full_name ?? body.client_name ?? 'Client') as string;
     try {
       await updateCalendarEvent(existing.gcal_event_id, {
         summary: `Session — ${clientName}`,
+        description: format === 'online' ? 'Join: https://doxy.me/owenlynchtherapy' : undefined,
         location,
         startIso: newWallClock,
         durationMinutes: 50,

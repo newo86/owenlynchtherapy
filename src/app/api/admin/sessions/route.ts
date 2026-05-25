@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
 
   const location = session_format === 'in_person'
     ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
-    : "I'll send you a link to join shortly before your session.";
+    : 'https://doxy.me/owenlynchtherapy';
 
   // isoDates = wall-clock Dublin strings (used as-is for Google Calendar).
   // utcDates  = UTC ISO strings for Supabase timestamptz storage.
@@ -138,10 +138,11 @@ export async function POST(req: NextRequest) {
       description: [
         clientRow?.full_name && clientRow.email ? `Client: ${clientRow.full_name} <${clientRow.email}>` : '',
         `Format: ${session_format === 'in_person' ? 'In Person' : 'Online'}`,
+        session_format === 'online' ? 'Join: https://doxy.me/owenlynchtherapy' : '',
         `Fee: €${Math.round(Number(fee) / 100)}`,
         cadenceLabel,
       ].filter(Boolean).join('\n'),
-      location: session_format === 'in_person' ? location : undefined,
+      location,
       startIso: isoDates[0],
       durationMinutes: 50,
       recurrence: rrule ? [rrule] : undefined,
