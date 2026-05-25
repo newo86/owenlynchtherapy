@@ -691,11 +691,11 @@
 }
 
 .admin-day {
-  background: var(--cream);
+  background: #ffffff;
   border-radius: 14px;
   min-height: 220px;
   padding: 12px 12px 14px;
-  border: 1px solid transparent;
+  border: 1px solid rgba(42, 77, 60, 0.08);
   transition: border-color 180ms ease;
   display: flex;
   flex-direction: column;
@@ -710,7 +710,7 @@
 }
 
 .admin-day-clickable:hover {
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(245, 240, 232, 0.6);
 }
 
 .admin-day-clickable.is-today:hover {
