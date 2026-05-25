@@ -6,6 +6,7 @@ import { localDublinToUtcIso } from '@/lib/dateUtils';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
 const VALID_PAYMENT = ['paid', 'unpaid', 'refunded'];
+const VALID_STATUS = ['scheduled', 'attended', 'cancelled', 'no_show'];
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -21,6 +22,8 @@ export async function POST(req: NextRequest) {
     fee?: number;             // euros
     session_format?: string;
     payment_status?: string;
+    status?: string;
+    notes?: string;
     client_name?: string;
     client_email?: string;
   };
@@ -63,6 +66,12 @@ export async function POST(req: NextRequest) {
   }
   if (typeof body.payment_status === 'string' && VALID_PAYMENT.includes(body.payment_status)) {
     sessionPatch.payment_status = body.payment_status;
+  }
+  if (typeof body.status === 'string' && VALID_STATUS.includes(body.status)) {
+    sessionPatch.status = body.status;
+  }
+  if (typeof body.notes === 'string') {
+    sessionPatch.notes = body.notes.trim() || null;
   }
 
   if (Object.keys(sessionPatch).length > 0) {

@@ -12,7 +12,7 @@ interface Props {
   onSuccess: () => void;
 }
 
-type Recurrence = 'once' | 'weekly' | 'biweekly';
+type Recurrence = 'once' | 'weekly' | 'biweekly' | 'monthly';
 
 const COUNT_PRESETS = [4, 6, 8, 10, 12];
 
@@ -187,6 +187,7 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
                 { id: 'once', label: 'One-off' },
                 { id: 'weekly', label: 'Weekly' },
                 { id: 'biweekly', label: 'Fortnightly' },
+                { id: 'monthly', label: 'Monthly' },
               ] as const).map(opt => (
                 <button
                   key={opt.id}

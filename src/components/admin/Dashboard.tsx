@@ -294,7 +294,7 @@ export function Dashboard({
               <p className="admin-eyebrow">Today</p>
               <h2 className="admin-h2">{today.toLocaleDateString('en-IE', { weekday: 'long' })}&rsquo;s sessions</h2>
             </div>
-            <button type="button" className="admin-link" onClick={() => onWeekOffsetChange(0)}>
+            <button type="button" className="admin-link" onClick={() => onNavigateSection('sessions')}>
               View calendar →
             </button>
           </div>
@@ -317,6 +317,7 @@ export function Dashboard({
                   onConfirmAttended={() => doMarkAttended(s.id)}
                   onCancelConfirm={() => setConfirmId(null)}
                   onSendReceipt={() => sendReceipt(s.id)}
+                  onEdit={() => onClickSession(s, c)}
                 />
               ))}
             </div>
@@ -431,12 +432,13 @@ interface SessionRowProps {
   onConfirmAttended?: () => void;
   onCancelConfirm?: () => void;
   onSendReceipt?: () => void;
+  onEdit?: () => void;
 }
 
 function SessionRow({
   session, client, busy, feedback,
   needsAttendedConfirm,
-  onMarkAttended, onConfirmAttended, onCancelConfirm, onSendReceipt,
+  onMarkAttended, onConfirmAttended, onCancelConfirm, onSendReceipt, onEdit,
 }: SessionRowProps) {
   const formatTag = session.session_format === 'in_person' ? 'admin-tag-inperson' : 'admin-tag-online';
   const formatLabel = session.session_format === 'in_person' ? 'In person' : 'Online';
@@ -450,15 +452,25 @@ function SessionRow({
         <span className="admin-session-time-meridiem">{meridiem(session.session_date)}</span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+      <button
+        type="button"
+        onClick={onEdit}
+        disabled={!onEdit}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 12, minWidth: 0,
+          background: 'none', border: 'none', padding: 0, textAlign: 'left',
+          cursor: onEdit ? 'pointer' : 'default',
+        }}
+        title={onEdit ? `Edit session for ${client.full_name}` : undefined}
+      >
         <Avatar name={client.full_name} size={38} />
         <div style={{ minWidth: 0 }}>
-          <div className="admin-session-name">{client.full_name}</div>
+          <div className="admin-session-name" style={onEdit ? { textDecoration: 'underline', textDecorationColor: 'rgba(42,77,60,0.3)', textUnderlineOffset: 3 } : undefined}>{client.full_name}</div>
           <div className="admin-session-meta">
             {displayFee(session.fee)} · 50 min
           </div>
         </div>
-      </div>
+      </button>
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>

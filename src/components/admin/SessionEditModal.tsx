@@ -12,8 +12,9 @@ interface Props {
   onSuccess: () => void;
 }
 
-/** Convert a UTC ISO string from Supabase into a "YYYY-MM-DDTHH:MM" string
- *  in the Europe/Dublin timezone, suitable for a datetime-local input. */
+type FollowUpCadence = 'none' | 'weekly' | 'fortnightly' | 'monthly';
+
+/** Convert a UTC ISO string from Supabase into "YYYY-MM-DDTHH:MM" in Dublin time. */
 function toDatetimeLocal(iso: string): string {
   if (!iso) return '';
   const d = new Date(iso);
@@ -29,6 +30,22 @@ function toDatetimeLocal(iso: string): string {
   return `${get('year')}-${get('month')}-${get('day')}T${h}:${get('minute')}`;
 }
 
+/** Advance a "YYYY-MM-DDTHH:MM" wall-clock string by one interval. */
+function addInterval(wallClock: string, cadence: 'weekly' | 'fortnightly' | 'monthly'): string {
+  const [datePart, timePart = '00:00'] = wallClock.split('T');
+  const [y, mo, d] = datePart.split('-').map(Number);
+  let dt: Date;
+  if (cadence === 'monthly') {
+    dt = new Date(Date.UTC(y, mo - 1 + 1, d));
+  } else {
+    dt = new Date(Date.UTC(y, mo - 1, d + (cadence === 'weekly' ? 7 : 14)));
+  }
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}T${timePart}`;
+}
+
+const COUNT_PRESETS = [4, 6, 8, 10, 12];
+
 export function SessionEditModal({ session, client, onClose, onSuccess }: Props) {
   const [clientName, setClientName]       = useState(client.full_name);
   const [clientEmail, setClientEmail]     = useState(client.email ?? '');
@@ -42,6 +59,14 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
     : session.payment_status === 'refunded' ? 'refunded'
     : 'unpaid'
   );
+  const [status, setStatus] = useState<'scheduled' | 'attended' | 'cancelled' | 'no_show'>(
+    (['scheduled', 'attended', 'cancelled', 'no_show'] as const).includes(session.status as 'scheduled')
+      ? session.status as 'scheduled' | 'attended' | 'cancelled' | 'no_show'
+      : 'scheduled'
+  );
+  const [notes, setNotes]                 = useState(session.notes ?? '');
+  const [followUpCadence, setFollowUpCadence] = useState<FollowUpCadence>('none');
+  const [followUpCount, setFollowUpCount]     = useState(6);
   const [busy, setBusy]   = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
@@ -55,6 +80,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
     setBusy(true);
     setError('');
     try {
+      // 1 — Update the current session and client details.
       const res = await adminFetch('/api/admin/sessions/update', {
         method: 'POST',
         body: JSON.stringify({
@@ -66,10 +92,37 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
           fee:            Number(fee),
           session_format: format,
           payment_status: paymentStatus,
+          status,
+          notes,
         }),
       });
       const json = await res.json();
       if (!res.ok) { setError(json.error ?? 'Failed to save changes.'); return; }
+
+      // 2 — Optionally schedule follow-up sessions starting from the next occurrence.
+      if (followUpCadence !== 'none') {
+        const nextDate = addInterval(sessionDate, followUpCadence);
+        const apiCadence = followUpCadence === 'fortnightly' ? 'biweekly' : followUpCadence;
+        const fuRes = await adminFetch('/api/admin/sessions', {
+          method: 'POST',
+          body: JSON.stringify({
+            client_id:      client.id,
+            session_date:   nextDate,
+            session_format: format,
+            fee:            Number(fee) * 100,
+            recurrence:     apiCadence,
+            occurrence_count: followUpCount,
+          }),
+        });
+        if (!fuRes.ok) {
+          const fuJson = await fuRes.json().catch(() => ({}));
+          setError(`Session saved, but follow-ups failed: ${fuJson.error ?? 'unknown error'}`);
+          onSuccess();
+          setTimeout(() => onClose(), 1800);
+          return;
+        }
+      }
+
       setSaved(true);
       onSuccess();
       setTimeout(() => onClose(), 900);
@@ -99,7 +152,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
         borderRadius: 18,
         boxShadow: '0 24px 64px rgba(42, 77, 60, 0.18)',
         zIndex: 120,
-        width: 'min(540px, 92vw)',
+        width: 'min(560px, 92vw)',
         maxHeight: '92vh',
         overflowY: 'auto',
         animation: 'admin-pop-in 180ms ease',
@@ -134,7 +187,8 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
         </div>
 
         {/* Form */}
-        <form onSubmit={save} style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <form onSubmit={save} style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 18 }}>
+
           {/* Client details */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
@@ -208,6 +262,29 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
             </div>
           </div>
 
+          {/* Session status */}
+          <div>
+            <label className="admin-label">Session status</label>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+              {([
+                { id: 'scheduled',  label: 'Scheduled' },
+                { id: 'attended',   label: 'Attended' },
+                { id: 'cancelled',  label: 'Cancelled' },
+                { id: 'no_show',    label: 'No Show' },
+              ] as const).map(opt => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setStatus(opt.id)}
+                  className={`admin-segmented-btn${status === opt.id ? ' is-active' : ''}`}
+                  style={{ padding: '8px 14px' }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Payment status */}
           <div>
             <label className="admin-label">Payment status</label>
@@ -228,6 +305,75 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="admin-label">Notes</label>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              className="admin-input"
+              rows={3}
+              placeholder="Private session notes…"
+              style={{ resize: 'vertical', minHeight: 72 }}
+            />
+          </div>
+
+          {/* Follow-up sessions */}
+          <div style={{
+            borderTop: '1px solid rgba(42,77,60,0.1)',
+            paddingTop: 16,
+          }}>
+            <label className="admin-label" style={{ marginBottom: 8, display: 'block' }}>
+              Schedule follow-up sessions
+            </label>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {([
+                { id: 'none',        label: 'None' },
+                { id: 'weekly',      label: 'Weekly' },
+                { id: 'fortnightly', label: 'Fortnightly' },
+                { id: 'monthly',     label: 'Monthly' },
+              ] as const).map(opt => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setFollowUpCadence(opt.id)}
+                  className={`admin-segmented-btn${followUpCadence === opt.id ? ' is-active' : ''}`}
+                  style={{ padding: '8px 14px' }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {followUpCadence !== 'none' && (
+              <div style={{ marginTop: 12 }}>
+                <label className="admin-label">Number of follow-up sessions</label>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginTop: 6 }}>
+                  {COUNT_PRESETS.map(n => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setFollowUpCount(n)}
+                      className={`admin-segmented-btn${followUpCount === n ? ' is-active' : ''}`}
+                      style={{ padding: '8px 14px' }}
+                    >{n}</button>
+                  ))}
+                  <input
+                    type="number" min={1} max={52} step={1}
+                    value={followUpCount}
+                    onChange={e => setFollowUpCount(Math.max(1, Math.min(52, Number(e.target.value) || 6)))}
+                    className="admin-input"
+                    style={{ width: 80 }}
+                    aria-label="Custom number of follow-up sessions"
+                  />
+                </div>
+                <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--ink-muted)' }}>
+                  Creates {followUpCount} {followUpCadence} sessions starting the {followUpCadence === 'weekly' ? 'next week' : followUpCadence === 'fortnightly' ? 'next fortnight' : 'next month'}.
+                </p>
+              </div>
+            )}
           </div>
 
           {error && (

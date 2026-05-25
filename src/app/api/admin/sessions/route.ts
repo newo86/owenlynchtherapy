@@ -5,7 +5,7 @@ import { localDublinToUtcIso } from '@/lib/dateUtils';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
-const VALID_RECURRENCE = ['once', 'weekly', 'biweekly'] as const;
+const VALID_RECURRENCE = ['once', 'weekly', 'biweekly', 'monthly'] as const;
 type Recurrence = typeof VALID_RECURRENCE[number];
 
 export async function GET(req: NextRequest) {
@@ -90,7 +90,9 @@ export async function POST(req: NextRequest) {
     ? null
     : recurrence === 'weekly'
       ? `RRULE:FREQ=WEEKLY;COUNT=${occurrenceCount}`
-      : `RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=${occurrenceCount}`;
+      : recurrence === 'biweekly'
+        ? `RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=${occurrenceCount}`
+        : `RRULE:FREQ=MONTHLY;COUNT=${occurrenceCount}`;
 
   const payload = utcDates.map(d => ({
     client_id,
@@ -122,7 +124,9 @@ export async function POST(req: NextRequest) {
       ? 'One-off session'
       : recurrence === 'weekly'
         ? `Weekly · ${occurrenceCount} sessions`
-        : `Fortnightly · ${occurrenceCount} sessions`;
+        : recurrence === 'biweekly'
+          ? `Fortnightly · ${occurrenceCount} sessions`
+          : `Monthly · ${occurrenceCount} sessions`;
     const eventId = await createCalendarEvent({
       summary: `Session — ${clientRow?.full_name ?? 'Client'}`,
       description: [
@@ -165,13 +169,16 @@ function buildOccurrences(firstIsoLocal: string, recurrence: Recurrence, count: 
 
   const out: string[] = [];
   for (let i = 0; i < count; i++) {
-    const step = recurrence === 'weekly' ? 7 * i
-      : recurrence === 'biweekly' ? 14 * i
-      : 0;
-    // Use UTC math for calendar safety (no DST surprises since we're only
-    // adding whole days).
-    const ms = Date.UTC(y, mo - 1, d + step, h, mi, 0);
-    const dt = new Date(ms);
+    let dt: Date;
+    if (recurrence === 'monthly') {
+      // Calendar-aware: same day of month, i months later.
+      dt = new Date(Date.UTC(y, mo - 1 + i, d, h, mi, 0));
+    } else {
+      const step = recurrence === 'weekly' ? 7 * i
+        : recurrence === 'biweekly' ? 14 * i
+        : 0;
+      dt = new Date(Date.UTC(y, mo - 1, d + step, h, mi, 0));
+    }
     out.push(
       `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}T` +
       `${pad(dt.getUTCHours())}:${pad(dt.getUTCMinutes())}:00`
