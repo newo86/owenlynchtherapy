@@ -19,6 +19,8 @@ interface Props {
   onClickSession?: (session: SessionRow, client: ClientRow) => void;
   /** Opens the schedule modal pre-filled to this datetime string. */
   onScheduleDay?: (iso: string) => void;
+  /** Opens the new-client modal. */
+  onNewClient?: () => void;
 }
 
 function buildClickIso(day: Date): string {
@@ -55,7 +57,7 @@ function accentForName(name: string): typeof ACCENTS[number] {
   return ACCENTS[h % ACCENTS.length];
 }
 
-export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter, onClickSession, onScheduleDay }: Props) {
+export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter, onClickSession, onScheduleDay, onNewClient }: Props) {
   // Default to calendar; only drop to list when arriving with a filter intent
   // (Quick Actions like "Unpaid this week") because filters only apply in list view.
   const [view, setView] = useState<View>(initialFilter ? 'list' : 'calendar');
@@ -183,14 +185,19 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
           </div>
         )}
 
-        {onScheduleDay && (
-          <button
-            onClick={() => onScheduleDay(buildClickIso(new Date()))}
-            className="admin-btn-primary"
-            style={{ marginLeft: view === 'list' ? 'auto' : undefined }}
-          >
-            + Schedule session
-          </button>
+        {(onScheduleDay || onNewClient) && (
+          <div style={{ display: 'flex', gap: 8, marginLeft: view === 'list' ? 'auto' : undefined }}>
+            {onNewClient && (
+              <button onClick={onNewClient} className="admin-btn-secondary">
+                + Add client
+              </button>
+            )}
+            {onScheduleDay && (
+              <button onClick={() => onScheduleDay(buildClickIso(new Date()))} className="admin-btn-primary">
+                + Schedule session
+              </button>
+            )}
+          </div>
         )}
       </div>
 

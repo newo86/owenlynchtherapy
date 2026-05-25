@@ -230,7 +230,7 @@ export function AdminShell() {
                       Calendar Connected
                     </button>
                   )}
-                  {section !== 'clients' && (
+                  {section !== 'clients' && section !== 'sessions' && (
                     <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
                       + Add Client
                     </button>
@@ -271,6 +271,7 @@ export function AdminShell() {
                   initialFilter={sessionsFilter}
                   onClickSession={(session, client) => setEditSession({ session, client })}
                   onScheduleDay={iso => { setScheduleInitialIso(iso); setScheduleOpen(true); }}
+                  onNewClient={() => setModalOpen(true)}
                 />
               )}
 
