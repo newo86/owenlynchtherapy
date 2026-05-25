@@ -4,11 +4,8 @@ import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import AnimatedCard from '@/components/ui/AnimatedCard';
 import FloatingCircles from '@/components/ui/floating-circles';
-
-// TODO: Replace hard-coded posts with Sanity query when CMS is configured:
-// import { sanityClient } from '@/lib/sanity/client';
-// import { allPostsQuery } from '@/lib/sanity/queries';
-// const posts = await sanityClient.fetch(allPostsQuery);
+import { sanityClient } from '@/lib/sanity/client';
+import { allPostsQuery } from '@/lib/sanity/queries';
 
 export const metadata: Metadata = {
   title: { absolute: 'Articles | Owen Lynch Psychotherapy' },
@@ -48,29 +45,15 @@ const breadcrumbJsonLd = {
 };
 
 type Post = {
-  slug: string;
+  _id: string;
+  slug: { current: string };
   title: string;
   excerpt: string;
   publishedAt: string;
   category: string;
-  featuredImage: string;
-  featuredImageAlt: string;
+  featuredImageUrl: string | null;
+  featuredImageAlt: string | null;
 };
-
-// Hard-coded fallback — swap for Sanity fetch when CMS is wired up
-const posts: Post[] = [
-  {
-    slug: 'how-ocd-therapy-works',
-    title: 'How OCD Therapy Works: An Evidence-Based Guide',
-    excerpt:
-      'An integrative look at I-CBT, ACT, and psychodynamic approaches to OCD treatment — what the research says and what therapy actually looks like.',
-    publishedAt: '2026-05-13',
-    category: 'OCD',
-    featuredImage: '/images/blog-hero-ocd-therapy.png',
-    featuredImageAlt:
-      'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta with a figure, symbolising the cycle of obsessive thoughts',
-  },
-];
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IE', {
@@ -82,7 +65,8 @@ function formatDate(iso: string) {
 
 const PAGE_SIZE = 9;
 
-export default function ArticlesPage() {
+export default async function ArticlesPage() {
+  const posts: Post[] = await sanityClient.fetch(allPostsQuery);
   const visiblePosts = posts.slice(0, PAGE_SIZE);
   const hasMore = posts.length > PAGE_SIZE;
 
@@ -147,33 +131,30 @@ export default function ArticlesPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
               {visiblePosts.map((post, i) => (
-                /*
-                 * AnimatedCard is a client component that wraps the article
-                 * in a motion.div with whileInView fade-up. The article content
-                 * itself is always present in the server-rendered HTML for SEO.
-                 */
-                <AnimatedCard key={post.slug} index={i} className="service-card-border rounded-2xl">
+                <AnimatedCard key={post._id} index={i} className="service-card-border rounded-2xl">
                   <article
                     className="relative z-[1] group flex flex-col flex-1 rounded-2xl bg-white h-hover:-translate-y-1 h-can:transition-all h-can:duration-300"
                     style={{ boxShadow: '0 2px 16px rgba(42,77,60,0.07)' }}
                   >
                     <Link
-                      href={`/articles/${post.slug}`}
+                      href={`/articles/${post.slug.current}`}
                       className="flex flex-col flex-1 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-2 focus-visible:ring-offset-linen"
                       aria-label={`Read article: ${post.title}`}
                     >
                       {/* Featured image */}
+                      {post.featuredImageUrl && (
                       <div className="relative aspect-video overflow-hidden rounded-t-2xl">
                         <Image
-                          src={post.featuredImage}
-                          alt={post.featuredImageAlt}
+                          src={post.featuredImageUrl}
+                          alt={post.featuredImageAlt ?? post.title}
                           fill
                           className="object-cover h-can:transition-transform h-can:duration-700 ease-out group-h-hover:scale-[1.04]"
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           priority={i === 0}
-                          unoptimized={post.featuredImage.startsWith('https://images.unsplash')}
+                          unoptimized={post.featuredImageUrl.startsWith('https://images.unsplash')}
                         />
                       </div>
+                      )}
 
                       {/* Category pill — pulls up slightly into the image zone */}
                       <div className="relative z-10 px-5 -mt-[14px] mb-4">
