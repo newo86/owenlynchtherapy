@@ -61,7 +61,7 @@ export function AdminShell() {
   const [sessionsFilter, setSessionsFilter] = useState<SessionFilter | undefined>();
   const [formsTab, setFormsTab] = useState<FormsTab | undefined>();
 
-  function navigateSection(section: 'sessions' | 'forms', opts?: { sessionsFilter?: SessionFilter; formsTab?: FormsTab }) {
+  function navigateSection(section: AdminSection, opts?: { sessionsFilter?: SessionFilter; formsTab?: FormsTab }) {
     if (opts?.sessionsFilter) setSessionsFilter(opts.sessionsFilter);
     if (opts?.formsTab) setFormsTab(opts.formsTab);
     setSection(section);
@@ -260,6 +260,8 @@ export function AdminShell() {
                   onWeekOffsetChange={setWeekOffset}
                   onReload={reload}
                   initialFilter={sessionsFilter}
+                  onClickSession={(session, client) => setEditSession({ session, client })}
+                  onScheduleDay={iso => { setScheduleInitialIso(iso); setScheduleOpen(true); }}
                 />
               )}
 
@@ -283,6 +285,7 @@ export function AdminShell() {
           submissions={submissions}
           onClose={() => setOpenClient(null)}
           onReload={reload}
+          onEditSession={(session, client) => setEditSession({ session, client })}
         />
       )}
 

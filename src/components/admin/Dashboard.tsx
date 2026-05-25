@@ -10,7 +10,7 @@ import {
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatTime, isSameDay, startOfWeek } from './api';
 import type {
-  ClientRow, SessionRow, TokenRow,
+  AdminSection, ClientRow, SessionRow, TokenRow,
   CalendarEvent, CalendarStatus, SessionFilter, FormsTab,
 } from './types';
 
@@ -30,9 +30,8 @@ interface Props {
   onScheduleDay: (iso: string) => void;
   /** Called when the user clicks an existing session event on the calendar. */
   onClickSession: (session: SessionRow, client: ClientRow) => void;
-  /** Navigate the admin to another section, optionally carrying a filter
-   *  intent (sessions tab + initial filter / forms tab). */
-  onNavigateSection: (section: 'sessions' | 'forms', opts?: {
+  /** Navigate to any section, optionally carrying a filter intent. */
+  onNavigateSection: (section: AdminSection, opts?: {
     sessionsFilter?: SessionFilter;
     formsTab?: FormsTab;
   }) => void;
@@ -236,6 +235,7 @@ export function Dashboard({
           Icon={CalendarDays}
           foot={events.length > 0 ? `+${events.length} calendar events` : 'No external events'}
           footKind="ok"
+          onClick={() => onNavigateSection('sessions', { sessionsFilter: 'this_week' })}
         />
         <StatCard
           label="Active clients"
@@ -244,6 +244,7 @@ export function Dashboard({
           Icon={Users}
           foot={newClientsThisMonth > 0 ? `${newClientsThisMonth} new this month` : 'None new this month'}
           footKind="ok"
+          onClick={() => onNavigateSection('clients')}
         />
         <StatCard
           label="Forms pending"
@@ -251,6 +252,7 @@ export function Dashboard({
           value={String(formsPending)}
           Icon={FileText}
           foot={formsPending > 0 ? 'Links sent, awaiting reply' : 'All caught up'}
+          onClick={() => onNavigateSection('forms', { formsTab: 'pending' })}
         />
         <StatCard
           label="Outstanding payments"
@@ -267,8 +269,9 @@ export function Dashboard({
               : `All clear · ${outstandingScope === 'week' ? 'this week' : outstandingScope === 'month' ? 'this month' : 'all time'}`
           }
           footKind={outstandingCount > 0 ? 'warn' : 'ok'}
+          onClick={() => onNavigateSection('sessions', { sessionsFilter: 'unpaid' })}
           pills={(
-            <div style={{ display: 'flex', gap: 4, marginTop: 12 }}>
+            <div style={{ display: 'flex', gap: 4, marginTop: 12 }} onClick={e => e.stopPropagation()}>
               {([
                 { id: 'week',  label: 'Week' },
                 { id: 'month', label: 'Month' },
@@ -375,8 +378,8 @@ export function Dashboard({
 
       {/* Revenue + Recent clients */}
       <div className="admin-row-bottom">
-        <RevenueCard revenue={revenue} />
-        <RecentClientsCard clients={clients} />
+        <RevenueCard revenue={revenue} onNavigate={() => onNavigateSection('revenue')} />
+        <RecentClientsCard clients={clients} onNavigate={() => onNavigateSection('clients')} />
       </div>
     </>
   );
@@ -392,9 +395,10 @@ interface StatProps {
   foot: string;
   footKind?: 'ok' | 'warn' | 'neutral';
   pills?: React.ReactNode;
+  onClick?: () => void;
 }
 
-function StatCard({ label, value, accent, Icon, foot, footKind = 'neutral', pills }: StatProps) {
+function StatCard({ label, value, accent, Icon, foot, footKind = 'neutral', pills, onClick }: StatProps) {
   const palette = {
     terracotta: { strip: 'var(--terracotta)',  blob: '#f6dfd0', iconBg: 'rgba(200,90,27,0.12)', iconFg: 'var(--terracotta)' },
     sage:       { strip: 'var(--sage)',        blob: '#d8e8de', iconBg: 'rgba(79,138,104,0.14)', iconFg: 'var(--sage)' },
@@ -403,7 +407,14 @@ function StatCard({ label, value, accent, Icon, foot, footKind = 'neutral', pill
   }[accent];
 
   return (
-    <div className="admin-stat">
+    <div
+      className="admin-stat"
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? e => { if (e.key === 'Enter' || e.key === ' ') onClick(); } : undefined}
+      style={onClick ? { cursor: 'pointer' } : undefined}
+    >
       <div className="admin-stat-accent" style={{ background: palette.strip }} />
       <div className="admin-stat-blob" style={{ background: palette.blob }} aria-hidden />
       <div className="admin-stat-top">
@@ -821,7 +832,7 @@ function computeRevenue(all: Array<{ s: SessionRow; c: ClientRow }>): Revenue {
   return { monthGrossCents: monthGross, monthNetCents: monthNet, monthLowCostCents: monthLowCost, prevMonthCents: prevCents, recentMonths };
 }
 
-function RevenueCard({ revenue }: { revenue: Revenue }) {
+function RevenueCard({ revenue, onNavigate }: { revenue: Revenue; onNavigate?: () => void }) {
   const { monthGrossCents, monthNetCents, monthLowCostCents, prevMonthCents, recentMonths } = revenue;
   const max = Math.max(...recentMonths.map(b => b.cents), 1);
   const peakIdx = recentMonths.reduce((pi, b, i, arr) => arr[pi].cents >= b.cents ? pi : i, 0);
@@ -831,7 +842,14 @@ function RevenueCard({ revenue }: { revenue: Revenue }) {
   const roomCosts = monthGrossCents - monthNetCents;
 
   return (
-    <section className="admin-card">
+    <section
+      className="admin-card"
+      onClick={onNavigate}
+      role={onNavigate ? 'button' : undefined}
+      tabIndex={onNavigate ? 0 : undefined}
+      onKeyDown={onNavigate ? e => { if (e.key === 'Enter' || e.key === ' ') onNavigate(); } : undefined}
+      style={onNavigate ? { cursor: 'pointer' } : undefined}
+    >
       <div className="admin-card-head">
         <div>
           <p className="admin-eyebrow">Revenue · this month</p>
@@ -887,7 +905,7 @@ function prevMonthLabel() {
   return d.toLocaleDateString('en-IE', { month: 'long' });
 }
 
-function RecentClientsCard({ clients }: { clients: ClientRow[] }) {
+function RecentClientsCard({ clients, onNavigate }: { clients: ClientRow[]; onNavigate?: () => void }) {
   const recent = clients.slice(0, 5);
 
   return (
@@ -920,7 +938,15 @@ function RecentClientsCard({ clients }: { clients: ClientRow[] }) {
               c.status === 'completed' ? 'Completed' : c.status;
 
             return (
-              <div key={c.id} className="admin-clientrow">
+              <div
+                key={c.id}
+                className="admin-clientrow"
+                onClick={onNavigate}
+                role={onNavigate ? 'button' : undefined}
+                tabIndex={onNavigate ? 0 : undefined}
+                onKeyDown={onNavigate ? e => { if (e.key === 'Enter' || e.key === ' ') onNavigate(); } : undefined}
+                style={onNavigate ? { cursor: 'pointer' } : undefined}
+              >
                 <Avatar name={c.full_name} size={36} />
                 <div>
                   <div className="admin-clientrow-name">{c.full_name}</div>

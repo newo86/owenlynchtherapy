@@ -5,13 +5,14 @@ import { X, Download, Trash2, Pencil, Check } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatDateTime } from './api';
 import { FORMAT_LABELS } from './types';
-import type { ClientRow, SubmissionRow } from './types';
+import type { ClientRow, SessionRow, SubmissionRow } from './types';
 
 interface Props {
   client: ClientRow | null;
   submissions: SubmissionRow[];
   onClose: () => void;
   onReload: () => void;
+  onEditSession?: (session: SessionRow, client: ClientRow) => void;
 }
 
 function legacySubmissionMatch(submissions: SubmissionRow[], client: ClientRow): SubmissionRow | undefined {
@@ -73,7 +74,7 @@ function toContactFields(c: ClientRow): ContactFields {
   };
 }
 
-export function ClientDetail({ client, submissions, onClose, onReload }: Props) {
+export function ClientDetail({ client, submissions, onClose, onReload, onEditSession }: Props) {
   const [notes, setNotes] = useState('');
   const [notesSaving, setNotesSaving] = useState(false);
   const [notesSaved, setNotesSaved] = useState(false);
@@ -337,6 +338,16 @@ export function ClientDetail({ client, submissions, onClose, onReload }: Props) 
                     <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>
                       {FORMAT_LABELS[s.session_format] ?? s.session_format} · {displayFee(s.fee)}
                     </span>
+                    {onEditSession && client && (
+                      <button
+                        type="button"
+                        onClick={() => onEditSession(s, client)}
+                        className="admin-btn-secondary"
+                        style={{ padding: '5px 10px', fontSize: 10, marginLeft: 'auto' }}
+                      >
+                        <Pencil size={11} strokeWidth={1.8} /> Edit
+                      </button>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
                     <span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span>

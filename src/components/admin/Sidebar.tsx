@@ -21,7 +21,13 @@ const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> =
 export function Sidebar({ active, onNavigate, onSignOut }: Props) {
   return (
     <aside className="admin-sidebar" aria-label="Admin navigation">
-      <div className="admin-sidebar-logo" aria-hidden>
+      <button
+        className="admin-sidebar-logo"
+        onClick={() => onNavigate('dashboard')}
+        title="Dashboard home"
+        aria-label="Go to dashboard"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+      >
         <svg viewBox="0 0 200 200" width="44" height="44" xmlns="http://www.w3.org/2000/svg">
           <circle cx="100" cy="100" r="78" fill="none" stroke="#C85A1B" strokeWidth="10"
                   strokeLinecap="round" strokeDasharray="312.8 157.5" transform="rotate(70,100,100)"/>
@@ -31,7 +37,7 @@ export function Sidebar({ active, onNavigate, onSignOut }: Props) {
                 fontSize="42" fontWeight="300" fill="#ffffff"
                 textAnchor="middle" dominantBaseline="middle">OL</text>
         </svg>
-      </div>
+      </button>
 
       <nav className="admin-sidebar-nav">
         {NAV.map(({ id, label, Icon }) => (

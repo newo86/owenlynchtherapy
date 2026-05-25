@@ -15,6 +15,15 @@ interface Props {
   onReload: () => void;
   /** Initial filter when the section is opened (e.g. via a Quick Action card). */
   initialFilter?: SessionFilter;
+  /** Opens the session edit modal. */
+  onClickSession?: (session: SessionRow, client: ClientRow) => void;
+  /** Opens the schedule modal pre-filled to this datetime string. */
+  onScheduleDay?: (iso: string) => void;
+}
+
+function buildClickIso(day: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T17:00`;
 }
 
 type View = 'list' | 'calendar';
@@ -46,15 +55,20 @@ function accentForName(name: string): typeof ACCENTS[number] {
   return ACCENTS[h % ACCENTS.length];
 }
 
-export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter }: Props) {
-  const [view, setView] = useState<View>('list');
+export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter, onClickSession, onScheduleDay }: Props) {
+  // Default to calendar; only drop to list when arriving with a filter intent
+  // (Quick Actions like "Unpaid this week") because filters only apply in list view.
+  const [view, setView] = useState<View>(initialFilter ? 'list' : 'calendar');
   const [filter, setFilter] = useState<SessionFilter>(initialFilter ?? 'all');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  // Sync the local filter if a parent navigates here with a different intent.
+  // Sync filter AND view if a parent navigates here with a different intent.
   useEffect(() => {
-    if (initialFilter) setFilter(initialFilter);
+    if (initialFilter) {
+      setFilter(initialFilter);
+      setView('list');
+    }
   }, [initialFilter]);
 
   const rows = useMemo(() => {
@@ -168,6 +182,16 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
             )}
           </div>
         )}
+
+        {onScheduleDay && (
+          <button
+            onClick={() => onScheduleDay(buildClickIso(new Date()))}
+            className="admin-btn-primary"
+            style={{ marginLeft: view === 'list' ? 'auto' : undefined }}
+          >
+            + Schedule session
+          </button>
+        )}
       </div>
 
       {view === 'list' && (
@@ -219,6 +243,11 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                 <td><span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span></td>
                 <td style={{ textAlign: 'right' as const }}>
                   <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {onClickSession && (
+                      <button onClick={() => onClickSession(s, c)} disabled={busyId === s.id} className="admin-btn-secondary">
+                        Edit
+                      </button>
+                    )}
                     {s.status === 'scheduled' && (
                       <button onClick={() => markAttended(s.id, s.payment_status)} disabled={busyId === s.id} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
                         Attended
@@ -244,13 +273,27 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
       )}
 
       {view === 'calendar' && (
-        <CalendarGrid clients={clients} events={events} weekOffset={weekOffset} />
+        <CalendarGrid
+          clients={clients}
+          events={events}
+          weekOffset={weekOffset}
+          onClickSession={onClickSession}
+          onScheduleDay={onScheduleDay}
+        />
       )}
     </div>
   );
 }
 
-function CalendarGrid({ clients, events, weekOffset }: { clients: ClientRow[]; events: CalendarEvent[]; weekOffset: number }) {
+function CalendarGrid({
+  clients, events, weekOffset, onClickSession, onScheduleDay,
+}: {
+  clients: ClientRow[];
+  events: CalendarEvent[];
+  weekOffset: number;
+  onClickSession?: (session: SessionRow, client: ClientRow) => void;
+  onScheduleDay?: (iso: string) => void;
+}) {
   const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const days = useMemo(() => {
     const monday = startOfWeek(new Date());
@@ -262,7 +305,11 @@ function CalendarGrid({ clients, events, weekOffset }: { clients: ClientRow[]; e
 
   function eventsForDay(day: Date) {
     const matched = new Set<string>();
-    const out: Array<{ time: string; label: string; accent: typeof ACCENTS[number]; start: string; format?: string }> = [];
+    const out: Array<{
+      time: string; label: string; accent: typeof ACCENTS[number];
+      start: string; format?: string;
+      session?: SessionRow; client?: ClientRow;
+    }> = [];
     for (const c of clients) {
       for (const s of c.sessions) {
         const d = new Date(s.session_date);
@@ -281,6 +328,8 @@ function CalendarGrid({ clients, events, weekOffset }: { clients: ClientRow[]; e
           accent: accentForName(c.full_name),
           start: s.session_date,
           format: s.session_format,
+          session: s,
+          client: c,
         });
       }
     }
@@ -292,35 +341,62 @@ function CalendarGrid({ clients, events, weekOffset }: { clients: ClientRow[]; e
     return out.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
   }
 
+  const clickable = !!onScheduleDay;
+
   return (
     <div className="admin-week-grid">
       {days.map((day, i) => {
         const dayEvents = eventsForDay(day);
         const isToday = isSameDay(day, new Date());
+        const handleDayClick = clickable ? () => onScheduleDay!(buildClickIso(day)) : undefined;
         return (
-          <div key={i} className={`admin-day${isToday ? ' is-today' : ''}`}>
+          <div
+            key={i}
+            className={`admin-day${isToday ? ' is-today' : ''}${clickable ? ' admin-day-clickable' : ''}`}
+            onClick={handleDayClick}
+            role={clickable ? 'button' : undefined}
+            tabIndex={clickable ? 0 : undefined}
+            onKeyDown={clickable ? e => { if (e.key === 'Enter' || e.key === ' ') handleDayClick!(); } : undefined}
+            title={clickable ? `Schedule a session on ${day.toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'short' })}` : undefined}
+          >
             <div className="admin-day-head">
               <div className="admin-day-name">{DAY_NAMES[i]}</div>
               <div className="admin-day-num">{day.getDate()}</div>
             </div>
             {dayEvents.length === 0 ? (
-              <div className="admin-event-empty">No sessions</div>
+              <div className="admin-event-empty">{clickable ? '+ Add session' : 'No sessions'}</div>
             ) : (
-              dayEvents.map((e, idx) => (
-                <div key={idx} className={`admin-event ${e.accent}`}>
-                  <div className="admin-event-time">{e.time}</div>
-                  <div className="admin-event-name">{e.label}</div>
-                  {e.format === 'online' && (
-                    <a
-                      href="https://doxy.me/owenlynchtherapy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={ev => ev.stopPropagation()}
-                      style={{ fontSize: 9, opacity: 0.9, display: 'block', marginTop: 2, color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 1 }}
-                    >↗ doxy.me</a>
-                  )}
-                </div>
-              ))
+              dayEvents.map((e, idx) => {
+                const isSession = !!e.session && !!e.client;
+                return (
+                  <div
+                    key={idx}
+                    className={`admin-event ${e.accent}`}
+                    style={isSession && onClickSession ? { cursor: 'pointer' } : undefined}
+                    onClick={isSession && onClickSession
+                      ? ev => { ev.stopPropagation(); onClickSession(e.session!, e.client!); }
+                      : undefined}
+                    role={isSession && onClickSession ? 'button' : undefined}
+                    tabIndex={isSession && onClickSession ? 0 : undefined}
+                    onKeyDown={isSession && onClickSession
+                      ? ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.stopPropagation(); onClickSession(e.session!, e.client!); } }
+                      : undefined}
+                    title={isSession ? `Edit: ${e.label}` : undefined}
+                  >
+                    <div className="admin-event-time">{e.time}</div>
+                    <div className="admin-event-name">{e.label}</div>
+                    {e.format === 'online' && (
+                      <a
+                        href="https://doxy.me/owenlynchtherapy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={ev => ev.stopPropagation()}
+                        style={{ fontSize: 9, opacity: 0.9, display: 'block', marginTop: 2, color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 1 }}
+                      >↗ doxy.me</a>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         );
