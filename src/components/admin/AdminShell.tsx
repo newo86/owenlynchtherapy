@@ -176,7 +176,13 @@ export function AdminShell() {
           active={section}
           onNavigate={s => {
             if (s === 'new-client') setModalOpen(true);
-            else setSection(s);
+            else {
+              // Clear any filter intent so direct sidebar navigation always
+              // opens the section in its default state (calendar grid, all-tab, etc.)
+              if (s === 'sessions') setSessionsFilter(undefined);
+              if (s === 'forms') setFormsTab(undefined);
+              setSection(s);
+            }
           }}
           onSignOut={() => { clearSecret(); window.location.reload(); }}
         />
@@ -224,9 +230,11 @@ export function AdminShell() {
                       Calendar Connected
                     </button>
                   )}
-                  <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
-                    + Add Client
-                  </button>
+                  {section !== 'clients' && (
+                    <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
+                      + Add Client
+                    </button>
+                  )}
                 </div>
               </header>
 
@@ -249,6 +257,7 @@ export function AdminShell() {
                   clients={clients}
                   onOpen={setOpenClient}
                   onNewClient={() => setModalOpen(true)}
+                  onScheduleSession={() => { setScheduleInitialIso(undefined); setScheduleOpen(true); }}
                 />
               )}
 

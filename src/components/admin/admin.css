@@ -755,12 +755,23 @@
   padding: 8px 10px;
   background: white;
   border-left: 3px solid var(--ink-muted);
-  transition: transform 180ms ease;
+  transition: transform 180ms ease, box-shadow 180ms ease;
   cursor: default;
 }
 
 @media (hover: hover) {
   .admin-event:hover { transform: translateX(2px); }
+}
+
+.admin-event-clickable {
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .admin-event-clickable:hover {
+    transform: translateX(3px);
+    box-shadow: 2px 3px 10px rgba(42, 77, 60, 0.12);
+  }
 }
 
 .admin-event-time {

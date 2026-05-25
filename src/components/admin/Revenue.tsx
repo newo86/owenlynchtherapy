@@ -133,7 +133,7 @@ export function Revenue({ clients }: Props) {
     scope === 'year'  ? 'Yearly trend' :
     'Monthly trend';
   const chartTitle =
-    scope === 'week'  ? 'This week · gross' :
+    scope === 'week'  ? 'This week · paid sessions only' :
     scope === 'year'  ? `${now.getFullYear()} · month by month · gross` :
     'Last 12 months · gross';
 
@@ -373,7 +373,7 @@ interface MonthBucket {
   low: number;
 }
 
-function buildWeekly(clients: ClientRow[], basis: 'attended' | 'all_scheduled', now: Date): MonthBucket[] {
+function buildWeekly(clients: ClientRow[], _basis: 'attended' | 'all_scheduled', now: Date): MonthBucket[] {
   const monday = startOfWeek(now);
   const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   return Array.from({ length: 7 }, (_, i) => {
@@ -382,7 +382,7 @@ function buildWeekly(clients: ClientRow[], basis: 'attended' | 'all_scheduled', 
     for (const c of clients) {
       for (const s of c.sessions) {
         if (s.status === 'cancelled') continue;
-        if (basis === 'attended' && s.status !== 'attended') continue;
+        if (s.payment_status !== 'paid') continue; // weekly view = cash actually received
         if (!isSameDay(new Date(s.session_date), day)) continue;
         if (c.is_low_cost) low += s.fee ?? 0;
         else full += s.fee ?? 0;

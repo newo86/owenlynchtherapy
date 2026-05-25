@@ -11,6 +11,7 @@ interface Props {
   clients: ClientRow[];
   onOpen: (c: ClientRow) => void;
   onNewClient: () => void;
+  onScheduleSession?: () => void;
 }
 
 type Filter = 'all' | 'active' | 'new' | 'completed';
@@ -26,7 +27,7 @@ function nextSession(c: ClientRow): SessionRow | null {
     .sort((a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime())[0] ?? null;
 }
 
-export function ClientsList({ clients, onOpen, onNewClient }: Props) {
+export function ClientsList({ clients, onOpen, onNewClient, onScheduleSession }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
   const [q, setQ] = useState('');
 
@@ -66,9 +67,22 @@ export function ClientsList({ clients, onOpen, onNewClient }: Props) {
           ))}
         </div>
 
-        <button onClick={onNewClient} className="admin-btn-primary" style={{ marginLeft: 'auto' }}>
-          + Add new client
-        </button>
+        <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
+          <button
+            onClick={onScheduleSession}
+            className="admin-btn-secondary"
+            title="Schedule a session for an existing client"
+          >
+            + Add
+          </button>
+          <button
+            onClick={onNewClient}
+            className="admin-btn-primary"
+            title="Create a brand new client"
+          >
+            + New
+          </button>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
