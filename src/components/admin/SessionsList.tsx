@@ -203,7 +203,17 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   </div>
                 </td>
                 <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date)}</td>
-                <td>{FORMAT_LABELS[s.session_format] ?? s.session_format}</td>
+                <td>
+                  {FORMAT_LABELS[s.session_format] ?? s.session_format}
+                  {s.session_format === 'online' && (
+                    <a
+                      href="https://doxy.me/owenlynchtherapy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'block', fontSize: 11, color: 'var(--sage)', textDecoration: 'underline', textUnderlineOffset: 2, marginTop: 2 }}
+                    >doxy.me ↗</a>
+                  )}
+                </td>
                 <td>{displayFee(s.fee)}</td>
                 <td><span className={`admin-tag ${payTag(s.payment_status)}`}>{payLabel(s.payment_status)}</span></td>
                 <td><span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span></td>
@@ -252,7 +262,7 @@ function CalendarGrid({ clients, events, weekOffset }: { clients: ClientRow[]; e
 
   function eventsForDay(day: Date) {
     const matched = new Set<string>();
-    const out: Array<{ time: string; label: string; accent: typeof ACCENTS[number]; start: string }> = [];
+    const out: Array<{ time: string; label: string; accent: typeof ACCENTS[number]; start: string; format?: string }> = [];
     for (const c of clients) {
       for (const s of c.sessions) {
         const d = new Date(s.session_date);
@@ -270,6 +280,7 @@ function CalendarGrid({ clients, events, weekOffset }: { clients: ClientRow[]; e
           label: c.full_name,
           accent: accentForName(c.full_name),
           start: s.session_date,
+          format: s.session_format,
         });
       }
     }
@@ -299,6 +310,15 @@ function CalendarGrid({ clients, events, weekOffset }: { clients: ClientRow[]; e
                 <div key={idx} className={`admin-event ${e.accent}`}>
                   <div className="admin-event-time">{e.time}</div>
                   <div className="admin-event-name">{e.label}</div>
+                  {e.format === 'online' && (
+                    <a
+                      href="https://doxy.me/owenlynchtherapy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={ev => ev.stopPropagation()}
+                      style={{ fontSize: 9, opacity: 0.9, display: 'block', marginTop: 2, color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 1 }}
+                    >↗ doxy.me</a>
+                  )}
                 </div>
               ))
             )}

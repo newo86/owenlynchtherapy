@@ -469,6 +469,17 @@ function SessionRow({
           <div className="admin-session-meta">
             {displayFee(session.fee)} · 50 min
           </div>
+          {session.session_format === 'online' && (
+            <a
+              href="https://doxy.me/owenlynchtherapy"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              style={{ fontSize: 11, color: 'var(--sage)', textDecoration: 'underline', textUnderlineOffset: 2, display: 'inline-block', marginTop: 2 }}
+            >
+              doxy.me room ↗
+            </a>
+          )}
         </div>
       </button>
 
@@ -715,6 +726,15 @@ function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession }: {
                   >
                     <div className="admin-event-time">{e.time}</div>
                     <div className="admin-event-name">{e.label}</div>
+                    {e.session?.session_format === 'online' && (
+                      <a
+                        href="https://doxy.me/owenlynchtherapy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={ev => ev.stopPropagation()}
+                        style={{ fontSize: 9, opacity: 0.9, display: 'block', marginTop: 2, color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 1 }}
+                      >↗ doxy.me</a>
+                    )}
                   </div>
                 );
               })
