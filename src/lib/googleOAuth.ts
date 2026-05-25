@@ -145,6 +145,26 @@ interface CreateEventInput {
   timeZone?: string;
 }
 
+/** Deletes an event (or recurring series) from the practice's primary Google Calendar.
+ *  Returns true on success, false on failure. Silent failure — Supabase is
+ *  the source of truth. */
+export async function deleteCalendarEvent(eventId: string): Promise<boolean> {
+  const client = await getAuthorizedClient();
+  if (!client) return false;
+  try {
+    const calendar = google.calendar({ version: 'v3', auth: client });
+    await calendar.events.delete({ calendarId: 'primary', eventId });
+    return true;
+  } catch (err: unknown) {
+    // 404 means the event was already deleted — treat as success.
+    const msg = err instanceof Error ? err.message : String(err);
+    if (!msg.includes('404')) {
+      console.error('[googleOAuth] deleteCalendarEvent error:', msg);
+    }
+    return false;
+  }
+}
+
 /** Updates an existing event on the practice's primary Google Calendar.
  *  Returns true on success, false on failure. Silent failure — Supabase is
  *  the source of truth. */

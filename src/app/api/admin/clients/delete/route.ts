@@ -1,16 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { deleteCalendarEvent } from '@/lib/googleOAuth';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 // POST /api/admin/clients/delete  body: { client_id: string }
-//
-// We use POST instead of HTTP DELETE so the route shape stays straightforward
-// (no [id] route segment needed) and so the admin can send a JSON body with
-// the Authorization header in exactly the same shape as every other admin
-// mutation in this codebase. Deletion is permanent and cascades manually
-// through sessions, intake submissions, and intake tokens — the existing
-// schema doesn't have ON DELETE CASCADE.
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   const secret = process.env.INTAKE_ADMIN_SECRET;
@@ -31,7 +25,33 @@ export async function POST(req: NextRequest) {
 
   console.log('[clients/delete] cascading delete for client:', client_id);
 
-  // 1. Child rows first to satisfy FK constraints.
+  // 1. Fetch all sessions BEFORE deleting so we have their gcal_event_ids.
+  const { data: sessions, error: fetchErr } = await supabaseAdmin
+    .from('sessions')
+    .select('id, gcal_event_id')
+    .eq('client_id', client_id);
+
+  if (fetchErr) {
+    console.error('[clients/delete] sessions fetch error:', fetchErr);
+    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+  }
+
+  // 2. Delete every Google Calendar event linked to this client's sessions.
+  //    Multiple sessions in a recurring series share one gcal_event_id, so
+  //    deduplicate before hitting the API. Deleting the series event removes
+  //    all instances at once. Failures are logged but don't abort the delete.
+  const uniqueEventIds = [
+    ...new Set(
+      (sessions ?? [])
+        .map(s => (s as { gcal_event_id?: string | null }).gcal_event_id)
+        .filter((id): id is string => !!id),
+    ),
+  ];
+
+  console.log('[clients/delete] removing', uniqueEventIds.length, 'gcal event(s)');
+  await Promise.all(uniqueEventIds.map(id => deleteCalendarEvent(id)));
+
+  // 3. Delete child rows to satisfy FK constraints.
   const sessionsDel = await supabaseAdmin.from('sessions').delete().eq('client_id', client_id);
   if (sessionsDel.error) {
     console.error('[clients/delete] sessions error:', sessionsDel.error);
@@ -41,8 +61,7 @@ export async function POST(req: NextRequest) {
   const submissionsDel = await supabaseAdmin.from('intake_submissions').delete().eq('client_id', client_id);
   if (submissionsDel.error) {
     console.error('[clients/delete] submissions error:', submissionsDel.error);
-    // Fall through — the column may not exist on a legacy submission, in which
-    // case we leave the orphan row rather than failing the whole delete.
+    // Fall through — orphan row is acceptable.
   }
 
   const tokensDel = await supabaseAdmin.from('intake_tokens').delete().eq('client_id', client_id);
@@ -50,12 +69,12 @@ export async function POST(req: NextRequest) {
     console.error('[clients/delete] tokens error:', tokensDel.error);
   }
 
-  // 2. The client itself.
+  // 4. Delete the client.
   const { error } = await supabaseAdmin.from('clients').delete().eq('id', client_id);
   if (error) {
     console.error('[clients/delete] client error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true }, { headers: noCache });
+  return NextResponse.json({ success: true, gcal_events_removed: uniqueEventIds.length }, { headers: noCache });
 }
