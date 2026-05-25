@@ -49,11 +49,14 @@ const COUNT_PRESETS = [4, 6, 8, 10, 12];
 export function SessionEditModal({ session, client, onClose, onSuccess }: Props) {
   const [clientName, setClientName]       = useState(client.full_name);
   const [clientEmail, setClientEmail]     = useState(client.email ?? '');
+  const [clientPhone, setClientPhone]     = useState(client.phone ?? '');
   const [sessionDate, setSessionDate]     = useState(toDatetimeLocal(session.session_date));
   const [fee, setFee]                     = useState(String(Math.round(session.fee / 100)));
   const [format, setFormat]               = useState<'in_person' | 'online'>(
     session.session_format === 'online' ? 'online' : 'in_person'
   );
+  const [applyFormatToAll, setApplyFormatToAll] = useState(false);
+  const [isLowCost, setIsLowCost]               = useState(client.is_low_cost ?? false);
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'unpaid' | 'refunded'>(
     session.payment_status === 'paid' ? 'paid'
     : session.payment_status === 'refunded' ? 'refunded'
@@ -68,9 +71,11 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
   const [followUpCadence, setFollowUpCadence]     = useState<FollowUpCadence>('none');
   const [followUpCount, setFollowUpCount]         = useState(6);
   const [followUpContinuous, setFollowUpContinuous] = useState(false);
-  const [busy, setBusy]   = useState(false);
-  const [error, setError] = useState('');
-  const [saved, setSaved] = useState(false);
+  const [busy, setBusy]         = useState(false);
+  const [error, setError]       = useState('');
+  const [saved, setSaved]       = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -85,20 +90,30 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
       const res = await adminFetch('/api/admin/sessions/update', {
         method: 'POST',
         body: JSON.stringify({
-          session_id:     session.id,
-          client_id:      client.id,
-          client_name:    clientName,
-          client_email:   clientEmail,
-          session_date:   sessionDate,
-          fee:            Number(fee),
-          session_format: format,
-          payment_status: paymentStatus,
+          session_id:          session.id,
+          client_id:           client.id,
+          client_name:         clientName,
+          client_email:        clientEmail,
+          phone:               clientPhone,
+          session_date:        sessionDate,
+          fee:                 Number(fee),
+          session_format:      format,
+          payment_status:      paymentStatus,
           status,
           notes,
+          apply_format_to_all: applyFormatToAll,
         }),
       });
       const json = await res.json();
       if (!res.ok) { setError(json.error ?? 'Failed to save changes.'); return; }
+
+      // 1b — Sync low-cost flag if it changed.
+      if (isLowCost !== (client.is_low_cost ?? false)) {
+        await adminFetch('/api/admin/clients/update', {
+          method: 'POST',
+          body: JSON.stringify({ client_id: client.id, is_low_cost: isLowCost }),
+        });
+      }
 
       // 2 — Optionally schedule follow-up sessions starting from the next occurrence.
       if (followUpCadence !== 'none') {
@@ -132,6 +147,24 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
       setError('Network error. Please try again.');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function deleteClient() {
+    setDeleting(true);
+    setError('');
+    try {
+      const res = await adminFetch('/api/admin/clients/delete', {
+        method: 'POST',
+        body: JSON.stringify({ client_id: client.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error ?? 'Failed to delete client.'); setDeleting(false); return; }
+      onSuccess();
+      onClose();
+    } catch {
+      setError('Network error. Please try again.');
+      setDeleting(false);
     }
   }
 
@@ -213,6 +246,31 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                 placeholder="jane@example.com"
               />
             </div>
+            <div>
+              <label className="admin-label">Phone</label>
+              <input
+                type="tel"
+                value={clientPhone}
+                onChange={e => setClientPhone(e.target.value)}
+                className="admin-input"
+                placeholder="+353 87 000 0000"
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <label style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                cursor: 'pointer', fontSize: 13, color: 'var(--forest-deep)',
+                paddingTop: 20,
+              }}>
+                <input
+                  type="checkbox"
+                  checked={isLowCost}
+                  onChange={e => setIsLowCost(e.target.checked)}
+                  style={{ accentColor: 'var(--terracotta)', width: 15, height: 15 }}
+                />
+                Low cost session
+              </label>
+            </div>
           </div>
 
           {/* Date / fee */}
@@ -262,6 +320,20 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                 </label>
               ))}
             </div>
+            {format !== session.session_format && (
+              <label style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                marginTop: 10, cursor: 'pointer', fontSize: 13, color: 'var(--forest-deep)',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={applyFormatToAll}
+                  onChange={e => setApplyFormatToAll(e.target.checked)}
+                  style={{ accentColor: 'var(--terracotta)', width: 15, height: 15 }}
+                />
+                Apply format change to all of {clientName.split(' ')[0]}&apos;s sessions
+              </label>
+            )}
           </div>
 
           {/* Session status */}
@@ -413,6 +485,56 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
             >
               Cancel
             </button>
+          </div>
+
+          {/* Delete client */}
+          <div style={{
+            borderTop: '1px solid rgba(200,90,26,0.15)',
+            paddingTop: 16,
+            marginTop: 4,
+          }}>
+            {confirmDelete ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)', fontWeight: 500 }}>
+                  Permanently delete {clientName.trim()} and all their sessions? This cannot be undone.
+                </p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    onClick={deleteClient}
+                    style={{
+                      background: 'var(--terracotta)', color: 'white',
+                      border: 'none', borderRadius: 8, padding: '8px 16px',
+                      fontSize: 13, fontWeight: 600, cursor: deleting ? 'wait' : 'pointer',
+                    }}
+                  >
+                    {deleting ? 'Deleting…' : 'Yes, delete client'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    className="admin-btn-secondary"
+                    style={{ fontSize: 13, padding: '8px 14px' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                style={{
+                  background: 'none', border: '1px solid rgba(200,90,26,0.35)',
+                  borderRadius: 8, padding: '7px 14px',
+                  fontSize: 12, color: 'var(--terracotta)',
+                  cursor: 'pointer', letterSpacing: '0.3px',
+                }}
+              >
+                Delete client &amp; all sessions
+              </button>
+            )}
           </div>
         </form>
       </div>

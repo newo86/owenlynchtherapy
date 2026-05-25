@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { TrendingUp, Video, MapPin, Wallet } from 'lucide-react';
-import { startOfWeek } from './api';
+import { startOfWeek, isSameDay } from './api';
 import type { ClientRow, SessionRow } from './types';
 
 interface Props {
@@ -117,8 +117,25 @@ export function Revenue({ clients }: Props) {
     netInPerson:     fullTotals.netInPerson + lowTotals.netInPerson,
   };
 
-  // Monthly bar chart — last 12 months, stacked full vs low.
-  const monthly = useMemo(() => buildMonthly(clients, basis, now), [clients, basis, now]);
+  // Chart data — view depends on active scope.
+  const chartData = useMemo(() => {
+    if (scope === 'week') return buildWeekly(clients, basis, now);
+    if (scope === 'year') return buildYearly(clients, basis, now);
+    return buildMonthly(clients, basis, now); // month + all
+  }, [clients, scope, basis, now]);
+
+  const chartCurrentIdx =
+    scope === 'week'  ? (now.getDay() === 0 ? 6 : now.getDay() - 1) :
+    scope === 'year'  ? now.getMonth() :
+    11; // month / all: last bar is the current month
+  const chartEyebrow =
+    scope === 'week'  ? 'Weekly trend' :
+    scope === 'year'  ? 'Yearly trend' :
+    'Monthly trend';
+  const chartTitle =
+    scope === 'week'  ? 'This week · gross' :
+    scope === 'year'  ? `${now.getFullYear()} · month by month · gross` :
+    'Last 12 months · gross';
 
   // Active low-cost clients count
   const lowCostClientCount = clients.filter(c => c.is_low_cost && c.status === 'active').length;
@@ -186,19 +203,19 @@ export function Revenue({ clients }: Props) {
         />
       </div>
 
-      {/* Monthly chart */}
+      {/* Trend chart */}
       <section className="admin-card">
         <div className="admin-card-head">
           <div>
-            <p className="admin-eyebrow">Monthly trend</p>
-            <h2 className="admin-h2">Last 12 months · gross</h2>
+            <p className="admin-eyebrow">{chartEyebrow}</p>
+            <h2 className="admin-h2">{chartTitle}</h2>
           </div>
           <div style={{ display: 'flex', gap: 14, alignItems: 'center', fontSize: 11, color: 'var(--ink-muted)' }}>
             <Swatch colour="var(--sage)" label="Full-paying" />
             <Swatch colour="var(--lilac)" label="Low cost" />
           </div>
         </div>
-        <MonthlyChart months={monthly} />
+        <MonthlyChart months={chartData} currentIdx={chartCurrentIdx} />
       </section>
 
       {/* Format breakdown */}
@@ -356,6 +373,43 @@ interface MonthBucket {
   low: number;
 }
 
+function buildWeekly(clients: ClientRow[], basis: 'attended' | 'all_scheduled', now: Date): MonthBucket[] {
+  const monday = startOfWeek(now);
+  const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  return Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(monday); day.setDate(monday.getDate() + i);
+    let full = 0, low = 0;
+    for (const c of clients) {
+      for (const s of c.sessions) {
+        if (s.status === 'cancelled') continue;
+        if (basis === 'attended' && s.status !== 'attended') continue;
+        if (!isSameDay(new Date(s.session_date), day)) continue;
+        if (c.is_low_cost) low += s.fee ?? 0;
+        else full += s.fee ?? 0;
+      }
+    }
+    return { label: DAY_LABELS[i], full, low };
+  });
+}
+
+function buildYearly(clients: ClientRow[], basis: 'attended' | 'all_scheduled', now: Date): MonthBucket[] {
+  const year = now.getFullYear();
+  return Array.from({ length: 12 }, (_, month) => {
+    let full = 0, low = 0;
+    for (const c of clients) {
+      for (const s of c.sessions) {
+        if (s.status === 'cancelled') continue;
+        if (basis === 'attended' && s.status !== 'attended') continue;
+        const d = new Date(s.session_date);
+        if (d.getFullYear() !== year || d.getMonth() !== month) continue;
+        if (c.is_low_cost) low += s.fee ?? 0;
+        else full += s.fee ?? 0;
+      }
+    }
+    return { label: new Date(year, month, 1).toLocaleDateString('en-IE', { month: 'short' }), full, low };
+  });
+}
+
 function buildMonthly(clients: ClientRow[], basis: 'attended' | 'all_scheduled', now: Date): MonthBucket[] {
   const months: Array<{ year: number; month: number; label: string }> = [];
   for (let i = 11; i >= 0; i--) {
@@ -383,7 +437,7 @@ function buildMonthly(clients: ClientRow[], basis: 'attended' | 'all_scheduled',
   });
 }
 
-function MonthlyChart({ months }: { months: MonthBucket[] }) {
+function MonthlyChart({ months, currentIdx }: { months: MonthBucket[]; currentIdx: number }) {
   const max = Math.max(1, ...months.map(m => m.full + m.low));
   return (
     <div style={{
@@ -394,7 +448,7 @@ function MonthlyChart({ months }: { months: MonthBucket[] }) {
         const fullPct = (m.full / max) * 100;
         const lowPct = (m.low / max) * 100;
         const total = m.full + m.low;
-        const isCurrent = i === months.length - 1;
+        const isCurrent = i === currentIdx;
         return (
           <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
             <div style={{ width: '100%', height: 180, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>

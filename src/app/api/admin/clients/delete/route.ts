@@ -26,30 +26,31 @@ export async function POST(req: NextRequest) {
   console.log('[clients/delete] cascading delete for client:', client_id);
 
   // 1. Fetch all sessions BEFORE deleting so we have their gcal_event_ids.
+  //    If the gcal_event_id column hasn't been migrated yet, fetchErr will fire —
+  //    we log a warning and skip GCal cleanup rather than blocking the delete.
   const { data: sessions, error: fetchErr } = await supabaseAdmin
     .from('sessions')
     .select('id, gcal_event_id')
     .eq('client_id', client_id);
 
+  let uniqueEventIds: string[] = [];
   if (fetchErr) {
-    console.error('[clients/delete] sessions fetch error:', fetchErr);
-    return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    console.warn('[clients/delete] could not read gcal_event_ids (migration pending?):', fetchErr.message);
+  } else {
+    // 2. Delete every Google Calendar event linked to this client's sessions.
+    //    Multiple sessions in a recurring series share one gcal_event_id, so
+    //    deduplicate before hitting the API. Deleting the series event removes
+    //    all instances at once. Failures are logged but don't abort the delete.
+    uniqueEventIds = [
+      ...new Set(
+        (sessions ?? [])
+          .map(s => (s as { gcal_event_id?: string | null }).gcal_event_id)
+          .filter((id): id is string => !!id),
+      ),
+    ];
+    console.log('[clients/delete] removing', uniqueEventIds.length, 'gcal event(s)');
+    await Promise.all(uniqueEventIds.map(id => deleteCalendarEvent(id)));
   }
-
-  // 2. Delete every Google Calendar event linked to this client's sessions.
-  //    Multiple sessions in a recurring series share one gcal_event_id, so
-  //    deduplicate before hitting the API. Deleting the series event removes
-  //    all instances at once. Failures are logged but don't abort the delete.
-  const uniqueEventIds = [
-    ...new Set(
-      (sessions ?? [])
-        .map(s => (s as { gcal_event_id?: string | null }).gcal_event_id)
-        .filter((id): id is string => !!id),
-    ),
-  ];
-
-  console.log('[clients/delete] removing', uniqueEventIds.length, 'gcal event(s)');
-  await Promise.all(uniqueEventIds.map(id => deleteCalendarEvent(id)));
 
   // 3. Delete child rows to satisfy FK constraints.
   const sessionsDel = await supabaseAdmin.from('sessions').delete().eq('client_id', client_id);

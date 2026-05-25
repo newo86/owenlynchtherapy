@@ -762,7 +762,7 @@ interface Revenue {
   monthNetCents: number;
   monthLowCostCents: number;
   prevMonthCents: number;
-  weekBars: Array<{ day: string; value: number; cents: number }>;
+  recentMonths: Array<{ label: string; cents: number; isCurrent: boolean }>;
 }
 
 const ROOM_COST_CENTS_DASH = 2000;
@@ -798,28 +798,33 @@ function computeRevenue(all: Array<{ s: SessionRow; c: ClientRow }>): Revenue {
     })
     .reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
 
-  const monday = startOfWeek(now);
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday); d.setDate(monday.getDate() + i); return d;
-  });
-
-  const weekBars = weekDays.map(d => {
+  // Last 6 months — each bar shows full-paying gross for that month.
+  const recentMonths = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const isCurrentMonth = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
     const cents = all
       .filter(({ s, c }) => {
         const sd = new Date(s.session_date);
-        return !c.is_low_cost && isSameDay(sd, d) && s.status !== 'cancelled';
+        return !c.is_low_cost
+          && sd.getFullYear() === d.getFullYear()
+          && sd.getMonth() === d.getMonth()
+          && s.status !== 'cancelled';
       })
       .reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
-    return { day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][weekDays.indexOf(d)], value: cents, cents };
+    return {
+      label: d.toLocaleDateString('en-IE', { month: 'short' }),
+      cents,
+      isCurrent: isCurrentMonth,
+    };
   });
 
-  return { monthGrossCents: monthGross, monthNetCents: monthNet, monthLowCostCents: monthLowCost, prevMonthCents: prevCents, weekBars };
+  return { monthGrossCents: monthGross, monthNetCents: monthNet, monthLowCostCents: monthLowCost, prevMonthCents: prevCents, recentMonths };
 }
 
 function RevenueCard({ revenue }: { revenue: Revenue }) {
-  const { monthGrossCents, monthNetCents, monthLowCostCents, prevMonthCents, weekBars } = revenue;
-  const max = Math.max(...weekBars.map(b => b.cents), 1);
-  const peakIdx = weekBars.reduce((pi, b, i, arr) => arr[pi].cents >= b.cents ? pi : i, 0);
+  const { monthGrossCents, monthNetCents, monthLowCostCents, prevMonthCents, recentMonths } = revenue;
+  const max = Math.max(...recentMonths.map(b => b.cents), 1);
+  const peakIdx = recentMonths.reduce((pi, b, i, arr) => arr[pi].cents >= b.cents ? pi : i, 0);
   const delta = prevMonthCents > 0
     ? Math.round(((monthGrossCents - prevMonthCents) / prevMonthCents) * 100)
     : null;
@@ -859,16 +864,16 @@ function RevenueCard({ revenue }: { revenue: Revenue }) {
       </div>
 
       <div className="admin-revenue-chart">
-        {weekBars.map((b, i) => {
+        {recentMonths.map((b, i) => {
           const pct = b.cents === 0 ? 0 : Math.max(8, Math.round((b.cents / max) * 100));
-          const isHi = i === peakIdx && b.cents > 0;
+          const isHi = b.isCurrent || (i === peakIdx && b.cents > 0 && !recentMonths[recentMonths.length - 1].isCurrent);
           return (
-            <div key={b.day} className="admin-bar-col">
+            <div key={b.label + i} className="admin-bar-col">
               <div className="admin-bar-wrap">
                 <div className={`admin-bar${isHi ? ' is-hi' : ''}${b.cents === 0 ? ' is-zero' : ''}`} style={{ height: `${pct}%` }} />
               </div>
               <div className="admin-bar-value">{b.cents > 0 ? `€${Math.round(b.cents / 100)}` : '—'}</div>
-              <div className="admin-bar-label">{b.day}</div>
+              <div className="admin-bar-label">{b.label}</div>
             </div>
           );
         })}

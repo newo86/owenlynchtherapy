@@ -18,14 +18,16 @@ export async function POST(req: NextRequest) {
   let body: {
     session_id: string;
     client_id: string;
-    session_date?: string;    // "YYYY-MM-DDTHH:MM" Dublin wall-clock
-    fee?: number;             // euros
+    session_date?: string;       // "YYYY-MM-DDTHH:MM" Dublin wall-clock
+    fee?: number;                // euros
     session_format?: string;
     payment_status?: string;
     status?: string;
     notes?: string;
     client_name?: string;
     client_email?: string;
+    phone?: string;
+    apply_format_to_all?: boolean; // propagate format+location change to all client sessions
   };
   try {
     body = await req.json();
@@ -33,7 +35,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { session_id, client_id } = body;
+  const { session_id, client_id, apply_format_to_all } = body;
   if (!session_id) return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
   if (!client_id)  return NextResponse.json({ error: 'client_id is required' }, { status: 400 });
 
@@ -93,6 +95,9 @@ export async function POST(req: NextRequest) {
   if (typeof body.client_email === 'string') {
     clientPatch.email = body.client_email.trim();
   }
+  if (typeof body.phone === 'string') {
+    clientPatch.phone = body.phone.trim() || null;
+  }
   if (Object.keys(clientPatch).length > 0) {
     const { error: clientErr } = await supabaseAdmin
       .from('clients')
@@ -101,6 +106,23 @@ export async function POST(req: NextRequest) {
     if (clientErr) {
       console.error('[sessions/update] client update error:', clientErr);
       return NextResponse.json({ error: clientErr.message }, { status: 500 });
+    }
+  }
+
+  // Propagate format change to all other sessions for this client.
+  if (apply_format_to_all && sessionPatch.session_format) {
+    const bulkPatch = {
+      session_format: sessionPatch.session_format,
+      location: sessionPatch.location,
+    };
+    const { error: bulkErr } = await supabaseAdmin
+      .from('sessions')
+      .update(bulkPatch)
+      .eq('client_id', client_id)
+      .neq('id', session_id);
+    if (bulkErr) {
+      console.error('[sessions/update] bulk format update error:', bulkErr);
+      // Non-fatal — current session was already updated.
     }
   }
 
