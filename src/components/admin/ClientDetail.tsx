@@ -353,8 +353,13 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
                     <span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span>
                     <span className={`admin-tag ${payTag(s.payment_status)}`}>{payLabel(s.payment_status)}</span>
                   </div>
+                  {s.paid_at && (
+                    <div style={{ fontSize: 11, color: 'var(--sage)', marginTop: 8, fontWeight: 500 }}>
+                      Paid {formatDateTime(s.paid_at)} · €{Math.round((s.fee ?? 0) / 100)}
+                    </div>
+                  )}
                   {s.receipt_sent_at && (
-                    <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginTop: 8 }}>
+                    <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginTop: 4 }}>
                       Receipt sent {formatDateTime(s.receipt_sent_at)}
                     </div>
                   )}

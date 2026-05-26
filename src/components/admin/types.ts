@@ -8,6 +8,9 @@ export interface SessionRow {
   status: 'scheduled' | 'attended' | 'cancelled' | 'no_show' | string;
   payment_status: 'paid' | 'unpaid' | 'refunded' | string;
   stripe_payment_link_url: string | null;
+  stripe_payment_link_id?: string | null;
+  stripe_payment_intent_id?: string | null;
+  paid_at?: string | null;
   receipt_sent_at: string | null;
   notes: string | null;
   gcal_event_id?: string | null;

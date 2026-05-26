@@ -48,11 +48,12 @@ export async function POST(request: NextRequest) {
       return new Response('OK', { status: 200 });
     }
 
-    // Update session: mark paid, store payment_intent_id
+    // Update session: mark paid, store payment_intent_id and paid_at timestamp
     const { data: session, error: updateErr } = await supabaseAdmin
       .from('sessions')
       .update({
         payment_status: 'paid',
+        paid_at: new Date().toISOString(),
         ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),
       })
       .eq('id', supabaseSessionId)
@@ -66,16 +67,14 @@ export async function POST(request: NextRequest) {
 
     console.log('[stripe-webhook] payment confirmed for session:', supabaseSessionId);
 
-    // If the session has already been marked attended, send receipt automatically
-    if (session.status === 'attended') {
-      const client = (session as { clients: { full_name: string; email: string } }).clients;
-      if (client?.email) {
-        await sendReceipt(client, session);
-        await supabaseAdmin
-          .from('sessions')
-          .update({ receipt_sent_at: new Date().toISOString() })
-          .eq('id', supabaseSessionId);
-      }
+    // Send receipt immediately on payment (Resend custom receipt)
+    const client = (session as { clients: { full_name: string; email: string } }).clients;
+    if (client?.email) {
+      await sendReceipt(client, session);
+      await supabaseAdmin
+        .from('sessions')
+        .update({ receipt_sent_at: new Date().toISOString() })
+        .eq('id', supabaseSessionId);
     }
   }
 

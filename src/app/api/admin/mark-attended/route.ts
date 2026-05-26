@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
 
   let receipt_sent = false;
 
-  if (session?.payment_status === 'paid') {
+  // Only send if paid and no receipt sent yet (webhook sends one immediately on payment)
+  if (session?.payment_status === 'paid' && !session?.receipt_sent_at) {
     const client = (session as { clients: { full_name: string; email: string } }).clients;
     if (client?.email) {
       const firstName = client.full_name.split(' ')[0];

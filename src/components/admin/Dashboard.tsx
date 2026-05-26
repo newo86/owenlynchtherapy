@@ -784,15 +784,14 @@ function computeRevenue(all: Array<{ s: SessionRow; c: ClientRow }>): Revenue {
   const startOfPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const endOfPrev = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // Headline figure = full-paying attended sessions this month. Low-cost
-  // sits underneath so the dashboard "what am I making" number stays clean.
+  // Headline = full-paying sessions confirmed paid via Stripe this month.
   let monthGross = 0;
   let monthNet = 0;
   let monthLowCost = 0;
   for (const { s, c } of all) {
     const d = new Date(s.session_date);
     if (d < startOfMonth || d > now) continue;
-    if (s.status !== 'attended') continue;
+    if (s.payment_status !== 'paid') continue;
     if (c.is_low_cost) {
       monthLowCost += s.fee ?? 0;
       continue;
@@ -805,11 +804,11 @@ function computeRevenue(all: Array<{ s: SessionRow; c: ClientRow }>): Revenue {
   const prevCents = all
     .filter(({ s, c }) => {
       const d = new Date(s.session_date);
-      return !c.is_low_cost && d >= startOfPrev && d < endOfPrev && s.status === 'attended';
+      return !c.is_low_cost && d >= startOfPrev && d < endOfPrev && s.payment_status === 'paid';
     })
     .reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
 
-  // Last 6 months — each bar shows full-paying gross for that month.
+  // Last 6 months — each bar shows full-paying paid gross for that month.
   const recentMonths = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
     const isCurrentMonth = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
@@ -819,7 +818,7 @@ function computeRevenue(all: Array<{ s: SessionRow; c: ClientRow }>): Revenue {
         return !c.is_low_cost
           && sd.getFullYear() === d.getFullYear()
           && sd.getMonth() === d.getMonth()
-          && s.status !== 'cancelled';
+          && s.payment_status === 'paid';
       })
       .reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
     return {
@@ -863,7 +862,7 @@ function RevenueCard({ revenue, onNavigate }: { revenue: Revenue; onNavigate?: (
             )}
           </div>
           <div style={{ marginTop: 6, fontSize: 12, color: 'var(--ink-muted)' }}>
-            Full-paying · attended this month
+            Full-paying · paid this month
           </div>
           <div style={{ marginTop: 8, fontSize: 13, fontWeight: 500, color: 'var(--forest-deep)' }}>
             Net €{Math.round(monthNetCents / 100).toLocaleString('en-IE')}

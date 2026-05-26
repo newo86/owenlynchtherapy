@@ -125,6 +125,12 @@ export function AdminShell() {
 
   useEffect(() => { void reload(); }, [reload]);
 
+  // Auto-refresh every 30 s so payment status updates from Stripe webhook appear automatically
+  useEffect(() => {
+    const timer = setInterval(() => { void reload(); }, 30_000);
+    return () => clearInterval(timer);
+  }, [reload]);
+
   useEffect(() => {
     if (!calStatus?.connected) return;
     let cancelled = false;
