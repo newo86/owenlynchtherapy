@@ -50,7 +50,8 @@ function payLabel(status: string) {
   return status === 'paid' ? 'Paid' : status === 'refunded' ? 'Refunded' : 'Unpaid';
 }
 
-const ACCENTS = ['e-sage', 'e-terra', 'e-gold', 'e-lilac'] as const;
+// e-terra is reserved for unpaid sessions — don't include it in the name hash pool
+const ACCENTS = ['e-sage', 'e-gold', 'e-lilac'] as const;
 function accentForName(name: string): typeof ACCENTS[number] {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
@@ -319,7 +320,7 @@ function CalendarGrid({
   function eventsForDay(day: Date) {
     const matched = new Set<string>();
     const out: Array<{
-      time: string; label: string; accent: typeof ACCENTS[number];
+      time: string; label: string; accent: typeof ACCENTS[number] | 'e-terra';
       start: string; format?: string;
       session?: SessionRow; client?: ClientRow;
     }> = [];
@@ -335,10 +336,11 @@ function CalendarGrid({
           return sameTitle || closeInTime;
         });
         if (ev) matched.add(ev.id);
+        const unpaid = s.payment_status !== 'paid' && s.payment_status !== 'refunded';
         out.push({
           time: formatTime(s.session_date),
           label: c.full_name,
-          accent: accentForName(c.full_name),
+          accent: unpaid ? 'e-terra' : accentForName(c.full_name),
           start: s.session_date,
           format: s.session_format,
           session: s,
