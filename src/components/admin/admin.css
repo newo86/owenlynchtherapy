@@ -798,9 +798,6 @@
 .admin-event.e-gold  .admin-event-time { color: var(--gold-dark); }
 .admin-event.e-lilac { background: rgba(168, 124, 185, 0.10); border-left-color: var(--lilac); }
 .admin-event.e-lilac .admin-event-time { color: var(--lilac-dark); }
-.admin-event.e-red   { background: rgba(220, 38, 38, 0.08);   border-left-color: #dc2626; }
-.admin-event.e-red   .admin-event-time { color: #dc2626; }
-.admin-event.e-red   .admin-event-name { color: #dc2626; }
 
 .admin-event-empty {
   border: 1px dashed var(--line);
