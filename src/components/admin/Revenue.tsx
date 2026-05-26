@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { TrendingUp, Video, MapPin, Wallet, X } from 'lucide-react';
-import { startOfWeek, isSameDay, formatDateTime } from './api';
+import { TrendingUp, Video, MapPin, Wallet, X, Send } from 'lucide-react';
+import { startOfWeek, isSameDay, formatDateTime, adminFetch } from './api';
 import type { ClientRow, SessionRow } from './types';
 
 interface Props {
@@ -87,6 +87,7 @@ export function Revenue({ clients }: Props) {
   const [scope, setScope] = useState<Scope>('month');
   const [basis, setBasis] = useState<'attended' | 'all_scheduled'>('attended');
   const [drill, setDrill] = useState<{ title: string; rows: DrillRow[] } | null>(null);
+  const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
   const now = new Date();
 
@@ -174,6 +175,28 @@ export function Revenue({ clients }: Props) {
             >{b.label}</button>
           ))}
         </div>
+
+        <button
+          className="admin-btn-secondary"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}
+          disabled={reportStatus === 'sending'}
+          onClick={async () => {
+            setReportStatus('sending');
+            try {
+              const res = await adminFetch('/api/admin/reports/weekly');
+              setReportStatus(res.ok ? 'sent' : 'error');
+            } catch {
+              setReportStatus('error');
+            }
+            setTimeout(() => setReportStatus('idle'), 4000);
+          }}
+        >
+          <Send size={12} strokeWidth={1.8} />
+          {reportStatus === 'sending' ? 'Sending…'
+            : reportStatus === 'sent'  ? 'Sent!'
+            : reportStatus === 'error' ? 'Failed'
+            : 'Email weekly report'}
+        </button>
       </div>
 
       {/* Three stat cards */}
