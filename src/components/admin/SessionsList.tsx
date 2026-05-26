@@ -320,7 +320,7 @@ function CalendarGrid({
   function eventsForDay(day: Date) {
     const matched = new Set<string>();
     const out: Array<{
-      time: string; label: string; accent: typeof ACCENTS[number] | 'e-terra';
+      time: string; label: string; accent: typeof ACCENTS[number] | 'e-red';
       start: string; format?: string;
       session?: SessionRow; client?: ClientRow;
     }> = [];
@@ -340,7 +340,7 @@ function CalendarGrid({
         out.push({
           time: formatTime(s.session_date),
           label: c.full_name,
-          accent: unpaid ? 'e-terra' : accentForName(c.full_name),
+          accent: unpaid ? 'e-red' : accentForName(c.full_name),
           start: s.session_date,
           format: s.session_format,
           session: s,
