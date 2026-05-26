@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     'Anxiety therapy in Dublin and online for adults across Ireland & the UK. Evidence-based support for worry, panic, and generalised anxiety. IAHIP accredited.',
   alternates: {
     canonical: PAGE_URL,
-    languages: { 'en-IE': PAGE_URL, 'x-default': PAGE_URL },
+    languages: { 'en': PAGE_URL, 'x-default': PAGE_URL },
   },
   openGraph: {
     title: 'Anxiety Therapy Dublin & Online | Owen Lynch Psychotherapy',

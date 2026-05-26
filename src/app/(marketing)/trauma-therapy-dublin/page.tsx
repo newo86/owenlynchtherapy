@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     'Trauma therapy in Dublin and online across Ireland & the UK. Gentle, paced support for past experiences affecting the present. IAHIP accredited.',
   alternates: {
     canonical: PAGE_URL,
-    languages: { 'en-IE': PAGE_URL, 'x-default': PAGE_URL },
+    languages: { 'en': PAGE_URL, 'x-default': PAGE_URL },
   },
   openGraph: {
     title: 'Trauma Therapy Dublin & Online | Owen Lynch Psychotherapy',

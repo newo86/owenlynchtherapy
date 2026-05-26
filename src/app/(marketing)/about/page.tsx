@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://owenlynchtherapy.com/about',
     languages: {
-      'en-IE': 'https://owenlynchtherapy.com/about',
+      'en': 'https://owenlynchtherapy.com/about',
       'x-default': 'https://owenlynchtherapy.com/about',
     },
   },

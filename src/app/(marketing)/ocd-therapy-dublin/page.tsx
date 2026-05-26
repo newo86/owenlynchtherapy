@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     'Specialist OCD therapy in Dublin and online across Ireland & the UK. IAHIP-accredited psychotherapist using I-CBT, ACT, and ERP. €70-€80 per session.',
   alternates: {
     canonical: PAGE_URL,
-    languages: { 'en-IE': PAGE_URL, 'x-default': PAGE_URL },
+    languages: { 'en': PAGE_URL, 'x-default': PAGE_URL },
   },
   openGraph: {
     title: 'OCD Therapy Dublin & Online | Owen Lynch Psychotherapy',

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://owenlynchtherapy.com/articles',
     languages: {
-      'en-IE': 'https://owenlynchtherapy.com/articles',
+      'en': 'https://owenlynchtherapy.com/articles',
       'x-default': 'https://owenlynchtherapy.com/articles',
     },
   },

@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     'Therapy for depression in Dublin and online across Ireland & the UK. Evidence-based support for low mood, hopelessness, and burnout. IAHIP accredited.',
   alternates: {
     canonical: PAGE_URL,
-    languages: { 'en-IE': PAGE_URL, 'x-default': PAGE_URL },
+    languages: { 'en': PAGE_URL, 'x-default': PAGE_URL },
   },
   openGraph: {
     title: 'Depression Therapy Dublin & Online | Owen Lynch Psychotherapy',

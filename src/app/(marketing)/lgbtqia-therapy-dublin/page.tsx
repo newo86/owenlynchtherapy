@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     'Affirming LGBTQIA+ therapy in Dublin and online across Ireland & the UK. Identity, relationships, minority stress, chemsex. IAHIP-accredited psychotherapist.',
   alternates: {
     canonical: PAGE_URL,
-    languages: { 'en-IE': PAGE_URL, 'x-default': PAGE_URL },
+    languages: { 'en': PAGE_URL, 'x-default': PAGE_URL },
   },
   openGraph: {
     title: 'LGBTQIA+ Therapy Dublin & Online | Owen Lynch Psychotherapy',

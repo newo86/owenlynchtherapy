@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     'ADHD therapy for adults in Dublin and online across Ireland & the UK. Support for diagnosed and self-identifying adults. IAHIP-accredited psychotherapist.',
   alternates: {
     canonical: PAGE_URL,
-    languages: { 'en-IE': PAGE_URL, 'x-default': PAGE_URL },
+    languages: { 'en': PAGE_URL, 'x-default': PAGE_URL },
   },
   openGraph: {
     title: 'ADHD Therapy Dublin & Online | Owen Lynch Psychotherapy',

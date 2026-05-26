@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     'Therapy for relationship difficulties in Dublin and online for individuals across Ireland & the UK. Support for patterns, communication, attachment. IAHIP accredited.',
   alternates: {
     canonical: PAGE_URL,
-    languages: { 'en-IE': PAGE_URL, 'x-default': PAGE_URL },
+    languages: { 'en': PAGE_URL, 'x-default': PAGE_URL },
   },
   openGraph: {
     title: 'Relationship Therapy Dublin & Online | Owen Lynch Psychotherapy',

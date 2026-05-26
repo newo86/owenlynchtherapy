@@ -10,6 +10,10 @@ export const metadata: Metadata = {
     'IAHIP and ICP accredited psychotherapist in Dublin offering in-person and online therapy for anxiety, OCD, ADHD, autism, depression, relationships and LGBTQIA+ mental health.',
   alternates: {
     canonical: 'https://owenlynchtherapy.com',
+    languages: {
+      'en':        'https://owenlynchtherapy.com',
+      'x-default': 'https://owenlynchtherapy.com',
+    },
   },
   openGraph: {
     title: 'Psychotherapy in Dublin & Online | Owen Lynch',
@@ -38,12 +42,12 @@ export const metadata: Metadata = {
 
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'MedicalBusiness',
-  '@id': 'https://www.owenlynchtherapy.com/#medicalbusiness',
+  '@type': ['LocalBusiness', 'MedicalBusiness'],
+  '@id': 'https://owenlynchtherapy.com/#medicalbusiness',
   name: 'Owen Lynch Psychotherapy',
-  url: 'https://www.owenlynchtherapy.com',
-  logo: 'https://www.owenlynchtherapy.com/logo.png',
-  image: 'https://www.owenlynchtherapy.com/therapy-room.jpg',
+  url: 'https://owenlynchtherapy.com',
+  logo: 'https://owenlynchtherapy.com/logo.png',
+  image: 'https://owenlynchtherapy.com/therapy-room.jpg',
   description:
     'Accredited integrative psychotherapist in Dublin specializing in evidence-based treatments for Anxiety, OCD, ADHD, Autism, and Trauma.',
   telephone: '+353851471689',

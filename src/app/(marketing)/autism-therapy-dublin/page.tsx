@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     'Affirming therapy for autistic adults in Dublin and online across Ireland & the UK. Late-diagnosed and self-identifying welcome. IAHIP-accredited psychotherapist.',
   alternates: {
     canonical: PAGE_URL,
-    languages: { 'en-IE': PAGE_URL, 'x-default': PAGE_URL },
+    languages: { 'en': PAGE_URL, 'x-default': PAGE_URL },
   },
   openGraph: {
     title: 'Autism Therapy Dublin & Online | Owen Lynch Psychotherapy',

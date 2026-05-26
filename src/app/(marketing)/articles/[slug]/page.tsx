@@ -120,7 +120,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       alternates: {
         canonical: `${BASE_URL}/articles/how-ocd-therapy-works`,
         languages: {
-          'en-IE': `${BASE_URL}/articles/how-ocd-therapy-works`,
+          'en': `${BASE_URL}/articles/how-ocd-therapy-works`,
           'x-default': `${BASE_URL}/articles/how-ocd-therapy-works`,
         },
       },
@@ -157,7 +157,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: `${BASE_URL}/articles/${slug}`,
       languages: {
-        'en-IE': `${BASE_URL}/articles/${slug}`,
+        'en': `${BASE_URL}/articles/${slug}`,
         'x-default': `${BASE_URL}/articles/${slug}`,
       },
     },
