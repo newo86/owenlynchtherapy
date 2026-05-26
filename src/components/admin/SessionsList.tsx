@@ -95,6 +95,11 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
         const d = new Date(s.session_date);
         return d >= monday && d < sunday;
       }
+      if (filter === 'unpaid_this_week') {
+        const d = new Date(s.session_date);
+        return s.payment_status !== 'paid' && s.payment_status !== 'refunded'
+          && s.status !== 'cancelled' && d >= monday && d < sunday;
+      }
       return true;
     });
   }, [rows, filter]);
@@ -150,10 +155,11 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
         {view === 'list' && (
           <div className="admin-segmented">
             {([
-              { id: 'all',           label: 'All' },
-              { id: 'unpaid',        label: 'Unpaid' },
-              { id: 'needs_receipt', label: 'Needs receipt' },
-              { id: 'this_week',     label: 'This week' },
+              { id: 'all',              label: 'All' },
+              { id: 'unpaid',           label: 'Unpaid' },
+              { id: 'unpaid_this_week', label: 'Unpaid · this week' },
+              { id: 'needs_receipt',    label: 'Needs receipt' },
+              { id: 'this_week',        label: 'This week' },
             ] as const).map(t => (
               <button
                 key={t.id}

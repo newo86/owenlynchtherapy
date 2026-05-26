@@ -269,7 +269,9 @@ export function Dashboard({
               : `All clear · ${outstandingScope === 'week' ? 'this week' : outstandingScope === 'month' ? 'this month' : 'all time'}`
           }
           footKind={outstandingCount > 0 ? 'warn' : 'ok'}
-          onClick={() => onNavigateSection('sessions', { sessionsFilter: 'unpaid' })}
+          onClick={() => onNavigateSection('sessions', {
+            sessionsFilter: outstandingScope === 'week' ? 'unpaid_this_week' : 'unpaid',
+          })}
           pills={(
             <div style={{ display: 'flex', gap: 4, marginTop: 12 }} onClick={e => e.stopPropagation()}>
               {([
@@ -555,7 +557,7 @@ function QuickActions({ unpaidThisWeek, needsReceipt, formsPending, pendingNames
         {/* Unpaid sessions this week */}
         <button
           type="button"
-          onClick={() => onNavigateSection('sessions', { sessionsFilter: 'unpaid' })}
+          onClick={() => onNavigateSection('sessions', { sessionsFilter: 'unpaid_this_week' })}
           className="admin-task warn"
         >
           <div className="admin-task-eyebrow">Unpaid · {unpaidThisWeek}</div>

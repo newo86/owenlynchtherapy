@@ -70,7 +70,7 @@ export interface CalendarStatus {
 
 export type AdminSection = 'dashboard' | 'clients' | 'sessions' | 'revenue' | 'forms' | 'new-client';
 
-export type SessionFilter = 'all' | 'unpaid' | 'needs_receipt' | 'this_week';
+export type SessionFilter = 'all' | 'unpaid' | 'needs_receipt' | 'this_week' | 'unpaid_this_week';
 export type FormsTab = 'submitted' | 'pending';
 
 export const FORMAT_LABELS: Record<string, string> = {
