@@ -6,7 +6,7 @@ import PsychologyTodayBadge from '@/components/sections/PsychologyTodayBadge';
 import FloatingCircles from '@/components/ui/floating-circles';
 
 export const metadata: Metadata = {
-  title: 'About Owen Lynch | IAHIP & ICP Accredited Psychotherapist Dublin',
+  title: { absolute: 'About Owen Lynch | Psychotherapist Dublin' },
   description:
     'Owen Lynch is an IAHIP and ICP accredited integrative psychotherapist based in Dublin, working with adults in person and online across Ireland and the UK.',
   alternates: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'About Owen Lynch | IAHIP & ICP Accredited Psychotherapist Dublin',
+    title: 'About Owen Lynch | Psychotherapist Dublin',
     description:
       'Owen Lynch is an IAHIP and ICP accredited integrative psychotherapist based in Dublin, working with adults in person and online across Ireland and the UK.',
     url: 'https://owenlynchtherapy.com/about',

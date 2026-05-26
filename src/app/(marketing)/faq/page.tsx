@@ -5,7 +5,7 @@ import FaqAccordion, { type FaqCategory } from '@/components/sections/FaqAccordi
 import FloatingCircles from '@/components/ui/floating-circles';
 
 export const metadata: Metadata = {
-  title: 'FAQ | Psychotherapy Dublin and Online | Owen Lynch',
+  title: { absolute: 'FAQ | Psychotherapy Dublin & Online | Owen Lynch' },
   description:
     'Answers to common questions about psychotherapy in Dublin and online therapy in Ireland. IAHIP accredited. OCD therapy, ADHD therapy, anxiety, confidential sessions.',
   alternates: {
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: 'FAQ | Psychotherapy Dublin and Online | Owen Lynch',
+    title: 'FAQ | Psychotherapy Dublin & Online | Owen Lynch',
     description:
       'Answers to common questions about psychotherapy in Dublin and online therapy in Ireland. IAHIP accredited. OCD therapy, ADHD therapy, anxiety, confidential sessions.',
     url: 'https://owenlynchtherapy.com/faq',
