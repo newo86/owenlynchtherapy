@@ -217,6 +217,10 @@ export async function POST(req: NextRequest) {
     });
     if (eventId) {
       console.log('[generate-token] step 3b: google calendar event created', eventId);
+      await supabaseAdmin
+        .from('sessions')
+        .update({ gcal_event_id: eventId })
+        .in('id', sessionRows.map((s: { id: string }) => s.id));
     } else {
       console.log('[generate-token] step 3b: google calendar skipped (not connected or scope insufficient)');
     }

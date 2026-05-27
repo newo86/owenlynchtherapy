@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { getAuthorizedClient } from '@/lib/googleOAuth';
 import { startOfWeek } from '@/lib/dateUtils';
+import { supabaseAdmin } from '@/lib/supabase';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -52,6 +53,30 @@ export async function GET(req: NextRequest) {
         location: e.location ?? undefined,
         htmlLink: e.htmlLink ?? undefined,
       }));
+
+    // Auto-cancel Supabase sessions whose GCal event was deleted.
+    // Only affects sessions that have a gcal_event_id recorded.
+    const gcalIds = new Set(events.map(e => e.id));
+    const { data: trackedSessions } = await supabaseAdmin
+      .from('sessions')
+      .select('id, gcal_event_id')
+      .gte('session_date', timeMin)
+      .lte('session_date', timeMax)
+      .not('gcal_event_id', 'is', null)
+      .neq('status', 'cancelled');
+
+    if (trackedSessions && trackedSessions.length > 0) {
+      const orphaned = trackedSessions
+        .filter((s: { id: string; gcal_event_id: string }) => !gcalIds.has(s.gcal_event_id))
+        .map((s: { id: string }) => s.id);
+      if (orphaned.length > 0) {
+        await supabaseAdmin
+          .from('sessions')
+          .update({ status: 'cancelled' })
+          .in('id', orphaned);
+        console.log('[admin/calendar] auto-cancelled', orphaned.length, 'session(s) removed from GCal');
+      }
+    }
 
     return NextResponse.json({ connected: true, events }, { headers: noCache });
   } catch (err: unknown) {

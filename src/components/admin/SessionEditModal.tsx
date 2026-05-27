@@ -76,6 +76,8 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
   const [saved, setSaved]       = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDeleteSession, setConfirmDeleteSession] = useState(false);
+  const [deletingSession, setDeletingSession] = useState(false);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -147,6 +149,24 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
       setError('Network error. Please try again.');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function deleteSession() {
+    setDeletingSession(true);
+    setError('');
+    try {
+      const res = await adminFetch('/api/admin/sessions/delete', {
+        method: 'POST',
+        body: JSON.stringify({ session_id: session.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error ?? 'Failed to delete session.'); setDeletingSession(false); return; }
+      onSuccess();
+      onClose();
+    } catch {
+      setError('Network error. Please try again.');
+      setDeletingSession(false);
     }
   }
 
@@ -485,6 +505,56 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
             >
               Cancel
             </button>
+          </div>
+
+          {/* Delete this session */}
+          <div style={{
+            borderTop: '1px solid rgba(200,90,26,0.15)',
+            paddingTop: 16,
+            marginTop: 4,
+          }}>
+            {confirmDeleteSession ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)', fontWeight: 500 }}>
+                  Delete this single session? This cannot be undone.
+                </p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    type="button"
+                    disabled={deletingSession}
+                    onClick={deleteSession}
+                    style={{
+                      background: 'var(--terracotta)', color: 'white',
+                      border: 'none', borderRadius: 8, padding: '8px 16px',
+                      fontSize: 13, fontWeight: 600, cursor: deletingSession ? 'wait' : 'pointer',
+                    }}
+                  >
+                    {deletingSession ? 'Deleting…' : 'Yes, delete session'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteSession(false)}
+                    className="admin-btn-secondary"
+                    style={{ fontSize: 13, padding: '8px 14px' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteSession(true)}
+                style={{
+                  background: 'none', border: '1px solid rgba(200,90,26,0.35)',
+                  borderRadius: 8, padding: '7px 14px',
+                  fontSize: 12, color: 'var(--terracotta)',
+                  cursor: 'pointer', letterSpacing: '0.3px',
+                }}
+              >
+                Delete this session
+              </button>
+            )}
           </div>
 
           {/* Delete client */}
