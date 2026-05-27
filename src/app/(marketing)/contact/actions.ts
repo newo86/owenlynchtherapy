@@ -10,6 +10,27 @@ export async function submitContactForm(formData: FormData) {
     redirect('/contact?sent=1');
   }
 
+  // Turnstile verification — skip if secret key not configured (e.g. local dev)
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+  if (turnstileSecret) {
+    const token = ((formData.get('cf-turnstile-response') as string) ?? '').trim();
+    if (!token) {
+      redirect('/contact?error=1');
+    }
+    const verifyRes = await fetch(
+      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ secret: turnstileSecret, response: token }),
+      }
+    );
+    const verifyData = (await verifyRes.json()) as { success: boolean };
+    if (!verifyData.success) {
+      redirect('/contact?error=1');
+    }
+  }
+
   const firstName = ((formData.get('firstName') as string) ?? '').trim();
   const lastName  = ((formData.get('lastName')  as string) ?? '').trim();
   const email     = ((formData.get('email')     as string) ?? '').trim();

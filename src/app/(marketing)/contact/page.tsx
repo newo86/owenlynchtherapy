@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import Script from 'next/script';
 import { submitContactForm } from './actions';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
@@ -351,6 +352,14 @@ export default async function ContactPage({ searchParams }: Props) {
                     />
                   </div>
 
+                  {process.env.TURNSTILE_SITE_KEY && (
+                    <div
+                      className="cf-turnstile"
+                      data-sitekey={process.env.TURNSTILE_SITE_KEY}
+                      data-theme="light"
+                    />
+                  )}
+
                   <button
                     type="submit"
                     className="w-full bg-orange text-white py-3.5 rounded-md text-xs uppercase tracking-normal font-normal h-hover:opacity-90 h-can:transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
@@ -363,6 +372,13 @@ export default async function ContactPage({ searchParams }: Props) {
           </div>
         </div>
       </section>
+
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        strategy="afterInteractive"
+        async
+        defer
+      />
 
       {/* ── Section 4: Reassurance ── */}
       <section
