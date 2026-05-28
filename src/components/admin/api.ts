@@ -86,3 +86,17 @@ export function isSameDay(a: Date, b: Date): boolean {
     && a.getMonth() === b.getMonth()
     && a.getDate() === b.getDate();
 }
+
+/** Convert a GCal ISO start string to "YYYY-MM-DDTHH:MM" in Dublin wall-clock
+ *  so it can be passed as initialIsoDate to ScheduleSessionModal. */
+export function gcalIsoToDublinLocal(isoStart: string): string {
+  const d = new Date(isoStart);
+  const parts = new Intl.DateTimeFormat('en-IE', {
+    timeZone: 'Europe/Dublin',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(d);
+  const v = (t: string) => parts.find(p => p.type === t)?.value ?? '00';
+  const h = v('hour') === '24' ? '00' : v('hour');
+  return `${v('year')}-${v('month')}-${v('day')}T${h}:${v('minute')}`;
+}

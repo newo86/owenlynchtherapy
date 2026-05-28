@@ -5,10 +5,10 @@ import {
   CalendarDays, Users, FileText, Wallet,
   ChevronLeft, ChevronRight,
   CalendarCheck2, Check,
-  CheckCircle2, Pencil, Trash2, Mail,
+  CheckCircle2, Pencil, Trash2, Mail, CalendarPlus,
 } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { adminFetch, displayFee, formatTime, isSameDay, startOfWeek } from './api';
+import { adminFetch, displayFee, formatTime, isSameDay, startOfWeek, gcalIsoToDublinLocal } from './api';
 import { SendReminderModal } from './SendReminderModal';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow,
@@ -705,6 +705,7 @@ function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession, onR
       start: string;
       session?: SessionRow;
       client?: ClientRow;
+      gcalId?: string;
     }> = [];
     for (const c of clients) {
       for (const s of c.sessions) {
@@ -737,6 +738,7 @@ function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession, onR
         label: e.title || '(no title)',
         accent: 'e-gold',
         start: e.start,
+        gcalId: e.id,
       });
     }
     return out.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
@@ -772,21 +774,24 @@ function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession, onR
             ) : (
               dayEvents.map((e, idx) => {
                 const isSession = !!e.session && !!e.client;
-                const isOpen = isSession && openCardId === e.session!.id;
+                const isGcalOnly = !isSession && !!e.gcalId;
+                const cardId = isSession ? e.session!.id : e.gcalId;
+                const isOpen = !!cardId && openCardId === cardId;
+                const isClickable = isSession || (isGcalOnly && !!onClickDay);
                 return (
                   <div
                     key={idx}
-                    data-card-id={isSession ? e.session!.id : undefined}
-                    className={`admin-event ${e.accent}${isSession ? ' admin-event-clickable' : ''}${isOpen ? ' is-reveal-open' : ''}`}
-                    onClick={isSession
-                      ? ev => { ev.stopPropagation(); setOpenCardId(prev => prev === e.session!.id ? null : e.session!.id); }
+                    data-card-id={cardId}
+                    className={`admin-event ${e.accent}${isClickable ? ' admin-event-clickable' : ''}${isOpen ? ' is-reveal-open' : ''}`}
+                    onClick={isClickable
+                      ? ev => { ev.stopPropagation(); setOpenCardId(prev => prev === cardId ? null : cardId!); }
                       : undefined}
-                    role={isSession ? 'button' : undefined}
-                    tabIndex={isSession ? 0 : undefined}
-                    onKeyDown={isSession
-                      ? ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.stopPropagation(); setOpenCardId(prev => prev === e.session!.id ? null : e.session!.id); } }
+                    role={isClickable ? 'button' : undefined}
+                    tabIndex={isClickable ? 0 : undefined}
+                    onKeyDown={isClickable
+                      ? ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.stopPropagation(); setOpenCardId(prev => prev === cardId ? null : cardId!); } }
                       : undefined}
-                    title={isSession && !isOpen ? `${e.label} — click for actions` : undefined}
+                    title={isClickable && !isOpen ? `${e.label} — click for actions` : undefined}
                   >
                     <div className="admin-event-time">{e.time}</div>
                     <div className="admin-event-name">{e.label}</div>
@@ -828,6 +833,18 @@ function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession, onR
                             <Mail size={12} strokeWidth={2} />
                           </button>
                         )}
+                      </div>
+                    )}
+
+                    {isGcalOnly && onClickDay && (
+                      <div className={`admin-event-actions${isOpen ? ' is-open' : ''}`}>
+                        <button
+                          className="admin-event-action-btn"
+                          onClick={ev => { ev.stopPropagation(); setOpenCardId(null); onClickDay(gcalIsoToDublinLocal(e.start)); }}
+                          title="Schedule session from this event"
+                        >
+                          <CalendarPlus size={12} strokeWidth={2} />
+                        </button>
                       </div>
                     )}
                   </div>
