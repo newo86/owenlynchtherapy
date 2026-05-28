@@ -1,3 +1,16 @@
+/** Convert a UTC ISO string to "YYYY-MM-DDTHH:MM" in Dublin wall-clock time. */
+export function utcToDublinLocal(utcIso: string): string {
+  const d = new Date(utcIso);
+  const parts = new Intl.DateTimeFormat('en-IE', {
+    timeZone: 'Europe/Dublin',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(d);
+  const v = (t: string) => parts.find(p => p.type === t)?.value ?? '00';
+  const h = v('hour') === '24' ? '00' : v('hour');
+  return `${v('year')}-${v('month')}-${v('day')}T${h}:${v('minute')}`;
+}
+
 export function startOfWeek(d: Date = new Date()): Date {
   const date = new Date(d);
   const day = date.getDay(); // 0 Sun … 6 Sat

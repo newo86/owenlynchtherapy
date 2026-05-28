@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { updateCalendarEvent } from '@/lib/googleOAuth';
-import { localDublinToUtcIso } from '@/lib/dateUtils';
+import { localDublinToUtcIso, utcToDublinLocal } from '@/lib/dateUtils';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
@@ -126,19 +126,21 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Update Google Calendar event if we have the event ID and the date changed.
-  if (existing.gcal_event_id && newWallClock) {
+  // Sync to Google Calendar if the event is linked and any GCal-relevant field changed.
+  const gcalNeedsUpdate = !!(existing.gcal_event_id && (newWallClock || sessionPatch.session_format || clientPatch.full_name));
+  if (gcalNeedsUpdate) {
     const format = (sessionPatch.session_format ?? existing.session_format) as string;
     const location = format === 'in_person'
       ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
       : 'https://doxy.me/owenlynchtherapy';
     const clientName = (clientPatch.full_name ?? body.client_name ?? 'Client') as string;
+    const startIso = newWallClock ?? utcToDublinLocal(existing.session_date);
     try {
       await updateCalendarEvent(existing.gcal_event_id, {
         summary: `Session — ${clientName}`,
         description: format === 'online' ? 'Join: https://doxy.me/owenlynchtherapy' : undefined,
         location,
-        startIso: newWallClock,
+        startIso,
         durationMinutes: 50,
       });
     } catch (calErr) {
