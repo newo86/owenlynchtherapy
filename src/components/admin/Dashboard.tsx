@@ -1,14 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   CalendarDays, Users, FileText, Wallet,
   ChevronLeft, ChevronRight,
   CalendarCheck2, Check,
-  CheckCircle2,
+  CheckCircle2, Pencil, Trash2, Mail,
 } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatTime, isSameDay, startOfWeek } from './api';
+import { SendReminderModal } from './SendReminderModal';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow,
   CalendarEvent, CalendarStatus, SessionFilter, FormsTab,
@@ -88,6 +89,7 @@ export function Dashboard({
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; msg: string } | null>(null);
   const [outstandingScope, setOutstandingScope] = useState<OutstandingScope>('week');
+  const [reminderData, setReminderData] = useState<{ session: SessionRow; client: ClientRow } | null>(null);
 
   const today = new Date();
   const allSessions = useMemo(() => {
@@ -375,7 +377,15 @@ export function Dashboard({
           </div>
         </div>
 
-        <WeekGrid clients={clients} events={events} weekOffset={weekOffset} onClickDay={onScheduleDay} onClickSession={onClickSession} />
+        <WeekGrid
+          clients={clients}
+          events={events}
+          weekOffset={weekOffset}
+          onClickDay={onScheduleDay}
+          onClickSession={onClickSession}
+          onReload={onReload}
+          onReminderSession={(session, client) => setReminderData({ session, client })}
+        />
       </section>
 
       {/* Revenue + Recent clients */}
@@ -383,6 +393,14 @@ export function Dashboard({
         <RevenueCard revenue={revenue} onNavigate={() => onNavigateSection('revenue')} />
         <RecentClientsCard clients={clients} onNavigate={() => onNavigateSection('clients')} />
       </div>
+
+      {reminderData && (
+        <SendReminderModal
+          session={reminderData.session}
+          client={reminderData.client}
+          onClose={() => setReminderData(null)}
+        />
+      )}
     </>
   );
 }
@@ -630,13 +648,18 @@ function QuickActions({ unpaidThisWeek, needsReceipt, formsPending, pendingNames
 
 // ── Week grid (light-themed) ───────────────────────────────────────────────
 
-function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession }: {
+function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession, onReload, onReminderSession }: {
   clients: ClientRow[];
   events: CalendarEvent[];
   weekOffset: number;
   onClickDay?: (iso: string) => void;
   onClickSession?: (session: SessionRow, client: ClientRow) => void;
+  onReload: () => void;
+  onReminderSession?: (session: SessionRow, client: ClientRow) => void;
 }) {
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [busyDeleteId, setBusyDeleteId] = useState<string | null>(null);
+
   const days = useMemo(() => {
     const monday = startOfWeek(new Date());
     monday.setDate(monday.getDate() + weekOffset * 7);
@@ -644,6 +667,34 @@ function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession }: {
       const d = new Date(monday); d.setDate(monday.getDate() + i); return d;
     });
   }, [weekOffset]);
+
+  // Close the open card when clicking anywhere outside it.
+  useEffect(() => {
+    if (!openCardId) return;
+    function handler(e: MouseEvent) {
+      const cardEl = document.querySelector(`[data-card-id="${openCardId}"]`);
+      if (!cardEl || !cardEl.contains(e.target as Node)) {
+        setOpenCardId(null);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openCardId]);
+
+  async function deleteSession(session: SessionRow) {
+    if (!confirm('Delete this session?')) return;
+    setBusyDeleteId(session.id);
+    setOpenCardId(null);
+    try {
+      await adminFetch('/api/admin/sessions/delete', {
+        method: 'POST',
+        body: JSON.stringify({ session_id: session.id }),
+      });
+      onReload();
+    } finally {
+      setBusyDeleteId(null);
+    }
+  }
 
   function eventsForDay(day: Date) {
     const matched = new Set<string>();
@@ -660,6 +711,7 @@ function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession }: {
         const d = new Date(s.session_date);
         if (!isSameDay(d, day) || s.status === 'cancelled') continue;
         const ev = events.find(e => {
+          if (s.gcal_event_id && s.gcal_event_id === e.id) return true;
           const eStart = new Date(e.start);
           if (!isSameDay(eStart, d)) return false;
           const sameTitle = e.title?.toLowerCase().includes(c.full_name.toLowerCase().split(' ')[0]);
@@ -720,19 +772,21 @@ function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession }: {
             ) : (
               dayEvents.map((e, idx) => {
                 const isSession = !!e.session && !!e.client;
+                const isOpen = isSession && openCardId === e.session!.id;
                 return (
                   <div
                     key={idx}
-                    className={`admin-event ${e.accent}${isSession && onClickSession ? ' admin-event-clickable' : ''}`}
-                    onClick={isSession && onClickSession
-                      ? ev => { ev.stopPropagation(); onClickSession(e.session!, e.client!); }
+                    data-card-id={isSession ? e.session!.id : undefined}
+                    className={`admin-event ${e.accent}${isSession ? ' admin-event-clickable' : ''}${isOpen ? ' is-reveal-open' : ''}`}
+                    onClick={isSession
+                      ? ev => { ev.stopPropagation(); setOpenCardId(prev => prev === e.session!.id ? null : e.session!.id); }
                       : undefined}
-                    role={isSession && onClickSession ? 'button' : undefined}
-                    tabIndex={isSession && onClickSession ? 0 : undefined}
-                    onKeyDown={isSession && onClickSession
-                      ? ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.stopPropagation(); onClickSession(e.session!, e.client!); } }
+                    role={isSession ? 'button' : undefined}
+                    tabIndex={isSession ? 0 : undefined}
+                    onKeyDown={isSession
+                      ? ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.stopPropagation(); setOpenCardId(prev => prev === e.session!.id ? null : e.session!.id); } }
                       : undefined}
-                    title={isSession ? `Edit: ${e.label}` : undefined}
+                    title={isSession && !isOpen ? `${e.label} — click for actions` : undefined}
                   >
                     <div className="admin-event-time">{e.time}</div>
                     <div className="admin-event-name">{e.label}</div>
@@ -744,6 +798,37 @@ function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession }: {
                         onClick={ev => ev.stopPropagation()}
                         style={{ fontSize: 9, opacity: 0.9, display: 'block', marginTop: 2, color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 1 }}
                       >↗ doxy.me</a>
+                    )}
+
+                    {isSession && (
+                      <div className={`admin-event-actions${isOpen ? ' is-open' : ''}`}>
+                        {onClickSession && (
+                          <button
+                            className="admin-event-action-btn"
+                            onClick={ev => { ev.stopPropagation(); setOpenCardId(null); onClickSession(e.session!, e.client!); }}
+                            title="Edit session"
+                          >
+                            <Pencil size={12} strokeWidth={2} />
+                          </button>
+                        )}
+                        <button
+                          className="admin-event-action-btn"
+                          onClick={ev => { ev.stopPropagation(); void deleteSession(e.session!); }}
+                          disabled={busyDeleteId === e.session!.id}
+                          title="Delete session"
+                        >
+                          <Trash2 size={12} strokeWidth={2} />
+                        </button>
+                        {onReminderSession && (
+                          <button
+                            className="admin-event-action-btn"
+                            onClick={ev => { ev.stopPropagation(); setOpenCardId(null); onReminderSession(e.session!, e.client!); }}
+                            title="Send reminder"
+                          >
+                            <Mail size={12} strokeWidth={2} />
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
