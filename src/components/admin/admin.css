@@ -757,6 +757,8 @@
   border-left: 3px solid var(--ink-muted);
   transition: transform 180ms ease, box-shadow 180ms ease;
   cursor: default;
+  position: relative;
+  overflow: hidden;
 }
 
 @media (hover: hover) {
@@ -811,6 +813,61 @@
   color: var(--ink-muted);
   opacity: 0.6;
   border-radius: 10px;
+}
+
+/* ── Calendar card slide-reveal action panel ─────────────────────────── */
+
+.admin-event-actions {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 10px;
+  border-radius: inherit;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 200ms ease-out;
+}
+
+.admin-event-actions.is-open {
+  clip-path: inset(0 0% 0 0);
+}
+
+.admin-event.e-sage  .admin-event-actions { background: var(--sage); }
+.admin-event.e-terra .admin-event-actions { background: var(--terracotta); }
+.admin-event.e-gold  .admin-event-actions { background: var(--gold); }
+.admin-event.e-lilac .admin-event-actions { background: var(--lilac); }
+
+.admin-event.is-reveal-open {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.admin-event-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: none;
+  background: rgba(255, 255, 255, 0.22);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+@media (hover: hover) {
+  .admin-event-action-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.40);
+    transform: scale(1.1);
+  }
+}
+
+.admin-event-action-btn:disabled {
+  opacity: 0.40;
+  cursor: default;
 }
 
 /* ── Bottom row (revenue + recent clients) ───────────────────────────── */

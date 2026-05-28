@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { List, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
+import { List, CalendarRange, ChevronLeft, ChevronRight, Pencil, Trash2, Mail } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatDateTime, startOfWeek, isSameDay, formatTime } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SessionRow, CalendarEvent, SessionFilter } from './types';
+import { SendReminderModal } from './SendReminderModal';
 
 interface Props {
   clients: ClientRow[];
@@ -64,6 +65,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
   const [filter, setFilter] = useState<SessionFilter>(initialFilter ?? 'all');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [reminderData, setReminderData] = useState<{ session: SessionRow; client: ClientRow } | null>(null);
 
   // Sync filter AND view if a parent navigates here with a different intent.
   useEffect(() => {
@@ -135,6 +137,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
   const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 6);
 
   return (
+    <>
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
         <div className="admin-segmented">
@@ -292,22 +295,38 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
           weekOffset={weekOffset}
           onClickSession={onClickSession}
           onScheduleDay={onScheduleDay}
+          onReload={onReload}
+          onReminderSession={(session, client) => setReminderData({ session, client })}
         />
       )}
     </div>
+
+    {reminderData && (
+      <SendReminderModal
+        session={reminderData.session}
+        client={reminderData.client}
+        onClose={() => setReminderData(null)}
+      />
+    )}
+    </>
   );
 }
 
 function CalendarGrid({
-  clients, events, weekOffset, onClickSession, onScheduleDay,
+  clients, events, weekOffset, onClickSession, onScheduleDay, onReload, onReminderSession,
 }: {
   clients: ClientRow[];
   events: CalendarEvent[];
   weekOffset: number;
   onClickSession?: (session: SessionRow, client: ClientRow) => void;
   onScheduleDay?: (iso: string) => void;
+  onReload: () => void;
+  onReminderSession?: (session: SessionRow, client: ClientRow) => void;
 }) {
   const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [busyDeleteId, setBusyDeleteId] = useState<string | null>(null);
+
   const days = useMemo(() => {
     const monday = startOfWeek(new Date());
     monday.setDate(monday.getDate() + weekOffset * 7);
@@ -315,6 +334,34 @@ function CalendarGrid({
       const d = new Date(monday); d.setDate(monday.getDate() + i); return d;
     });
   }, [weekOffset]);
+
+  // Close the open card when clicking anywhere outside it.
+  useEffect(() => {
+    if (!openCardId) return;
+    function handler(e: MouseEvent) {
+      const cardEl = document.querySelector(`[data-card-id="${openCardId}"]`);
+      if (!cardEl || !cardEl.contains(e.target as Node)) {
+        setOpenCardId(null);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [openCardId]);
+
+  async function deleteSession(session: SessionRow) {
+    if (!confirm('Delete this session?')) return;
+    setBusyDeleteId(session.id);
+    setOpenCardId(null);
+    try {
+      await adminFetch('/api/admin/sessions/delete', {
+        method: 'POST',
+        body: JSON.stringify({ session_id: session.id }),
+      });
+      onReload();
+    } finally {
+      setBusyDeleteId(null);
+    }
+  }
 
   function eventsForDay(day: Date) {
     const matched = new Set<string>();
@@ -328,6 +375,8 @@ function CalendarGrid({
         const d = new Date(s.session_date);
         if (!isSameDay(d, day) || s.status === 'cancelled') continue;
         const ev = events.find(e => {
+          // Prefer matching by stored gcal_event_id.
+          if (s.gcal_event_id && s.gcal_event_id === e.id) return true;
           const eStart = new Date(e.start);
           if (!isSameDay(eStart, d)) return false;
           const sameTitle = e.title?.toLowerCase().includes(c.full_name.toLowerCase().split(' ')[0]);
@@ -381,19 +430,21 @@ function CalendarGrid({
             ) : (
               dayEvents.map((e, idx) => {
                 const isSession = !!e.session && !!e.client;
+                const isOpen = isSession && openCardId === e.session!.id;
                 return (
                   <div
                     key={idx}
-                    className={`admin-event ${e.accent}${isSession && onClickSession ? ' admin-event-clickable' : ''}`}
-                    onClick={isSession && onClickSession
-                      ? ev => { ev.stopPropagation(); onClickSession(e.session!, e.client!); }
+                    data-card-id={isSession ? e.session!.id : undefined}
+                    className={`admin-event ${e.accent}${isSession ? ' admin-event-clickable' : ''}${isOpen ? ' is-reveal-open' : ''}`}
+                    onClick={isSession
+                      ? ev => { ev.stopPropagation(); setOpenCardId(prev => prev === e.session!.id ? null : e.session!.id); }
                       : undefined}
-                    role={isSession && onClickSession ? 'button' : undefined}
-                    tabIndex={isSession && onClickSession ? 0 : undefined}
-                    onKeyDown={isSession && onClickSession
-                      ? ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.stopPropagation(); onClickSession(e.session!, e.client!); } }
+                    role={isSession ? 'button' : undefined}
+                    tabIndex={isSession ? 0 : undefined}
+                    onKeyDown={isSession
+                      ? ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.stopPropagation(); setOpenCardId(prev => prev === e.session!.id ? null : e.session!.id); } }
                       : undefined}
-                    title={isSession ? `Edit: ${e.label}` : undefined}
+                    title={isSession && !isOpen ? `${e.label} — click for actions` : undefined}
                   >
                     <div className="admin-event-time">{e.time}</div>
                     <div className="admin-event-name">{e.label}</div>
@@ -405,6 +456,37 @@ function CalendarGrid({
                         onClick={ev => ev.stopPropagation()}
                         style={{ fontSize: 9, opacity: 0.9, display: 'block', marginTop: 2, color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 1 }}
                       >↗ doxy.me</a>
+                    )}
+
+                    {isSession && (
+                      <div className={`admin-event-actions${isOpen ? ' is-open' : ''}`}>
+                        {onClickSession && (
+                          <button
+                            className="admin-event-action-btn"
+                            onClick={ev => { ev.stopPropagation(); setOpenCardId(null); onClickSession(e.session!, e.client!); }}
+                            title="Edit session"
+                          >
+                            <Pencil size={12} strokeWidth={2} />
+                          </button>
+                        )}
+                        <button
+                          className="admin-event-action-btn"
+                          onClick={ev => { ev.stopPropagation(); void deleteSession(e.session!); }}
+                          disabled={busyDeleteId === e.session!.id}
+                          title="Delete session"
+                        >
+                          <Trash2 size={12} strokeWidth={2} />
+                        </button>
+                        {onReminderSession && (
+                          <button
+                            className="admin-event-action-btn"
+                            onClick={ev => { ev.stopPropagation(); setOpenCardId(null); onReminderSession(e.session!, e.client!); }}
+                            title="Send reminder"
+                          >
+                            <Mail size={12} strokeWidth={2} />
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 );

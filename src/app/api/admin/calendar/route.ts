@@ -54,6 +54,87 @@ export async function GET(req: NextRequest) {
         htmlLink: e.htmlLink ?? undefined,
       }));
 
+    // ── Two-way sync: conflict resolution + auto-import ─────────────────────
+    if (events.length > 0) {
+      const eventIds = events.map(e => e.id);
+
+      // Find sessions already tracked by gcal_event_id (any status).
+      const { data: trackedByIdRows } = await supabaseAdmin
+        .from('sessions')
+        .select('id, gcal_event_id, session_date, status')
+        .in('gcal_event_id', eventIds);
+
+      const trackedByGcalId = new Map<string, { id: string; session_date: string; status: string }>();
+      for (const s of (trackedByIdRows ?? [])) {
+        if (s.gcal_event_id) trackedByGcalId.set(s.gcal_event_id, s);
+      }
+
+      // Conflict resolution: GCal time is the source of truth for scheduled sessions.
+      const conflictFixes: Promise<void>[] = [];
+      for (const event of events) {
+        const tracked = trackedByGcalId.get(event.id);
+        if (!tracked || tracked.status !== 'scheduled') continue;
+        const gcalMs = new Date(event.start).getTime();
+        const supaMs = new Date(tracked.session_date).getTime();
+        if (Math.abs(gcalMs - supaMs) > 60_000) {
+          conflictFixes.push((async () => {
+            await supabaseAdmin
+              .from('sessions')
+              .update({ session_date: new Date(event.start).toISOString() })
+              .eq('id', tracked.id);
+            console.log('[admin/calendar] conflict-resolved session:', tracked.id, '→', event.start);
+          })());
+        }
+      }
+      if (conflictFixes.length > 0) await Promise.all(conflictFixes);
+
+      // Auto-import: GCal events not yet in Supabase, matched by client name.
+      const { data: activeClients } = await supabaseAdmin
+        .from('clients')
+        .select('id, full_name, session_fee')
+        .eq('status', 'active');
+
+      const imports: Promise<void>[] = [];
+      for (const event of events) {
+        if (trackedByGcalId.has(event.id)) continue;
+
+        const titleLower = (event.title ?? '').toLowerCase();
+        let matchedClient: { id: string; session_fee: number } | null = null;
+        for (const c of (activeClients ?? [])) {
+          const parts = c.full_name.trim().split(/\s+/).filter(Boolean);
+          if (parts.some((p: string) => p.length > 2 && titleLower.includes(p.toLowerCase()))) {
+            matchedClient = c;
+            break;
+          }
+        }
+        if (!matchedClient) continue;
+
+        const mc = matchedClient;
+        const ev = event;
+        imports.push((async () => {
+          const { data: newSession } = await supabaseAdmin
+            .from('sessions')
+            .insert({
+              client_id: mc.id,
+              session_date: new Date(ev.start).toISOString(),
+              session_format: 'in_person',
+              location: 'Insight Matters, 106 Capel Street, Dublin, D01 WY40',
+              fee: mc.session_fee ?? 0,
+              status: 'scheduled',
+              payment_status: 'unpaid',
+              notes: `Imported from Google Calendar: "${ev.title}"`,
+              gcal_event_id: ev.id,
+            })
+            .select('id')
+            .single();
+          if (newSession) {
+            console.log('[admin/calendar] imported GCal event:', ev.id, '→ session:', newSession.id);
+          }
+        })());
+      }
+      if (imports.length > 0) await Promise.all(imports);
+    }
+
     // Auto-cancel Supabase sessions whose GCal event was deleted.
     // Only affects sessions that have a gcal_event_id recorded.
     const gcalIds = new Set(events.map(e => e.id));

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { deleteCalendarEvent } from '@/lib/googleOAuth';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -20,6 +21,17 @@ export async function POST(req: NextRequest) {
   const { session_id } = body;
   if (!session_id) {
     return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
+  }
+
+  // Fetch gcal_event_id before deleting so we can remove the GCal event too.
+  const { data: sessionRow } = await supabaseAdmin
+    .from('sessions')
+    .select('gcal_event_id')
+    .eq('id', session_id)
+    .single();
+
+  if (sessionRow?.gcal_event_id) {
+    await deleteCalendarEvent(sessionRow.gcal_event_id);
   }
 
   const { error } = await supabaseAdmin
