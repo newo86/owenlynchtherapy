@@ -723,8 +723,7 @@ function WeekGrid({ clients, events, weekOffset, onClickDay, onClickSession }: {
                 return (
                   <div
                     key={idx}
-                    className={`admin-event ${e.accent}`}
-                    style={isSession && onClickSession ? { cursor: 'pointer' } : undefined}
+                    className={`admin-event ${e.accent}${isSession && onClickSession ? ' admin-event-clickable' : ''}`}
                     onClick={isSession && onClickSession
                       ? ev => { ev.stopPropagation(); onClickSession(e.session!, e.client!); }
                       : undefined}
