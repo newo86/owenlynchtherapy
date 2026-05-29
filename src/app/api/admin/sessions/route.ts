@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
       const eventId = await createCalendarEvent({
         summary: `Session — ${clientRow?.full_name ?? 'Client'}`,
         description: [
-          clientRow?.full_name && clientRow.email ? `Client: ${clientRow.full_name} <${clientRow.email}>` : '',
+          clientRow?.full_name ? `Client: ${clientRow.full_name}` : '',
           `Format: ${session_format === 'in_person' ? 'In Person' : 'Online'}`,
           session_format === 'online' ? 'Join: https://doxy.me/owenlynchtherapy' : '',
           `Fee: €${Math.round(Number(fee) / 100)}`,

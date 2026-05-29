@@ -220,7 +220,7 @@ export async function POST(req: NextRequest) {
     const eventId = await createCalendarEvent({
       summary: `Session — ${client_name.trim()}`,
       description: [
-        `Client: ${client_name.trim()} <${client_email.trim()}>`,
+        `Client: ${client_name.trim()}`,
         `Format: ${session_format === 'in_person' ? 'In Person' : 'Online'}`,
         `Fee: €${Math.round(Number(session_fee))}`,
         plan.scheduleLabel,

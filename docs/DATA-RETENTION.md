@@ -11,6 +11,18 @@ what is retained, what is purged automatically, and the items still open.
 |------|------|-------|
 | **Unused intake links** (`intake_tokens` with `is_used = false`) | Deleted 30 days after expiry. They hold a prospective client's name + email but serve no purpose once expired. | `GET /api/admin/maintenance/purge-tokens`, daily Vercel cron (`vercel.json`). |
 | **Server logs** | No client names, emails, payment URLs, or secrets are written to logs — only opaque IDs. | `src/lib/adminAuth.ts` + sanitised `console.*` across API routes. |
+| **Google Calendar events** | Client **email** is no longer written to event descriptions; only the name (needed so the practitioner can identify sessions) remains. | `generate-token`, `admin/sessions` route. |
+
+## Security controls implemented
+
+- **Admin auth:** httpOnly + Secure + SameSite=Strict session cookie (JS cannot
+  read the secret); constant-time validation; 12-hour expiry. (`src/lib/adminAuth.ts`)
+- **Rate limiting:** in-memory limiter plus a **durable Postgres-backed** limiter
+  on login / intake submit / token validation. The durable layer **fails open
+  until** `supabase/migrations/rate_limits.sql` is applied — run that migration
+  in Supabase to activate cross-instance limiting. (`src/lib/rateLimitDurable.ts`)
+- **Headers:** HSTS site-wide; a baseline CSP site-wide and a stricter CSP on
+  `/admin/*`. (`next.config.ts`)
 
 ## Retained (clinical norms)
 
@@ -27,31 +39,34 @@ what is retained, what is purged automatically, and the items still open.
   events). Intake submissions for an erased client should be removed in the
   same flow — verify this before relying on it for a formal erasure request.
 
-## Open items (need a decision or infra — not yet implemented)
+## Open items (need a decision — deliberately not automated)
 
-1. **Minimise PII in Google Calendar.** Session events currently use the
-   client's full name in the title (`Session — <name>`) and name + email in the
-   description. Reducing this to initials/a code would lower PII exposure in
-   Google, **but** the calendar sync auto-imports events by matching the client
-   name in the event title (`src/app/api/admin/calendar/route.ts`). Changing the
-   title format requires re-working that matching to key off the stored
-   `gcal_event_id` instead — a deliberate change, not a find-and-replace.
+1. **Clinical-record retention purge.** Clients, sessions and intake submissions
+   are kept indefinitely. A scheduled purge of records older than the retention
+   window is **not** implemented because the period is a professional/legal
+   decision (IAHIP/PSI is typically ~7–8 years after last contact; for under-18s
+   it differs). Once you confirm the exact period, a purge can be added mirroring
+   the token-purge route. Auto-deleting clinical data on a guessed period is
+   intentionally avoided.
 
-2. **Durable rate limiting.** Current limiter is in-memory and per-instance
-   (`src/lib/rateLimit.ts`), so it resets on serverless cold starts. Backing it
-   with Vercel KV / Upstash Redis requires provisioning that store and adding
-   its env vars.
+2. **Apply the rate-limit migration.** Run `supabase/migrations/rate_limits.sql`
+   in Supabase to activate the durable, cross-instance rate limiter (it fails
+   open until then, with the in-memory limiter still active).
 
-3. **Admin auth.** The dashboard uses a single shared secret stored in
-   `sessionStorage`. Comparison is now constant-time (`requireAdmin`), but
-   moving to an httpOnly-cookie session + TOTP MFA would materially improve
-   security. Deferred because it changes the sign-in flow.
+3. **Verify the site-wide CSP after deploy.** Check the contact page (Google
+   Maps embed, Turnstile widget, Psychology Today badge all render) and that GTM
+   tags still fire. If you run a GTM tag that calls a domain not in
+   `connect-src` (e.g. a Meta pixel), add that domain to `siteCsp` in
+   `next.config.ts`.
 
-4. **Marketing-wide CSP.** A strict Content-Security-Policy is enforced on
-   `/admin/*` (`next.config.ts`). Extending it to the marketing pages needs a
-   verified rollout because those pages load Google Maps, the Psychology Today
-   badge, Cloudflare Turnstile, and GTM-managed tags.
+4. **Optional: reduce the client name in Google Calendar to initials.** Email is
+   already removed; the full name remains so you can identify sessions. Reducing
+   to initials would require re-working the calendar auto-import, which matches
+   externally-created events by name (`src/app/api/admin/calendar/route.ts`).
 
 5. **Processor DPAs.** Personal data is shared with Resend, Stripe, Google,
    Supabase and Vercel. Ensure a Data Processing Agreement is in place with each
    and that the privacy policy lists them.
+
+6. **Optional: TOTP MFA** on top of the cookie session, if you want a second
+   factor for admin sign-in.

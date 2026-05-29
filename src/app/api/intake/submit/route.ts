@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { generateIntakePDF } from '@/lib/generateIntakePDF';
 import { sanitiseInput } from '@/lib/sanitise';
 import { rateLimit } from '@/lib/rateLimit';
+import { rateLimitDurable } from '@/lib/rateLimitDurable';
 import { getResend } from '@/lib/resend';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -33,7 +34,8 @@ function validateDOB(raw: string): string | null {
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
 
-  if (!rateLimit('submit', ip, 5, 15 * 60 * 1000)) {
+  if (!rateLimit('submit', ip, 5, 15 * 60 * 1000)
+      || !(await rateLimitDurable('submit', ip, 5, 15 * 60 * 1000))) {
     return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429, headers: noCache });
   }
 

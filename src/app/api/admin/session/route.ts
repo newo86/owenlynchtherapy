@@ -7,6 +7,8 @@ import {
   sessionCookieOptions,
   SESSION_TTL_SECONDS,
 } from '@/lib/adminAuth';
+import { rateLimit } from '@/lib/rateLimit';
+import { rateLimitDurable } from '@/lib/rateLimitDurable';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -21,6 +23,16 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
  * httpOnly, Secure, SameSite=Strict cookie that JavaScript cannot read.
  */
 export async function POST(req: NextRequest) {
+  // Throttle login attempts to slow brute-forcing of the admin secret.
+  // In-memory guard is always on; the durable (Postgres) guard adds
+  // cross-instance protection once its migration is applied (fail-open before).
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const allowed = rateLimit('admin-login', ip, 10, 15 * 60 * 1000)
+    && await rateLimitDurable('admin-login', ip, 10, 15 * 60 * 1000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429, headers: noCache });
+  }
+
   let body: { secret?: string };
   try {
     body = await req.json();

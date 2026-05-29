@@ -40,10 +40,31 @@ const nextConfig: NextConfig = {
       "object-src 'none'",
     ].join('; ');
 
+    // Baseline CSP for the whole site (incl. marketing pages). More permissive
+    // than adminCsp because the public pages load Google Tag Manager, Google
+    // Maps embeds, the Psychology Today badge, Cloudflare Turnstile and Vercel
+    // Analytics. 'unsafe-inline' is required for GTM, JSON-LD, the PT badge and
+    // Next's inline hydration scripts; img-src is broad so analytics pixels and
+    // CMS images aren't blocked. The stricter adminCsp is ALSO applied to
+    // /admin/* (browsers enforce both policies there).
+    const siteCsp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://va.vercel-scripts.com https://challenges.cloudflare.com https://member.psychologytoday.com https://www.google-analytics.com",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://stats.g.doubleclick.net https://va.vercel-scripts.com https://vitals.vercel-insights.com https://challenges.cloudflare.com https://*.psychologytoday.com",
+      "frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://www.googletagmanager.com",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "object-src 'none'",
+    ].join('; ');
+
     return [
       {
         source: '/(.*)',
         headers: [
+          { key: 'Content-Security-Policy', value: siteCsp },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-Frame-Options', value: 'DENY' },
