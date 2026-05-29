@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Pencil, Trash2, Mail, CalendarPlus } from 'lucide-react';
-import { adminFetch, formatTime, isSameDay, startOfWeek, gcalIsoToDublinLocal } from './api';
+import { Pencil, Trash2, Mail } from 'lucide-react';
+import { adminFetch, formatTime, isSameDay, startOfWeek } from './api';
 import type { ClientRow, SessionRow, CalendarEvent } from './types';
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -30,6 +30,16 @@ interface MergedEvent {
   session?: SessionRow;
   client?: ClientRow;
   gcalId?: string;
+  gcalEvent?: CalendarEvent;
+}
+
+/** Build throwaway client/session objects from a standalone Google Calendar
+ *  event so the existing SendReminderModal (which only reads full_name and
+ *  session_date) can be reused for unlinked events. */
+function syntheticReminderTargets(label: string, startIso: string): { session: SessionRow; client: ClientRow } {
+  const client = { id: '', full_name: label, email: '' } as unknown as ClientRow;
+  const session = { id: '', session_date: startIso } as unknown as SessionRow;
+  return { session, client };
 }
 
 export interface CalendarWeekGridProps {
@@ -40,10 +50,12 @@ export interface CalendarWeekGridProps {
   onScheduleDay?: (iso: string) => void;
   onReload: () => void;
   onReminderSession?: (session: SessionRow, client: ClientRow) => void;
+  /** Opens the edit modal for an unlinked Google Calendar event. */
+  onEditGcalEvent?: (event: CalendarEvent) => void;
 }
 
 export function CalendarWeekGrid({
-  clients, events, weekOffset, onClickSession, onScheduleDay, onReload, onReminderSession,
+  clients, events, weekOffset, onClickSession, onScheduleDay, onReload, onReminderSession, onEditGcalEvent,
 }: CalendarWeekGridProps) {
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [busyDeleteId, setBusyDeleteId] = useState<string | null>(null);
@@ -74,6 +86,21 @@ export function CalendarWeekGrid({
       await adminFetch('/api/admin/sessions/delete', {
         method: 'POST',
         body: JSON.stringify({ session_id: session.id }),
+      });
+      onReload();
+    } finally {
+      setBusyDeleteId(null);
+    }
+  }
+
+  async function deleteGcalEvent(gcalId: string) {
+    if (!confirm('Delete this event? It will be removed from Google Calendar.')) return;
+    setBusyDeleteId(gcalId);
+    setOpenCardId(null);
+    try {
+      await adminFetch('/api/admin/calendar/event', {
+        method: 'DELETE',
+        body: JSON.stringify({ gcal_event_id: gcalId }),
       });
       onReload();
     } finally {
@@ -119,6 +146,7 @@ export function CalendarWeekGrid({
         accent: 'e-gold',
         start: e.start,
         gcalId: e.id,
+        gcalEvent: e,
       });
     }
 
@@ -155,7 +183,9 @@ export function CalendarWeekGrid({
                 const isGcalOnly = !isSession && !!e.gcalId;
                 const cardId = isSession ? e.session!.id : e.gcalId;
                 const isOpen = !!cardId && openCardId === cardId;
-                const isClickable = isSession || (isGcalOnly && clickable);
+                // Every card — linked session or standalone GCal event — opens
+                // the same slide reveal with edit / delete / reminder actions.
+                const isClickable = isSession || isGcalOnly;
                 return (
                   <div
                     key={idx}
@@ -183,46 +213,58 @@ export function CalendarWeekGrid({
                       >↗ doxy.me</a>
                     )}
 
-                    {isSession && (
+                    {(isSession || isGcalOnly) && (
                       <div className={`admin-event-actions${isOpen ? ' is-open' : ''}`}>
-                        {onClickSession && (
+                        {/* Edit — session edit modal for linked sessions, the
+                            standalone-event edit modal for unlinked GCal events. */}
+                        {((isSession && onClickSession) || (isGcalOnly && onEditGcalEvent)) && (
                           <button
                             className="admin-event-action-btn"
-                            onClick={ev => { ev.stopPropagation(); setOpenCardId(null); onClickSession(e.session!, e.client!); }}
-                            title="Edit session"
+                            onClick={ev => {
+                              ev.stopPropagation();
+                              setOpenCardId(null);
+                              if (isSession) onClickSession!(e.session!, e.client!);
+                              else onEditGcalEvent!(e.gcalEvent!);
+                            }}
+                            title="Edit"
                           >
                             <Pencil size={12} strokeWidth={2} />
                           </button>
                         )}
+                        {/* Delete — from Supabase + GCal for linked sessions,
+                            from GCal (and Supabase if a row exists) for events. */}
                         <button
                           className="admin-event-action-btn"
-                          onClick={ev => { ev.stopPropagation(); void deleteSession(e.session!); }}
-                          disabled={busyDeleteId === e.session!.id}
-                          title="Delete session"
+                          onClick={ev => {
+                            ev.stopPropagation();
+                            if (isSession) void deleteSession(e.session!);
+                            else void deleteGcalEvent(e.gcalId!);
+                          }}
+                          disabled={busyDeleteId === (isSession ? e.session!.id : e.gcalId)}
+                          title="Delete"
                         >
                           <Trash2 size={12} strokeWidth={2} />
                         </button>
+                        {/* Send reminder — works for both; unlinked events use a
+                            synthetic target built from the event. */}
                         {onReminderSession && (
                           <button
                             className="admin-event-action-btn"
-                            onClick={ev => { ev.stopPropagation(); setOpenCardId(null); onReminderSession(e.session!, e.client!); }}
+                            onClick={ev => {
+                              ev.stopPropagation();
+                              setOpenCardId(null);
+                              if (isSession) {
+                                onReminderSession(e.session!, e.client!);
+                              } else {
+                                const t = syntheticReminderTargets(e.label, e.start);
+                                onReminderSession(t.session, t.client);
+                              }
+                            }}
                             title="Send reminder"
                           >
                             <Mail size={12} strokeWidth={2} />
                           </button>
                         )}
-                      </div>
-                    )}
-
-                    {isGcalOnly && clickable && (
-                      <div className={`admin-event-actions${isOpen ? ' is-open' : ''}`}>
-                        <button
-                          className="admin-event-action-btn"
-                          onClick={ev => { ev.stopPropagation(); setOpenCardId(null); onScheduleDay!(gcalIsoToDublinLocal(e.start)); }}
-                          title="Schedule session from this event"
-                        >
-                          <CalendarPlus size={12} strokeWidth={2} />
-                        </button>
                       </div>
                     )}
                   </div>

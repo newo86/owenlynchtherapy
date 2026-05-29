@@ -78,6 +78,9 @@ export async function GET(req: NextRequest) {
         const supaMs = new Date(tracked.session_date).getTime();
         if (Math.abs(gcalMs - supaMs) > 60_000) {
           conflictFixes.push((async () => {
+            // TIMEZONE: GCal's event.start is an RFC3339 string with an explicit
+            // offset (e.g. "…+01:00"), so new Date(...).toISOString() yields the
+            // correct UTC instant for the timestamptz column.
             await supabaseAdmin
               .from('sessions')
               .update({ session_date: new Date(event.start).toISOString() })
@@ -116,6 +119,8 @@ export async function GET(req: NextRequest) {
             .from('sessions')
             .insert({
               client_id: mc.id,
+              // TIMEZONE: ev.start carries an explicit offset from GCal, so this
+              // stores a correct UTC instant.
               session_date: new Date(ev.start).toISOString(),
               session_format: 'in_person',
               location: 'Insight Matters, 106 Capel Street, Dublin, D01 WY40',

@@ -11,6 +11,7 @@ import { Revenue } from './Revenue';
 import { NewClientModal } from './NewClientModal';
 import { ScheduleSessionModal } from './ScheduleSessionModal';
 import { SessionEditModal } from './SessionEditModal';
+import { GcalEventEditModal } from './GcalEventEditModal';
 import { adminFetch, clearSecret } from './api';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
@@ -57,6 +58,7 @@ export function AdminShell() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleInitialIso, setScheduleInitialIso] = useState<string | undefined>();
   const [editSession, setEditSession] = useState<{ session: SessionRow; client: ClientRow } | null>(null);
+  const [editGcalEvent, setEditGcalEvent] = useState<CalendarEvent | null>(null);
   // Filter intents carried when a Quick Action card navigates between sections.
   const [sessionsFilter, setSessionsFilter] = useState<SessionFilter | undefined>();
   const [formsTab, setFormsTab] = useState<FormsTab | undefined>();
@@ -208,6 +210,7 @@ export function AdminShell() {
               onNewClient={() => setModalOpen(true)}
               onScheduleDay={iso => { setScheduleInitialIso(iso); setScheduleOpen(true); }}
               onClickSession={(session, client) => setEditSession({ session, client })}
+              onEditGcalEvent={event => setEditGcalEvent(event)}
               onNavigateSection={navigateSection}
               greeting={greet()}
               dateLine={dateLine()}
@@ -276,6 +279,7 @@ export function AdminShell() {
                   onReload={reload}
                   initialFilter={sessionsFilter}
                   onClickSession={(session, client) => setEditSession({ session, client })}
+                  onEditGcalEvent={event => setEditGcalEvent(event)}
                   onScheduleDay={iso => { setScheduleInitialIso(iso); setScheduleOpen(true); }}
                   onNewClient={() => setModalOpen(true)}
                 />
@@ -327,6 +331,15 @@ export function AdminShell() {
           session={editSession.session}
           client={editSession.client}
           onClose={() => setEditSession(null)}
+          onSuccess={() => { reload(); }}
+        />
+      )}
+
+      {editGcalEvent && (
+        <GcalEventEditModal
+          event={editGcalEvent}
+          clients={clients}
+          onClose={() => setEditGcalEvent(null)}
           onSuccess={() => { reload(); }}
         />
       )}

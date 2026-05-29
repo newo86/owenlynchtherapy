@@ -19,6 +19,8 @@ interface Props {
   initialFilter?: SessionFilter;
   /** Opens the session edit modal. */
   onClickSession?: (session: SessionRow, client: ClientRow) => void;
+  /** Opens the edit modal for an unlinked Google Calendar event. */
+  onEditGcalEvent?: (event: CalendarEvent) => void;
   /** Opens the schedule modal pre-filled to this datetime string. */
   onScheduleDay?: (iso: string) => void;
   /** Opens the new-client modal. */
@@ -52,7 +54,7 @@ function payLabel(status: string) {
   return status === 'paid' ? 'Paid' : status === 'refunded' ? 'Refunded' : 'Unpaid';
 }
 
-export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter, onClickSession, onScheduleDay, onNewClient }: Props) {
+export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter, onClickSession, onEditGcalEvent, onScheduleDay, onNewClient }: Props) {
   // Default to calendar; only drop to list when arriving with a filter intent
   // (Quick Actions like "Unpaid this week") because filters only apply in list view.
   const [view, setView] = useState<View>(initialFilter ? 'list' : 'calendar');
@@ -288,6 +290,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
           events={events}
           weekOffset={weekOffset}
           onClickSession={onClickSession}
+          onEditGcalEvent={onEditGcalEvent}
           onScheduleDay={onScheduleDay}
           onReload={onReload}
           onReminderSession={(session, client) => setReminderData({ session, client })}

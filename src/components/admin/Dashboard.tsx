@@ -32,6 +32,8 @@ interface Props {
   onScheduleDay: (iso: string) => void;
   /** Called when the user clicks an existing session event on the calendar. */
   onClickSession: (session: SessionRow, client: ClientRow) => void;
+  /** Called when the user edits an unlinked Google Calendar event. */
+  onEditGcalEvent: (event: CalendarEvent) => void;
   /** Navigate to any section, optionally carrying a filter intent. */
   onNavigateSection: (section: AdminSection, opts?: {
     sessionsFilter?: SessionFilter;
@@ -64,7 +66,7 @@ export function Dashboard({
   clients, tokens, events, calendarStatus,
   weekOffset, onWeekOffsetChange,
   onReload, onConnectCalendar, onDisconnectCalendar, onNewClient,
-  onScheduleDay, onClickSession, onNavigateSection,
+  onScheduleDay, onClickSession, onEditGcalEvent, onNavigateSection,
   greeting, dateLine, flash, sectionTitle,
 }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -365,6 +367,7 @@ export function Dashboard({
           weekOffset={weekOffset}
           onScheduleDay={onScheduleDay}
           onClickSession={onClickSession}
+          onEditGcalEvent={onEditGcalEvent}
           onReload={onReload}
           onReminderSession={(session, client) => setReminderData({ session, client })}
         />

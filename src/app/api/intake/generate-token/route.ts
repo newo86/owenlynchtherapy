@@ -6,6 +6,7 @@ import { rateLimit } from '@/lib/rateLimit';
 import { generateTherapeuticAgreementPDF } from '@/lib/pdf/generateTherapeuticAgreementPDF';
 import { generatePrivacyPolicyPDF } from '@/lib/pdf/generatePrivacyPolicyPDF';
 import { createCalendarEvent } from '@/lib/googleOAuth';
+import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { getResend } from '@/lib/resend';
 const VALID_FORMATS = ['in_person', 'online'];
 const VALID_RECURRENCE = ['once', 'weekly', 'biweekly', 'monthly'] as const;
@@ -18,35 +19,42 @@ interface OccurrencePlan {
 }
 
 function buildOccurrences(firstIsoLocal: string, recurrence: Recurrence, count: number): OccurrencePlan {
-  // Treat the datetime-local input as local Dublin time, but keep the wall-
-  // clock identical when we step forward — Date math on a JS Date is in UTC
-  // ms so weekly/biweekly just need +N*7 days. For monthly we shift the
-  // month index; if the day-of-month doesn't exist the result naturally
-  // overflows (eg 31 Jan → 3 Mar) — fine for now.
-  const first = new Date(firstIsoLocal);
+  // The admin form sends "YYYY-MM-DDTHH:MM" (datetime-local, no zone). We treat
+  // those components as Dublin WALL-CLOCK time and step forward using UTC-based
+  // calendar arithmetic, then read the components back out with getUTC* getters.
+  // Doing the maths in UTC means the wall-clock hour never drifts with the host
+  // server's timezone (Vercel runs in UTC), so this is deterministic everywhere.
+  //
+  // The returned strings are still wall-clock (no zone) — that is exactly what
+  // Google Calendar wants, paired with timeZone: 'Europe/Dublin'. The caller is
+  // responsible for converting them to a true UTC instant (localDublinToUtcIso)
+  // before writing to the Supabase timestamptz column.
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const stripped = firstIsoLocal.replace(/\.\d+/, '').replace(/Z$/, '').replace(/[+-]\d{2}:?\d{2}$/, '');
+  const [datePart, timePart = '00:00'] = stripped.split('T');
+  const [y, mo, d] = datePart.split('-').map(Number);
+  const [h, mi] = timePart.split(':').map(Number);
   const isoDates: string[] = [];
 
-  function pushOccurrence(d: Date) {
-    // Re-build the local ISO so timezone offset stays consistent with what
-    // the admin typed in the form.
-    const pad = (n: number) => String(n).padStart(2, '0');
+  function pushOccurrence(dt: Date) {
     isoDates.push(
-      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T` +
-      `${pad(d.getHours())}:${pad(d.getMinutes())}:00`
+      `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}T` +
+      `${pad(dt.getUTCHours())}:${pad(dt.getUTCMinutes())}:00`
     );
   }
 
   if (recurrence === 'once') {
-    pushOccurrence(first);
+    pushOccurrence(new Date(Date.UTC(y, mo - 1, d, h, mi, 0)));
     return { isoDates, rrule: null, scheduleLabel: 'One-off session' };
   }
 
   for (let i = 0; i < count; i++) {
-    const d = new Date(first);
-    if (recurrence === 'weekly')   d.setDate(first.getDate() + i * 7);
-    if (recurrence === 'biweekly') d.setDate(first.getDate() + i * 14);
-    if (recurrence === 'monthly')  d.setMonth(first.getMonth() + i);
-    pushOccurrence(d);
+    // Monthly shifts the month index (overflowing day-of-month is fine);
+    // weekly/biweekly add whole days.
+    const dt = recurrence === 'monthly'
+      ? new Date(Date.UTC(y, mo - 1 + i, d, h, mi, 0))
+      : new Date(Date.UTC(y, mo - 1, d + (recurrence === 'weekly' ? 7 : 14) * i, h, mi, 0));
+    pushOccurrence(dt);
   }
 
   const rrule =
@@ -109,7 +117,13 @@ export async function POST(req: NextRequest) {
     ? 1
     : Math.max(1, Math.min(52, Math.floor(Number(body.occurrence_count) || 12)));
 
-  const sessionDateObj = new Date(session_date);
+  // session_date is a Dublin wall-clock string. Convert it to the true UTC
+  // instant up front so every downstream use (validation, the welcome email,
+  // and Supabase storage) shares one correct point in time. Parsing the raw
+  // wall-clock string with `new Date()` on a UTC server would treat it as UTC
+  // and shift the displayed time 1 hour during IST (summer) — the timezone bug.
+  const sessionUtcIso = localDublinToUtcIso(session_date);
+  const sessionDateObj = new Date(sessionUtcIso);
   if (isNaN(sessionDateObj.getTime())) return NextResponse.json({ error: 'Invalid session_date' }, { status: 400 });
   if (sessionDateObj < new Date()) return NextResponse.json({ error: 'session_date must be in the future' }, { status: 400 });
 
@@ -174,7 +188,12 @@ export async function POST(req: NextRequest) {
   console.log('[generate-token] step 3: inserting', plan.isoDates.length, 'session(s)');
   const sessionRowsPayload = plan.isoDates.map(iso => ({
     client_id: clientRow.id,
-    session_date: iso,
+    // TIMEZONE: convert each Dublin wall-clock occurrence to a true UTC instant
+    // before storing in the timestamptz column. Storing the zoneless wall-clock
+    // string directly makes Postgres read it as UTC, which then renders 1 hour
+    // ahead on the dashboard during IST. All other write paths
+    // (/api/admin/sessions, sessions/update, clients/quick-add) already do this.
+    session_date: localDublinToUtcIso(iso),
     session_format,
     location,
     fee: feeInCents,
