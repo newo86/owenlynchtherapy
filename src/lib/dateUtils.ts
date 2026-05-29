@@ -1,4 +1,8 @@
-/** Convert a UTC ISO string to "YYYY-MM-DDTHH:MM" in Dublin wall-clock time. */
+/**
+ * Convert a UTC ISO string (e.g. from Supabase timestamptz) to
+ * "YYYY-MM-DDTHH:MM" in Europe/Dublin wall-clock time for UI display.
+ * Always use this — never rely on the host's local timezone.
+ */
 export function utcToDublinLocal(utcIso: string): string {
   const d = new Date(utcIso);
   const parts = new Intl.DateTimeFormat('en-IE', {
@@ -22,9 +26,10 @@ export function startOfWeek(d: Date = new Date()): Date {
 
 /**
  * Convert a "YYYY-MM-DDTHH:MM" Dublin wall-clock string to a UTC ISO string
- * for inserting into a Supabase timestamptz column. Ireland is always UTC+0
- * (winter/GMT) or UTC+1 (summer/IST) — we try each offset and pick the one
- * whose Dublin display matches the original input.
+ * for storing in Supabase (timestamptz). Ireland is UTC+0 (winter/GMT) or
+ * UTC+1 (summer/IST). We try each offset and keep whichever round-trips back
+ * to the same Dublin wall-clock time via Intl.DateTimeFormat.
+ * Input must be a naive local string — never pass a UTC "Z"-suffixed string.
  */
 export function localDublinToUtcIso(wallClock: string): string {
   const stripped = wallClock

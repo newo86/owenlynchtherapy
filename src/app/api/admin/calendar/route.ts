@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { getAuthorizedClient } from '@/lib/googleOAuth';
-import { startOfWeek } from '@/lib/dateUtils';
+import { startOfWeek, utcToDublinLocal } from '@/lib/dateUtils';
 import { supabaseAdmin } from '@/lib/supabase';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
@@ -70,17 +70,26 @@ export async function GET(req: NextRequest) {
       }
 
       // Conflict resolution: GCal time is the source of truth for scheduled sessions.
+      // We compare Dublin wall-clock strings (not raw UTC ms) to avoid a class of
+      // intermittent bugs: GCal can return an event with a "Z" (UTC) suffix for events
+      // created directly in Google Calendar that lack an explicit timezone, making the
+      // UTC timestamp differ by exactly one BST hour (3600 s) from the correct stored
+      // value even though both represent the same Dublin wall-clock time.  Comparing
+      // Dublin local strings sidesteps that.  If the Dublin times genuinely differ we
+      // still update — this correctly handles real reschedules.
       const conflictFixes: Promise<void>[] = [];
       for (const event of events) {
         const tracked = trackedByGcalId.get(event.id);
         if (!tracked || tracked.status !== 'scheduled') continue;
-        const gcalMs = new Date(event.start).getTime();
-        const supaMs = new Date(tracked.session_date).getTime();
-        if (Math.abs(gcalMs - supaMs) > 60_000) {
+        // Normalise both sides to UTC ISO then convert to Dublin wall-clock
+        const gcalUtcIso = new Date(event.start).toISOString();
+        const gcalDublin = utcToDublinLocal(gcalUtcIso);
+        const supaDublin = utcToDublinLocal(tracked.session_date);
+        if (gcalDublin !== supaDublin) {
           conflictFixes.push((async () => {
             await supabaseAdmin
               .from('sessions')
-              .update({ session_date: new Date(event.start).toISOString() })
+              .update({ session_date: gcalUtcIso })
               .eq('id', tracked.id);
             console.log('[admin/calendar] conflict-resolved session:', tracked.id, '→', event.start);
           })());
@@ -116,6 +125,7 @@ export async function GET(req: NextRequest) {
             .from('sessions')
             .insert({
               client_id: mc.id,
+              // GCal dateTime is RFC 3339 with offset; new Date() parses it to UTC
               session_date: new Date(ev.start).toISOString(),
               session_format: 'in_person',
               location: 'Insight Matters, 106 Capel Street, Dublin, D01 WY40',

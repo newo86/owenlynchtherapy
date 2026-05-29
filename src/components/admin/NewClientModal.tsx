@@ -6,6 +6,7 @@ import { adminFetch } from './api';
 
 interface Props {
   asModal?: boolean;
+  initialClientName?: string;
   onClose?: () => void;
   onSuccess?: () => void;
 }
@@ -16,8 +17,8 @@ interface Generated {
   clientEmail: string;
 }
 
-export function NewClientModal({ asModal = false, onClose, onSuccess }: Props) {
-  const [clientName, setClientName] = useState('');
+export function NewClientModal({ asModal = false, initialClientName, onClose, onSuccess }: Props) {
+  const [clientName, setClientName] = useState(initialClientName ?? '');
   const [clientEmail, setClientEmail] = useState('');
   const [sessionDate, setSessionDate] = useState('');
   const [sessionFormat, setSessionFormat] = useState<'in_person' | 'online'>('in_person');

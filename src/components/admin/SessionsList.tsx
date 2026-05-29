@@ -5,7 +5,7 @@ import { List, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatDateTime, startOfWeek } from './api';
 import { FORMAT_LABELS } from './types';
-import type { ClientRow, SessionRow, CalendarEvent, SessionFilter } from './types';
+import type { ClientRow, SessionRow, CalendarEvent, SessionFilter, GcalRef } from './types';
 import { SendReminderModal } from './SendReminderModal';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
 
@@ -23,6 +23,8 @@ interface Props {
   onScheduleDay?: (iso: string) => void;
   /** Opens the new-client modal. */
   onNewClient?: () => void;
+  /** Opens the link-to-client modal for an unmatched GCal event. */
+  onEditGcalEvent?: (event: GcalRef) => void;
 }
 
 function buildClickIso(day: Date): string {
@@ -52,7 +54,7 @@ function payLabel(status: string) {
   return status === 'paid' ? 'Paid' : status === 'refunded' ? 'Refunded' : 'Unpaid';
 }
 
-export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter, onClickSession, onScheduleDay, onNewClient }: Props) {
+export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter, onClickSession, onScheduleDay, onNewClient, onEditGcalEvent }: Props) {
   // Default to calendar; only drop to list when arriving with a filter intent
   // (Quick Actions like "Unpaid this week") because filters only apply in list view.
   const [view, setView] = useState<View>(initialFilter ? 'list' : 'calendar');
@@ -291,6 +293,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
           onScheduleDay={onScheduleDay}
           onReload={onReload}
           onReminderSession={(session, client) => setReminderData({ session, client })}
+          onEditGcalEvent={onEditGcalEvent}
         />
       )}
     </div>

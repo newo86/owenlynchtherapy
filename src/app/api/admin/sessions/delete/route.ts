@@ -11,23 +11,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { session_id: string };
+  let body: { session_id?: string; gcal_event_id?: string };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { session_id } = body;
-  if (!session_id) {
-    return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
+  const { session_id, gcal_event_id } = body;
+  if (!session_id && !gcal_event_id) {
+    return NextResponse.json({ error: 'session_id or gcal_event_id is required' }, { status: 400 });
+  }
+
+  // GCal-only delete: no Supabase session row, just remove the calendar event.
+  if (!session_id && gcal_event_id) {
+    await deleteCalendarEvent(gcal_event_id);
+    console.log('[sessions/delete] deleted GCal-only event:', gcal_event_id);
+    return NextResponse.json({ success: true }, { headers: noCache });
   }
 
   // Fetch gcal_event_id before deleting so we can remove the GCal event too.
   const { data: sessionRow } = await supabaseAdmin
     .from('sessions')
     .select('gcal_event_id')
-    .eq('id', session_id)
+    .eq('id', session_id!)
     .single();
 
   if (sessionRow?.gcal_event_id) {
@@ -37,7 +44,7 @@ export async function POST(req: NextRequest) {
   const { error } = await supabaseAdmin
     .from('sessions')
     .delete()
-    .eq('id', session_id);
+    .eq('id', session_id!);
 
   if (error) {
     console.error('[sessions/delete] Supabase error:', JSON.stringify(error, null, 2));

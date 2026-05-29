@@ -13,7 +13,7 @@ import { SendReminderModal } from './SendReminderModal';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow,
-  CalendarEvent, CalendarStatus, SessionFilter, FormsTab,
+  CalendarEvent, CalendarStatus, SessionFilter, FormsTab, GcalRef,
 } from './types';
 
 interface Props {
@@ -41,6 +41,7 @@ interface Props {
   dateLine: string;
   flash: { kind: 'success' | 'error'; msg: string } | null;
   sectionTitle: string;
+  onEditGcalEvent?: (event: GcalRef) => void;
 }
 
 type OutstandingScope = 'week' | 'month' | 'all';
@@ -65,7 +66,7 @@ export function Dashboard({
   weekOffset, onWeekOffsetChange,
   onReload, onConnectCalendar, onDisconnectCalendar, onNewClient,
   onScheduleDay, onClickSession, onNavigateSection,
-  greeting, dateLine, flash, sectionTitle,
+  greeting, dateLine, flash, sectionTitle, onEditGcalEvent,
 }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -367,6 +368,7 @@ export function Dashboard({
           onClickSession={onClickSession}
           onReload={onReload}
           onReminderSession={(session, client) => setReminderData({ session, client })}
+          onEditGcalEvent={onEditGcalEvent}
         />
       </section>
 

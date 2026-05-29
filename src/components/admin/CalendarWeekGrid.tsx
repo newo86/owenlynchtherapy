@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Pencil, Trash2, Mail, CalendarPlus } from 'lucide-react';
-import { adminFetch, formatTime, isSameDay, startOfWeek, gcalIsoToDublinLocal } from './api';
-import type { ClientRow, SessionRow, CalendarEvent } from './types';
+import { Pencil, Trash2, Mail } from 'lucide-react';
+import { adminFetch, formatTime, isSameDay, startOfWeek } from './api';
+import type { ClientRow, SessionRow, CalendarEvent, GcalRef } from './types';
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -30,6 +30,7 @@ interface MergedEvent {
   session?: SessionRow;
   client?: ClientRow;
   gcalId?: string;
+  gcalLocation?: string;
 }
 
 export interface CalendarWeekGridProps {
@@ -40,10 +41,11 @@ export interface CalendarWeekGridProps {
   onScheduleDay?: (iso: string) => void;
   onReload: () => void;
   onReminderSession?: (session: SessionRow, client: ClientRow) => void;
+  onEditGcalEvent?: (event: GcalRef) => void;
 }
 
 export function CalendarWeekGrid({
-  clients, events, weekOffset, onClickSession, onScheduleDay, onReload, onReminderSession,
+  clients, events, weekOffset, onClickSession, onScheduleDay, onReload, onReminderSession, onEditGcalEvent,
 }: CalendarWeekGridProps) {
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [busyDeleteId, setBusyDeleteId] = useState<string | null>(null);
@@ -74,6 +76,21 @@ export function CalendarWeekGrid({
       await adminFetch('/api/admin/sessions/delete', {
         method: 'POST',
         body: JSON.stringify({ session_id: session.id }),
+      });
+      onReload();
+    } finally {
+      setBusyDeleteId(null);
+    }
+  }
+
+  async function deleteGcalEvent(gcalId: string) {
+    if (!confirm('Delete this event from Google Calendar?')) return;
+    setBusyDeleteId(gcalId);
+    setOpenCardId(null);
+    try {
+      await adminFetch('/api/admin/sessions/delete', {
+        method: 'POST',
+        body: JSON.stringify({ gcal_event_id: gcalId }),
       });
       onReload();
     } finally {
@@ -119,6 +136,7 @@ export function CalendarWeekGrid({
         accent: 'e-gold',
         start: e.start,
         gcalId: e.id,
+        gcalLocation: e.location,
       });
     }
 
@@ -126,6 +144,7 @@ export function CalendarWeekGrid({
   }
 
   const clickable = !!onScheduleDay;
+  const gcalEditable = !!onEditGcalEvent;
 
   return (
     <div className="admin-week-grid">
@@ -155,7 +174,7 @@ export function CalendarWeekGrid({
                 const isGcalOnly = !isSession && !!e.gcalId;
                 const cardId = isSession ? e.session!.id : e.gcalId;
                 const isOpen = !!cardId && openCardId === cardId;
-                const isClickable = isSession || (isGcalOnly && clickable);
+                const isClickable = isSession || (isGcalOnly && gcalEditable);
                 return (
                   <div
                     key={idx}
@@ -214,14 +233,26 @@ export function CalendarWeekGrid({
                       </div>
                     )}
 
-                    {isGcalOnly && clickable && (
+                    {isGcalOnly && gcalEditable && (
                       <div className={`admin-event-actions${isOpen ? ' is-open' : ''}`}>
                         <button
                           className="admin-event-action-btn"
-                          onClick={ev => { ev.stopPropagation(); setOpenCardId(null); onScheduleDay!(gcalIsoToDublinLocal(e.start)); }}
-                          title="Schedule session from this event"
+                          onClick={ev => {
+                            ev.stopPropagation();
+                            setOpenCardId(null);
+                            onEditGcalEvent!({ id: e.gcalId!, title: e.label, start: e.start, location: e.gcalLocation });
+                          }}
+                          title="Edit event"
                         >
-                          <CalendarPlus size={12} strokeWidth={2} />
+                          <Pencil size={12} strokeWidth={2} />
+                        </button>
+                        <button
+                          className="admin-event-action-btn"
+                          onClick={ev => { ev.stopPropagation(); void deleteGcalEvent(e.gcalId!); }}
+                          disabled={busyDeleteId === e.gcalId}
+                          title="Delete event"
+                        >
+                          <Trash2 size={12} strokeWidth={2} />
                         </button>
                       </div>
                     )}

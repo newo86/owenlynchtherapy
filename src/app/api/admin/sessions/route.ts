@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
     recurrence?: string;            // 'once' | 'weekly' | 'biweekly' | 'monthly'
     occurrence_count?: number;      // applies when recurrence != 'once'
     continuous?: boolean;           // open-ended recurrence (no COUNT in RRULE)
+    gcal_event_id?: string;         // if provided, link to existing GCal event (skip creation)
   };
   try {
     body = await req.json();
@@ -107,6 +108,7 @@ export async function POST(req: NextRequest) {
     status: 'scheduled',
     payment_status: 'unpaid',
     notes: notes ?? null,
+    gcal_event_id: body.gcal_event_id ?? null,
   }));
 
   const { data: sessions, error } = await supabaseAdmin
@@ -119,43 +121,45 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error?.message ?? 'Failed to create session(s)' }, { status: 500 });
   }
 
-  // Push to Google Calendar — one recurring event spans the whole series.
-  // Failures are logged and ignored: Supabase is the source of truth.
-  // startIso uses the original wall-clock Dublin string (Google Calendar API
-  // expects wall-clock + timeZone, not a UTC string).
-  try {
-    const cadenceLabel = recurrence === 'once'
-      ? 'One-off session'
-      : isContinuous
-        ? `${recurrence === 'weekly' ? 'Weekly' : recurrence === 'biweekly' ? 'Fortnightly' : 'Monthly'} · ongoing`
-        : recurrence === 'weekly'
-          ? `Weekly · ${occurrenceCount} sessions`
-          : recurrence === 'biweekly'
-            ? `Fortnightly · ${occurrenceCount} sessions`
-            : `Monthly · ${occurrenceCount} sessions`;
-    const eventId = await createCalendarEvent({
-      summary: `Session — ${clientRow?.full_name ?? 'Client'}`,
-      description: [
-        clientRow?.full_name && clientRow.email ? `Client: ${clientRow.full_name} <${clientRow.email}>` : '',
-        `Format: ${session_format === 'in_person' ? 'In Person' : 'Online'}`,
-        session_format === 'online' ? 'Join: https://doxy.me/owenlynchtherapy' : '',
-        `Fee: €${Math.round(Number(fee) / 100)}`,
-        cadenceLabel,
-      ].filter(Boolean).join('\n'),
-      location,
-      startIso: isoDates[0],
-      durationMinutes: 50,
-      recurrence: rrule ? [rrule] : undefined,
-    });
-    console.log('[sessions POST] google event:', eventId ?? 'skipped');
-    if (eventId) {
-      await supabaseAdmin
-        .from('sessions')
-        .update({ gcal_event_id: eventId })
-        .in('id', sessions.map((s: { id: string }) => s.id));
+  // Push to Google Calendar — skip if the caller already supplied a gcal_event_id
+  // (linking an existing GCal event to a client rather than creating a new one).
+  if (!body.gcal_event_id) {
+    try {
+      const cadenceLabel = recurrence === 'once'
+        ? 'One-off session'
+        : isContinuous
+          ? `${recurrence === 'weekly' ? 'Weekly' : recurrence === 'biweekly' ? 'Fortnightly' : 'Monthly'} · ongoing`
+          : recurrence === 'weekly'
+            ? `Weekly · ${occurrenceCount} sessions`
+            : recurrence === 'biweekly'
+              ? `Fortnightly · ${occurrenceCount} sessions`
+              : `Monthly · ${occurrenceCount} sessions`;
+      const eventId = await createCalendarEvent({
+        summary: `Session — ${clientRow?.full_name ?? 'Client'}`,
+        description: [
+          clientRow?.full_name && clientRow.email ? `Client: ${clientRow.full_name} <${clientRow.email}>` : '',
+          `Format: ${session_format === 'in_person' ? 'In Person' : 'Online'}`,
+          session_format === 'online' ? 'Join: https://doxy.me/owenlynchtherapy' : '',
+          `Fee: €${Math.round(Number(fee) / 100)}`,
+          cadenceLabel,
+        ].filter(Boolean).join('\n'),
+        location,
+        startIso: isoDates[0],
+        durationMinutes: 50,
+        recurrence: rrule ? [rrule] : undefined,
+      });
+      console.log('[sessions POST] google event:', eventId ?? 'skipped');
+      if (eventId) {
+        await supabaseAdmin
+          .from('sessions')
+          .update({ gcal_event_id: eventId })
+          .in('id', sessions.map((s: { id: string }) => s.id));
+      }
+    } catch (calErr) {
+      console.error('[sessions POST] google calendar error:', calErr);
     }
-  } catch (calErr) {
-    console.error('[sessions POST] google calendar error:', calErr);
+  } else {
+    console.log('[sessions POST] linked to existing GCal event:', body.gcal_event_id);
   }
 
   // Sort so the anchor session is the earliest one.

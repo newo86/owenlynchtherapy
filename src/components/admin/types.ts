@@ -68,6 +68,14 @@ export interface CalendarStatus {
   email?: string;
 }
 
+/** Minimal reference to a Google Calendar event — used for editing/deleting unmatched GCal-only cards. */
+export interface GcalRef {
+  id: string;
+  title: string;
+  start: string;     // ISO (RFC 3339 from GCal)
+  location?: string; // used to detect in_person vs online on first open
+}
+
 export type AdminSection = 'dashboard' | 'clients' | 'sessions' | 'revenue' | 'forms' | 'new-client';
 
 export type SessionFilter = 'all' | 'unpaid' | 'needs_receipt' | 'this_week' | 'unpaid_this_week';

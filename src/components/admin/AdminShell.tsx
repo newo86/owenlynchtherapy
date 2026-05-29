@@ -11,10 +11,11 @@ import { Revenue } from './Revenue';
 import { NewClientModal } from './NewClientModal';
 import { ScheduleSessionModal } from './ScheduleSessionModal';
 import { SessionEditModal } from './SessionEditModal';
+import { GcalEventEditModal } from './GcalEventEditModal';
 import { adminFetch, clearSecret } from './api';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
-  SessionFilter, FormsTab,
+  SessionFilter, FormsTab, GcalRef,
 } from './types';
 
 const SECTION_TITLES: Record<AdminSection, string> = {
@@ -57,6 +58,7 @@ export function AdminShell() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleInitialIso, setScheduleInitialIso] = useState<string | undefined>();
   const [editSession, setEditSession] = useState<{ session: SessionRow; client: ClientRow } | null>(null);
+  const [editGcalData, setEditGcalData] = useState<GcalRef | null>(null);
   // Filter intents carried when a Quick Action card navigates between sections.
   const [sessionsFilter, setSessionsFilter] = useState<SessionFilter | undefined>();
   const [formsTab, setFormsTab] = useState<FormsTab | undefined>();
@@ -213,6 +215,7 @@ export function AdminShell() {
               dateLine={dateLine()}
               flash={flash}
               sectionTitle={SECTION_TITLES[section]}
+              onEditGcalEvent={setEditGcalData}
             />
           )}
 
@@ -278,6 +281,7 @@ export function AdminShell() {
                   onClickSession={(session, client) => setEditSession({ session, client })}
                   onScheduleDay={iso => { setScheduleInitialIso(iso); setScheduleOpen(true); }}
                   onNewClient={() => setModalOpen(true)}
+                  onEditGcalEvent={setEditGcalData}
                 />
               )}
 
@@ -310,6 +314,15 @@ export function AdminShell() {
           asModal
           onClose={() => setModalOpen(false)}
           onSuccess={() => { reload(); }}
+        />
+      )}
+
+      {editGcalData && (
+        <GcalEventEditModal
+          gcalEvent={editGcalData}
+          clients={clients}
+          onClose={() => setEditGcalData(null)}
+          onSuccess={() => { setEditGcalData(null); reload(); }}
         />
       )}
 
