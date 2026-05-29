@@ -12,6 +12,7 @@ import { NewClientModal } from './NewClientModal';
 import { ScheduleSessionModal } from './ScheduleSessionModal';
 import { SessionEditModal } from './SessionEditModal';
 import { GcalEventEditModal } from './GcalEventEditModal';
+import { MfaModal } from './MfaModal';
 import { adminFetch, logout } from './api';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
@@ -59,6 +60,7 @@ export function AdminShell() {
   const [scheduleInitialIso, setScheduleInitialIso] = useState<string | undefined>();
   const [editSession, setEditSession] = useState<{ session: SessionRow; client: ClientRow } | null>(null);
   const [editGcalData, setEditGcalData] = useState<GcalRef | null>(null);
+  const [mfaOpen, setMfaOpen] = useState(false);
   // Filter intents carried when a Quick Action card navigates between sections.
   const [sessionsFilter, setSessionsFilter] = useState<SessionFilter | undefined>();
   const [formsTab, setFormsTab] = useState<FormsTab | undefined>();
@@ -193,6 +195,7 @@ export function AdminShell() {
             }
           }}
           onSignOut={() => { void logout().then(() => window.location.reload()); }}
+          onOpenMfa={() => setMfaOpen(true)}
         />
 
         <main className="admin-main">
@@ -343,6 +346,8 @@ export function AdminShell() {
           onSuccess={() => { reload(); }}
         />
       )}
+
+      {mfaOpen && <MfaModal onClose={() => setMfaOpen(false)} />}
     </div>
   );
 }

@@ -1,17 +1,11 @@
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 
 // Minimal, dependency-free TOTP (RFC 6238: HMAC-SHA1, 30-second step, 6 digits)
-// for admin two-factor auth. The shared secret lives in the ADMIN_TOTP_SECRET
-// environment variable (base32). If it's unset, MFA is simply disabled and
-// password-only login continues to work — so enabling MFA can never lock the
-// admin out by surprise.
+// for admin two-factor auth. The shared secret is stored in Supabase (table
+// admin_mfa) and passed in here — these functions are pure crypto and hold no
+// state. See src/lib/adminMfa.ts for the storage/enable logic.
 
 const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-
-/** True when an admin TOTP secret is configured. */
-export function mfaEnabled(): boolean {
-  return !!process.env.ADMIN_TOTP_SECRET;
-}
 
 /** Generate a fresh base32 secret for enrolling an authenticator app. */
 export function generateTotpSecret(): string {
@@ -55,10 +49,9 @@ function codesEqual(a: string, b: string): boolean {
   return ab.length === bb.length && timingSafeEqual(ab, bb);
 }
 
-/** Verify a 6-digit code against ADMIN_TOTP_SECRET, allowing ±1 time step for
- *  clock drift. Returns false if MFA isn't configured or the code is malformed. */
-export function verifyTotp(token: string): boolean {
-  const secret = process.env.ADMIN_TOTP_SECRET;
+/** Verify a 6-digit code against the given base32 secret, allowing ±1 time step
+ *  for clock drift. Returns false if the secret is empty or the code malformed. */
+export function verifyTotp(token: string, secret: string): boolean {
   if (!secret || !/^\d{6}$/.test(token)) return false;
   const key = base32Decode(secret);
   const counter = Math.floor(Date.now() / 30_000);

@@ -1,12 +1,13 @@
 'use client';
 
-import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus, TrendingUp } from 'lucide-react';
+import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus, TrendingUp, ShieldCheck } from 'lucide-react';
 import type { AdminSection } from './types';
 
 interface Props {
   active: AdminSection;
   onNavigate: (s: AdminSection) => void;
   onSignOut: () => void;
+  onOpenMfa: () => void;
 }
 
 const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> = [
@@ -18,7 +19,7 @@ const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> =
   { id: 'new-client', label: 'Onboarding', Icon: UserRoundPlus },
 ];
 
-export function Sidebar({ active, onNavigate, onSignOut }: Props) {
+export function Sidebar({ active, onNavigate, onSignOut, onOpenMfa }: Props) {
   return (
     <aside className="admin-sidebar" aria-label="Admin navigation">
       <button
@@ -52,6 +53,17 @@ export function Sidebar({ active, onNavigate, onSignOut }: Props) {
           </button>
         ))}
       </nav>
+
+      <button
+        type="button"
+        onClick={onOpenMfa}
+        className="admin-nav-btn"
+        title="Two-factor authentication"
+        aria-label="Two-factor authentication"
+        style={{ marginBottom: 10 }}
+      >
+        <ShieldCheck size={22} strokeWidth={1.6} aria-hidden />
+      </button>
 
       <button
         type="button"

@@ -34,16 +34,20 @@ what is retained, what is purged automatically, and the items still open.
   the environment. Until then it runs as a **dry-run** that logs/returns how many
   records *would* be purged, deleting nothing. Set the flag when you're ready to
   let it delete. (Nothing is old enough to delete until ~2033 regardless.)
-- Two-factor admin login (TOTP) is available — set `ADMIN_TOTP_SECRET` to
-  enable; see "Two-factor" below.
+- Two-factor admin login (TOTP) is available — enable it from the dashboard
+  sidebar; see "Two-factor" below.
 
 ## Two-factor authentication (TOTP)
 
-- Optional. While `ADMIN_TOTP_SECRET` is unset, login is password-only (no
-  lockout risk). To enable: sign in, call `GET /api/admin/mfa/setup` to mint a
-  secret + `otpauth://` URL, add it to an authenticator app, then set
-  `ADMIN_TOTP_SECRET` to that value in Vercel and redeploy. Login then requires
-  a 6-digit code as a second step. (`src/lib/totp.ts`)
+- Optional, fully in-app. In the dashboard sidebar, open **Two-factor** (shield
+  icon): a QR code appears — scan it with an authenticator app (Google
+  Authenticator, Authy, 1Password…), enter the 6-digit code to confirm, and it's
+  enabled. No env vars, no redeploy. Turn it off from the same panel (requires a
+  current code).
+- The secret is stored in Supabase (`admin_mfa` table, service-role only — run
+  `supabase/migrations/admin_mfa.sql` once). While MFA is off, login is
+  password-only, so there's no lockout risk. (`src/lib/totp.ts`,
+  `src/lib/adminMfa.ts`)
 
 ## Right to erasure (Art 17)
 
@@ -59,8 +63,8 @@ what is retained, what is purged automatically, and the items still open.
    records are old enough to delete until ~2033, so there's no rush — flip it on
    whenever you're comfortable.
 
-2. **Enable TOTP MFA (optional).** Set `ADMIN_TOTP_SECRET` (see "Two-factor"
-   above) to require a second factor at login.
+2. **Enable TOTP MFA (optional).** Run `supabase/migrations/admin_mfa.sql`, then
+   turn it on from the dashboard sidebar's Two-factor panel (scan the QR).
 
 3. **Verify the site-wide CSP.** Confirmed working: Google Maps + Turnstile. If
    a GTM tag calls a domain not in `connect-src` (e.g. a Meta pixel), add it to
