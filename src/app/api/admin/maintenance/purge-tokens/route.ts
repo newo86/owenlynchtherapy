@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { bearerMatches } from '@/lib/adminAuth';
+import { bearerMatches, requireAdmin } from '@/lib/adminAuth';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -16,7 +16,7 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 // secret, both compared in constant time.
 export async function GET(req: NextRequest) {
   const valid = bearerMatches(req, process.env.CRON_SECRET)
-    || bearerMatches(req, process.env.INTAKE_ADMIN_SECRET);
+    || requireAdmin(req) === null;
   if (!valid) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

@@ -6,26 +6,47 @@ import { startOfWeek, utcToDublinLocal } from '@/lib/dateUtils';
 export { startOfWeek };
 export const gcalIsoToDublinLocal = utcToDublinLocal;
 
-const STORAGE_KEY = 'intake_admin_auth';
+// Admin auth is a server-set httpOnly cookie (see /api/admin/session). The
+// browser never holds the secret; the cookie is sent automatically on
+// same-origin requests, so adminFetch no longer attaches an Authorization
+// header and JavaScript can't read or leak the credential.
 
-export function getSecret(): string {
-  if (typeof window === 'undefined') return '';
-  return sessionStorage.getItem(STORAGE_KEY) ?? '';
+/** Log in by exchanging the admin secret for a session cookie. */
+export async function login(secret: string): Promise<boolean> {
+  const res = await fetch('/api/admin/session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ secret }),
+    cache: 'no-store',
+  });
+  return res.ok;
 }
 
-export function setSecret(value: string) {
-  sessionStorage.setItem(STORAGE_KEY, value);
+/** Whether the current browser holds a valid admin session. */
+export async function checkSession(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/admin/session', { cache: 'no-store' });
+    if (!res.ok) return false;
+    const json = await res.json();
+    return Boolean(json.authed);
+  } catch {
+    return false;
+  }
 }
 
-export function clearSecret() {
-  sessionStorage.removeItem(STORAGE_KEY);
+/** Clear the session cookie. */
+export async function logout(): Promise<void> {
+  try {
+    await fetch('/api/admin/session', { method: 'DELETE', cache: 'no-store' });
+  } catch {
+    /* best-effort */
+  }
 }
 
 export async function adminFetch(input: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
-  headers.set('Authorization', `Bearer ${getSecret()}`);
   if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-  return fetch(input, { ...init, headers, cache: 'no-store' });
+  return fetch(input, { ...init, headers, cache: 'no-store', credentials: 'same-origin' });
 }
 
 export function displayFee(cents: number): string {

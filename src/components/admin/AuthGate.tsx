@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { setSecret, clearSecret, getSecret } from './api';
+import { login, logout, checkSession } from './api';
 
 interface Props {
   children: React.ReactNode;
@@ -11,16 +11,19 @@ export function AuthGate({ children }: Props) {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [value, setValue] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    setAuthed(Boolean(getSecret()));
+    let cancelled = false;
+    // Ask the server whether this browser already holds a valid session cookie.
+    checkSession().then(ok => { if (!cancelled) setAuthed(ok); });
     function onUnauth() {
-      clearSecret();
+      void logout();
       setAuthed(false);
-      setError('Session expired — please re-enter your admin secret.');
+      setError('Session expired — please sign in again.');
     }
     window.addEventListener('admin-unauthorized', onUnauth);
-    return () => window.removeEventListener('admin-unauthorized', onUnauth);
+    return () => { cancelled = true; window.removeEventListener('admin-unauthorized', onUnauth); };
   }, []);
 
   if (authed === null) {
@@ -49,12 +52,19 @@ export function AuthGate({ children }: Props) {
           <h1 className="admin-h1" style={{ fontSize: 28, margin: '6px 0 4px' }}>Sign in</h1>
           <p className="admin-subline">Enter the admin secret to continue.</p>
           <form
-            onSubmit={e => {
+            onSubmit={async e => {
               e.preventDefault();
-              if (!value.trim()) return;
-              setSecret(value.trim());
-              setAuthed(true);
+              if (!value.trim() || busy) return;
+              setBusy(true);
               setError('');
+              const ok = await login(value.trim());
+              setBusy(false);
+              if (ok) {
+                setValue('');
+                setAuthed(true);
+              } else {
+                setError('Incorrect admin secret.');
+              }
             }}
             style={{ marginTop: 22 }}
           >
@@ -69,8 +79,8 @@ export function AuthGate({ children }: Props) {
             {error && (
               <p style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>
             )}
-            <button type="submit" className="admin-btn-primary" style={{ marginTop: 18, width: '100%', justifyContent: 'center' }}>
-              Continue
+            <button type="submit" disabled={busy} className="admin-btn-primary" style={{ marginTop: 18, width: '100%', justifyContent: 'center' }}>
+              {busy ? 'Signing in…' : 'Continue'}
             </button>
           </form>
         </div>

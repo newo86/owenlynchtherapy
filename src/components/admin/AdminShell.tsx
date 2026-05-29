@@ -12,7 +12,7 @@ import { NewClientModal } from './NewClientModal';
 import { ScheduleSessionModal } from './ScheduleSessionModal';
 import { SessionEditModal } from './SessionEditModal';
 import { GcalEventEditModal } from './GcalEventEditModal';
-import { adminFetch, clearSecret } from './api';
+import { adminFetch, logout } from './api';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
   SessionFilter, FormsTab, GcalRef,
@@ -192,7 +192,7 @@ export function AdminShell() {
               setSection(s);
             }
           }}
-          onSignOut={() => { clearSecret(); window.location.reload(); }}
+          onSignOut={() => { void logout().then(() => window.location.reload()); }}
         />
 
         <main className="admin-main">

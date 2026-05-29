@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { bearerMatches } from '@/lib/adminAuth';
+import { bearerMatches, requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 
@@ -18,8 +18,9 @@ function getWeekBounds(now: Date): { monday: Date; sunday: Date } {
 }
 
 export async function GET(req: NextRequest) {
-  // Accept either CRON_SECRET (Vercel cron) or INTAKE_ADMIN_SECRET (manual trigger)
-  const valid = bearerMatches(req, process.env.CRON_SECRET) || bearerMatches(req, process.env.INTAKE_ADMIN_SECRET);
+  // Cron authenticates with CRON_SECRET (bearer); a manual trigger from the
+  // admin dashboard authenticates with the admin session cookie.
+  const valid = bearerMatches(req, process.env.CRON_SECRET) || requireAdmin(req) === null;
   if (!valid) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
