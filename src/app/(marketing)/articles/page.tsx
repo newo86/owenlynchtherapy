@@ -65,10 +65,40 @@ function formatDate(iso: string) {
 
 const PAGE_SIZE = 9;
 
+// The OCD article is hand-written prose served at /articles/how-ocd-therapy-works
+// (see the [slug] route) rather than a Sanity document, so it isn't returned by
+// the CMS query. We add it to the listing here so it appears in the grid; if it
+// is ever migrated into Sanity (same slug) the dedupe below drops this copy.
+const OCD_POST: Post = {
+  _id: 'static-how-ocd-therapy-works',
+  slug: { current: 'how-ocd-therapy-works' },
+  title: 'How OCD Therapy Works: An Evidence-Based Guide',
+  excerpt:
+    'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment — and what effective, compassionate help actually looks like.',
+  publishedAt: '2026-05-13',
+  category: 'OCD',
+  featuredImageUrl: '/images/blog-hero-ocd-therapy.png',
+  featuredImageAlt:
+    'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta',
+};
+
 export default async function ArticlesPage() {
-  const posts: Post[] = await sanityClient.fetch(allPostsQuery);
-  const visiblePosts = posts.slice(0, PAGE_SIZE);
-  const hasMore = posts.length > PAGE_SIZE;
+  // Fetch CMS posts defensively: if Sanity is unreachable the page still renders
+  // (at minimum with the hardcoded OCD article) instead of erroring.
+  let sanityPosts: Post[] = [];
+  try {
+    sanityPosts = await sanityClient.fetch(allPostsQuery);
+  } catch {
+    sanityPosts = [];
+  }
+
+  const merged = sanityPosts.some(p => p.slug?.current === OCD_POST.slug.current)
+    ? sanityPosts
+    : [OCD_POST, ...sanityPosts];
+  merged.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+  const visiblePosts = merged.slice(0, PAGE_SIZE);
+  const hasMore = merged.length > PAGE_SIZE;
 
   return (
     <>
