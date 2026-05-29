@@ -1,18 +1,12 @@
 import { NextRequest } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { generateIntakePDF } from '@/lib/generateIntakePDF';
 import { rateLimit } from '@/lib/rateLimit';
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const secret = process.env.INTAKE_ADMIN_SECRET;
-
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  const denied = requireAdmin(req);
+  if (denied) return denied;
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (!rateLimit('download-pdf', ip, 20, 60 * 60 * 1000)) {
@@ -37,8 +31,6 @@ export async function GET(req: NextRequest) {
     .eq('id', submissionId)
     .single();
 
-  console.log('[download-pdf] Fetched submission for client:', data?.full_name);
-
   if (error || !data) {
     console.error('[download-pdf] Supabase error:', JSON.stringify(error, null, 2));
     return new Response(JSON.stringify({ error: 'Submission not found' }), {
@@ -47,7 +39,7 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  console.log('[download-pdf] generating PDF for:', data.full_name, '| submitted_at:', data.submitted_at);
+  console.log('[download-pdf] generating PDF for submission:', submissionId);
 
   try {
     const pdfBuffer = await generateIntakePDF(data);

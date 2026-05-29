@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { createCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
@@ -11,11 +12,8 @@ const VALID_FORMATS = ['in_person', 'online'];
 // counterpart to /api/intake/generate-token for clients who already exist
 // in Owen's practice from before this admin existed.
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const secret = process.env.INTAKE_ADMIN_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = requireAdmin(req);
+  if (denied) return denied;
 
   let body: {
     client_name?: string;

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { updateCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso, utcToDublinLocal } from '@/lib/dateUtils';
@@ -9,11 +10,8 @@ const VALID_PAYMENT = ['paid', 'unpaid', 'refunded'];
 const VALID_STATUS = ['scheduled', 'attended', 'cancelled', 'no_show'];
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const secret = process.env.INTAKE_ADMIN_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = requireAdmin(req);
+  if (denied) return denied;
 
   let body: {
     session_id: string;

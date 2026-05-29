@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { deleteCalendarEvent } from '@/lib/googleOAuth';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const secret = process.env.INTAKE_ADMIN_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = requireAdmin(req);
+  if (denied) return denied;
 
   let body: { session_id?: string; gcal_event_id?: string };
   try {

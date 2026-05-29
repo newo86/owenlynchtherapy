@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
 import { google } from 'googleapis';
 import { getAuthorizedClient } from '@/lib/googleOAuth';
 import { startOfWeek, utcToDublinLocal } from '@/lib/dateUtils';
@@ -7,11 +8,8 @@ import { supabaseAdmin } from '@/lib/supabase';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const secret = process.env.INTAKE_ADMIN_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = requireAdmin(req);
+  if (denied) return denied;
 
   const client = await getAuthorizedClient();
   if (!client) {

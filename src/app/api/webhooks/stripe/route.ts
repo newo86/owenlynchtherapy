@@ -68,8 +68,11 @@ export async function POST(request: NextRequest) {
     console.log('[stripe-webhook] payment confirmed for session:', supabaseSessionId);
 
     // Send receipt immediately on payment (Resend custom receipt)
+    // Idempotency: only send a receipt once. Stripe may deliver the same
+    // checkout.session.completed event more than once; without this guard a
+    // replay would email the client a duplicate receipt.
     const client = (session as { clients: { full_name: string; email: string } }).clients;
-    if (client?.email) {
+    if (client?.email && !(session as { receipt_sent_at?: string | null }).receipt_sent_at) {
       await sendReceipt(client, session);
       await supabaseAdmin
         .from('sessions')
@@ -105,7 +108,7 @@ async function sendReceipt(
   if (emailResult.error) {
     console.error('[stripe-webhook] receipt email error:', JSON.stringify(emailResult.error, null, 2));
   } else {
-    console.log('[stripe-webhook] receipt sent to', client.email);
+    console.log('[stripe-webhook] receipt sent');
   }
 }
 

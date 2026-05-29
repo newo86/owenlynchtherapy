@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const secret = process.env.INTAKE_ADMIN_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = requireAdmin(req);
+  if (denied) return denied;
 
   let body: { session_id: string; force?: boolean };
   try {
@@ -67,7 +65,7 @@ export async function POST(req: NextRequest) {
     .update({ receipt_sent_at: new Date().toISOString() })
     .eq('id', session_id);
 
-  console.log('[send-receipt] sent to', client.email, 'for session', session_id);
+  console.log('[send-receipt] sent for session', session_id);
   return NextResponse.json({ success: true }, { headers: noCache });
 }
 

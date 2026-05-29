@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getStripe } from '@/lib/stripe';
@@ -73,13 +74,8 @@ function buildOccurrences(firstIsoLocal: string, recurrence: Recurrence, count: 
 export async function POST(req: NextRequest) {
   console.log('[generate-token] request received');
 
-  const authHeader = req.headers.get('authorization');
-  const secret = process.env.INTAKE_ADMIN_SECRET;
-
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    console.log('[generate-token] unauthorized');
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = requireAdmin(req);
+  if (denied) return denied;
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (!rateLimit('generate-token', ip, 20, 60 * 60 * 1000)) {
@@ -102,7 +98,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { client_name, client_email, session_date, session_format, session_fee } = body;
-  console.log('[generate-token] body parsed:', { client_name, client_email, session_date, session_format, session_fee, recurrence: body.recurrence, occurrence_count: body.occurrence_count });
+  console.log('[generate-token] body parsed:', { session_format, recurrence: body.recurrence, occurrence_count: body.occurrence_count });
 
   if (!client_name?.trim()) return NextResponse.json({ error: 'client_name is required' }, { status: 400 });
   if (!client_email?.trim()) return NextResponse.json({ error: 'client_email is required' }, { status: 400 });
@@ -252,7 +248,7 @@ export async function POST(req: NextRequest) {
   let paymentLinkId = '';
 
   const stripeKeyRaw = process.env.STRIPE_SECRET_KEY ?? '';
-  console.log('[generate-token] Stripe key present:', !!stripeKeyRaw, '| prefix:', stripeKeyRaw.slice(0, 12) || '(empty)');
+  console.log('[generate-token] Stripe key present:', !!stripeKeyRaw);
 
   try {
     const stripeClient = getStripe();
@@ -279,7 +275,7 @@ export async function POST(req: NextRequest) {
         client_email: client_email.trim(),
       },
     });
-    console.log('[generate-token] step 4b: payment link created, url:', paymentLink.url, '| id:', paymentLink.id);
+    console.log('[generate-token] step 4b: payment link created, id:', paymentLink.id);
 
     paymentLinkUrl = paymentLink.url;
     paymentLinkId = paymentLink.id;
@@ -316,7 +312,7 @@ export async function POST(req: NextRequest) {
   // payment link, which would be useless landing in info@).
   const firstName = client_name.trim().split(' ')[0];
   const emailTo = client_email.trim();
-  console.log('[generate-token] step 6: sending welcome email to', emailTo, '| paymentLinkUrl:', paymentLinkUrl || '(empty)');
+  console.log('[generate-token] step 6: sending welcome email | payment link present:', !!paymentLinkUrl);
 
   let therapeuticAgreementBuffer: Buffer | null = null;
   let privacyPolicyBuffer: Buffer | null = null;
@@ -370,7 +366,6 @@ export async function POST(req: NextRequest) {
     } else {
       console.log('[generate-token] step 6: done, email id:', emailResult.data?.id);
     }
-    console.log('[generate-token] step 6: full Resend response:', JSON.stringify(emailResult, null, 2));
   } catch (emailErr) {
     console.error('[generate-token] welcome email thrown error:', emailErr);
   }

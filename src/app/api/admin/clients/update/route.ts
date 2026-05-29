@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
@@ -7,11 +8,8 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 // admin-editable fields. We whitelist the columns so a malicious body
 // can't touch status / email / id directly.
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const secret = process.env.INTAKE_ADMIN_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = requireAdmin(req);
+  if (denied) return denied;
 
   let body: {
     client_id?: string;

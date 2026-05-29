@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
 import { randomBytes } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { buildAuthUrl } from '@/lib/googleOAuth';
@@ -6,11 +7,8 @@ import { buildAuthUrl } from '@/lib/googleOAuth';
 // POST /api/auth/google — initiates OAuth. Requires admin Bearer auth.
 // Returns { url } for the client to redirect the user's browser to.
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const secret = process.env.INTAKE_ADMIN_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = requireAdmin(req);
+  if (denied) return denied;
 
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REDIRECT_URI) {
     return NextResponse.json(

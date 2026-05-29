@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { deleteCalendarEvent } from '@/lib/googleOAuth';
 
@@ -6,11 +7,8 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 // POST /api/admin/clients/delete  body: { client_id: string }
 export async function POST(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const secret = process.env.INTAKE_ADMIN_SECRET;
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = requireAdmin(req);
+  if (denied) return denied;
 
   let body: { client_id?: string };
   try {
