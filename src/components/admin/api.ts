@@ -11,15 +11,19 @@ export const gcalIsoToDublinLocal = utcToDublinLocal;
 // same-origin requests, so adminFetch no longer attaches an Authorization
 // header and JavaScript can't read or leak the credential.
 
-/** Log in by exchanging the admin secret for a session cookie. */
-export async function login(secret: string): Promise<boolean> {
+/** Log in by exchanging the admin secret (and TOTP code, if MFA is on) for a
+ *  session cookie. Returns mfaRequired when the password was accepted but a
+ *  6-digit code is needed. */
+export async function login(secret: string, code?: string): Promise<{ ok: boolean; mfaRequired?: boolean; error?: string }> {
   const res = await fetch('/api/admin/session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ secret }),
+    body: JSON.stringify({ secret, code }),
     cache: 'no-store',
   });
-  return res.ok;
+  if (res.ok) return { ok: true };
+  const json = await res.json().catch(() => ({}));
+  return { ok: false, mfaRequired: Boolean(json.mfaRequired), error: json.error };
 }
 
 /** Whether the current browser holds a valid admin session. */

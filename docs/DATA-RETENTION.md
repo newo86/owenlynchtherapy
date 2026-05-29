@@ -24,13 +24,26 @@ what is retained, what is purged automatically, and the items still open.
 - **Headers:** HSTS site-wide; a baseline CSP site-wide and a stricter CSP on
   `/admin/*`. (`next.config.ts`)
 
-## Retained (clinical norms)
+## Clinical-record retention (7 years)
 
-- **Clients, sessions, intake submissions** are retained per professional
-  guidance (IAHIP/PSI: typically ~7 years after last contact for adults).
-  These are **not** auto-purged. When the practice has records old enough to
-  fall outside the retention window, add a purge for them (mirroring the
-  token-purge route) once the exact period is confirmed.
+- **Clients, sessions, intake submissions** are retained for **7 years after
+  last contact** (the most recent session), then purged — unless the client
+  requested earlier erasure (handled via `/api/admin/clients/delete`).
+- Enforced by `GET /api/admin/maintenance/purge-clinical` (monthly Vercel cron).
+- **SAFETY:** the purge only deletes when `CLINICAL_PURGE_ENABLED=true` is set in
+  the environment. Until then it runs as a **dry-run** that logs/returns how many
+  records *would* be purged, deleting nothing. Set the flag when you're ready to
+  let it delete. (Nothing is old enough to delete until ~2033 regardless.)
+- Two-factor admin login (TOTP) is available — set `ADMIN_TOTP_SECRET` to
+  enable; see "Two-factor" below.
+
+## Two-factor authentication (TOTP)
+
+- Optional. While `ADMIN_TOTP_SECRET` is unset, login is password-only (no
+  lockout risk). To enable: sign in, call `GET /api/admin/mfa/setup` to mint a
+  secret + `otpauth://` URL, add it to an authenticator app, then set
+  `ADMIN_TOTP_SECRET` to that value in Vercel and redeploy. Login then requires
+  a 6-digit code as a second step. (`src/lib/totp.ts`)
 
 ## Right to erasure (Art 17)
 
@@ -39,25 +52,19 @@ what is retained, what is purged automatically, and the items still open.
   events). Intake submissions for an erased client should be removed in the
   same flow — verify this before relying on it for a formal erasure request.
 
-## Open items (need a decision — deliberately not automated)
+## Open items (need a decision or a one-time switch)
 
-1. **Clinical-record retention purge.** Clients, sessions and intake submissions
-   are kept indefinitely. A scheduled purge of records older than the retention
-   window is **not** implemented because the period is a professional/legal
-   decision (IAHIP/PSI is typically ~7–8 years after last contact; for under-18s
-   it differs). Once you confirm the exact period, a purge can be added mirroring
-   the token-purge route. Auto-deleting clinical data on a guessed period is
-   intentionally avoided.
+1. **Enable the clinical purge when ready.** The 7-year purge is implemented but
+   runs as a dry-run until you set `CLINICAL_PURGE_ENABLED=true` in Vercel. No
+   records are old enough to delete until ~2033, so there's no rush — flip it on
+   whenever you're comfortable.
 
-2. **Apply the rate-limit migration.** Run `supabase/migrations/rate_limits.sql`
-   in Supabase to activate the durable, cross-instance rate limiter (it fails
-   open until then, with the in-memory limiter still active).
+2. **Enable TOTP MFA (optional).** Set `ADMIN_TOTP_SECRET` (see "Two-factor"
+   above) to require a second factor at login.
 
-3. **Verify the site-wide CSP after deploy.** Check the contact page (Google
-   Maps embed, Turnstile widget, Psychology Today badge all render) and that GTM
-   tags still fire. If you run a GTM tag that calls a domain not in
-   `connect-src` (e.g. a Meta pixel), add that domain to `siteCsp` in
-   `next.config.ts`.
+3. **Verify the site-wide CSP.** Confirmed working: Google Maps + Turnstile. If
+   a GTM tag calls a domain not in `connect-src` (e.g. a Meta pixel), add it to
+   `siteCsp` in `next.config.ts`.
 
 4. **Optional: reduce the client name in Google Calendar to initials.** Email is
    already removed; the full name remains so you can identify sessions. Reducing
@@ -67,6 +74,3 @@ what is retained, what is purged automatically, and the items still open.
 5. **Processor DPAs.** Personal data is shared with Resend, Stripe, Google,
    Supabase and Vercel. Ensure a Data Processing Agreement is in place with each
    and that the privacy policy lists them.
-
-6. **Optional: TOTP MFA** on top of the cookie session, if you want a second
-   factor for admin sign-in.

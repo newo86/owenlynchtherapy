@@ -9,6 +9,7 @@ import {
 } from '@/lib/adminAuth';
 import { rateLimit } from '@/lib/rateLimit';
 import { rateLimitDurable } from '@/lib/rateLimitDurable';
+import { mfaEnabled, verifyTotp } from '@/lib/totp';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429, headers: noCache });
   }
 
-  let body: { secret?: string };
+  let body: { secret?: string; code?: string };
   try {
     body = await req.json();
   } catch {
@@ -42,6 +43,18 @@ export async function POST(req: NextRequest) {
 
   if (!adminSecretValid(body.secret ?? '')) {
     return NextResponse.json({ error: 'Invalid secret' }, { status: 401, headers: noCache });
+  }
+
+  // Second factor: if a TOTP secret is configured, require a valid 6-digit code.
+  // mfaRequired tells the client to prompt for the code after the password step.
+  if (mfaEnabled()) {
+    const code = (body.code ?? '').trim();
+    if (!code) {
+      return NextResponse.json({ error: 'Verification code required', mfaRequired: true }, { status: 401, headers: noCache });
+    }
+    if (!verifyTotp(code)) {
+      return NextResponse.json({ error: 'Invalid verification code', mfaRequired: true }, { status: 401, headers: noCache });
+    }
   }
 
   const token = createSessionToken();
