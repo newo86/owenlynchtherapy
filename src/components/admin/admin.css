@@ -1274,3 +1274,37 @@
 @media (min-width: 480px) and (max-width: 768px) {
   .admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ── Mobile schedule FAB ───────────────────────────────────────────────────
+   Hidden on desktop (which has inline "+ Schedule session" buttons); on phones
+   it floats bottom-right as a large, thumb-reachable target. */
+.admin-fab {
+  display: none;
+}
+@media (max-width: 768px) {
+  .admin-fab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 80;
+    padding: 14px 20px 14px 16px;
+    border: none;
+    border-radius: 999px;
+    background: var(--terracotta);
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    box-shadow: 0 8px 24px rgba(200, 90, 27, 0.4);
+    cursor: pointer;
+    /* keep clear of iOS home indicator / safe area */
+    margin-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .admin-fab:active {
+    transform: scale(0.96);
+  }
+}
