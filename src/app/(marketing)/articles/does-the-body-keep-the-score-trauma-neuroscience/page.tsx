@@ -176,7 +176,7 @@ const articleJsonLd = {
     'complex PTSD',
   ],
   articleSection: 'Trauma and Psychotherapy',
-  wordCount: '5000',
+  wordCount: '5150',
   timeRequired: 'PT20M',
   inLanguage: 'en-IE',
   isAccessibleForFree: true,
@@ -460,6 +460,10 @@ export default function TraumaNeuroscienceArticle() {
 
             <p className={p}>
               {`The brain's structural changes in PTSD confirm this picture. Multiple large studies consistently show reduced volume in the hippocampus, the brain's key structure for contextual memory, for placing experiences in time and space, and for updating predictions about the world, in people with PTSD compared to both trauma-exposed and non-exposed controls (Ben-Zion et al., 2024). This shrinkage is concentrated in specific subregions: CA1, CA3, the dentate gyrus, and the subiculum. These are precisely the parts involved in determining whether a threat is past or present. Part of this is driven by chronic stress hormones suppressing a key brain growth protein called BDNF, which reduces the hippocampus's ability to generate new cells. Separately, the amygdala, the brain's threat-detection centre, shows consistently elevated activity in response to danger signals, particularly on the left side. And the ventromedial prefrontal cortex, the region responsible for putting the brakes on the fear response and recalling that a previous threat no longer exists, is consistently underactive (Del Casale et al., 2022; Kredlow et al., 2022).`}
+            </p>
+
+            <p className={p}>
+              {`This loss of cognitive flexibility shows up clinically in something most therapists will recognise immediately: reduced mentalisation. Peter Fonagy's work on mentalisation describes the capacity to understand one's own and others' mental states: to hold multiple perspectives simultaneously, to wonder what someone else might be feeling, to reflect on why you yourself responded in a particular way. It requires mental flexibility. It requires the brain to be able to shift between perspectives rather than staying locked in one. Research consistently shows that mentalisation is impaired in people with trauma responses (Fonagy & Bateman, 2016). That isn't a coincidence. It's the same mechanism: when the brain is consumed by threat prediction, the nuanced, context-sensitive work of understanding minds becomes harder. The system trauma makes rigid is the same system mentalisation depends on.`}
             </p>
 
             <p className={p}>
