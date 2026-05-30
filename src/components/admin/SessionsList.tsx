@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { List, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { adminFetch, displayFee, formatDateTime, startOfWeek } from './api';
+import { adminFetch, displayFee, formatDateTime, startOfWeek, dedupeSessions } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SessionRow, CalendarEvent, SessionFilter, GcalRef } from './types';
 import { SendReminderModal } from './SendReminderModal';
@@ -73,7 +73,8 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
 
   const rows = useMemo(() => {
     const out: Array<{ s: SessionRow; c: ClientRow }> = [];
-    for (const c of clients) for (const s of c.sessions) out.push({ s, c });
+    // Collapse duplicate rows (recurring-sync artefact), keeping the paid/attended one.
+    for (const c of clients) for (const s of dedupeSessions(c.sessions)) out.push({ s, c });
     return out.sort((a, b) => new Date(a.s.session_date).getTime() - new Date(b.s.session_date).getTime());
   }, [clients]);
 

@@ -1,10 +1,46 @@
 import { startOfWeek, utcToDublinLocal } from '@/lib/dateUtils';
+import type { SessionRow } from './types';
 
 // Re-exported from the single source of truth in lib/dateUtils so admin
 // components can keep importing these from './api'. (gcalIsoToDublinLocal is
 // just the GCal-named alias of utcToDublinLocal — same implementation.)
 export { startOfWeek };
 export const gcalIsoToDublinLocal = utcToDublinLocal;
+
+/**
+ * Collapse duplicate session rows to one per (client, time) slot. The
+ * recurring-event sync bug created extra rows for the same session — typically
+ * an auto-imported `unpaid` copy alongside the real, possibly-paid one — which
+ * inflates revenue and can make a paid session look unpaid. We never delete
+ * here; we just pick the single "best" row to count/display, preferring:
+ *   1. paid over unpaid (never lose a payment),
+ *   2. attended over scheduled,
+ *   3. a row with a Stripe payment/paid_at record,
+ *   4. otherwise the first seen.
+ * Cancelled rows are left untouched (callers filter those separately).
+ */
+export function dedupeSessions(sessions: SessionRow[]): SessionRow[] {
+  const score = (s: SessionRow): number => {
+    let n = 0;
+    if (s.payment_status === 'paid') n += 8;
+    if (s.status === 'attended') n += 4;
+    if (s.paid_at || s.stripe_payment_intent_id) n += 2;
+    if (s.gcal_event_id) n += 1;
+    return n;
+  };
+  const best = new Map<string, SessionRow>();
+  const passthrough: SessionRow[] = [];
+  for (const s of sessions) {
+    // Only de-duplicate active rows; keep cancelled ones as-is.
+    if (s.status === 'cancelled') { passthrough.push(s); continue; }
+    const slot = new Date(s.session_date).getTime();
+    const key = `${s.client_id}@${slot}`;
+    const existing = best.get(key);
+    if (!existing || score(s) > score(existing)) best.set(key, s);
+  }
+  return [...best.values(), ...passthrough];
+}
+
 
 // Admin auth is a server-set httpOnly cookie (see /api/admin/session). The
 // browser never holds the secret; the cookie is sent automatically on

@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
   const { data: rows, error } = await supabaseAdmin
     .from('sessions')
-    .select('id, client_id, session_date, payment_status, gcal_event_id, created_at')
+    .select('id, client_id, session_date, payment_status, status, paid_at, stripe_payment_intent_id, gcal_event_id, created_at')
     .neq('status', 'cancelled');
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -34,19 +34,28 @@ export async function GET(req: NextRequest) {
     if (g) g.push(s); else groups.set(key, [s]);
   }
 
+  // Score a row so the KEPT copy is always the most valuable — never delete a
+  // payment. Matches the dashboard's display dedupe (components/admin/api.ts).
+  type Row = NonNullable<typeof rows>[number];
+  const score = (s: Row): number => {
+    let n = 0;
+    if (s.payment_status === 'paid') n += 8;
+    if (s.status === 'attended') n += 4;
+    if (s.paid_at || s.stripe_payment_intent_id) n += 2;
+    if (s.gcal_event_id) n += 1;
+    return n;
+  };
+
   const toDelete: string[] = [];
   for (const group of groups.values()) {
     if (group.length < 2) continue;
     const sorted = [...group].sort((a, b) => {
-      if ((a.payment_status === 'paid') !== (b.payment_status === 'paid')) {
-        return a.payment_status === 'paid' ? -1 : 1;
-      }
-      if (!!a.gcal_event_id !== !!b.gcal_event_id) {
-        return a.gcal_event_id ? -1 : 1;
-      }
+      const d = score(b) - score(a);
+      if (d !== 0) return d;
+      // tie-break: keep the earliest-created row.
       return new Date(a.created_at as string).getTime() - new Date(b.created_at as string).getTime();
     });
-    // Keep sorted[0]; delete the rest.
+    // Keep sorted[0] (highest score); delete the rest.
     for (const dup of sorted.slice(1)) toDelete.push(dup.id as string);
   }
 

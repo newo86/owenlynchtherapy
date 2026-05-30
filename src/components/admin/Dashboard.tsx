@@ -8,7 +8,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { adminFetch, displayFee, formatDateTime, isSameDay, startOfWeek } from './api';
+import { adminFetch, displayFee, formatDateTime, isSameDay, startOfWeek, dedupeSessions } from './api';
 import { SendReminderModal } from './SendReminderModal';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
 import type {
@@ -77,7 +77,9 @@ export function Dashboard({
   const today = new Date();
   const allSessions = useMemo(() => {
     const out: Array<{ s: SessionRow; c: ClientRow }> = [];
-    for (const c of clients) for (const s of c.sessions) out.push({ s, c });
+    // Collapse duplicate rows (recurring-sync artefact) so counts, outstanding
+    // payments and revenue aren't doubled or shadowed by unpaid duplicates.
+    for (const c of clients) for (const s of dedupeSessions(c.sessions)) out.push({ s, c });
     return out;
   }, [clients]);
 

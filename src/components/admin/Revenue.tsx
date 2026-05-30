@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { TrendingUp, Video, MapPin, Wallet, X, Send } from 'lucide-react';
-import { startOfWeek, isSameDay, formatDateTime, adminFetch } from './api';
+import { startOfWeek, isSameDay, formatDateTime, adminFetch, dedupeSessions } from './api';
 import type { ClientRow, SessionRow } from './types';
 
 interface Props {
@@ -95,7 +95,9 @@ export function Revenue({ clients }: Props) {
     const full: DrillRow[] = [];
     const low: DrillRow[] = [];
     for (const c of clients) {
-      for (const s of c.sessions) {
+      // Collapse duplicate rows (recurring-sync artefact) so a paid session
+      // isn't counted twice or shadowed by an unpaid duplicate.
+      for (const s of dedupeSessions(c.sessions)) {
         if (s.status === 'cancelled') continue;
         if (basis === 'attended' && s.status !== 'attended') continue;
         if (!inScope(s.session_date, scope, now)) continue;

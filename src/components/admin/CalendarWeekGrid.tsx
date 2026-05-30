@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Pencil, Trash2, Mail } from 'lucide-react';
-import { adminFetch, formatTime, isSameDay, startOfWeek } from './api';
+import { adminFetch, formatTime, isSameDay, startOfWeek, dedupeSessions } from './api';
 import type { ClientRow, SessionRow, CalendarEvent, GcalRef } from './types';
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -102,17 +102,12 @@ export function CalendarWeekGrid({
     const matched = new Set<string>();
     const out: MergedEvent[] = [];
 
-    // Guard against duplicate session rows for the same client at the same time
-    // (can happen if a recurring series was auto-imported as separate rows).
-    const seenSession = new Set<string>();
-
     for (const c of clients) {
-      for (const s of c.sessions) {
+      // Collapse duplicate rows (recurring-sync artefact) to the best one —
+      // prefers the paid/attended row so a paid session never shows as unpaid.
+      for (const s of dedupeSessions(c.sessions)) {
         const d = new Date(s.session_date);
         if (!isSameDay(d, day) || s.status === 'cancelled') continue;
-        const dedupeKey = `${c.id}@${d.getTime()}`;
-        if (seenSession.has(dedupeKey)) continue;
-        seenSession.add(dedupeKey);
         const ev = events.find(e => {
           if (s.gcal_event_id && s.gcal_event_id === e.id) return true;
           const eStart = new Date(e.start);
