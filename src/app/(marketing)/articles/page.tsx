@@ -132,19 +132,6 @@ export default async function ArticlesPage() {
         <PageHeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          {/* Breadcrumb */}
-          <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 list-none text-xs text-cream/60">
-              <li>
-                <Link href="/" className="h-hover:text-cream h-can:transition-colors">
-                  Home
-                </Link>
-              </li>
-              <li aria-hidden="true">/</li>
-              <li className="text-cream/80">Articles</li>
-            </ol>
-          </nav>
-
           <p className="text-white text-sm font-semibold uppercase tracking-normal mb-5">
             Articles &amp; Insights
           </p>
