@@ -336,6 +336,7 @@ export function AdminShell() {
           initialIsoDate={scheduleInitialIso}
           onClose={() => setScheduleOpen(false)}
           onSuccess={() => { reload(); }}
+          onNewClient={() => { setScheduleOpen(false); setModalOpen(true); }}
         />
       )}
 

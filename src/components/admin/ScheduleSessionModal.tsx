@@ -10,13 +10,18 @@ interface Props {
   initialIsoDate?: string;    // "YYYY-MM-DDTHH:MM" — pre-fills datetime-local
   onClose: () => void;
   onSuccess: () => void;
+  /** Switch to the full new-client flow (intake forms, Stripe, etc.). */
+  onNewClient?: () => void;
 }
 
 type Recurrence = 'once' | 'weekly' | 'biweekly' | 'monthly';
 
 const COUNT_PRESETS = [4, 6, 8, 10, 12];
 
-export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSuccess }: Props) {
+export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSuccess, onNewClient }: Props) {
+  // Step 1 is a chooser (New vs Existing client) when onNewClient is wired up;
+  // otherwise jump straight to the existing-client form.
+  const [mode, setMode] = useState<'choose' | 'existing'>(onNewClient ? 'choose' : 'existing');
   const [clientId, setClientId] = useState('');
   const [sessionDate, setSessionDate] = useState(initialIsoDate ?? '');
   const [sessionFormat, setSessionFormat] = useState<'in_person' | 'online'>('in_person');
@@ -110,7 +115,7 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
               margin: '4px 0 0',
               fontFamily: 'var(--font-montserrat), Avenir, sans-serif',
               fontWeight: 300, fontSize: 22, color: 'white', letterSpacing: '0.5px',
-            }}>New session</h2>
+            }}>{mode === 'choose' ? 'New session' : 'Existing client'}</h2>
           </div>
           <button onClick={onClose} aria-label="Close"
             style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', padding: 6 }}>
@@ -118,6 +123,29 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
           </button>
         </div>
 
+        {mode === 'choose' ? (
+          <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-muted)' }}>
+              Who is this session for?
+            </p>
+            <button
+              type="button"
+              onClick={() => onNewClient?.()}
+              className="admin-choice-btn"
+            >
+              <span className="admin-choice-title">New client</span>
+              <span className="admin-choice-sub">Set up a client, send intake forms &amp; payment link</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('existing')}
+              className="admin-choice-btn"
+            >
+              <span className="admin-choice-title">Existing client</span>
+              <span className="admin-choice-sub">Schedule a session for someone already set up</span>
+            </button>
+          </div>
+        ) : (
         <form onSubmit={submit} style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <label className="admin-label">Client *</label>
@@ -258,6 +286,7 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
             {busy ? 'Scheduling…' : 'Schedule session'}
           </button>
         </form>
+        )}
       </div>
     </>
   );
