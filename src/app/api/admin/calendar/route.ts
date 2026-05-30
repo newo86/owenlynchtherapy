@@ -96,27 +96,30 @@ export async function GET(req: NextRequest) {
       if (conflictFixes.length > 0) await Promise.all(conflictFixes);
 
       // Auto-import: GCal events not yet in Supabase, matched by client name.
+      // We only auto-link when EXACTLY ONE active client matches, on a
+      // whole-word basis (so "Sarah" matches "Session — Sarah" but not
+      // "Sarahs birthday", and two clients named Sarah are left for manual
+      // linking instead of being guessed wrong).
       const { data: activeClients } = await supabaseAdmin
         .from('clients')
         .select('id, full_name, session_fee')
         .eq('status', 'active');
 
+      const matchClients = (title: string) => {
+        const words = new Set((title ?? '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+        return (activeClients ?? []).filter(c => {
+          const parts = c.full_name.trim().split(/\s+/).filter((p: string) => p.length > 2);
+          return parts.some((p: string) => words.has(p.toLowerCase()));
+        });
+      };
+
       const imports: Promise<void>[] = [];
       for (const event of events) {
         if (trackedByGcalId.has(event.id)) continue;
 
-        const titleLower = (event.title ?? '').toLowerCase();
-        let matchedClient: { id: string; session_fee: number } | null = null;
-        for (const c of (activeClients ?? [])) {
-          const parts = c.full_name.trim().split(/\s+/).filter(Boolean);
-          if (parts.some((p: string) => p.length > 2 && titleLower.includes(p.toLowerCase()))) {
-            matchedClient = c;
-            break;
-          }
-        }
-        if (!matchedClient) continue;
-
-        const mc = matchedClient;
+        const matches = matchClients(event.title ?? '');
+        if (matches.length !== 1) continue; // 0 = personal/unknown, >1 = ambiguous → leave for manual linking
+        const mc = matches[0];
         const ev = event;
         imports.push((async () => {
           const { data: newSession } = await supabaseAdmin
@@ -136,7 +139,7 @@ export async function GET(req: NextRequest) {
             .select('id')
             .single();
           if (newSession) {
-            console.log('[admin/calendar] imported GCal event:', ev.id, '→ session:', newSession.id);
+            console.log('[admin/calendar] auto-linked GCal event:', ev.id, '→ session:', newSession.id);
           }
         })());
       }

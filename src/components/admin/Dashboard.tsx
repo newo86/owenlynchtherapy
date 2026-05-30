@@ -8,7 +8,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { adminFetch, displayFee, isSameDay, startOfWeek } from './api';
+import { adminFetch, displayFee, formatDateTime, isSameDay, startOfWeek } from './api';
 import { SendReminderModal } from './SendReminderModal';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
 import type {
@@ -80,6 +80,32 @@ export function Dashboard({
     for (const c of clients) for (const s of c.sessions) out.push({ s, c });
     return out;
   }, [clients]);
+
+  // Calendar events that aren't linked to any client session yet — surfaced as
+  // a "needs a client" queue so linking is a deliberate, visible action rather
+  // than something to stumble on. An event is considered linked if a session
+  // shares its gcal_event_id, or (legacy) falls on the same day within 30 min.
+  const unlinkedEvents = useMemo(() => {
+    const linkedIds = new Set<string>();
+    const sessions: Array<{ date: Date; first: string }> = [];
+    for (const c of clients) {
+      for (const s of c.sessions) {
+        if (s.status === 'cancelled') continue;
+        if (s.gcal_event_id) linkedIds.add(s.gcal_event_id);
+        sessions.push({ date: new Date(s.session_date), first: c.full_name.toLowerCase().split(' ')[0] });
+      }
+    }
+    return events.filter(e => {
+      if (linkedIds.has(e.id)) return false;
+      const eStart = new Date(e.start);
+      const looksLinked = sessions.some(s =>
+        isSameDay(s.date, eStart)
+        && (Math.abs(s.date.getTime() - eStart.getTime()) < 30 * 60 * 1000
+          || (e.title ?? '').toLowerCase().includes(s.first)),
+      );
+      return !looksLinked;
+    });
+  }, [clients, events]);
 
   const monday = startOfWeek(today);
   const sunday = new Date(monday); sunday.setDate(monday.getDate() + 7);
@@ -209,6 +235,47 @@ export function Dashboard({
           color: flash.kind === 'success' ? '#2D5A42' : '#A04714',
           fontSize: 13,
         }}>{flash.msg}</div>
+      )}
+
+      {/* Calendar events that still need a client linked */}
+      {onEditGcalEvent && unlinkedEvents.length > 0 && (
+        <div style={{
+          margin: '0 0 22px',
+          padding: '14px 18px',
+          borderRadius: 14,
+          background: 'rgba(212,168,67,0.12)',
+          border: '1px solid rgba(212,168,67,0.4)',
+          display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+        }}>
+          <CalendarCheck2 size={18} color="#a3801a" style={{ flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 180 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--forest-deep)' }}>
+              {unlinkedEvents.length} calendar event{unlinkedEvents.length === 1 ? '' : 's'} need{unlinkedEvents.length === 1 ? 's' : ''} a client
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>
+              Link them to track payment &amp; attendance — or leave them as standalone calendar entries.
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {unlinkedEvents.slice(0, 4).map(e => (
+              <button
+                key={e.id}
+                type="button"
+                onClick={() => onEditGcalEvent({ id: e.id, title: e.title, start: e.start, location: e.location })}
+                className="admin-btn-secondary"
+                style={{ fontSize: 12, padding: '6px 12px' }}
+                title={`${e.title} · ${formatDateTime(e.start)}`}
+              >
+                {e.title.length > 22 ? e.title.slice(0, 21) + '…' : e.title}
+              </button>
+            ))}
+            {unlinkedEvents.length > 4 && (
+              <span style={{ fontSize: 12, color: 'var(--ink-muted)', alignSelf: 'center' }}>
+                +{unlinkedEvents.length - 4} more
+              </span>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Stats */}
