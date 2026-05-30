@@ -103,6 +103,7 @@ export function FormsTable({ submissions, tokens, initialTab }: Props) {
       </div>
 
       {tab === 'submitted' && (
+        <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
@@ -138,9 +139,11 @@ export function FormsTable({ submissions, tokens, initialTab }: Props) {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {tab === 'pending' && (
+        <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
@@ -173,6 +176,7 @@ export function FormsTable({ submissions, tokens, initialTab }: Props) {
             })}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

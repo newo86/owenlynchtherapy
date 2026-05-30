@@ -113,6 +113,22 @@ export async function GET(req: NextRequest) {
         });
       };
 
+      // Guard against duplicates: build a set of "clientId@dublinWallClock" for
+      // every existing non-cancelled session in the window. Recurring events are
+      // returned by Google as individual instances (each with its own instance
+      // id), but the session rows are stamped with the SERIES id — so matching
+      // on gcal_event_id alone misses them and we'd insert a second row per
+      // occurrence. Keying on client + wall-clock time catches that.
+      const { data: windowSessions } = await supabaseAdmin
+        .from('sessions')
+        .select('client_id, session_date')
+        .gte('session_date', timeMin)
+        .lte('session_date', timeMax)
+        .neq('status', 'cancelled');
+      const existingKeys = new Set(
+        (windowSessions ?? []).map(s => `${s.client_id}@${utcToDublinLocal(s.session_date as string)}`),
+      );
+
       const imports: Promise<void>[] = [];
       for (const event of events) {
         if (trackedByGcalId.has(event.id)) continue;
@@ -120,6 +136,11 @@ export async function GET(req: NextRequest) {
         const matches = matchClients(event.title ?? '');
         if (matches.length !== 1) continue; // 0 = personal/unknown, >1 = ambiguous → leave for manual linking
         const mc = matches[0];
+        // Skip if this client already has a session at this time (e.g. a
+        // recurring series tracked under its base id, or a manually-added row).
+        const key = `${mc.id}@${utcToDublinLocal(new Date(event.start).toISOString())}`;
+        if (existingKeys.has(key)) continue;
+        existingKeys.add(key); // prevent two events in the same sync colliding too
         const ev = event;
         imports.push((async () => {
           const { data: newSession } = await supabaseAdmin

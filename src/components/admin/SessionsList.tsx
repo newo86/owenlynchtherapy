@@ -207,6 +207,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
       </div>
 
       {view === 'list' && (
+        <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
             <tr>
@@ -282,6 +283,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {view === 'calendar' && (

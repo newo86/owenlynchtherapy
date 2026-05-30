@@ -1185,3 +1185,92 @@
   color: var(--ink-muted);
   opacity: 0.55;
 }
+
+/* ── Mobile / tablet (≤ 768px) ─────────────────────────────────────────────
+   The admin dashboard was desktop-only; this block makes it usable on a phone
+   so sessions can be scheduled on the go. Desktop layout above is unchanged. */
+@media (max-width: 768px) {
+  /* Sidebar becomes a top bar so the main content gets full width */
+  .admin-shell {
+    grid-template-columns: 1fr;
+  }
+  .admin-sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 12px;
+    gap: 6px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .admin-sidebar-logo { margin-bottom: 0; margin-right: 4px; }
+  .admin-sidebar-logo svg { width: 34px; height: 34px; }
+  .admin-sidebar-nav {
+    flex-direction: row;
+    flex: 1;
+    gap: 2px;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+  .admin-nav-btn { width: 44px; height: 44px; flex-shrink: 0; }
+  /* active indicator bar sits at the bottom on a horizontal bar, not the side */
+  .admin-nav-btn.is-active::before { display: none; }
+  .admin-sidebar-avatar { width: 38px; height: 38px; flex-shrink: 0; }
+
+  .admin-main { padding: 16px 14px 48px; }
+
+  /* Headings scale down */
+  .admin-h1 { font-size: 24px; }
+  .admin-topbar { gap: 14px; margin-bottom: 20px; }
+
+  /* Stat cards stack one per row */
+  .admin-stats { grid-template-columns: 1fr; gap: 12px; }
+  .admin-row-split { grid-template-columns: 1fr; }
+  .admin-row-bottom { grid-template-columns: 1fr; }
+  .admin-quickgrid { grid-template-columns: 1fr; }
+
+  .admin-card { padding: 18px 16px; }
+
+  /* Week calendar: horizontal scroll instead of 7 cramped columns.
+     Each day keeps a tappable min width; the row scrolls sideways. */
+  .admin-week-grid {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(132px, 1fr);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 10px;
+    padding-bottom: 6px;
+  }
+  .admin-day { scroll-snap-align: start; min-height: 120px; }
+
+  /* Calendar event cards: keep the action buttons reachable by touch.
+     On hover-less devices the slide-reveal can't rely on :hover, so show
+     the actions when the card is open. */
+  .admin-event-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .admin-event-action-btn { width: 30px; height: 30px; }
+
+  /* Session rows stack their columns */
+  .admin-session-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  /* Tables scroll horizontally rather than overflow the screen */
+  .admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .admin-table { min-width: 640px; }
+
+  /* Modals: near full-width with comfortable padding */
+  .admin-revenue-chart { gap: 6px; }
+}
+
+/* Slightly larger phones / small tablets keep 2-up stats */
+@media (min-width: 480px) and (max-width: 768px) {
+  .admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
