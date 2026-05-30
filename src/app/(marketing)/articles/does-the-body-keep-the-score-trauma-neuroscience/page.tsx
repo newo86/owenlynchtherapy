@@ -338,10 +338,9 @@ export default function TraumaNeuroscienceArticle() {
         <div className="relative max-w-4xl mx-auto" style={{ zIndex: 1 }}>
 
           {/* Featured image */}
-          {/* TODO: replace with blog-hero-trauma-neuroscience.png */}
           <figure className="mb-14">
             <Image
-              src="/images/blog-hero-ocd-therapy.png"
+              src="/images/blog-hero-trauma-neuroscience.png"
               alt="Abstract illustration representing trauma neuroscience — the brain as a prediction machine"
               width={3200}
               height={1800}

@@ -78,8 +78,7 @@ const STATIC_POSTS: Post[] = [
       'New peer-reviewed research challenges whether trauma is stored in the body. A clear breakdown of PTSD vs CPTSD, what predictive coding explains, and why polyvagal theory is contested.',
     publishedAt: '2026-06-01',
     category: 'Trauma',
-    // TODO: replace with blog-hero-trauma-neuroscience.png
-    featuredImageUrl: '/images/blog-hero-ocd-therapy.png',
+    featuredImageUrl: '/images/blog-hero-trauma-neuroscience.png',
     featuredImageAlt:
       'Abstract illustration representing trauma neuroscience — the brain as a prediction machine',
   },
