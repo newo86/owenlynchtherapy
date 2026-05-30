@@ -29,6 +29,7 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
   const [busy, setBusy]           = useState(false);
   const [error, setError]         = useState('');
   const [saved, setSaved]         = useState(false);
+  const [linkedClient, setLinkedClient] = useState(false);
 
   // Pre-fill fee from the selected client's default rate.
   useEffect(() => {
@@ -70,9 +71,10 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
       });
       const json = await res.json();
       if (!res.ok) { setError(json.error ?? 'Failed to save.'); return; }
+      setLinkedClient(Boolean(selectedId));
       setSaved(true);
       onSuccess();
-      setTimeout(() => onClose(), 900);
+      // Stay open on a clear success screen; the user dismisses with ✕.
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -104,6 +106,38 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
         overflowY: 'auto',
         animation: 'admin-pop-in 180ms ease',
       }}>
+        {saved ? (
+          <div style={{
+            position: 'relative',
+            padding: '56px 32px',
+            background: 'rgba(255,255,255,0.96)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            textAlign: 'center', minHeight: 300, gap: 14, borderRadius: 18,
+          }}>
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', padding: 6 }}
+            >
+              <X size={22} strokeWidth={1.8} />
+            </button>
+            <div style={{ width: 66, height: 66, borderRadius: '50%', background: 'rgba(79,138,104,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Check size={36} strokeWidth={2.4} color="var(--sage)" />
+            </div>
+            <h2 style={{ margin: 0, fontFamily: 'var(--font-montserrat), Avenir, sans-serif', fontWeight: 300, fontSize: 26, color: 'var(--forest-deep)' }}>
+              {linkedClient ? 'Client added' : 'Saved'}
+            </h2>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-muted)', maxWidth: 320, lineHeight: 1.6 }}>
+              {linkedClient
+                ? 'This calendar event is now linked to the client, and will track payment and attendance.'
+                : 'Your changes to this calendar event have been saved.'}
+            </p>
+            <button onClick={onClose} className="admin-btn-primary" style={{ marginTop: 8 }}>Done</button>
+          </div>
+        ) : (
+        <>
         {/* Header */}
         <div style={{
           padding: '20px 26px',
@@ -284,6 +318,8 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
             </button>
           </div>
         </form>
+        </>
+        )}
       </div>
     </>
   );

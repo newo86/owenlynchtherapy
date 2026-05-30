@@ -59,27 +59,45 @@ export async function POST(req: NextRequest) {
     const utcIso = localDublinToUtcIso(session_date);
     const fee = typeof body.fee === 'number' ? Math.round(body.fee) : 0;
 
-    const { data, error: insertErr } = await supabaseAdmin
+    const basePayload = {
+      client_id,
+      session_date: utcIso,
+      session_format: format,
+      location,
+      fee,
+      status: 'scheduled',
+      payment_status: 'unpaid',
+      notes: body.notes?.trim() ?? null,
+    };
+
+    // Try to store the gcal_event_id so future two-way sync can match this
+    // session to its calendar event. If that column hasn't been migrated yet
+    // (PostgREST reports it missing / a stale schema cache), fall back to
+    // creating the session WITHOUT it so linking the client still succeeds —
+    // the calendar then falls back to name-matching. Run the
+    // sessions_gcal_event_id.sql migration in Supabase to restore full sync.
+    let inserted = await supabaseAdmin
       .from('sessions')
-      .insert({
-        client_id,
-        session_date: utcIso,
-        session_format: format,
-        location,
-        fee,
-        status: 'scheduled',
-        payment_status: 'unpaid',
-        notes: body.notes?.trim() ?? null,
-        gcal_event_id,
-      })
+      .insert({ ...basePayload, gcal_event_id })
       .select('id')
       .single();
 
-    if (insertErr) {
-      console.error('[gcal-event/update] session insert error:', insertErr);
-      return NextResponse.json({ error: insertErr.message ?? 'Failed to create session' }, { status: 500 });
+    const missingCol = inserted.error
+      && /gcal_event_id|schema cache/i.test(inserted.error.message ?? '');
+    if (missingCol) {
+      console.warn('[gcal-event/update] gcal_event_id column missing — run sessions_gcal_event_id.sql. Linking client without it.');
+      inserted = await supabaseAdmin
+        .from('sessions')
+        .insert(basePayload)
+        .select('id')
+        .single();
     }
-    newSession = data as { id: string };
+
+    if (inserted.error) {
+      console.error('[gcal-event/update] session insert error:', inserted.error);
+      return NextResponse.json({ error: inserted.error.message ?? 'Failed to create session' }, { status: 500 });
+    }
+    newSession = inserted.data as { id: string };
   }
 
   console.log('[gcal-event/update] updated GCal event:', gcal_event_id, client_id ? `→ session: ${newSession?.id}` : '(unlinked)');
