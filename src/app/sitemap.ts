@@ -29,6 +29,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${BASE_URL}/articles/does-the-body-keep-the-score-trauma-neuroscience`,
+      lastModified: new Date('2026-06-01'),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
       url: `${BASE_URL}/articles/how-ocd-therapy-works`,
       lastModified: new Date('2026-05-13'),
       changeFrequency: 'monthly',

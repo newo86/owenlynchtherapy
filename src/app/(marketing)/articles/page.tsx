@@ -65,26 +65,41 @@ function formatDate(iso: string) {
 
 const PAGE_SIZE = 9;
 
-// The OCD article is hand-written prose served at /articles/how-ocd-therapy-works
-// (see the [slug] route) rather than a Sanity document, so it isn't returned by
-// the CMS query. We add it to the listing here so it appears in the grid; if it
-// is ever migrated into Sanity (same slug) the dedupe below drops this copy.
-const OCD_POST: Post = {
-  _id: 'static-how-ocd-therapy-works',
-  slug: { current: 'how-ocd-therapy-works' },
-  title: 'How OCD Therapy Works: An Evidence-Based Guide',
-  excerpt:
-    'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment — and what effective, compassionate help actually looks like.',
-  publishedAt: '2026-05-13',
-  category: 'OCD',
-  featuredImageUrl: '/images/blog-hero-ocd-therapy.png',
-  featuredImageAlt:
-    'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta',
-};
+// These articles are hand-written prose pages (see the /articles/[slug] routes)
+// rather than Sanity documents, so they aren't returned by the CMS query. We add
+// them to the listing here so they appear in the grid; if one is ever migrated
+// into Sanity (same slug) the dedupe below drops the static copy.
+const STATIC_POSTS: Post[] = [
+  {
+    _id: 'static-does-the-body-keep-the-score-trauma-neuroscience',
+    slug: { current: 'does-the-body-keep-the-score-trauma-neuroscience' },
+    title: 'Does the Body Keep the Score? Trauma Neuroscience Explained',
+    excerpt:
+      'New peer-reviewed research challenges whether trauma is stored in the body. A clear breakdown of PTSD vs CPTSD, what predictive coding explains, and why polyvagal theory is contested.',
+    publishedAt: '2026-06-01',
+    category: 'Trauma',
+    // TODO: replace with blog-hero-trauma-neuroscience.png
+    featuredImageUrl: '/images/blog-hero-ocd-therapy.png',
+    featuredImageAlt:
+      'Abstract illustration representing trauma neuroscience — the brain as a prediction machine',
+  },
+  {
+    _id: 'static-how-ocd-therapy-works',
+    slug: { current: 'how-ocd-therapy-works' },
+    title: 'How OCD Therapy Works: An Evidence-Based Guide',
+    excerpt:
+      'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment — and what effective, compassionate help actually looks like.',
+    publishedAt: '2026-05-13',
+    category: 'OCD',
+    featuredImageUrl: '/images/blog-hero-ocd-therapy.png',
+    featuredImageAlt:
+      'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta',
+  },
+];
 
 export default async function ArticlesPage() {
   // Fetch CMS posts defensively: if Sanity is unreachable the page still renders
-  // (at minimum with the hardcoded OCD article) instead of erroring.
+  // (at minimum with the hardcoded articles) instead of erroring.
   let sanityPosts: Post[] = [];
   try {
     sanityPosts = await sanityClient.fetch(allPostsQuery);
@@ -92,9 +107,8 @@ export default async function ArticlesPage() {
     sanityPosts = [];
   }
 
-  const merged = sanityPosts.some(p => p.slug?.current === OCD_POST.slug.current)
-    ? sanityPosts
-    : [OCD_POST, ...sanityPosts];
+  const sanitySlugs = new Set(sanityPosts.map(p => p.slug?.current));
+  const merged = [...sanityPosts, ...STATIC_POSTS.filter(p => !sanitySlugs.has(p.slug.current))];
   merged.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
   const visiblePosts = merged.slice(0, PAGE_SIZE);
