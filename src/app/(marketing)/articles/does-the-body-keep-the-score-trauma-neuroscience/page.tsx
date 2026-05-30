@@ -176,8 +176,8 @@ const articleJsonLd = {
     'complex PTSD',
   ],
   articleSection: 'Trauma and Psychotherapy',
-  wordCount: '5150',
-  timeRequired: 'PT20M',
+  wordCount: '3600',
+  timeRequired: 'PT15M',
   inLanguage: 'en-IE',
   isAccessibleForFree: true,
   about: [
@@ -342,7 +342,7 @@ export default function TraumaNeuroscienceArticle() {
             <span aria-hidden="true">·</span>
             <time dateTime="2026-06-01">1 June 2026</time>
             <span aria-hidden="true">·</span>
-            <span>20 min read</span>
+            <span>15 min read</span>
           </div>
         </div>
       </section>
@@ -376,36 +376,11 @@ export default function TraumaNeuroscienceArticle() {
             <h2 className={h2}>First, a Word on the Language We Use</h2>
 
             <p className={p}>
-              {`Trauma. PTSD. CPTSD. These terms circulate in therapy rooms, podcasts, CPD brochures, and social media as though they mean the same thing. They don't. Getting this wrong has real clinical consequences: it shapes what treatment gets offered, and when.`}
+              {`Trauma. PTSD. CPTSD. These terms circulate as though they're interchangeable. They're not, and the difference matters clinically.`}
             </p>
 
             <p className={p}>
-              <strong className="font-semibold">Trauma</strong>
-              {` is the broadest term. It describes any psychological response to an event or series of events that overwhelms a person's capacity to cope. Experiencing trauma does not automatically mean developing a disorder. Research data show that around 70% of people will go through at least one potentially traumatic event in their lifetime, yet only 6–8% will develop PTSD (McLaughlin et al., 2015). Resilience is the more common outcome. What shapes the trajectory is context: previous adversity, social support, timing, and individual differences in how the nervous system responds.`}
-            </p>
-
-            <p className={p}>
-              <strong className="font-semibold">Acute Stress Disorder (ASD)</strong>
-              {` is the clinical term for an immediate response to trauma, lasting between three days and one month after the event. It carries the same symptom picture as PTSD (intrusive memories, avoidance, mood changes, hyperarousal) but within that compressed timeframe. It matters clinically because people with ASD have a significantly elevated risk of going on to develop PTSD, and effective support in this early window can materially change that outcome.`}
-            </p>
-
-            <p className={p}>
-              <strong className="font-semibold">PTSD (Post-Traumatic Stress Disorder)</strong>
-              {` is a formal diagnosis in both DSM-5 (the American Psychiatric Association's handbook) and ICD-11 (the World Health Organisation's classification system), though the two define it slightly differently. DSM-5 requires a qualifying traumatic event: direct exposure to, or witnessing of, actual or threatened death, serious injury, or sexual violence. ICD-11 is slightly broader, requiring the event to have been "extremely threatening or horrific." Both require four symptom clusters: re-experiencing the trauma (flashbacks, nightmares), avoidance, negative changes in thinking and mood, and persistent changes in alertness and reactivity. Symptoms must last more than a month and significantly affect daily functioning (APA, 2013; WHO, 2022).`}
-            </p>
-
-            <p className={p}>
-              {`PTSD is typically, though not always, associated with a specific traumatic event or a defined period of events. The danger has passed. The nervous system hasn't registered that yet.`}
-            </p>
-
-            <p className={p}>
-              <strong className="font-semibold">CPTSD (Complex Post-Traumatic Stress Disorder)</strong>
-              {` is formally recognised in ICD-11, but it does not exist as a standalone diagnosis in DSM-5. American practitioners working within DSM can access a "PTSD with dissociative symptoms" specifier, but it doesn't fully capture the CPTSD picture. ICD-11 defines CPTSD as everything in PTSD plus three additional areas of difficulty that arise from prolonged or repeated trauma: problems regulating emotions (swinging between flooding and numbness), a persistently damaged sense of self (deep shame, guilt, the feeling of being permanently broken), and pervasive difficulties in relationships. These additional features, absent from standard PTSD, reflect what happens when trauma was interpersonal, chronic, and inescapable: childhood abuse or neglect, domestic violence, trafficking, or any situation where safety was never reliably available. CPTSD is associated with more severe impairment, more dissociation, more depression, and a considerably more complex treatment course than PTSD (Hyland et al., 2021; Cloitre et al., 2013).`}
-            </p>
-
-            <p className={p}>
-              <strong className="font-semibold">A note on &ldquo;TSD.&rdquo;</strong>
-              {` The abbreviation "Traumatic Stress Disorder" doesn't appear in either diagnostic system. It circulates in some clinical and public health settings as informal shorthand for trauma responses that cause genuine suffering but don't quite reach the threshold for a full PTSD diagnosis. This is clinically real: people who fall just below diagnostic criteria can still be significantly affected and often go untreated (McLaughlin et al., 2015). A diagnostic label is a treatment map. An imprecise map is a clinical hazard.`}
+              {`PTSD typically follows a specific traumatic event. The danger has passed; the nervous system hasn't registered that yet. CPTSD develops after prolonged or repeated trauma, usually interpersonal and inescapable, and involves everything in PTSD plus three additional areas of lasting difficulty: emotional dysregulation, a persistently damaged sense of self, and pervasive problems in relationships (Hyland et al., 2021). CPTSD is formally recognised in ICD-11 but does not exist as a standalone diagnosis in DSM-5, which has real implications for how people get assessed and treated. A fuller breakdown of these distinctions, including Acute Stress Disorder and sub-threshold presentations, is covered in a separate article.`}
             </p>
 
             {/* H2: The Claim That Shaped a Decade */}
@@ -551,57 +526,26 @@ export default function TraumaNeuroscienceArticle() {
             </p>
 
             <p className={p}>
-              {`Porges published a detailed rebuttal in the same journal issue (Porges, 2026), arguing the critique misrepresents what the theory actually claims, a disagreement that has been running for nearly two decades. Some newer biological techniques, including optogenetics and molecular analysis, do support certain functional distinctions between the brainstem structures in question (Strain et al., 2024; Jalil et al., 2023). The debate is not resolved.`}
+              {`Porges published a detailed rebuttal in the same journal issue (Porges, 2026), arguing the critique misrepresents what the theory actually claims, a disagreement that has been running for nearly two decades. Some newer biological techniques, including optogenetics and molecular analysis, do support certain functional distinctions between the brainstem structures in question (Strain et al., 2024). The debate is not resolved.`}
             </p>
 
             <p className={p}>
               {`What is clear: the specific anatomical and physiological claims underpinning polyvagal theory are actively contested at the highest level of the relevant scientific literature, by neurophysiologists who study the vagus nerve for a living. The broader clinical observation that perceived safety and social connection regulate our physiological state is well supported in the wider literature. Those two things are not the same as saying polyvagal theory's specific biological model is correct. And the difference matters when that model is being taught in training programmes as established neuroscience, which it currently is.`}
             </p>
 
-            {/* H2: Flow States, Psychedelics */}
-            <h2 className={h2}>
-              Flow States, Psychedelics, and Why Different Therapies May Work for the Same Reason
-            </h2>
+            {/* H2: Why Different Therapies May Work for the Same Reason */}
+            <h2 className={h2}>Why Different Therapies May Work for the Same Reason</h2>
 
             <p className={p}>
-              {`Kotler et al. (2026) make an observation that's worth sitting with. Diverse interventions, EMDR, mindfulness, yoga, psychedelics, even intense physical activity, all produce measurable improvements in PTSD symptoms. On the surface, they look completely unrelated. The paper argues they may all work via the same underlying mechanism: each one restores the brain's lost flexibility. Each creates a window in which rigid, threat-weighted predictions can be loosened and updated. The mechanism isn't specific content. It's dynamic reorganisation.`}
+              {`Kotler et al. (2026) make an observation worth sitting with. Diverse interventions, EMDR, mindfulness, yoga, psychedelics, even intense physical activity, all produce measurable improvements in PTSD symptoms. On the surface they look completely unrelated. The paper argues they may all work via the same underlying mechanism: each one restores the brain's lost flexibility. Each creates a window in which rigid, threat-weighted predictions can be loosened and updated. The mechanism isn't specific content. It's dynamic reorganisation.`}
             </p>
 
             <p className={p}>
-              <em>Flow states</em>
-              {` fit this picture. Flow is the experience of complete absorption, effortless focus, and present-moment immersion. It is associated with reduced activity in the default mode network (DMN). The DMN is the brain's resting-state self-referential system: the network most active when we're mind-wandering, replaying the past, worrying about the future, or thinking about ourselves. In PTSD, this network is chronically overactive and dysregulated. It keeps returning to threat-related memories and predictions without resolution. Flow temporarily quiets this loop, creating a window in which the brain isn't actively generating fear predictions. In that window, some revision may become possible. The clinical evidence for flow-state induction as a formal PTSD intervention doesn't yet exist in rigorous trial form, but the neurobiological logic is consistent with the framework.`}
+              {`Flow states fit this picture well. Flow, the experience of complete absorption, effortless focus, and present-moment immersion, is associated with reduced activity in the default mode network, the brain's resting-state self-referential system. In PTSD, this network is chronically overactive. It keeps returning to threat-related memories without resolution. Flow temporarily quiets this loop, creating a window in which the brain isn't actively generating fear predictions, and in which some revision may become possible.`}
             </p>
 
             <p className={p}>
-              {`Psychedelics offer the same window, with considerably more developed research behind the mechanism.`}
-            </p>
-
-            <p className={p}>
-              {`In 2019, Carhart-Harris and Friston (the same Friston who co-authored the Kotler et al. paper) proposed the REBUS model, short for Relaxed Beliefs Under pSychedelics. The argument: classic psychedelics like psilocybin (the active compound in "magic mushrooms"), LSD, and MDMA work in part by loosening the brain's grip on its deeply held predictions. In neuroscience terms, they reduce the confidence the brain assigns to its high-level priors, the entrenched assumptions it normally treats as facts. The free-energy landscape flattens: the brain's rigid attractor states lose their hold, and incoming information from the senses and the body carries much more weight than usual. Trauma-related predictions, locked threat and persistent danger, become accessible for revision in a way that is not ordinarily possible when the system is operating normally (Carhart-Harris & Friston, 2019).`}
-            </p>
-
-            <p className={p}>
-              {`Brain imaging backs this up. Across psilocybin, LSD, and ayahuasca, studies consistently show reduced connectivity within the default mode network, the self-referential loop discussed above, and increased communication between brain networks that don't usually talk to each other. The brain's state-space becomes more dynamic (Gattuso et al., 2023). A 2024 study by Siegel et al., published in `}
-              <em>Nature</em>
-              {`, showed that a single dose of psilocybin produced lasting reductions in one particular brain connection, between the hippocampus and the default mode network, suggesting the plasticity window psychedelics open can produce changes that persist beyond the experience itself.`}
-            </p>
-
-            <p className={p}>
-              {`MDMA works somewhat differently. It's not primarily a classic psychedelic. It acts by flooding the brain with serotonin, norepinephrine, and dopamine from nerve endings, while simultaneously suppressing the threat-reactivity of the amygdala and triggering the release of oxytocin from the hypothalamus. The result is a state in which a person can engage with traumatic memories without the usual fear-driven avoidance, which effectively widens the therapeutic window (Mitchell et al., 2023). Pooled data from Phase 2 clinical trials showed 54% of participants no longer met criteria for PTSD following MDMA-assisted therapy, compared to 22.6% of those who received a placebo alongside therapy (Mitchell et al., 2023).`}
-            </p>
-
-            <p className={p}>
-              {`The FDA declined to approve MDMA in 2024, citing concerns about trial methodology and an ethical violation at one site that led to data retraction. This is a regulatory setback, not a verdict on the mechanism. Australia has approved both MDMA for PTSD and psilocybin for treatment-resistant depression under controlled clinical conditions, and psilocybin holds FDA Breakthrough Therapy Designation for depression.`}
-            </p>
-
-            <p className={p}>
-              {`Psilocybin for PTSD is earlier in the trial process. A Phase 2 qualitative study published in `}
-              <em>eClinicalMedicine</em>
-              {` (2025) found that participants described their engagement with traumatic material during psilocybin sessions as qualitatively different from standard therapy, characterised by present-moment connection, reduced defensiveness, and a spontaneous reorganisation of how they understood their experience. That's consistent with what the REBUS model predicts.`}
-            </p>
-
-            <p className={p}>
-              {`Neither MDMA nor psilocybin is ready for unsupervised use as a trauma treatment, and that's not a bureaucratic caveat. It's a clinical one. The same neurological openness that makes them potentially therapeutic is what makes them potentially destabilising without proper preparation, screening, and integration support. Psychotic vulnerability and severe dissociation are genuine contraindications. These are not self-directed interventions.`}
+              {`Psychedelics appear to work through a related mechanism, temporarily loosening the brain's grip on entrenched predictions and creating a neuroplasticity window, and early clinical research, particularly on psilocybin and MDMA for PTSD, is promising (Carhart-Harris & Friston, 2019; Mitchell et al., 2023). These are specialist clinical interventions requiring rigorous preparation and oversight, not self-directed treatments, and the regulatory picture is still developing. But the neuroscience of how they work maps directly onto the metastability framework this article describes.`}
             </p>
 
             {/* H2: Mindfulness */}
@@ -681,11 +625,6 @@ export default function TraumaNeuroscienceArticle() {
 
               <div className="mt-6 space-y-5">
                 <p className={ref}>
-                  {`American Psychiatric Association. (2013). `}
-                  <em>Diagnostic and Statistical Manual of Mental Disorders</em>
-                  {` (5th ed.). APA.`}
-                </p>
-                <p className={ref}>
                   {`Beauchaine, T.P., & Thayer, J.F. (2015). Heart rate variability as a transdiagnostic biomarker of psychopathology. `}
                   <em>International Journal of Psychophysiology</em>
                   {`, 98(2), 338–350.`}
@@ -721,6 +660,11 @@ export default function TraumaNeuroscienceArticle() {
                   {`, 4(1), 20706.`}
                 </p>
                 <p className={ref}>
+                  {`Coverdell, T.C., Abraham-Fan, R.J., Wu, C., Abbott, S.B.G., & Campbell, J.N. (2022). Genetic encoding of an esophageal motor circuit. `}
+                  <em>Cell Reports</em>
+                  {`, 39(11), 110962.`}
+                </p>
+                <p className={ref}>
                   {`Del Casale, A., et al. (2022). Grey matter volume reductions of the left hippocampus and amygdala in PTSD: a coordinate-based meta-analysis. `}
                   <em>Neuropsychobiology</em>
                   {`, 81, 257–264.`}
@@ -734,11 +678,6 @@ export default function TraumaNeuroscienceArticle() {
                   {`Friston, K. (2010). The free-energy principle: a unified brain theory? `}
                   <em>Nature Reviews Neuroscience</em>
                   {`, 11(2), 127–138.`}
-                </p>
-                <p className={ref}>
-                  {`Gattuso, J.J., et al. (2023). Default Mode Network Modulation by Psychedelics: A Systematic Review. `}
-                  <em>International Journal of Neuropsychopharmacology</em>
-                  {`, 26(3), 155–188.`}
                 </p>
                 <p className={ref}>
                   {`Giroux, C., Ahlers, D., & Miawotoe, A. (2023). Polyvagal approaches: Scientifically questionable but useful in practice. `}
@@ -792,11 +731,6 @@ export default function TraumaNeuroscienceArticle() {
                   {`, 47, 247–259.`}
                 </p>
                 <p className={ref}>
-                  {`McLaughlin, K.A., et al. (2015). Subthreshold PTSD in the World Mental Health surveys. `}
-                  <em>Biological Psychiatry</em>
-                  {`, 77(4), 375–384.`}
-                </p>
-                <p className={ref}>
                   {`Mitchell, J.M., et al. (2023). MDMA-assisted therapy for moderate to severe PTSD: a randomised, placebo-controlled Phase 3 trial. `}
                   <em>Nature Medicine</em>
                   {`, 29, 2473–2480.`}
@@ -833,6 +767,11 @@ export default function TraumaNeuroscienceArticle() {
                   {`, 632, 131–138.`}
                 </p>
                 <p className={ref}>
+                  {`Strain, M.M., et al. (2024). Dorsal motor vagal neurons can elicit bradycardia and reduce anxiety-like behavior. `}
+                  <em>iScience</em>
+                  {`, 27(3), 109137. https://doi.org/10.1016/j.isci.2024.109137`}
+                </p>
+                <p className={ref}>
                   {`Treleaven, D.A. (2018). `}
                   <em>Trauma-Sensitive Mindfulness: Practices for Safe and Transformative Healing</em>
                   {`. W.W. Norton. `}
@@ -854,24 +793,9 @@ export default function TraumaNeuroscienceArticle() {
                   {`, 75(6), e559–e565.`}
                 </p>
                 <p className={ref}>
-                  {`World Health Organisation. (2022). `}
-                  <em>ICD-11 for Mortality and Morbidity Statistics</em>
-                  {` (Version 2022). WHO.`}
-                </p>
-                <p className={ref}>
                   {`Yehuda, R., & Bierer, L.M. (2009). The relevance of epigenetics to PTSD: implications for the DSM-V. `}
                   <em>Journal of Traumatic Stress</em>
                   {`, 22(5), 427–434.`}
-                </p>
-                <p className={ref}>
-                  {`Yu, Z., et al. (2024). Alterations in brain network connectivity and subjective experience induced by psychedelics: a scoping review. `}
-                  <em>Frontiers in Psychiatry</em>
-                  {`, 15, 1386321.`}
-                </p>
-                <p className={ref}>
-                  {`Zeifman, R.J., et al. (2025). From relaxed beliefs under psychedelics (REBUS) to revised beliefs after psychedelics (REBAS). `}
-                  <em>Scientific Reports</em>
-                  {`, 15, 3651.`}
                 </p>
               </div>
             </details>
