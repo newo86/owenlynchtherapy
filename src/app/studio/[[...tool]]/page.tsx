@@ -7,13 +7,11 @@
  * https://github.com/sanity-io/next-sanity
  */
 
-import { NextStudio } from 'next-sanity/studio'
-import config from '../../../../sanity.config'
-
 export const dynamic = 'force-static'
 
 export { metadata, viewport } from 'next-sanity/studio'
 
-export default function StudioPage() {
-  return <NextStudio config={config} />
-}
+// Rendering is delegated to StudioClient so that sanity.config.ts and all
+// Sanity plugin modules (which call React.createContext at import time) are
+// only ever evaluated in the client bundle, never during server-side rendering.
+export { default } from './StudioClient'
