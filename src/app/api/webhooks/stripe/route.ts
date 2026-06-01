@@ -4,51 +4,64 @@ import { getStripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 
-// App Router route handlers receive a raw Request — no body-parser config needed.
-// We read the raw body with request.text() which Stripe webhook verification requires.
-
+// Must be force-dynamic so Next.js never pre-renders or caches this route.
+// A cached response would consume request.body before Stripe's raw-body
+// verification runs, causing every signature check to fail.
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  // Guard env vars up-front so missing config produces a clear 500 log rather
+  // than a confusing 400 "signature failed" from inside the try/catch.
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error('[stripe-webhook] STRIPE_WEBHOOK_SECRET is not set — add it to Vercel environment variables');
+    return new Response('Webhook secret not configured', { status: 500 });
+  }
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.error('[stripe-webhook] STRIPE_SECRET_KEY is not set — add it to Vercel environment variables');
+    return new Response('Stripe not configured', { status: 500 });
+  }
+
   const rawBody = await request.text();
   const signature = request.headers.get('stripe-signature');
 
   if (!signature) {
+    console.error('[stripe-webhook] Missing stripe-signature header');
     return new Response('Missing stripe-signature header', { status: 400 });
-  }
-
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    console.error('[stripe-webhook] STRIPE_WEBHOOK_SECRET not set');
-    return new Response('Webhook secret not configured', { status: 500 });
   }
 
   let event: Stripe.Event;
   try {
     event = getStripe().webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err) {
-    console.error('[stripe-webhook] signature verification failed:', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[stripe-webhook] Signature verification failed:', msg);
     return new Response('Webhook signature verification failed', { status: 400 });
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const checkoutSession = event.data.object;
+  console.log(`[stripe-webhook] Received: ${event.type} (${event.id})`);
 
-    // payment_status is set to 'paid' when the checkout completes with successful payment
+  if (event.type === 'checkout.session.completed') {
+    const checkoutSession = event.data.object as Stripe.Checkout.Session;
+
     if (checkoutSession.payment_status !== 'paid') {
+      console.log(`[stripe-webhook] payment_status=${checkoutSession.payment_status} — skipping`);
       return new Response('OK', { status: 200 });
     }
 
     const supabaseSessionId = checkoutSession.metadata?.session_id;
-    const paymentIntentId = typeof checkoutSession.payment_intent === 'string'
-      ? checkoutSession.payment_intent
-      : checkoutSession.payment_intent?.id ?? null;
+    const paymentIntentId =
+      typeof checkoutSession.payment_intent === 'string'
+        ? checkoutSession.payment_intent
+        : checkoutSession.payment_intent?.id ?? null;
 
     if (!supabaseSessionId) {
-      console.warn('[stripe-webhook] checkout.session.completed missing metadata.session_id');
+      console.warn('[stripe-webhook] checkout.session.completed has no metadata.session_id — cannot update session record');
       return new Response('OK', { status: 200 });
     }
 
-    // Update session: mark paid, store payment_intent_id and paid_at timestamp
+    console.log(`[stripe-webhook] Marking session ${supabaseSessionId} paid (payment_intent=${paymentIntentId ?? 'none'})`);
+
     const { data: session, error: updateErr } = await supabaseAdmin
       .from('sessions')
       .update({
@@ -61,24 +74,36 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (updateErr || !session) {
-      console.error('[stripe-webhook] session update error:', JSON.stringify(updateErr, null, 2));
-      return new Response('OK', { status: 200 }); // Return 200 to prevent Stripe retries
+      console.error(
+        '[stripe-webhook] Supabase update failed for session',
+        supabaseSessionId,
+        JSON.stringify(updateErr ?? { reason: 'no row returned' }, null, 2),
+      );
+      // Return 200 so Stripe does not endlessly retry a data error.
+      return new Response('OK', { status: 200 });
     }
 
-    console.log('[stripe-webhook] payment confirmed for session:', supabaseSessionId);
+    console.log(`[stripe-webhook] Session ${supabaseSessionId} marked paid`);
 
-    // Send receipt immediately on payment (Resend custom receipt)
-    // Idempotency: only send a receipt once. Stripe may deliver the same
-    // checkout.session.completed event more than once; without this guard a
-    // replay would email the client a duplicate receipt.
-    const client = (session as { clients: { full_name: string; email: string } }).clients;
-    if (client?.email && !(session as { receipt_sent_at?: string | null }).receipt_sent_at) {
-      await sendReceipt(client, session);
+    type SessionWithClient = typeof session & {
+      clients: { full_name: string; email: string } | null;
+      receipt_sent_at?: string | null;
+    };
+    const s = session as SessionWithClient;
+
+    if (!s.clients?.email) {
+      console.warn(`[stripe-webhook] No client email on session ${supabaseSessionId} — skipping receipt`);
+    } else if (s.receipt_sent_at) {
+      console.log(`[stripe-webhook] Receipt already sent for session ${supabaseSessionId} — skipping (idempotency guard)`);
+    } else {
+      await sendReceipt(s.clients, s);
       await supabaseAdmin
         .from('sessions')
         .update({ receipt_sent_at: new Date().toISOString() })
         .eq('id', supabaseSessionId);
     }
+  } else {
+    console.log(`[stripe-webhook] Unhandled event type: ${event.type} — ignoring`);
   }
 
   return new Response('OK', { status: 200 });
@@ -106,9 +131,9 @@ async function sendReceipt(
   });
 
   if (emailResult.error) {
-    console.error('[stripe-webhook] receipt email error:', JSON.stringify(emailResult.error, null, 2));
+    console.error('[stripe-webhook] Receipt email failed:', JSON.stringify(emailResult.error, null, 2));
   } else {
-    console.log('[stripe-webhook] receipt sent');
+    console.log(`[stripe-webhook] Receipt sent to ${client.email}`);
   }
 }
 
