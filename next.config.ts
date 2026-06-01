@@ -62,15 +62,25 @@ const nextConfig: NextConfig = {
 
     return [
       {
+        // Baseline security headers for every route.
         source: '/(.*)',
         headers: [
           { key: 'Content-Security-Policy', value: siteCsp },
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-XSS-Protection', value: '1; mode=block' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+      {
+        // X-Frame-Options: DENY on every route except /studio and its sub-paths.
+        // The studio must be embeddable inside Sanity's manage.sanity.io dashboard
+        // iframe; omitting this header there lets Sanity load it while every other
+        // route remains protected.
+        source: '/((?!studio).*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
         ],
       },
       {
