@@ -46,6 +46,9 @@ interface Props {
 
 type OutstandingScope = 'week' | 'month' | 'all';
 
+// Sessions before this date are excluded from all outstanding-payment views.
+const OUTSTANDING_FLOOR = new Date('2026-06-01');
+
 // ── helpers ────────────────────────────────────────────────────────────────
 
 function meridiem(iso: string) {
@@ -73,6 +76,7 @@ export function Dashboard({
   const [feedback, setFeedback] = useState<{ id: string; msg: string } | null>(null);
   const [outstandingScope, setOutstandingScope] = useState<OutstandingScope>('week');
   const [reminderData, setReminderData] = useState<{ session: SessionRow; client: ClientRow } | null>(null);
+  const [dismissedEventIds, setDismissedEventIds] = useState<Set<string>>(new Set());
 
   const today = new Date();
   const allSessions = useMemo(() => {
@@ -109,6 +113,8 @@ export function Dashboard({
     });
   }, [clients, events]);
 
+  const visibleUnlinked = unlinkedEvents.filter(e => !dismissedEventIds.has(e.id));
+
   const monday = startOfWeek(today);
   const sunday = new Date(monday); sunday.setDate(monday.getDate() + 7);
 
@@ -130,6 +136,7 @@ export function Dashboard({
   const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
   const inScope = (iso: string) => {
     const d = new Date(iso);
+    if (d < OUTSTANDING_FLOOR) return false;
     if (outstandingScope === 'all')   return true;
     if (outstandingScope === 'week')  return d >= monday && d < sunday;
     return d >= startOfMonth;
@@ -144,7 +151,8 @@ export function Dashboard({
   // Unpaid this week — fixed scope, used by the Quick Actions "Unpaid" tile.
   const unpaidThisWeekCount = allSessions.filter(({ s }) => {
     const d = new Date(s.session_date);
-    return s.payment_status !== 'paid' && s.payment_status !== 'refunded'
+    return d >= OUTSTANDING_FLOOR
+      && s.payment_status !== 'paid' && s.payment_status !== 'refunded'
       && s.status !== 'cancelled' && d >= monday && d < sunday;
   }).length;
 
@@ -239,43 +247,79 @@ export function Dashboard({
         }}>{flash.msg}</div>
       )}
 
-      {/* Calendar events that still need a client linked */}
-      {onEditGcalEvent && unlinkedEvents.length > 0 && (
+      {/* Unlinked calendar events banner */}
+      {onEditGcalEvent && visibleUnlinked.length > 0 && (
         <div style={{
           margin: '0 0 22px',
           padding: '14px 18px',
           borderRadius: 14,
           background: 'rgba(212,168,67,0.12)',
           border: '1px solid rgba(212,168,67,0.4)',
-          display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+          display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap',
         }}>
-          <CalendarCheck2 size={18} color="#a3801a" style={{ flexShrink: 0 }} />
+          <CalendarCheck2 size={18} color="#a3801a" style={{ flexShrink: 0, marginTop: 2 }} />
           <div style={{ flex: 1, minWidth: 180 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--forest-deep)' }}>
-              {unlinkedEvents.length} calendar event{unlinkedEvents.length === 1 ? '' : 's'} need{unlinkedEvents.length === 1 ? 's' : ''} a client
+              {visibleUnlinked.length} unlinked calendar event{visibleUnlinked.length === 1 ? '' : 's'}
             </div>
             <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>
-              Link them to track payment &amp; attendance — or leave them as standalone calendar entries.
+              Link any that belong to a client, or dismiss the rest.
             </div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {unlinkedEvents.slice(0, 4).map(e => (
-              <button
-                key={e.id}
-                type="button"
-                onClick={() => onEditGcalEvent({ id: e.id, title: e.title, start: e.start, location: e.location })}
-                className="admin-btn-secondary"
-                style={{ fontSize: 12, padding: '6px 12px' }}
-                title={`${e.title} · ${formatDateTime(e.start)}`}
-              >
-                {e.title.length > 22 ? e.title.slice(0, 21) + '…' : e.title}
-              </button>
-            ))}
-            {unlinkedEvents.length > 4 && (
-              <span style={{ fontSize: 12, color: 'var(--ink-muted)', alignSelf: 'center' }}>
-                +{unlinkedEvents.length - 4} more
-              </span>
-            )}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+              {visibleUnlinked.slice(0, 5).map(e => (
+                <div
+                  key={e.id}
+                  style={{
+                    display: 'flex', alignItems: 'center',
+                    border: '1px solid rgba(212,168,67,0.5)',
+                    borderRadius: 8, overflow: 'hidden',
+                    background: 'rgba(255,255,255,0.6)',
+                  }}
+                >
+                  <span style={{
+                    padding: '5px 10px', fontSize: 11,
+                    color: 'var(--forest-deep)', whiteSpace: 'nowrap',
+                    maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}
+                    title={`${e.title} · ${formatDateTime(e.start)}`}
+                  >
+                    {e.title}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onEditGcalEvent({ id: e.id, title: e.title, start: e.start, location: e.location })}
+                    style={{
+                      padding: '5px 9px', fontSize: 11, fontWeight: 500,
+                      background: 'rgba(79,138,104,0.12)', border: 'none',
+                      borderLeft: '1px solid rgba(212,168,67,0.4)',
+                      color: 'var(--sage)', cursor: 'pointer',
+                    }}
+                    title={`Link "${e.title}" to a client`}
+                  >
+                    Link
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDismissedEventIds(prev => { const s = new Set(prev); s.add(e.id); return s; })}
+                    style={{
+                      padding: '5px 8px', fontSize: 13, lineHeight: 1,
+                      background: 'none', border: 'none',
+                      borderLeft: '1px solid rgba(212,168,67,0.4)',
+                      color: 'var(--ink-muted)', cursor: 'pointer',
+                    }}
+                    title={`Dismiss "${e.title}"`}
+                    aria-label={`Dismiss ${e.title}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {visibleUnlinked.length > 5 && (
+                <span style={{ fontSize: 12, color: 'var(--ink-muted)', alignSelf: 'center' }}>
+                  +{visibleUnlinked.length - 5} more
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -651,7 +695,7 @@ function QuickActions({ unpaidThisWeek, needsReceipt, formsPending, pendingNames
         >
           <div className="admin-task-eyebrow">Attendance · {needsReceipt}</div>
           <div className="admin-task-title">
-            {needsReceipt === 0 ? 'Receipts up to date' : 'Mark attended &amp; send receipts'}
+            {needsReceipt === 0 ? 'Receipts up to date' : 'Mark attended & send receipts'}
           </div>
           <div className="admin-task-body">
             {needsReceipt === 0
