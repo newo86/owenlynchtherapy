@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { X, Mail, Phone } from 'lucide-react';
-import { formatDateTime } from './api';
+import { adminFetch, formatDateTime } from './api';
 import type { SessionRow, ClientRow } from './types';
 
 interface Props {
@@ -13,8 +13,38 @@ interface Props {
 }
 
 export function SendReminderModal({ session, client, onClose }: Props) {
-  const [channel, setChannel] = useState<'email' | 'sms' | null>(null);
-  const [message, setMessage] = useState('');
+  const [channel, setChannel] = useState<'email' | null>(null);
+  const [sending, setSending] = useState(false);
+  const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; msg: string } | null>(null);
+
+  // Auto-close 2 s after a successful send.
+  useEffect(() => {
+    if (feedback?.kind !== 'success') return;
+    const t = setTimeout(onClose, 2000);
+    return () => clearTimeout(t);
+  }, [feedback, onClose]);
+
+  async function send() {
+    if (channel !== 'email' || sending) return;
+    setSending(true);
+    setFeedback(null);
+    try {
+      const res = await adminFetch('/api/admin/send-reminder', {
+        method: 'POST',
+        body: JSON.stringify({ session_id: session.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setFeedback({ kind: 'error', msg: json.error ?? 'Failed to send reminder.' });
+      } else {
+        setFeedback({ kind: 'success', msg: `Reminder sent to ${json.email ?? client.email}` });
+      }
+    } catch {
+      setFeedback({ kind: 'error', msg: 'Network error — please try again.' });
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <div
@@ -64,7 +94,7 @@ export function SendReminderModal({ session, client, onClose }: Props) {
         </div>
 
         {/* Channel option cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
           <ChannelCard
             icon={<Mail size={22} />}
             label="Email"
@@ -75,43 +105,41 @@ export function SendReminderModal({ session, client, onClose }: Props) {
           <ChannelCard
             icon={<Phone size={22} />}
             label="Text"
-            description="Send an SMS reminder to the client's number"
-            selected={channel === 'sms'}
-            onClick={() => setChannel(prev => prev === 'sms' ? null : 'sms')}
+            description="Coming soon"
+            selected={false}
+            disabled
+            onClick={() => {}}
           />
         </div>
 
-        {/* Optional message */}
-        <div style={{ marginBottom: 24 }}>
-          <label className="admin-label">Message (optional)</label>
-          <textarea
-            className="admin-textarea"
-            rows={3}
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            placeholder="Add a personal note to your reminder..."
-            style={{ minHeight: 80 }}
-          />
-        </div>
+        {/* Feedback */}
+        {feedback && (
+          <div style={{
+            marginBottom: 18,
+            padding: '12px 16px',
+            borderRadius: 10,
+            background: feedback.kind === 'success' ? 'rgba(79,138,104,0.10)' : 'rgba(200,90,27,0.10)',
+            border: `1px solid ${feedback.kind === 'success' ? 'rgba(79,138,104,0.35)' : 'rgba(200,90,27,0.4)'}`,
+            color: feedback.kind === 'success' ? '#2D5A42' : '#A04714',
+            fontSize: 13,
+          }}>
+            {feedback.msg}
+          </div>
+        )}
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button onClick={onClose} className="admin-btn-secondary">
+          <button onClick={onClose} className="admin-btn-secondary" disabled={sending}>
             Cancel
           </button>
-          {/* Disabled with tooltip — wired up to Resend/Twilio later */}
-          <span
-            title="Coming soon — this will send automatically once connected"
-            style={{ display: 'inline-block' }}
+          <button
+            onClick={send}
+            disabled={channel !== 'email' || sending}
+            className="admin-btn-primary"
+            style={channel !== 'email' ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
           >
-            <button
-              disabled
-              className="admin-btn-primary"
-              style={{ opacity: 0.4, cursor: 'not-allowed', pointerEvents: 'none' }}
-            >
-              Send Reminder
-            </button>
-          </span>
+            {sending ? 'Sending…' : 'Send Reminder'}
+          </button>
         </div>
       </div>
     </div>
@@ -119,24 +147,25 @@ export function SendReminderModal({ session, client, onClose }: Props) {
 }
 
 function ChannelCard({
-  icon, label, description, selected, onClick,
+  icon, label, description, selected, disabled, onClick,
 }: {
   icon: ReactNode;
   label: string;
   description: string;
   selected: boolean;
+  disabled?: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
       style={{
         padding: '18px 16px',
         borderRadius: 16,
         border: `2px solid ${selected ? 'var(--terracotta)' : 'var(--line)'}`,
-        background: selected ? 'rgba(200,90,27,0.06)' : 'white',
-        cursor: 'pointer',
+        background: disabled ? 'var(--cream)' : selected ? 'rgba(200,90,27,0.06)' : 'white',
+        cursor: disabled ? 'default' : 'pointer',
         textAlign: 'left',
         display: 'flex',
         flexDirection: 'column',
@@ -144,7 +173,9 @@ function ChannelCard({
         transition: 'border-color 150ms ease, background 150ms ease',
         fontFamily: 'inherit',
         width: '100%',
+        opacity: disabled ? 0.5 : 1,
       }}
+      disabled={disabled}
     >
       <span style={{ color: selected ? 'var(--terracotta)' : 'var(--ink-muted)' }}>
         {icon}

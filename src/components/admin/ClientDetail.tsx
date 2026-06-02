@@ -363,13 +363,6 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
                       Receipt sent {formatDateTime(s.receipt_sent_at)}
                     </div>
                   )}
-                  {s.stripe_payment_link_url && (
-                    <a href={s.stripe_payment_link_url} target="_blank" rel="noopener noreferrer"
-                      style={{
-                        display: 'inline-block', marginTop: 6,
-                        fontSize: 11, color: 'var(--terracotta)', textDecoration: 'underline',
-                      }}>Payment link ↗</a>
-                  )}
                   {s.notes && (
                     <div style={{
                       fontSize: 12, color: 'var(--ink-muted)',

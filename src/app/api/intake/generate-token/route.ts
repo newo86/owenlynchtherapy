@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { supabaseAdmin } from '@/lib/supabase';
-import { getStripe } from '@/lib/stripe';
 import { rateLimit } from '@/lib/rateLimit';
 import { generateTherapeuticAgreementPDF } from '@/lib/pdf/generateTherapeuticAgreementPDF';
 import { generatePrivacyPolicyPDF } from '@/lib/pdf/generatePrivacyPolicyPDF';
@@ -243,68 +242,11 @@ export async function POST(req: NextRequest) {
     console.error('[generate-token] step 3b: google calendar error:', calErr);
   }
 
-  // 4. Create Stripe price + payment link
-  let paymentLinkUrl = '';
-  let paymentLinkId = '';
-
-  const stripeKeyRaw = process.env.STRIPE_SECRET_KEY ?? '';
-  console.log('[generate-token] Stripe key present:', !!stripeKeyRaw);
-
-  try {
-    const stripeClient = getStripe();
-    console.log('[generate-token] step 4a: creating Stripe price, fee cents:', feeInCents);
-    const price = await stripeClient.prices.create({
-      currency: 'eur',
-      unit_amount: feeInCents,
-      product_data: {
-        name: `Psychotherapy Session — ${formattedDate} at ${formattedTime}`,
-      },
-    });
-    console.log('[generate-token] step 4a: price created, id:', price.id);
-
-    console.log('[generate-token] step 4b: creating Stripe payment link');
-    const paymentLink = await stripeClient.paymentLinks.create({
-      line_items: [{ price: price.id, quantity: 1 }],
-      after_completion: {
-        type: 'redirect',
-        redirect: { url: `${siteUrl}/payment-confirmed` },
-      },
-      metadata: {
-        session_id: sessionRow.id,
-        client_name: client_name.trim(),
-        client_email: client_email.trim(),
-      },
-    });
-    console.log('[generate-token] step 4b: payment link created, id:', paymentLink.id);
-
-    paymentLinkUrl = paymentLink.url;
-    paymentLinkId = paymentLink.id;
-
-    // 5. Update session with payment link details
-    console.log('[generate-token] step 5: updating session with payment link');
-    await supabaseAdmin
-      .from('sessions')
-      .update({
-        stripe_payment_link_id: paymentLinkId,
-        stripe_payment_link_url: paymentLinkUrl,
-      })
-      .eq('id', sessionRow.id);
-    console.log('[generate-token] step 5: done');
-  } catch (stripeErr: unknown) {
-    // Log full error so it's visible in Vercel function logs
-    console.error('[generate-token] *** STRIPE FAILED ***');
-    if (stripeErr instanceof Error) {
-      console.error('[generate-token] Stripe error name:', stripeErr.name);
-      console.error('[generate-token] Stripe error message:', stripeErr.message);
-      console.error('[generate-token] Stripe error stack:', stripeErr.stack);
-    }
-    try {
-      console.error('[generate-token] Stripe error JSON:', JSON.stringify(stripeErr, Object.getOwnPropertyNames(stripeErr)));
-    } catch {
-      console.error('[generate-token] Stripe error (non-serialisable):', String(stripeErr));
-    }
-    paymentLinkUrl = '';
-  }
+  // 4. Resolve Revolut payment link based on session format.
+  const paymentLinkUrl = session_format === 'online'
+    ? 'https://checkout.revolut.com/pay/f08b12df-f045-4df4-badf-4f01b9d7e0aa'
+    : 'https://checkout.revolut.com/pay/ffdf3049-df23-42d6-8e29-27fef9a14e69';
+  console.log('[generate-token] step 4: revolut payment link resolved for format', session_format);
 
   // 6. Send welcome email with Therapeutic Agreement + Privacy Policy attached.
   // Now that the owenlynchtherapy.com domain is verified in Resend the welcome
@@ -396,7 +338,7 @@ function buildWelcomeHtml(d: WelcomeEmailData): string {
     : '';
 
   const paymentBtn = d.paymentUrl
-    ? `<a href="${d.paymentUrl}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;">PAY €${d.feeEuros}</a>`
+    ? `<a href="${d.paymentUrl}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;">PAY €${d.feeEuros} VIA REVOLUT</a>`
     : `<p style="color:#666;font-size:14px;">Owen will send you payment details separately.</p>`;
 
   const logoUrl = `${d.siteUrl}/images/logo-horizontal-dark-bg.svg`;
@@ -450,7 +392,7 @@ function buildWelcomeHtml(d: WelcomeEmailData): string {
     <div style="margin:32px 0 0;">
       <p style="color:#2A4D3C;font-size:13px;font-weight:600;margin:0 0 8px;">2. Pay for your session in advance to secure your slot</p>
       <p style="color:#666;font-size:13px;line-height:1.6;margin:0 0 16px;">
-        Payment is handled securely via Stripe.
+        Payment is handled securely via Revolut.
       </p>
       ${paymentBtn}
     </div>
