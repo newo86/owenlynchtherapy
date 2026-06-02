@@ -65,53 +65,16 @@ function formatDate(iso: string) {
 
 const PAGE_SIZE = 9;
 
-// These articles are hand-written prose pages (see the /articles/[slug] routes)
-// rather than Sanity documents, so they aren't returned by the CMS query. We add
-// them to the listing here so they appear in the grid; if one is ever migrated
-// into Sanity (same slug) the dedupe below drops the static copy.
-const STATIC_POSTS: Post[] = [
-  {
-    _id: 'static-does-the-body-keep-the-score-trauma-neuroscience',
-    slug: { current: 'does-the-body-keep-the-score-trauma-neuroscience' },
-    title: 'Does the Body Keep the Score? Trauma Neuroscience Explained',
-    excerpt:
-      'New peer-reviewed research challenges whether trauma is stored in the body. A clear breakdown of PTSD vs CPTSD, what predictive coding explains, and why polyvagal theory is contested.',
-    publishedAt: '2026-06-01',
-    category: 'Trauma',
-    featuredImageUrl: '/images/blog-hero-trauma-neuroscience.png',
-    featuredImageAlt:
-      'Abstract illustration representing trauma neuroscience — the brain as a prediction machine',
-  },
-  {
-    _id: 'static-how-ocd-therapy-works',
-    slug: { current: 'how-ocd-therapy-works' },
-    title: 'How OCD Therapy Works: An Evidence-Based Guide',
-    excerpt:
-      'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment — and what effective, compassionate help actually looks like.',
-    publishedAt: '2026-05-13',
-    category: 'OCD',
-    featuredImageUrl: '/images/blog-hero-ocd-therapy.png',
-    featuredImageAlt:
-      'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta',
-  },
-];
-
 export default async function ArticlesPage() {
-  // Fetch CMS posts defensively: if Sanity is unreachable the page still renders
-  // (at minimum with the hardcoded articles) instead of erroring.
-  let sanityPosts: Post[] = [];
+  let posts: Post[] = [];
   try {
-    sanityPosts = await sanityClient.fetch(allPostsQuery);
+    posts = await sanityClient.fetch(allPostsQuery);
   } catch {
-    sanityPosts = [];
+    posts = [];
   }
 
-  const sanitySlugs = new Set(sanityPosts.map(p => p.slug?.current));
-  const merged = [...sanityPosts, ...STATIC_POSTS.filter(p => !sanitySlugs.has(p.slug.current))];
-  merged.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-
-  const visiblePosts = merged.slice(0, PAGE_SIZE);
-  const hasMore = merged.length > PAGE_SIZE;
+  const visiblePosts = posts.slice(0, PAGE_SIZE);
+  const hasMore = posts.length > PAGE_SIZE;
 
   return (
     <>

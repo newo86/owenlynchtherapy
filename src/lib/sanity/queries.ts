@@ -1,7 +1,7 @@
 import { groq } from 'next-sanity';
 
 export const allPostsQuery = groq`
-  *[_type == "post"] | order(publishedAt desc) {
+  *[_type == "post" && defined(publishedAt)] | order(publishedAt desc) {
     _id,
     title,
     slug,
@@ -23,7 +23,13 @@ export const postBySlugQuery = groq`
     excerpt,
     category,
     publishedAt,
-    body,
+    "body": body[]{
+      ...,
+      _type == "image" => {
+        ...,
+        "asset": asset->{ url, _id }
+      }
+    },
     references,
     seoTitle,
     seoDescription,
@@ -33,5 +39,5 @@ export const postBySlugQuery = groq`
 `;
 
 export const allPostSlugsQuery = groq`
-  *[_type == "post"] { "slug": slug.current }
+  *[_type == "post" && defined(publishedAt)] { "slug": slug.current }
 `;
