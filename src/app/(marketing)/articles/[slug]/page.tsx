@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import { PortableText } from '@portabletext/react';
+import type { PortableTextBlock } from '@portabletext/types';
 import { sanityClient } from '@/lib/sanity/client';
 import { postBySlugQuery, allPostSlugsQuery } from '@/lib/sanity/queries';
 
@@ -16,19 +17,33 @@ const BASE_URL = 'https://owenlynchtherapy.com';
 
 // ── Shared prose classes ──────────────────────────────────────────────────────
 
-const p = 'font-normal text-base text-gray-700 leading-[1.75] mb-6';
+const p = 'font-normal text-base md:text-[1.05rem] text-gray-700 leading-[1.85] mb-7';
 const h2 = 'font-heading font-light text-2xl sm:text-[1.75rem] text-forest mt-14 mb-5 leading-snug';
 const inlineLink = 'underline underline-offset-2 decoration-orange/60 h-hover:decoration-orange h-can:transition-colors';
+
+// ── Portable text helpers ─────────────────────────────────────────────────────
+
+function hasText(block?: PortableTextBlock): boolean {
+  return (
+    block?.children?.some(child => {
+      const text = (child as { text?: string }).text;
+      return typeof text === 'string' && text.trim().length > 0;
+    }) ?? false
+  );
+}
 
 // ── Portable text components ──────────────────────────────────────────────────
 
 const portableTextComponents = {
   block: {
-    normal: ({ children }: { children?: React.ReactNode }) => <p className={p}>{children}</p>,
-    h2: ({ children }: { children?: React.ReactNode }) => <h2 className={h2}>{children}</h2>,
-    h3: ({ children }: { children?: React.ReactNode }) => (
-      <h3 className="font-heading font-light text-xl text-forest mt-10 mb-4 leading-snug">{children}</h3>
-    ),
+    normal: ({ children, value }: { children?: React.ReactNode; value?: PortableTextBlock }) =>
+      hasText(value) ? <p className={p}>{children}</p> : null,
+    h2: ({ children, value }: { children?: React.ReactNode; value?: PortableTextBlock }) =>
+      hasText(value) ? <h2 className={h2}>{children}</h2> : null,
+    h3: ({ children, value }: { children?: React.ReactNode; value?: PortableTextBlock }) =>
+      hasText(value) ? (
+        <h3 className="font-heading font-light text-xl text-forest mt-10 mb-4 leading-snug">{children}</h3>
+      ) : null,
     blockquote: ({ children }: { children?: React.ReactNode }) => (
       <blockquote className="border-l-2 border-orange pl-5 my-6 text-gray-600 italic">{children}</blockquote>
     ),
@@ -230,7 +245,7 @@ export default async function ArticlePage({ params }: Props) {
               />
             </figure>
           )}
-          <article className="max-w-[720px] mx-auto prose-none">
+          <article className="max-w-[720px] mx-auto">
             {post.body && <PortableText value={post.body} components={portableTextComponents} />}
 
             {post.references && post.references.length > 0 && (
