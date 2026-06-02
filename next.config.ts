@@ -121,6 +121,10 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Legacy Wix URLs indexed by Google — 301 to canonical clean routes
+      { source: '/about-5',   destination: '/about',   permanent: true },
+      { source: '/contact-3', destination: '/contact', permanent: true },
+
       // Service detail sub-pages — not built yet
       { source: '/services/:slug',              destination: '/contact', permanent: false },
 
