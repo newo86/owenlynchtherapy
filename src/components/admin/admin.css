@@ -870,6 +870,39 @@
   cursor: default;
 }
 
+/* Quick-pay tick — filled white pill with a sage check once paid. */
+.admin-event-action-btn.is-paid {
+  background: white;
+  color: var(--sage);
+}
+
+@media (hover: hover) {
+  .admin-event-action-btn.is-paid:hover:not(:disabled) {
+    background: white;
+    transform: scale(1.1);
+  }
+}
+
+/* Brief confirmation pill that floats above a card after a quick action. */
+.admin-event-flash {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--forest-deep);
+  color: white;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  padding: 4px 9px;
+  border-radius: 7px;
+  pointer-events: none;
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(42, 77, 60, 0.22);
+  animation: admin-flash-in 160ms ease;
+}
+
 /* ── Bottom row (revenue + recent clients) ───────────────────────────── */
 
 .admin-row-bottom {
@@ -1160,6 +1193,11 @@
 @keyframes admin-slide-in-right {
   from { opacity: 0; transform: translateX(20px); }
   to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes admin-flash-in {
+  from { opacity: 0; transform: translate(-50%, 4px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
 /* ── Scrollbar ───────────────────────────────────────────────────────── */

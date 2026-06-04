@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Pencil, Trash2, Mail } from 'lucide-react';
+import { Pencil, Trash2, Mail, CircleCheck } from 'lucide-react';
 import { adminFetch, formatTime, isSameDay, startOfWeek, dedupeSessions } from './api';
 import type { ClientRow, SessionRow, CalendarEvent, GcalRef } from './types';
 
@@ -49,6 +49,11 @@ export function CalendarWeekGrid({
 }: CalendarWeekGridProps) {
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [busyDeleteId, setBusyDeleteId] = useState<string | null>(null);
+  // Quick-pay tick: optimistic per-session paid override + a brief confirmation
+  // flash, so the tick fills instantly without waiting on the reload round-trip.
+  const [paidOverride, setPaidOverride] = useState<Record<string, 'paid' | 'unpaid'>>({});
+  const [busyPaidId, setBusyPaidId] = useState<string | null>(null);
+  const [flash, setFlash] = useState<{ id: string; text: string } | null>(null);
 
   const days = useMemo(() => {
     const monday = startOfWeek(new Date());
@@ -97,6 +102,64 @@ export function CalendarWeekGrid({
       setBusyDeleteId(null);
     }
   }
+
+  // Effective paid state: prefer the optimistic override while a toggle is in
+  // flight (or until the reloaded data agrees), otherwise the stored status.
+  function isPaid(s: SessionRow): boolean {
+    const o = paidOverride[s.id];
+    return o ? o === 'paid' : s.payment_status === 'paid';
+  }
+
+  async function togglePaid(session: SessionRow) {
+    const next: 'paid' | 'unpaid' = isPaid(session) ? 'unpaid' : 'paid';
+    setPaidOverride(prev => ({ ...prev, [session.id]: next }));
+    setFlash({ id: session.id, text: next === 'paid' ? 'Marked as paid' : 'Marked as unpaid' });
+    setBusyPaidId(session.id);
+    try {
+      const res = await adminFetch('/api/admin/sessions/update', {
+        method: 'POST',
+        body: JSON.stringify({
+          session_id: session.id,
+          client_id: session.client_id,
+          payment_status: next,
+        }),
+      });
+      if (!res.ok) throw new Error('update failed');
+      onReload();
+    } catch {
+      // Revert the optimistic flip and let the user know it didn't take.
+      setPaidOverride(prev => ({ ...prev, [session.id]: next === 'paid' ? 'unpaid' : 'paid' }));
+      setFlash({ id: session.id, text: 'Could not update — try again' });
+    } finally {
+      setBusyPaidId(null);
+    }
+  }
+
+  // Auto-dismiss the confirmation flash.
+  useEffect(() => {
+    if (!flash) return;
+    const t = setTimeout(() => setFlash(null), 1500);
+    return () => clearTimeout(t);
+  }, [flash]);
+
+  // Drop overrides once the reloaded data reflects them, so the override never
+  // masks a later change made elsewhere.
+  useEffect(() => {
+    setPaidOverride(prev => {
+      if (Object.keys(prev).length === 0) return prev;
+      const next = { ...prev };
+      let changed = false;
+      for (const c of clients) {
+        for (const s of c.sessions) {
+          if (next[s.id] && (next[s.id] === 'paid') === (s.payment_status === 'paid')) {
+            delete next[s.id];
+            changed = true;
+          }
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [clients]);
 
   function eventsForDay(day: Date): MergedEvent[] {
     const matched = new Set<string>();
@@ -204,6 +267,10 @@ export function CalendarWeekGrid({
                       >↗ doxy.me</a>
                     )}
 
+                    {flash && flash.id === cardId && (
+                      <div className="admin-event-flash" role="status">{flash.text}</div>
+                    )}
+
                     {isSession && (
                       <div className={`admin-event-actions${isOpen ? ' is-open' : ''}`}>
                         {onClickSession && (
@@ -232,6 +299,14 @@ export function CalendarWeekGrid({
                             <Mail size={12} strokeWidth={2} />
                           </button>
                         )}
+                        <button
+                          className={`admin-event-action-btn${isPaid(e.session!) ? ' is-paid' : ''}`}
+                          onClick={ev => { ev.stopPropagation(); void togglePaid(e.session!); }}
+                          disabled={busyPaidId === e.session!.id}
+                          title={isPaid(e.session!) ? 'Paid — click to mark unpaid' : 'Mark as paid'}
+                        >
+                          <CircleCheck size={13} strokeWidth={2.2} />
+                        </button>
                       </div>
                     )}
 

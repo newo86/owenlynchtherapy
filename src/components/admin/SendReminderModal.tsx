@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { X, Mail, Phone } from 'lucide-react';
+import { X, Mail, Phone, Receipt, Check } from 'lucide-react';
 import { adminFetch, formatDateTime } from './api';
 import type { SessionRow, ClientRow } from './types';
 
@@ -16,6 +16,8 @@ export function SendReminderModal({ session, client, onClose }: Props) {
   const [channel, setChannel] = useState<'email' | null>(null);
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; msg: string } | null>(null);
+  // Send Receipt reuses the existing /api/admin/send-receipt route untouched.
+  const [receiptStatus, setReceiptStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
   // Auto-close 2 s after a successful send.
   useEffect(() => {
@@ -43,6 +45,19 @@ export function SendReminderModal({ session, client, onClose }: Props) {
       setFeedback({ kind: 'error', msg: 'Network error — please try again.' });
     } finally {
       setSending(false);
+    }
+  }
+
+  async function sendReceipt() {
+    setReceiptStatus('sending');
+    try {
+      const res = await adminFetch('/api/admin/send-receipt', {
+        method: 'POST',
+        body: JSON.stringify({ session_id: session.id }),
+      });
+      setReceiptStatus(res.ok ? 'sent' : 'error');
+    } catch {
+      setReceiptStatus('error');
     }
   }
 
@@ -128,19 +143,38 @@ export function SendReminderModal({ session, client, onClose }: Props) {
         )}
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button onClick={onClose} className="admin-btn-secondary" disabled={sending}>
             Cancel
           </button>
-          <button
-            onClick={send}
-            disabled={channel !== 'email' || sending}
-            className="admin-btn-primary"
-            style={channel !== 'email' ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
-          >
-            {sending ? 'Sending…' : 'Send Reminder'}
-          </button>
+          <div style={{ display: 'flex', gap: 10, marginLeft: 'auto' }}>
+            {/* Send Receipt — wired to the existing /api/admin/send-receipt route. */}
+            <button
+              onClick={sendReceipt}
+              disabled={receiptStatus === 'sending' || receiptStatus === 'sent'}
+              className="admin-btn-secondary is-filled"
+              style={{ background: 'var(--sage)', borderColor: 'var(--sage)' }}
+              title="Email this session's receipt to the client"
+            >
+              {receiptStatus === 'sent'
+                ? <><Check size={13} /> Receipt sent</>
+                : <><Receipt size={13} /> {receiptStatus === 'sending' ? 'Sending…' : 'Send Receipt'}</>}
+            </button>
+            <button
+              onClick={send}
+              disabled={channel !== 'email' || sending}
+              className="admin-btn-primary"
+              style={channel !== 'email' ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+            >
+              {sending ? 'Sending…' : 'Send Reminder'}
+            </button>
+          </div>
         </div>
+        {receiptStatus === 'error' && (
+          <p style={{ fontSize: 12, color: 'var(--terracotta)', textAlign: 'right', margin: '10px 0 0' }}>
+            Couldn&apos;t send the receipt — please try again.
+          </p>
+        )}
       </div>
     </div>
   );
