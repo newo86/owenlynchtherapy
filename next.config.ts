@@ -121,6 +121,23 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // High-intent legacy Wix URLs (catch trailing-slash variants too).
+      {
+        source: '/f{/}?',
+        destination: '/faq',
+        permanent: true,
+      },
+      {
+        source: '/book-online{/}?',
+        destination: '/services', // Change to /contact if you prefer them to go straight to the form
+        permanent: true,
+      },
+      {
+        source: '/service-page/online-therapy{/}?',
+        destination: '/services',
+        permanent: true,
+      },
+
       // Legacy Wix URLs indexed by Google — 301 to canonical clean routes
       { source: '/about-5',   destination: '/about',   permanent: true },
       { source: '/contact-3', destination: '/contact', permanent: true },

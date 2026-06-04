@@ -65,6 +65,24 @@ function formatDate(iso: string) {
 
 const PAGE_SIZE = 9;
 
+// Fallback so the OCD article always appears in the listing, even if the Sanity
+// fetch is unavailable. If the same post comes back from Sanity (matched by
+// slug) the static copy is dropped below, so there's never a duplicate card.
+const STATIC_POSTS: Post[] = [
+  {
+    _id: 'static-how-ocd-therapy-works',
+    slug: { current: 'how-ocd-therapy-works' },
+    title: 'How OCD Therapy Works: An Evidence-Based Guide',
+    excerpt:
+      'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment — and what effective, compassionate help actually looks like.',
+    publishedAt: '2026-05-13',
+    category: 'OCD',
+    featuredImageUrl: '/images/blog-hero-ocd-therapy.png',
+    featuredImageAlt:
+      'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta',
+  },
+];
+
 export default async function ArticlesPage() {
   let posts: Post[] = [];
   try {
@@ -73,8 +91,14 @@ export default async function ArticlesPage() {
     posts = [];
   }
 
-  const visiblePosts = posts.slice(0, PAGE_SIZE);
-  const hasMore = posts.length > PAGE_SIZE;
+  // Merge in any static fallback posts Sanity didn't already return (by slug),
+  // then sort newest-first so the order is stable regardless of source.
+  const sanitySlugs = new Set(posts.map(p => p.slug?.current));
+  const merged = [...posts, ...STATIC_POSTS.filter(p => !sanitySlugs.has(p.slug.current))];
+  merged.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+  const visiblePosts = merged.slice(0, PAGE_SIZE);
+  const hasMore = merged.length > PAGE_SIZE;
 
   return (
     <>
