@@ -195,6 +195,19 @@ export function Dashboard({
     } catch { setFeedback({ id: sessionId, msg: 'Network error.' }); }
     finally { setBusyId(null); }
   }
+  async function markPaid(sessionId: string, isLowCost: boolean) {
+    setBusyId(sessionId);
+    try {
+      const res = await adminFetch('/api/admin/mark-paid', {
+        method: 'POST', body: JSON.stringify({ session_id: sessionId }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setFeedback({ id: sessionId, msg: json.error ?? 'Failed.' }); return; }
+      setFeedback({ id: sessionId, msg: isLowCost ? 'Cash payment recorded.' : 'Marked paid.' });
+      onReload();
+    } catch { setFeedback({ id: sessionId, msg: 'Network error.' }); }
+    finally { setBusyId(null); }
+  }
 
   // ── Revenue
   const revenue = useMemo(() => computeRevenue(allSessions), [allSessions]);
@@ -420,6 +433,7 @@ export function Dashboard({
                   onConfirmAttended={() => doMarkAttended(s.id)}
                   onCancelConfirm={() => setConfirmId(null)}
                   onSendReceipt={() => sendReceipt(s.id)}
+                  onMarkPaid={() => markPaid(s.id, Boolean(c.is_low_cost))}
                   onEdit={() => onClickSession(s, c)}
                 />
               ))}
@@ -560,18 +574,20 @@ interface SessionRowProps {
   onConfirmAttended?: () => void;
   onCancelConfirm?: () => void;
   onSendReceipt?: () => void;
+  onMarkPaid?: () => void;
   onEdit?: () => void;
 }
 
 function SessionRow({
   session, client, busy, feedback,
   needsAttendedConfirm,
-  onMarkAttended, onConfirmAttended, onCancelConfirm, onSendReceipt, onEdit,
+  onMarkAttended, onConfirmAttended, onCancelConfirm, onSendReceipt, onMarkPaid, onEdit,
 }: SessionRowProps) {
   const formatTag = session.session_format === 'in_person' ? 'admin-tag-inperson' : 'admin-tag-online';
   const formatLabel = session.session_format === 'in_person' ? 'In person' : 'Online';
   const paymentTag = session.payment_status === 'paid' ? 'admin-tag-paid' : 'admin-tag-unpaid';
   const paymentLabel = session.payment_status === 'paid' ? 'Paid' : 'Unpaid';
+  const isLowCost = Boolean(client.is_low_cost);
 
   return (
     <div className="admin-session-row">
@@ -612,12 +628,23 @@ function SessionRow({
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <span className={`admin-tag ${formatTag}`}>{formatLabel}</span>
+          {isLowCost && <span className="admin-tag admin-tag-new">Low cost · cash</span>}
           <span className={`admin-tag ${paymentTag}`}>{paymentLabel}</span>
         </div>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {session.status === 'scheduled' && onMarkAttended && (
             <button onClick={onMarkAttended} disabled={busy} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
               Mark Attended
+            </button>
+          )}
+          {session.payment_status !== 'paid' && session.status !== 'cancelled' && onMarkPaid && (
+            <button
+              onClick={onMarkPaid}
+              disabled={busy}
+              className="admin-btn-secondary"
+              title={isLowCost ? 'Record cash received for this session' : 'Mark this session as paid'}
+            >
+              {isLowCost ? 'Cash Received' : 'Mark Paid'}
             </button>
           )}
           {onSendReceipt && (

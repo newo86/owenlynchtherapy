@@ -52,6 +52,55 @@ function payLabel(status: string) {
   return status === 'paid' ? 'Paid' : status === 'refunded' ? 'Refunded' : 'Unpaid';
 }
 
+interface NextAction {
+  kind: 'warn' | 'info' | 'ok';
+  label: string;
+  detail: string;
+}
+
+/** The single most useful thing to do next for this client, surfaced at the
+ *  top of the record so common tasks don't require scanning session history. */
+function nextAction(client: ClientRow): NextAction {
+  const now = new Date();
+  const active = client.sessions.filter(s => s.status !== 'cancelled');
+  const unpaidDue = active.filter(s =>
+    s.payment_status !== 'paid' && s.payment_status !== 'refunded' && new Date(s.session_date) <= now
+  );
+  const needsReceipt = active.filter(s => s.status === 'attended' && !s.receipt_sent_at);
+  const upcoming = active
+    .filter(s => s.status === 'scheduled' && new Date(s.session_date) > now)
+    .sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime())[0];
+
+  if (unpaidDue.length > 0) {
+    return {
+      kind: 'warn',
+      label: client.is_low_cost ? 'Record cash payment' : 'Collect payment',
+      detail: `${unpaidDue.length} past session${unpaidDue.length === 1 ? '' : 's'} unpaid — oldest ${formatDateTime(
+        unpaidDue.sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime())[0].session_date
+      )}.`,
+    };
+  }
+  if (needsReceipt.length > 0) {
+    return {
+      kind: 'info',
+      label: 'Send receipt',
+      detail: `${needsReceipt.length} attended session${needsReceipt.length === 1 ? '' : 's'} without a receipt.`,
+    };
+  }
+  if (upcoming) {
+    return {
+      kind: 'ok',
+      label: 'All up to date',
+      detail: `Next session ${formatDateTime(upcoming.session_date)}.`,
+    };
+  }
+  return {
+    kind: 'info',
+    label: 'Schedule next session',
+    detail: 'No upcoming sessions booked for this client.',
+  };
+}
+
 interface ContactFields {
   email: string;
   phone: string;
@@ -241,6 +290,31 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
         </div>
 
         <div style={{ padding: '26px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {(() => {
+            const action = nextAction(client);
+            const palette = {
+              warn: { bg: 'rgba(200,90,27,0.10)',  border: 'rgba(200,90,27,0.4)',  fg: '#A04714' },
+              info: { bg: 'rgba(212,168,67,0.12)', border: 'rgba(212,168,67,0.4)', fg: '#7a611f' },
+              ok:   { bg: 'rgba(79,138,104,0.10)', border: 'rgba(79,138,104,0.35)', fg: '#2D5A42' },
+            }[action.kind];
+            return (
+              <div style={{
+                padding: '12px 16px', borderRadius: 12,
+                background: palette.bg, border: `1px solid ${palette.border}`,
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: palette.fg }}>
+                  Next action
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--forest-deep)', marginTop: 4 }}>
+                  {action.label}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>
+                  {action.detail}
+                </div>
+              </div>
+            );
+          })()}
+
           <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <Field label="Status" value={client.status} />
             <Field label="Default fee" value={displayFee(client.session_fee)} />

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
+import { buildReceiptHtml } from '@/lib/emailTemplates';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 export async function POST(req: NextRequest) {
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
         from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
         to: client.email,
         subject: 'Receipt — Psychotherapy Session with Owen Lynch',
-        html: buildReceiptHtml(firstName, formattedDate, formattedTime, feeEuros, session.session_format as string),
+        html: buildReceiptHtml({ firstName, date: formattedDate, time: formattedTime, feeEuros, sessionFormat: session.session_format as string }),
       });
 
       if (!emailResult.error) {
@@ -77,66 +78,4 @@ export async function POST(req: NextRequest) {
     { success: true, receipt_sent, payment_status: session?.payment_status ?? 'unknown' },
     { headers: noCache }
   );
-}
-
-function buildReceiptHtml(firstName: string, date: string, time: string, feeEuros: number, sessionFormat?: string): string {
-  const isOnline = sessionFormat === 'online';
-  const formatRow = isOnline
-    ? `<tr>
-          <td style="padding:7px 0;color:#777;border-bottom:1px solid #F0EAE0;">Format</td>
-          <td style="padding:7px 0;text-align:right;border-bottom:1px solid #F0EAE0;">Online &mdash; <a href="https://doxy.me/owenlynchtherapy" style="color:#4F8A68;text-decoration:none;font-weight:500;">doxy.me/owenlynchtherapy</a></td>
-        </tr>`
-    : `<tr>
-          <td style="padding:7px 0;color:#777;border-bottom:1px solid #F0EAE0;">Format</td>
-          <td style="padding:7px 0;text-align:right;border-bottom:1px solid #F0EAE0;">In Person &mdash; Capel Street, Dublin</td>
-        </tr>`;
-  return `
-<div style="background-color:#F5F0E8;padding:40px 20px;font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
-  <div style="background-color:#2A4D3C;padding:30px;text-align:center;border-radius:8px 8px 0 0;">
-    <p style="color:#C85A1A;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 8px 0;">Owen Lynch</p>
-    <p style="color:#FFFFFF;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin:0;">Psychotherapy</p>
-  </div>
-  <div style="background-color:#FFFFFF;padding:40px;border-radius:0 0 8px 8px;">
-    <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${firstName},</p>
-    <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 28px;">Please find your receipt below for your recent session.</p>
-    <div style="border:1px solid #E0D8CE;border-radius:8px;padding:24px;background:#FAF7F2;margin:0 0 28px;">
-      <p style="font-size:11px;color:#2A4D3C;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin:0 0 16px;">Receipt</p>
-      <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;">
-        <tr>
-          <td style="padding:7px 0;color:#777;border-bottom:1px solid #F0EAE0;">Date</td>
-          <td style="padding:7px 0;text-align:right;border-bottom:1px solid #F0EAE0;">${date} at ${time}</td>
-        </tr>
-        <tr>
-          <td style="padding:7px 0;color:#777;border-bottom:1px solid #F0EAE0;">Service</td>
-          <td style="padding:7px 0;text-align:right;border-bottom:1px solid #F0EAE0;">Psychotherapy Session (50 minutes)</td>
-        </tr>
-        ${formatRow}
-        <tr>
-          <td style="padding:10px 0;font-weight:600;color:#2A4D3C;font-size:15px;">Amount</td>
-          <td style="padding:10px 0;text-align:right;font-weight:600;color:#2A4D3C;font-size:15px;">€${feeEuros}</td>
-        </tr>
-        <tr>
-          <td style="padding:7px 0;color:#777;">Status</td>
-          <td style="padding:7px 0;text-align:right;color:#4F8A68;font-weight:500;">Paid</td>
-        </tr>
-      </table>
-    </div>
-    ${isOnline ? `<div style="background:#EEF6F0;border:1px solid #C3DDD0;border-radius:8px;padding:18px 20px;margin:0 0 24px;">
-      <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#2A4D3C;letter-spacing:1px;text-transform:uppercase;">Your online waiting room</p>
-      <p style="margin:0;font-size:13px;color:#555;line-height:1.6;">For future online sessions, join via your dedicated waiting room:<br>
-      <a href="https://doxy.me/owenlynchtherapy" style="color:#4F8A68;font-weight:600;text-decoration:none;">https://doxy.me/owenlynchtherapy</a></p>
-    </div>` : ''}
-    <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 12px;">
-      Thank you for your payment. If you have any questions, please email
-      <a href="mailto:info@owenlynchtherapy.com" style="color:#C85A1A;text-decoration:none;">info@owenlynchtherapy.com</a>.
-    </p>
-    <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">See you at your next session.</p>
-    <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">Owen</p>
-  </div>
-  <div style="text-align:center;margin-top:24px;">
-    <p style="color:#2A4D3C;font-size:11px;opacity:0.6;letter-spacing:1px;margin:0;">
-      owenlynchtherapy.com · IAHIP &amp; ICP Accredited · Dublin &amp; Online
-    </p>
-  </div>
-</div>`;
 }

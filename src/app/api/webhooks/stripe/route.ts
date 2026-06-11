@@ -3,11 +3,29 @@ import Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
+import {
+  buildReceiptHtml,
+  sessionKind,
+  STRIPE_LINK_IN_PERSON,
+  STRIPE_LINK_ONLINE,
+} from '@/lib/emailTemplates';
 
 // Must be force-dynamic so Next.js never pre-renders or caches this route.
 // A cached response would consume request.body before Stripe's raw-body
 // verification runs, causing every signature check to fail.
 export const dynamic = 'force-dynamic';
+
+type SessionRecord = {
+  id: string;
+  client_id: string;
+  session_date: string;
+  session_format: string;
+  fee: number;
+  status: string;
+  payment_status: string;
+  receipt_sent_at: string | null;
+  clients: { id: string; full_name: string; email: string; is_low_cost?: boolean } | null;
+};
 
 export async function POST(request: NextRequest) {
   // Guard env vars up-front so missing config produces a clear 500 log rather
@@ -41,81 +59,168 @@ export async function POST(request: NextRequest) {
 
   console.log(`[stripe-webhook] Received: ${event.type} (${event.id})`);
 
-  if (event.type === 'checkout.session.completed') {
-    const checkoutSession = event.data.object as Stripe.Checkout.Session;
+  // checkout.session.completed fires for card payments; async_payment_succeeded
+  // covers delayed methods (e.g. bank debits) that complete later. Both are
+  // gated on payment_status === 'paid' so nothing happens for pending payments.
+  if (event.type !== 'checkout.session.completed' && event.type !== 'checkout.session.async_payment_succeeded') {
+    console.log(`[stripe-webhook] Unhandled event type: ${event.type} — ignoring`);
+    return new Response('OK', { status: 200 });
+  }
 
-    if (checkoutSession.payment_status !== 'paid') {
-      console.log(`[stripe-webhook] payment_status=${checkoutSession.payment_status} — skipping`);
-      return new Response('OK', { status: 200 });
-    }
+  const checkout = event.data.object as Stripe.Checkout.Session;
 
-    const supabaseSessionId = checkoutSession.metadata?.session_id;
-    const paymentIntentId =
-      typeof checkoutSession.payment_intent === 'string'
-        ? checkoutSession.payment_intent
-        : checkoutSession.payment_intent?.id ?? null;
+  if (checkout.payment_status !== 'paid') {
+    console.log(`[stripe-webhook] payment_status=${checkout.payment_status} — skipping until payment is confirmed`);
+    return new Response('OK', { status: 200 });
+  }
 
-    if (!supabaseSessionId) {
-      console.warn('[stripe-webhook] checkout.session.completed has no metadata.session_id — cannot update session record');
-      return new Response('OK', { status: 200 });
-    }
+  const session = await matchSession(checkout);
+  if (!session) {
+    console.warn(`[stripe-webhook] Could not match checkout ${checkout.id} to a session — review manually in the dashboard`);
+    // 200 so Stripe doesn't retry forever; the warning is the audit trail.
+    return new Response('OK', { status: 200 });
+  }
 
-    console.log(`[stripe-webhook] Marking session ${supabaseSessionId} paid (payment_intent=${paymentIntentId ?? 'none'})`);
+  if (session.clients?.is_low_cost) {
+    // Low-cost sessions are cash-only and recorded manually — a Stripe payment
+    // landing here would be unexpected, so log loudly and do nothing.
+    console.warn(`[stripe-webhook] Checkout ${checkout.id} matched low-cost client session ${session.id} — skipping (cash only)`);
+    return new Response('OK', { status: 200 });
+  }
 
-    const { data: session, error: updateErr } = await supabaseAdmin
+  const paymentIntentId =
+    typeof checkout.payment_intent === 'string'
+      ? checkout.payment_intent
+      : checkout.payment_intent?.id ?? null;
+
+  const alreadyPaid = session.payment_status === 'paid';
+
+  // 1. Mark the session paid in Supabase.
+  if (!alreadyPaid) {
+    const { error: updateErr } = await supabaseAdmin
       .from('sessions')
       .update({
         payment_status: 'paid',
         paid_at: new Date().toISOString(),
         ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),
       })
-      .eq('id', supabaseSessionId)
-      .select('*, clients(*)')
-      .single();
+      .eq('id', session.id);
 
-    if (updateErr || !session) {
-      console.error(
-        '[stripe-webhook] Supabase update failed for session',
-        supabaseSessionId,
-        JSON.stringify(updateErr ?? { reason: 'no row returned' }, null, 2),
-      );
+    if (updateErr) {
+      console.error('[stripe-webhook] Supabase update failed for session', session.id, JSON.stringify(updateErr, null, 2));
       // Return 200 so Stripe does not endlessly retry a data error.
       return new Response('OK', { status: 200 });
     }
-
-    console.log(`[stripe-webhook] Session ${supabaseSessionId} marked paid`);
-
-    type SessionWithClient = typeof session & {
-      clients: { full_name: string; email: string } | null;
-      receipt_sent_at?: string | null;
-    };
-    const s = session as SessionWithClient;
-
-    if (!s.clients?.email) {
-      console.warn(`[stripe-webhook] No client email on session ${supabaseSessionId} — skipping receipt`);
-    } else if (s.receipt_sent_at) {
-      console.log(`[stripe-webhook] Receipt already sent for session ${supabaseSessionId} — skipping (idempotency guard)`);
-    } else {
-      await sendReceipt(s.clients, s);
-      await supabaseAdmin
-        .from('sessions')
-        .update({ receipt_sent_at: new Date().toISOString() })
-        .eq('id', supabaseSessionId);
-    }
+    console.log(`[stripe-webhook] Session ${session.id} marked paid (payment_intent=${paymentIntentId ?? 'none'})`);
   } else {
-    console.log(`[stripe-webhook] Unhandled event type: ${event.type} — ignoring`);
+    console.log(`[stripe-webhook] Session ${session.id} already marked paid — skipping update`);
+  }
+
+  // 2. Log the payment in the finance ledger. The unique constraint on
+  //    stripe_checkout_session_id makes retried webhooks idempotent.
+  const kind = sessionKind(session.session_format, false);
+  const { error: ledgerErr } = await supabaseAdmin.from('payments').insert({
+    session_id: session.id,
+    client_id: session.client_id,
+    amount_cents: checkout.amount_total ?? session.fee,
+    currency: checkout.currency ?? 'eur',
+    session_type: kind,
+    method: 'stripe',
+    stripe_checkout_session_id: checkout.id,
+    stripe_payment_intent_id: paymentIntentId,
+    paid_at: new Date().toISOString(),
+  });
+  if (ledgerErr) {
+    if (ledgerErr.code === '23505') {
+      console.log(`[stripe-webhook] Payment for checkout ${checkout.id} already logged — skipping (idempotency guard)`);
+    } else {
+      console.warn('[stripe-webhook] Could not log payment (run the payments migration):', ledgerErr.message);
+    }
+  }
+
+  // 3. Send the receipt — only once.
+  if (!session.clients?.email) {
+    console.warn(`[stripe-webhook] No client email on session ${session.id} — skipping receipt`);
+  } else if (session.receipt_sent_at) {
+    console.log(`[stripe-webhook] Receipt already sent for session ${session.id} — skipping (idempotency guard)`);
+  } else {
+    await sendReceipt(session.clients, session, checkout.amount_total);
+    await supabaseAdmin
+      .from('sessions')
+      .update({ receipt_sent_at: new Date().toISOString() })
+      .eq('id', session.id);
   }
 
   return new Response('OK', { status: 200 });
 }
 
+/**
+ * Match a Stripe checkout session to a Supabase session row.
+ *  1. client_reference_id — set when the payment link was emailed in a
+ *     reminder (?client_reference_id=<session_id>). Exact match.
+ *  2. metadata.session_id — legacy per-session payment links.
+ *  3. Fallback: payment link → session type (online vs in-person) plus the
+ *     payer's email → that client's oldest unpaid, non-cancelled session of
+ *     the matching type.
+ */
+async function matchSession(checkout: Stripe.Checkout.Session): Promise<SessionRecord | null> {
+  const directId = checkout.client_reference_id ?? checkout.metadata?.session_id ?? null;
+  if (directId) {
+    const { data } = await supabaseAdmin
+      .from('sessions')
+      .select('*, clients(*)')
+      .eq('id', directId)
+      .single();
+    if (data) return data as SessionRecord;
+    console.warn(`[stripe-webhook] client_reference_id ${directId} did not match a session — falling back to email match`);
+  }
+
+  // Which session type does the payment link imply?
+  const paymentLinkId =
+    typeof checkout.payment_link === 'string' ? checkout.payment_link : checkout.payment_link?.id ?? null;
+  let format: string | null = null;
+  if (paymentLinkId) {
+    try {
+      const link = await getStripe().paymentLinks.retrieve(paymentLinkId);
+      if (link.url === STRIPE_LINK_ONLINE) format = 'online';
+      else if (link.url === STRIPE_LINK_IN_PERSON) format = 'in_person';
+    } catch (err) {
+      console.warn('[stripe-webhook] Could not retrieve payment link', paymentLinkId, err);
+    }
+  }
+
+  const email = checkout.customer_details?.email ?? checkout.customer_email ?? null;
+  if (!email) return null;
+
+  const { data: client } = await supabaseAdmin
+    .from('clients')
+    .select('id')
+    .ilike('email', email)
+    .maybeSingle();
+  if (!client) return null;
+
+  let query = supabaseAdmin
+    .from('sessions')
+    .select('*, clients(*)')
+    .eq('client_id', client.id)
+    .neq('payment_status', 'paid')
+    .neq('status', 'cancelled')
+    .order('session_date', { ascending: true })
+    .limit(1);
+  if (format) query = query.eq('session_format', format);
+
+  const { data: candidates } = await query;
+  return (candidates?.[0] as SessionRecord | undefined) ?? null;
+}
+
 async function sendReceipt(
   client: { full_name: string; email: string },
-  session: { session_date: unknown; fee: unknown },
+  session: { session_date: string; fee: number; session_format: string },
+  amountTotal: number | null,
 ) {
   const firstName = client.full_name.split(' ')[0];
-  const feeEuros = Math.round((session.fee as number) / 100);
-  const sessionDate = new Date(session.session_date as string);
+  const feeEuros = Math.round((amountTotal ?? session.fee) / 100);
+  const sessionDate = new Date(session.session_date);
   const formattedDate = sessionDate.toLocaleDateString('en-IE', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Dublin',
   });
@@ -127,7 +232,13 @@ async function sendReceipt(
     from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
     to: client.email,
     subject: 'Receipt — Psychotherapy Session with Owen Lynch',
-    html: buildReceiptHtml(firstName, formattedDate, formattedTime, feeEuros),
+    html: buildReceiptHtml({
+      firstName,
+      date: formattedDate,
+      time: formattedTime,
+      feeEuros,
+      sessionFormat: session.session_format,
+    }),
   });
 
   if (emailResult.error) {
@@ -135,50 +246,4 @@ async function sendReceipt(
   } else {
     console.log(`[stripe-webhook] Receipt sent to ${client.email}`);
   }
-}
-
-function buildReceiptHtml(firstName: string, date: string, time: string, feeEuros: number): string {
-  return `
-<div style="background-color:#F5F0E8;padding:40px 20px;font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
-  <div style="background-color:#2A4D3C;padding:30px;text-align:center;border-radius:8px 8px 0 0;">
-    <p style="color:#C85A1A;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 8px 0;">Owen Lynch</p>
-    <p style="color:#FFFFFF;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin:0;">Psychotherapy</p>
-  </div>
-  <div style="background-color:#FFFFFF;padding:40px;border-radius:0 0 8px 8px;">
-    <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${firstName},</p>
-    <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 28px;">Please find your receipt below for your recent session.</p>
-    <div style="border:1px solid #E0D8CE;border-radius:8px;padding:24px;background:#FAF7F2;margin:0 0 28px;">
-      <p style="font-size:11px;color:#2A4D3C;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin:0 0 16px;">Receipt</p>
-      <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;">
-        <tr>
-          <td style="padding:7px 0;color:#777;border-bottom:1px solid #F0EAE0;">Date</td>
-          <td style="padding:7px 0;text-align:right;border-bottom:1px solid #F0EAE0;">${date} at ${time}</td>
-        </tr>
-        <tr>
-          <td style="padding:7px 0;color:#777;border-bottom:1px solid #F0EAE0;">Service</td>
-          <td style="padding:7px 0;text-align:right;border-bottom:1px solid #F0EAE0;">Psychotherapy Session (50 minutes)</td>
-        </tr>
-        <tr>
-          <td style="padding:10px 0;font-weight:600;color:#2A4D3C;font-size:15px;">Amount</td>
-          <td style="padding:10px 0;text-align:right;font-weight:600;color:#2A4D3C;font-size:15px;">€${feeEuros}</td>
-        </tr>
-        <tr>
-          <td style="padding:7px 0;color:#777;">Status</td>
-          <td style="padding:7px 0;text-align:right;color:#4F8A68;font-weight:500;">Paid</td>
-        </tr>
-      </table>
-    </div>
-    <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 12px;">
-      Thank you for your payment. If you have any questions, please email
-      <a href="mailto:info@owenlynchtherapy.com" style="color:#C85A1A;text-decoration:none;">info@owenlynchtherapy.com</a>.
-    </p>
-    <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">See you at your next session.</p>
-    <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">Owen</p>
-  </div>
-  <div style="text-align:center;margin-top:24px;">
-    <p style="color:#2A4D3C;font-size:11px;opacity:0.6;letter-spacing:1px;margin:0;">
-      owenlynchtherapy.com · IAHIP &amp; ICP Accredited · Dublin &amp; Online
-    </p>
-  </div>
-</div>`;
 }

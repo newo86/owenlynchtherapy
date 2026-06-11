@@ -14,6 +14,14 @@ interface Props {
 
 export function SendReminderModal({ session, client, onClose }: Props) {
   const [channel, setChannel] = useState<'email' | null>(null);
+  // Mirror of the server-side logic in lib/sendSessionReminder.ts so the
+  // practitioner can see what the email will contain before sending.
+  const contents = client.is_low_cost
+    ? 'Includes the Insight Matters address and a note that payment is cash on the day — no payment link.'
+    : session.session_format === 'online'
+      ? 'Includes the doxy.me room link and the Stripe payment link for online sessions.'
+      : 'Includes the Insight Matters address and the Stripe payment link for in-person sessions.';
+  const canSend = session.status === 'scheduled';
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; msg: string } | null>(null);
   // Send Receipt reuses the existing /api/admin/send-receipt route untouched.
@@ -93,6 +101,14 @@ export function SendReminderModal({ session, client, onClose }: Props) {
             <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: 0 }}>
               {client.full_name} · {formatDateTime(session.session_date)}
             </p>
+            <p style={{ fontSize: 12, color: 'var(--sage)', margin: '8px 0 0', lineHeight: 1.5 }}>
+              {contents}
+            </p>
+            {!canSend && (
+              <p style={{ fontSize: 12, color: 'var(--terracotta)', margin: '6px 0 0' }}>
+                This session is {session.status === 'attended' ? 'already attended' : session.status} — reminders only go to scheduled sessions.
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -162,9 +178,9 @@ export function SendReminderModal({ session, client, onClose }: Props) {
             </button>
             <button
               onClick={send}
-              disabled={channel !== 'email' || sending}
+              disabled={channel !== 'email' || sending || !canSend}
               className="admin-btn-primary"
-              style={channel !== 'email' ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
+              style={channel !== 'email' || !canSend ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
             >
               {sending ? 'Sending…' : 'Send Reminder'}
             </button>

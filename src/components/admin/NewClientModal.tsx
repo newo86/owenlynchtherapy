@@ -52,7 +52,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
     setQuickAddDone(false);
     try {
       if (sendIntake) {
-        // Full intake flow — generates token, resolves Revolut link, emails client.
+        // Full intake flow — generates token, resolves Stripe payment link, emails client.
         const res = await adminFetch('/api/intake/generate-token', {
           method: 'POST',
           body: JSON.stringify({
@@ -149,7 +149,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
           </label>
           <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--ink-muted)' }}>
             {sendIntake
-              ? 'New client gets an intake form, Revolut payment link, and welcome email.'
+              ? 'New client gets an intake form, Stripe payment link, and welcome email.'
               : 'Quick add — just create the record. No intake link, payment link, or email sent. Useful for clients already onboarded outside this dashboard.'}
           </p>
         </div>
@@ -315,7 +315,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
           />
           {generated.paymentLinkUrl && (
             <LinkRow
-              label="Revolut payment link"
+              label="Stripe payment link"
               value={generated.paymentLinkUrl}
               copied={copiedKey === 'pay'}
               onCopy={() => copy(generated.paymentLinkUrl, 'pay')}

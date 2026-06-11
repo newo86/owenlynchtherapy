@@ -125,6 +125,15 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
       onReload();
     } finally { setBusyId(null); }
   }
+  async function markPaid(sessionId: string) {
+    setBusyId(sessionId);
+    try {
+      await adminFetch('/api/admin/mark-paid', {
+        method: 'POST', body: JSON.stringify({ session_id: sessionId }),
+      });
+      onReload();
+    } finally { setBusyId(null); }
+  }
 
   const weekStart = (() => {
     const d = startOfWeek(new Date());
@@ -253,7 +262,14 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   )}
                 </td>
                 <td>{displayFee(s.fee)}</td>
-                <td><span className={`admin-tag ${payTag(s.payment_status)}`}>{payLabel(s.payment_status)}</span></td>
+                <td>
+                  <span className={`admin-tag ${payTag(s.payment_status)}`}>{payLabel(s.payment_status)}</span>
+                  {c.is_low_cost && (
+                    <span style={{ display: 'block', fontSize: 10, color: 'var(--lilac-dark)', marginTop: 3, fontWeight: 500 }}>
+                      Low cost · cash
+                    </span>
+                  )}
+                </td>
                 <td><span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span></td>
                 <td style={{ textAlign: 'right' as const }}>
                   <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -265,6 +281,21 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     {s.status === 'scheduled' && (
                       <button onClick={() => markAttended(s.id, s.payment_status)} disabled={busyId === s.id} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
                         Attended
+                      </button>
+                    )}
+                    {s.payment_status !== 'paid' && s.status !== 'cancelled' && (
+                      <button
+                        onClick={() => markPaid(s.id)}
+                        disabled={busyId === s.id}
+                        className="admin-btn-secondary"
+                        title={c.is_low_cost ? 'Record cash received for this session' : 'Mark this session as paid'}
+                      >
+                        {c.is_low_cost ? 'Cash received' : 'Mark paid'}
+                      </button>
+                    )}
+                    {s.status === 'scheduled' && (
+                      <button onClick={() => setReminderData({ session: s, client: c })} disabled={busyId === s.id} className="admin-btn-secondary">
+                        Remind
                       </button>
                     )}
                     <button onClick={() => sendReceipt(s.id)} disabled={busyId === s.id} className="admin-btn-secondary">
