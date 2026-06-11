@@ -97,15 +97,6 @@ export function Revenue({ clients }: Props) {
   const onlineTotals   = useMemo(() => aggregate(byCategory.online),    [byCategory]);
   const inPersonTotals = useMemo(() => aggregate(byCategory.in_person), [byCategory]);
   const lowCostTotals  = useMemo(() => aggregate(byCategory.low_cost),  [byCategory]);
-  const overallRows = useMemo(
-    () => [...byCategory.online, ...byCategory.in_person, ...byCategory.low_cost],
-    [byCategory],
-  );
-  const overallTotals: Totals = {
-    sessions: onlineTotals.sessions + inPersonTotals.sessions + lowCostTotals.sessions,
-    gross:    onlineTotals.gross + inPersonTotals.gross + lowCostTotals.gross,
-    net:      onlineTotals.net + inPersonTotals.net + lowCostTotals.net,
-  };
 
   const scopeLabel =
     scope === 'week'  ? 'this week' :
@@ -131,6 +122,34 @@ export function Revenue({ clients }: Props) {
     'Last 12 months · gross';
 
   const lowCostClientCount = clients.filter(c => c.is_low_cost && c.status === 'active').length;
+
+  // Year projection for the Overall card: run-rate based on what's actually
+  // been earned (attended sessions, all categories) so far this year.
+  const projection = useMemo(() => {
+    const yearStart = startOfYear(now);
+    const rows: DrillRow[] = [];
+    let gross = 0, net = 0;
+    for (const c of clients) {
+      for (const s of dedupeSessions(c.sessions)) {
+        if (s.status !== 'attended') continue;
+        const d = new Date(s.session_date);
+        if (d < yearStart || d > now) continue;
+        rows.push({ s, c });
+        gross += s.fee ?? 0;
+        net += netCents(s);
+      }
+    }
+    const msElapsed = Math.max(1, now.getTime() - yearStart.getTime());
+    const msInYear = new Date(now.getFullYear() + 1, 0, 1).getTime() - yearStart.getTime();
+    const factor = msInYear / msElapsed;
+    return {
+      rows,
+      ytdGross: gross,
+      ytdSessions: rows.length,
+      projectedGross: Math.round(gross * factor),
+      projectedNet: Math.round(net * factor),
+    };
+  }, [clients, now]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -214,13 +233,18 @@ export function Revenue({ clients }: Props) {
           onClick={() => setDrill({ title: `Low cost · ${scopeLabel}`, rows: byCategory.low_cost })}
         />
         <RevenueCard
-          label="Overall"
+          label={`Projected ${now.getFullYear()}`}
           accent="terracotta"
-          totals={overallTotals}
-          subtext={`${overallTotals.sessions} session${overallTotals.sessions === 1 ? '' : 's'} ${basis === 'attended' ? 'delivered' : 'on the books'} · all categories`}
+          totals={{
+            sessions: projection.ytdSessions,
+            gross: projection.projectedGross,
+            net: projection.projectedNet,
+          }}
+          grossNote={`Projected gross for ${now.getFullYear()}`}
+          subtext={`Based on ${euro(projection.ytdGross)} earned from ${projection.ytdSessions} attended session${projection.ytdSessions === 1 ? '' : 's'} so far this year`}
           Icon={TrendingUp}
           emphasised
-          onClick={() => setDrill({ title: `All sessions · ${scopeLabel}`, rows: overallRows })}
+          onClick={() => setDrill({ title: `Attended ${now.getFullYear()} · year to date`, rows: projection.rows })}
         />
       </div>
 
@@ -385,10 +409,12 @@ interface RevenueCardProps {
   subtext: string;
   Icon: typeof TrendingUp;
   emphasised?: boolean;
+  /** Overrides the default "Gross · N sessions" line under the headline. */
+  grossNote?: string;
   onClick?: () => void;
 }
 
-function RevenueCard({ label, accent, totals, subtext, Icon, emphasised, onClick }: RevenueCardProps) {
+function RevenueCard({ label, accent, totals, subtext, Icon, emphasised, grossNote, onClick }: RevenueCardProps) {
   const palette = {
     sage:       { strip: 'var(--sage)',       blob: '#d8e8de', iconBg: 'rgba(79,138,104,0.14)', iconFg: 'var(--sage)' },
     lilac:      { strip: 'var(--lilac)',      blob: '#e3d3eb', iconBg: 'rgba(168,124,185,0.16)', iconFg: 'var(--lilac-dark)' },
@@ -426,7 +452,7 @@ function RevenueCard({ label, accent, totals, subtext, Icon, emphasised, onClick
         <span>{grossEuros.toLocaleString('en-IE')}</span>
       </div>
       <div style={{ marginTop: 8, fontSize: 12, color: 'var(--ink-muted)' }}>
-        Gross · {totals.sessions} session{totals.sessions === 1 ? '' : 's'}
+        {grossNote ?? `Gross · ${totals.sessions} session${totals.sessions === 1 ? '' : 's'}`}
       </div>
       <div style={{ marginTop: 4, fontSize: 13, fontWeight: 500, color: 'var(--forest-deep)' }}>
         Net €{netEuros.toLocaleString('en-IE')}
@@ -546,12 +572,12 @@ function MonthlyChart({
         const totalPct = (total / max) * 100;
         const isCurrent = i === currentIdx;
         const clickable = !!onBarClick && total > 0;
+        // Segment colours always match the legend — the current period is
+        // marked via its label, never by recolouring a segment.
         const segments = [
           { value: m.low,      colour: 'linear-gradient(180deg, #c198d3 0%, var(--lilac) 100%)' },
           { value: m.inPerson, colour: 'linear-gradient(180deg, #e3c170 0%, var(--gold) 100%)' },
-          { value: m.online,   colour: isCurrent
-              ? 'linear-gradient(180deg, var(--terracotta) 0%, #e7855a 100%)'
-              : 'linear-gradient(180deg, var(--sage) 0%, #7eae8e 100%)' },
+          { value: m.online,   colour: 'linear-gradient(180deg, var(--sage) 0%, #7eae8e 100%)' },
         ];
         return (
           <div
@@ -594,7 +620,11 @@ function MonthlyChart({
             <div style={{ fontSize: 10, color: 'var(--forest-deep)', fontWeight: 500 }}>
               {total > 0 ? euro(total) : '—'}
             </div>
-            <div style={{ fontSize: 10, color: 'var(--ink-muted)' }}>{barLabel(m.label, isCurrent)}</div>
+            <div style={{
+              fontSize: 10,
+              color: isCurrent ? 'var(--terracotta)' : 'var(--ink-muted)',
+              fontWeight: isCurrent ? 600 : 400,
+            }}>{m.label}</div>
           </div>
         );
       })}
@@ -602,6 +632,3 @@ function MonthlyChart({
   );
 }
 
-function barLabel(s: string, isCurrent: boolean) {
-  return isCurrent ? `${s} ·` : s;
-}
