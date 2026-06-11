@@ -116,20 +116,27 @@ export function CalendarWeekGrid({
     setFlash({ id: session.id, text: next === 'paid' ? 'Marked as paid' : 'Marked as unpaid' });
     setBusyPaidId(session.id);
     try {
-      const res = await adminFetch('/api/admin/sessions/update', {
+      // mark-paid (not sessions/update) so manual payments — e.g. a Revolut
+      // transfer — are also logged to / removed from the finance ledger.
+      const res = await adminFetch('/api/admin/mark-paid', {
         method: 'POST',
         body: JSON.stringify({
           session_id: session.id,
-          client_id: session.client_id,
-          payment_status: next,
+          action: next === 'paid' ? 'mark' : 'unmark',
         }),
       });
-      if (!res.ok) throw new Error('update failed');
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error ?? 'update failed');
+      }
       onReload();
-    } catch {
+    } catch (err) {
       // Revert the optimistic flip and let the user know it didn't take.
       setPaidOverride(prev => ({ ...prev, [session.id]: next === 'paid' ? 'unpaid' : 'paid' }));
-      setFlash({ id: session.id, text: 'Could not update — try again' });
+      const msg = err instanceof Error && err.message.includes('Stripe')
+        ? 'Stripe payment — refund via Stripe'
+        : 'Could not update — try again';
+      setFlash({ id: session.id, text: msg });
     } finally {
       setBusyPaidId(null);
     }

@@ -7,14 +7,18 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 // One-click manual payment recording. Marks the session paid and logs it in
 // the payments ledger with the correct category — 'cash' for low-cost
-// clients, 'manual' otherwise (e.g. a bank transfer recorded by hand).
+// clients, 'manual' otherwise (e.g. a Revolut transfer recorded by hand).
 // Stripe payments never come through here; the webhook handles those.
+//
+// action: 'unmark' reverses a manual mark: sets the session back to unpaid
+// and removes its cash/manual ledger rows. Stripe ledger rows are never
+// touched — a webhook-confirmed payment can't be undone from here.
 
 export async function POST(req: NextRequest) {
   const denied = requireAdmin(req);
   if (denied) return denied;
 
-  let body: { session_id: string };
+  let body: { session_id: string; action?: 'mark' | 'unmark' };
   try {
     body = await req.json();
   } catch {
@@ -35,6 +39,36 @@ export async function POST(req: NextRequest) {
   if (fetchErr || !session) {
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
+
+  if (body.action === 'unmark') {
+    if (session.stripe_payment_intent_id) {
+      return NextResponse.json(
+        { error: 'This payment was confirmed by Stripe — it can only be changed via a refund in Stripe' },
+        { status: 409 },
+      );
+    }
+    const { error: updateErr } = await supabaseAdmin
+      .from('sessions')
+      .update({ payment_status: 'unpaid', paid_at: null })
+      .eq('id', session_id);
+    if (updateErr) {
+      console.error('[mark-paid] unmark error:', updateErr);
+      return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
+    }
+    // Remove the manual/cash ledger rows this route created; graceful if the
+    // payments table doesn't exist yet.
+    const { error: ledgerErr } = await supabaseAdmin
+      .from('payments')
+      .delete()
+      .eq('session_id', session_id)
+      .in('method', ['cash', 'manual']);
+    if (ledgerErr) {
+      console.warn('[mark-paid] Could not clean ledger (run the payments migration):', ledgerErr.message);
+    }
+    console.log(`[mark-paid] Session ${session_id} unmarked (back to unpaid)`);
+    return NextResponse.json({ success: true, payment_status: 'unpaid' }, { headers: noCache });
+  }
+
   if (session.payment_status === 'paid') {
     return NextResponse.json({ error: 'Session is already marked paid' }, { status: 409 });
   }
