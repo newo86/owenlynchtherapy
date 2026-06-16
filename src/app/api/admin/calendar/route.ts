@@ -119,19 +119,34 @@ export async function GET(req: NextRequest) {
       // id), but the session rows are stamped with the SERIES id — so matching
       // on gcal_event_id alone misses them and we'd insert a second row per
       // occurrence. Keying on client + wall-clock time catches that.
+      // We include cancelled rows here ON PURPOSE. A session removed in-app is
+      // soft-deleted to 'cancelled' and keeps its slot as a tombstone. Counting
+      // it blocks the auto-import below from resurrecting the exact same
+      // client+time slot from a lingering Google Calendar event — the cause of
+      // reminder emails going out for sessions the practitioner had deleted. A
+      // genuinely new booking at a different time has a different key and still
+      // imports; a real re-add at the same time is surfaced via the manual
+      // "unlinked events" Link flow instead of being auto-created.
       const { data: windowSessions } = await supabaseAdmin
         .from('sessions')
-        .select('client_id, session_date')
+        .select('client_id, session_date, status, gcal_event_id')
         .gte('session_date', timeMin)
-        .lte('session_date', timeMax)
-        .neq('status', 'cancelled');
+        .lte('session_date', timeMax);
       const existingKeys = new Set(
         (windowSessions ?? []).map(s => `${s.client_id}@${utcToDublinLocal(s.session_date as string)}`),
+      );
+      // Also refuse to re-import an event whose id belongs to a cancelled
+      // tombstone (covers events tracked by their own instance id).
+      const cancelledGcalIds = new Set(
+        (windowSessions ?? [])
+          .filter(s => s.status === 'cancelled' && s.gcal_event_id)
+          .map(s => s.gcal_event_id as string),
       );
 
       const imports: Promise<void>[] = [];
       for (const event of events) {
         if (trackedByGcalId.has(event.id)) continue;
+        if (cancelledGcalIds.has(event.id)) continue; // deliberately removed — don't resurrect
 
         const matches = matchClients(event.title ?? '');
         if (matches.length !== 1) continue; // 0 = personal/unknown, >1 = ambiguous → leave for manual linking
