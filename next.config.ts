@@ -121,37 +121,6 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // ── Canonical host + scheme ─────────────────────────────────────────
-      // Consolidate all SEO authority on https://owenlynchtherapy.com (non-www).
-      // These run FIRST so the www host / http scheme is stripped before any
-      // path-specific rule below, and use an explicit 301 (permanent) so Google
-      // transfers authority — a 307/308 from temporary platform config does not
-      // do so as cleanly.
-      //
-      // IMPORTANT (infra): the Vercel project must serve the apex domain
-      // (owenlynchtherapy.com) DIRECTLY as the Production domain, with www set
-      // to redirect to it. If the platform were instead redirecting apex → www,
-      // the www → apex rule here would loop. The apex pages currently being
-      // reported as "redirect errors" in Search Console are the symptom of that
-      // inverted setup — fixing the primary domain in Vercel is required
-      // alongside this code change. See the SEO notes in the PR/commit.
-      {
-        // www.owenlynchtherapy.com/* → https://owenlynchtherapy.com/* (301)
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.owenlynchtherapy.com' }],
-        destination: 'https://owenlynchtherapy.com/:path*',
-        statusCode: 301,
-      },
-      {
-        // Any http request that reaches the app → https apex (301). Vercel
-        // already upgrades http→https at the edge; this is a deterministic
-        // backstop so the non-secure URL never serves a 200.
-        source: '/:path*',
-        has: [{ type: 'header', key: 'x-forwarded-proto', value: 'http' }],
-        destination: 'https://owenlynchtherapy.com/:path*',
-        statusCode: 301,
-      },
-
       // High-intent legacy Wix URLs (catch trailing-slash variants too).
       {
         source: '/f{/}?',
