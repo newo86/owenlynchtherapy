@@ -13,7 +13,7 @@ Custom website for owenlynchtherapy.com. Private psychotherapy practice, Dublin 
 - Next.js 16.2 (App Router) + TypeScript + Tailwind CSS
 - Sanity.io (headless CMS) for content
 - Supabase (Postgres) for the admin/intake data
-- Resend (email), Stripe (payments), Google Calendar (read-only)
+- Resend (email), Stripe (payments), Google Calendar (two-way sync)
 - Deployed on Vercel · repo: newo86/owenlynchtherapy
 
 ## Public site
@@ -26,7 +26,13 @@ Pages: Home, About, Services, Contact, FAQ. Blog in progress.
   download-pdf, mark-attended, send-receipt, auth/google, admin/calendar)
 - Supabase tables clients, sessions, intake_submissions, intake_tokens already
   exist — don't recreate them
-- Google Calendar is read-only — never write back to it
+- Google Calendar is two-way: the app reads events for the week view AND writes
+  back — sessions/clients created, rescheduled or deleted in-app push to the
+  practice's primary calendar via createCalendarEvent / updateCalendarEvent /
+  deleteCalendarEvent in src/lib/googleOAuth.ts (OAuth scope calendar.events).
+  Exception: the reconcileCalendar sync job (src/lib/calendarSync.ts) is
+  deliberately read-only toward Google — it only updates Supabase — to avoid
+  sync loops; keep it that way.
 - Run npm run build locally before pushing to catch TypeScript errors
 
 ## Branding
