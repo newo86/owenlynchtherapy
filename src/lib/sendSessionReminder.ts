@@ -58,16 +58,9 @@ export async function sendSessionReminder(
     return { success: false, error: 'Client email not found' };
   }
 
-  if (options.skipIfAlreadySent) {
-    const { data: existing } = await supabaseAdmin
-      .from('session_reminders')
-      .select('id')
-      .eq('session_id', sessionId)
-      .limit(1);
-    if (existing && existing.length > 0) {
-      return { success: false, skipped: true, error: 'Reminder already sent' };
-    }
-  }
+  // The cron path claims a reminder row BEFORE sending (see below); manual
+  // sends just log afterwards. `auto` distinguishes the two.
+  const auto = options.skipIfAlreadySent === true;
 
   const kind = sessionKind(session.session_format as string, Boolean(client.is_low_cost));
   const firstName = client.full_name.split(' ')[0];
@@ -83,6 +76,24 @@ export async function sendSessionReminder(
     : 'on ' + sessionDate.toLocaleDateString('en-IE', {
         weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Dublin',
       });
+
+  // Cron path: CLAIM the reminder before sending. The UNIQUE(session_id,
+  // reminder_type) constraint makes a duplicate claim fail, so a session can
+  // never be emailed twice — even if this runs twice. Fail-closed: if we
+  // cannot record the claim (e.g. the table/constraint is missing), we do
+  // NOT send. This is the opposite of the old behaviour that caused the flood.
+  if (auto) {
+    const { error: claimErr } = await supabaseAdmin
+      .from('session_reminders')
+      .insert({ session_id: sessionId, reminder_type: 'email' });
+    if (claimErr) {
+      if (claimErr.code === '23505') {
+        return { success: false, skipped: true, error: 'Reminder already sent' };
+      }
+      console.error('[send-reminder] claim failed — NOT sending:', claimErr.message);
+      return { success: false, error: 'Reminder ledger unavailable — not sending' };
+    }
+  }
 
   const emailResult = await getResend().emails.send({
     from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
@@ -103,17 +114,23 @@ export async function sendSessionReminder(
 
   if (emailResult.error) {
     console.error('[send-reminder] Resend error:', JSON.stringify(emailResult.error, null, 2));
+    // Release the claim so a later run can retry this session.
+    if (auto) {
+      await supabaseAdmin.from('session_reminders')
+        .delete().eq('session_id', sessionId).eq('reminder_type', 'email');
+    }
     return { success: false, error: 'Failed to send reminder email' };
   }
 
-  // Log to session_reminders. Graceful — if the table hasn't been created
-  // yet the email is already sent; we just skip the log.
-  const { error: logErr } = await supabaseAdmin
-    .from('session_reminders')
-    .insert({ session_id: sessionId, reminder_type: 'email' });
-
-  if (logErr) {
-    console.warn('[send-reminder] Could not log reminder (run the migration):', logErr.message);
+  // Manual path: log the send afterwards (best-effort; ignore the duplicate-key
+  // conflict that happens when one was already logged).
+  if (!auto) {
+    const { error: logErr } = await supabaseAdmin
+      .from('session_reminders')
+      .insert({ session_id: sessionId, reminder_type: 'email' });
+    if (logErr && logErr.code !== '23505') {
+      console.warn('[send-reminder] Could not log reminder:', logErr.message);
+    }
   }
 
   console.log(`[send-reminder] Sent ${kind} reminder to ${client.email} for session ${sessionId}`);

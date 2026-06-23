@@ -8,7 +8,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { adminFetch, displayFee, formatDateTime, isSameDay, startOfWeek, dedupeSessions } from './api';
+import { adminFetch, displayFee, formatDateTime, isSameDay, startOfWeek, dedupeSessions, offerSendReceipt } from './api';
 import { SendReminderModal } from './SendReminderModal';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
 import type {
@@ -204,6 +204,7 @@ export function Dashboard({
       const json = await res.json();
       if (!res.ok) { setFeedback({ id: sessionId, msg: json.error ?? 'Failed.' }); return; }
       setFeedback({ id: sessionId, msg: isLowCost ? 'Cash payment recorded.' : 'Marked paid.' });
+      await offerSendReceipt(sessionId);
       onReload();
     } catch { setFeedback({ id: sessionId, msg: 'Network error.' }); }
     finally { setBusyId(null); }

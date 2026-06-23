@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/admin/reminders/run",
-      "schedule": "0 * * * *"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/admin/reports/weekly",

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { List, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { adminFetch, displayFee, formatDateTime, startOfWeek, dedupeSessions } from './api';
+import { adminFetch, displayFee, formatDateTime, startOfWeek, dedupeSessions, offerSendReceipt } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SessionRow, CalendarEvent, SessionFilter, GcalRef } from './types';
 import { SendReminderModal } from './SendReminderModal';
@@ -128,9 +128,10 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
   async function markPaid(sessionId: string) {
     setBusyId(sessionId);
     try {
-      await adminFetch('/api/admin/mark-paid', {
+      const res = await adminFetch('/api/admin/mark-paid', {
         method: 'POST', body: JSON.stringify({ session_id: sessionId }),
       });
+      if (res.ok) await offerSendReceipt(sessionId);
       onReload();
     } finally { setBusyId(null); }
   }
