@@ -13,6 +13,15 @@
   --font-body: var(--font-poppins), system-ui, sans-serif;
   --font-heading: 'Avenir', 'Avenir Next', 'Nunito', system-ui, sans-serif;
   --font-montserrat: var(--font-montserrat), 'Montserrat', system-ui, sans-serif;
+
+  /* Type scale. Tailwind's defaults already match the brand scale for body
+     (text-base 16 / text-lg 18), utility (text-xs 12 / text-sm 14), H1-upper
+     (text-5xl 48) and H2-lower (text-2xl 24). Only these two needed nudging so
+     the H1 (text-4xl–5xl = 40–48px) and H2 (text-2xl–3xl = 24–32px) bands land
+     exactly on spec. Changing them here ripples across every page that uses the
+     utility classes — no per-file edits. */
+  --text-3xl: 2rem;    /* 32px — H2 upper (was 30px) */
+  --text-4xl: 2.5rem;  /* 40px — H1 lower (was 36px) */
 }
 
 @custom-variant h-hover {
