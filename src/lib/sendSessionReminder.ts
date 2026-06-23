@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 import { buildReminderHtml, paymentLinkFor, sessionKind } from '@/lib/emailTemplates';
+import { reminderOptOutUrl } from '@/lib/reminderOptOut';
 
 export interface ReminderResult {
   success: boolean;
@@ -51,11 +52,16 @@ export async function sendSessionReminder(
     };
   }
 
-  type ClientShape = { full_name: string; email: string; is_low_cost?: boolean };
+  type ClientShape = { full_name: string; email: string; is_low_cost?: boolean; reminders_opted_out?: boolean };
   const client = (session as { clients: ClientShape | null }).clients;
 
   if (!client?.email) {
     return { success: false, error: 'Client email not found' };
+  }
+
+  // Respect the client's choice — applies to both the cron and manual sends.
+  if (client.reminders_opted_out) {
+    return { success: false, skipped: true, error: 'Client has opted out of reminders' };
   }
 
   // The cron path claims a reminder row BEFORE sending (see below); manual
@@ -109,6 +115,7 @@ export async function sendSessionReminder(
       sessionFormat: session.session_format as string,
       paymentUrl: paymentLinkFor(kind, sessionId, client.email),
       alreadyPaid: session.payment_status === 'paid',
+      optOutUrl: reminderOptOutUrl(session.client_id as string),
     }),
   });
 

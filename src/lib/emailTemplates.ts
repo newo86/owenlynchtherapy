@@ -70,10 +70,13 @@ export interface ReminderEmailInput {
   paymentUrl: string | null;
   /** Hide the payment block entirely when the session is already paid. */
   alreadyPaid: boolean;
+  /** Public opt-out link; when present an "unsubscribe from reminders" line
+   *  is shown in the footer. */
+  optOutUrl?: string | null;
 }
 
 export function buildReminderHtml(input: ReminderEmailInput): string {
-  const { firstName, time, dayPhrase, kind, sessionFormat, paymentUrl, alreadyPaid } = input;
+  const { firstName, time, dayPhrase, kind, sessionFormat, paymentUrl, alreadyPaid, optOutUrl } = input;
 
   const joinBlock = sessionFormat === 'online' ? `
     <div style="background:#EEF6F0;border:1px solid #C3DDD0;border-radius:8px;padding:18px 20px;margin:0 0 24px;">
@@ -126,7 +129,10 @@ export function buildReminderHtml(input: ReminderEmailInput): string {
     <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">Owen Lynch<br>
       <span style="font-weight:400;font-size:13px;color:#666;">Owen Lynch Psychotherapy<br>
       owenlynchtherapy.com</span>
-    </p>`);
+    </p>${optOutUrl ? `
+    <p style="color:#999;font-size:12px;line-height:1.6;margin:26px 0 0;border-top:1px solid #EFE9DF;padding-top:16px;">
+      You receive these because you have sessions booked with Owen Lynch Psychotherapy. If you&rsquo;d prefer not to get session reminders, you can <a href="${optOutUrl}" style="color:#999;text-decoration:underline;">unsubscribe from reminders</a>.
+    </p>` : ''}`);
 }
 
 // ── Receipt ─────────────────────────────────────────────────────────────────
