@@ -49,7 +49,7 @@ export default function Hero() {
           fontSize: '13px',
           color: '#C85A1A',
           textTransform: 'uppercase',
-          letterSpacing: '7px',
+          letterSpacing: '0',
           marginTop: '4px',
         }}>
           Psychotherapy
