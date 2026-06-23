@@ -31,6 +31,7 @@ export interface ClientRow {
   created_at: string;
   notes?: string | null;
   is_low_cost?: boolean;
+  reminders_opted_out?: boolean;
   sessions: SessionRow[];
 }
 

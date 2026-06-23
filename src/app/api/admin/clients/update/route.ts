@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
   let body: {
     client_id?: string;
     is_low_cost?: boolean;
+    reminders_opted_out?: boolean;
     session_fee?: number;  // euros
     notes?: string;
     status?: 'active' | 'new' | 'completed';
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
 
   const patch: Record<string, unknown> = {};
   if (typeof body.is_low_cost === 'boolean') patch.is_low_cost = body.is_low_cost;
+  if (typeof body.reminders_opted_out === 'boolean') patch.reminders_opted_out = body.reminders_opted_out;
   if (typeof body.session_fee === 'number' && body.session_fee > 0) {
     patch.session_fee = Math.round(body.session_fee * 100);
   }

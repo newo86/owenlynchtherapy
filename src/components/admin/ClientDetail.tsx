@@ -338,6 +338,25 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
                 {client.is_low_cost ? 'Low cost · click to unmark' : 'Full-paying · click to mark low cost'}
               </button>
             </div>
+            <div>
+              <p className="admin-eyebrow" style={{ marginBottom: 4 }}>Reminders</p>
+              <button
+                type="button"
+                onClick={async () => {
+                  const next = !client.reminders_opted_out;
+                  const res = await adminFetch('/api/admin/clients/update', {
+                    method: 'POST',
+                    body: JSON.stringify({ client_id: client.id, reminders_opted_out: next }),
+                  });
+                  if (res.ok) onReload();
+                }}
+                className={`admin-tag ${client.reminders_opted_out ? 'admin-tag-pause' : 'admin-tag-active'}`}
+                style={{ cursor: 'pointer', border: 'none' }}
+                title="Click to toggle reminder emails for this client"
+              >
+                {client.reminders_opted_out ? 'Opted out · click to re-enable' : 'On · click to opt out'}
+              </button>
+            </div>
             {submission && (
               <button
                 onClick={downloadPdf}
