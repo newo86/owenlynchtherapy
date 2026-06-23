@@ -2,7 +2,6 @@
 
 import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'motion/react';
 
 interface Props {
   name: string;
@@ -13,40 +12,45 @@ interface Props {
 
 export default function ServiceCard({ name, url, description, index }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  const [entered, setEntered] = useState(false);
   const [lineVisible, setLineVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
 
+  // Entry + accent-line reveal, formerly framer-motion. The observer fires
+  // once; CSS transitions handle the fade/rise (inline below) and hover lift.
+  // `entered` drops the stagger delay after the entry runs so hover stays snappy.
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          const id = setTimeout(
-            () => setLineVisible(true),
-            (0.2 + index * 0.08) * 1000,
-          );
+          setInView(true);
+          timers.push(setTimeout(() => setLineVisible(true), (0.2 + index * 0.08) * 1000));
+          timers.push(setTimeout(() => setEntered(true), index * 100 + 650));
           observer.disconnect();
-          return () => clearTimeout(id);
         }
       },
       { rootMargin: '-60px 0px' },
     );
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); timers.forEach(clearTimeout); };
   }, [index]);
 
   return (
-    <motion.div
+    <div
       ref={ref}
       className="service-card-border rounded-xl h-full"
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.55, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: hovered ? 'translateY(-4px)' : inView ? 'none' : 'translateY(24px)',
+        transition: 'opacity 0.55s cubic-bezier(0.22,1,0.36,1), transform 0.45s cubic-bezier(0.22,1,0.36,1)',
+        transitionDelay: entered ? '0s' : `${index * 0.1}s`,
+      }}
     >
       <Link
         href={url}
@@ -84,6 +88,6 @@ export default function ServiceCard({ name, url, description, index }: Props) {
           </span>
         </span>
       </Link>
-    </motion.div>
+    </div>
   );
 }

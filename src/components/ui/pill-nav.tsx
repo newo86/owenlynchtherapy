@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useRef, useState, useEffect } from "react"
-import { motion } from "framer-motion"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -85,23 +84,33 @@ export default function PillNav({ variant }: PillNavProps) {
       ))}
 
       {/* Hover pill */}
-      <motion.li
+      <li
         aria-hidden="true"
-        animate={hoverPos}
-        transition={{ type: "spring", stiffness: 400, damping: 30 }}
         className="pointer-events-none absolute z-0 h-7 rounded-full bg-orange md:h-12"
-        style={{ top: "50%", transform: "translateY(-50%)" }}
+        style={{
+          top: "50%",
+          transform: "translateY(-50%)",
+          left: hoverPos.left,
+          width: hoverPos.width,
+          opacity: hoverPos.opacity,
+          transition: "left 0.3s cubic-bezier(0.22,1,0.36,1), width 0.3s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease",
+        }}
       />
 
       {/* Active page indicator */}
-      <motion.li
+      <li
         aria-hidden="true"
-        animate={{ left: activePos.left, width: activePos.width, opacity: hovering ? 0 : 0.18 }}
-        transition={{ type: "spring", stiffness: 400, damping: 30 }}
         className={`pointer-events-none absolute z-0 h-7 rounded-full md:h-12 ${
           isTransparent ? "bg-white" : "bg-forest"
         }`}
-        style={{ top: "50%", transform: "translateY(-50%)" }}
+        style={{
+          top: "50%",
+          transform: "translateY(-50%)",
+          left: activePos.left,
+          width: activePos.width,
+          opacity: hovering ? 0 : 0.18,
+          transition: "left 0.3s cubic-bezier(0.22,1,0.36,1), width 0.3s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease",
+        }}
       />
     </ul>
   )
