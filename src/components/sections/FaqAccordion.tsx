@@ -65,7 +65,7 @@ export default function FaqAccordion({ categories }: { categories: FaqCategory[]
                       style={{ borderLeft: '2px solid #d4a843' }}
                     >
                       {item.content ?? (
-                        <p className="text-sm font-normal text-gray-600 leading-[1.8]">{item.a}</p>
+                        <p className="text-base font-normal text-gray-600 leading-[1.8]">{item.a}</p>
                       )}
                     </div>
                   </div>

@@ -66,7 +66,7 @@ const reassurance = [
 ];
 
 const inputClass =
-  'w-full rounded-md px-3 py-3 text-sm font-normal bg-white text-gray-800 ' +
+  'w-full rounded-md px-3 py-3 text-base font-normal bg-white text-gray-800 ' +
   'border border-[#D0C8BC] focus:outline-none focus:border-[#2a4d3c] ' +
   'focus:ring-1 focus:ring-[#2a4d3c] h-can:transition-colors placeholder:text-gray-400';
 
@@ -143,14 +143,14 @@ export default async function ContactPage({ searchParams }: Props) {
                     style={{ borderTop: '3px solid #c85a1a' }}
                   >
                     <p className="font-heading font-light text-lg text-forest mb-2">{day}</p>
-                    <p className="font-normal text-sm text-gray-700 mb-1">{hours}</p>
-                    <p className="text-sm font-normal uppercase tracking-normal text-orange mt-3">
+                    <p className="font-normal text-base text-gray-700 mb-1">{hours}</p>
+                    <p className="text-base font-normal uppercase tracking-normal text-orange mt-3">
                       {format}
                     </p>
                   </div>
                 </div>
               ))}
-              <p className="font-normal text-sm leading-[1.8]" style={{ color: '#555555' }}>
+              <p className="font-normal text-base leading-[1.8]" style={{ color: '#555555' }}>
                 In-person sessions take place at Insight Matters, 106 Capel Street, Dublin 1.
                 Online sessions are available to clients across Ireland and the UK.
               </p>
@@ -193,7 +193,7 @@ export default async function ContactPage({ searchParams }: Props) {
                 <p className={labelClass}>Email</p>
                 <a
                   href="mailto:info@owenlynchtherapy.com"
-                  className="font-normal text-sm text-orange h-hover:underline"
+                  className="font-normal text-base text-orange h-hover:underline"
                 >
                   info@owenlynchtherapy.com
                 </a>
@@ -202,14 +202,14 @@ export default async function ContactPage({ searchParams }: Props) {
                 <p className={labelClass}>Phone</p>
                 <a
                   href="tel:+353851471689"
-                  className="font-normal text-sm text-orange h-hover:underline"
+                  className="font-normal text-base text-orange h-hover:underline"
                 >
                   085 147 1689
                 </a>
               </div>
               <div>
                 <p className={labelClass}>Address</p>
-                <address className="font-normal text-sm text-gray-700 not-italic leading-[1.8]">
+                <address className="font-normal text-base text-gray-700 not-italic leading-[1.8]">
                   Insight Matters<br />
                   106 Capel Street<br />
                   Dublin 1, D01 WY40
@@ -240,7 +240,7 @@ export default async function ContactPage({ searchParams }: Props) {
 
             {sent ? (
               <div
-                className="rounded-lg p-6 text-sm font-normal leading-[1.8]"
+                className="rounded-lg p-6 text-base font-normal leading-[1.8]"
                 style={{
                   backgroundColor: '#eef6f1',
                   color: '#2a4d3c',
@@ -254,7 +254,7 @@ export default async function ContactPage({ searchParams }: Props) {
               <>
                 {hasError && (
                   <div
-                    className="rounded-lg p-4 mb-6 text-sm font-normal leading-[1.8]"
+                    className="rounded-lg p-4 mb-6 text-base font-normal leading-[1.8]"
                     style={{
                       backgroundColor: '#fdf0eb',
                       color: '#c85a1a',
@@ -398,7 +398,7 @@ export default async function ContactPage({ searchParams }: Props) {
               <h3 className="font-heading font-light text-xl text-forest mb-3">
                 {heading}
               </h3>
-              <p className="font-normal text-sm text-gray-600 leading-[1.8]">
+              <p className="font-normal text-base text-gray-600 leading-[1.8]">
                 {body}
               </p>
             </div>

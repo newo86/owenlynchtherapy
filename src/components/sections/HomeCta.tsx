@@ -19,7 +19,7 @@ export default function HomeCta() {
           Taking the first step takes courage
         </h2>
 
-        <p className="font-normal text-sm text-white/70 leading-[1.8] mb-12">
+        <p className="font-normal text-base text-white/70 leading-[1.8] mb-12">
           Getting started can feel daunting. If you&apos;d like to find out more or check
           availability, send me a message and I&apos;ll get back to you within one working day.
         </p>

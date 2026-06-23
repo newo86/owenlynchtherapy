@@ -142,7 +142,7 @@ export default async function ArticlesPage() {
         <FloatingCircles />
         <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
           {visiblePosts.length === 0 ? (
-            <p className="font-normal text-sm text-gray-500 py-16">
+            <p className="font-normal text-base text-gray-500 py-16">
               No articles yet — check back soon.
             </p>
           ) : (
@@ -203,7 +203,7 @@ export default async function ArticlesPage() {
                           {formatDate(post.publishedAt)}
                         </time>
 
-                        <p className="font-normal text-sm text-gray-600 leading-[1.8] flex-1 mb-5 line-clamp-3">
+                        <p className="font-normal text-base text-gray-600 leading-[1.8] flex-1 mb-5 line-clamp-3">
                           {post.excerpt}
                         </p>
 
@@ -249,7 +249,7 @@ export default async function ArticlesPage() {
           >
             Thinking about starting therapy?
           </h2>
-          <p className="font-normal text-sm text-cream/70 leading-[1.8] mb-12">
+          <p className="font-normal text-base text-cream/70 leading-[1.8] mb-12">
             {`Reading about therapy is one thing. Taking the first step is another — and it doesn't have to feel daunting. Send me a message and I'll get back to you within one working day.`}
           </p>
           <span

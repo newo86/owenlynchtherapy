@@ -181,16 +181,16 @@ export default function ServicesPage() {
             How Sessions Work
           </h2>
 
-          <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-5">
+          <p className="font-normal text-base text-gray-600 leading-[1.8] mb-5">
             Sessions are 50 minutes and take place in person at Insight Matters, 106 Capel
             Street, Dublin 1, or online via a secure video call. I work with adults only.
           </p>
-          <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-5">
+          <p className="font-normal text-base text-gray-600 leading-[1.8] mb-5">
             I don&apos;t follow a fixed model or programme. We work at a pace that feels right for
             you, focusing on what matters most. Some people come for a few sessions with a specific
             issue in mind. Others work with me longer term.
           </p>
-          <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-10">
+          <p className="font-normal text-base text-gray-600 leading-[1.8] mb-10">
             If you&apos;re not sure whether therapy is right for you, or whether I&apos;m the right
             fit, feel free to get in touch. There&apos;s no pressure — it&apos;s just a conversation.
           </p>
@@ -224,7 +224,7 @@ export default function ServicesPage() {
             >
               Available Across Ireland &amp; the UK
             </h2>
-            <p className="font-normal text-sm text-gray-600 leading-[1.8]">
+            <p className="font-normal text-base text-gray-600 leading-[1.8]">
               All sessions are available online via secure video call — no travel, no waiting
               rooms, no compromise on quality. Online therapy works just as well as in-person for
               most people and many clients prefer it.
@@ -286,7 +286,7 @@ export default function ServicesPage() {
           >
             Ready to get started?
           </h2>
-          <p className="font-normal text-sm text-cream/70 leading-[1.8] mb-10">
+          <p className="font-normal text-base text-cream/70 leading-[1.8] mb-10">
             Getting started can feel daunting. Send me a message and I&apos;ll get back to you
             within one working day.
           </p>

@@ -14,7 +14,7 @@ export default function ServiceCTA() {
         >
           Ready to take the first step?
         </h2>
-        <p className="font-normal text-sm text-cream/75 leading-[1.8] mb-10">
+        <p className="font-normal text-base text-cream/75 leading-[1.8] mb-10">
           Getting started can feel daunting. Send me a message and I&apos;ll get back to you within
           one working day.
         </p>

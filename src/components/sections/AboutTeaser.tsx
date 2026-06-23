@@ -38,7 +38,7 @@ export default function AboutTeaser() {
             A gentle, non-judgmental approach
           </h2>
 
-          <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-5">
+          <p className="font-normal text-base text-gray-600 leading-[1.8] mb-5">
             I&apos;m Owen Lynch, an{' '}
             <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 h-hover:decoration-orange h-can:transition-colors">IAHIP</a>
             {' '}and{' '}
@@ -48,7 +48,7 @@ export default function AboutTeaser() {
             hardest to name.
           </p>
 
-          <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-12">
+          <p className="font-normal text-base text-gray-600 leading-[1.8] mb-12">
             I work with curiosity and honesty &mdash; that means I&apos;ll support you fully, and
             I&apos;ll also challenge you when it&apos;s needed.
           </p>

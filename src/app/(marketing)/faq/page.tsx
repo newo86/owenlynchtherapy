@@ -29,7 +29,7 @@ const ICP   = <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" ta
 
 /* ── Crisis answer: rich content rendered in the accordion ── */
 const crisisContent = (
-  <div className="text-sm font-normal text-gray-600 leading-[1.8] space-y-4">
+  <div className="text-base font-normal text-gray-600 leading-[1.8] space-y-4">
     <p>
       If you or someone you know is in immediate danger, or if there is any risk to life,
       please go straight to your nearest emergency department or call emergency services now.
@@ -114,7 +114,7 @@ const faqCategories: FaqCategory[] = [
       {
         q: 'Am I covered by health insurance?',
         a: 'Depending on your health insurance plan, yes. Many plans provide partial refunds or discounts on psychotherapy sessions. I am fully accredited by both IAHIP and ICP, which means my sessions should qualify under most plans that cover psychotherapy. Check directly with your insurance provider to confirm your specific cover.',
-        content: <p className="text-sm font-normal text-gray-600 leading-[1.8]">Depending on your health insurance plan, yes. Many plans provide partial refunds or discounts on psychotherapy sessions. I am fully accredited by both {IAHIP} and {ICP}, which means my sessions should qualify under most plans that cover psychotherapy. Check directly with your insurance provider to confirm your specific cover.</p>,
+        content: <p className="text-base font-normal text-gray-600 leading-[1.8]">Depending on your health insurance plan, yes. Many plans provide partial refunds or discounts on psychotherapy sessions. I am fully accredited by both {IAHIP} and {ICP}, which means my sessions should qualify under most plans that cover psychotherapy. Check directly with your insurance provider to confirm your specific cover.</p>,
       },
       {
         q: 'What is your cancellation policy?',
@@ -157,7 +157,7 @@ const faqCategories: FaqCategory[] = [
       {
         q: 'Do you keep notes?',
         a: 'I keep brief clinical notes as required by my accreditation bodies IAHIP and ICP. These are stored securely and are not shared with anyone without your consent.',
-        content: <p className="text-sm font-normal text-gray-600 leading-[1.8]">I keep brief clinical notes as required by my accreditation bodies {IAHIP} and {ICP}. These are stored securely and are not shared with anyone without your consent.</p>,
+        content: <p className="text-base font-normal text-gray-600 leading-[1.8]">I keep brief clinical notes as required by my accreditation bodies {IAHIP} and {ICP}. These are stored securely and are not shared with anyone without your consent.</p>,
       },
       {
         q: "What if I'm in crisis?",
@@ -307,7 +307,7 @@ export default function FaqPage() {
           >
             Still have a question?
           </h2>
-          <p className="font-normal text-sm text-cream/70 leading-[1.8] mb-10">
+          <p className="font-normal text-base text-cream/70 leading-[1.8] mb-10">
             Feel free to get in touch. I&apos;m happy to answer anything before you decide to book.
           </p>
           <span

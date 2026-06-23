@@ -302,7 +302,7 @@ export default async function ArticlePage({ params }: Props) {
           >
             Could therapy help?
           </h2>
-          <p className="font-normal text-sm text-cream/75 leading-[1.8] mb-10">
+          <p className="font-normal text-base text-cream/75 leading-[1.8] mb-10">
             {`If you're based in Ireland or the UK and think therapy might help, I offer sessions in Dublin and online. There's no pressure — the first step is simply a conversation.`}
           </p>
           <span className="block w-12 h-px mx-auto mb-8" style={{ backgroundColor: '#d4a843' }} aria-hidden="true" />

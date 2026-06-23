@@ -208,7 +208,7 @@ export default function AboutPage() {
               Hello, I&apos;m Owen
             </h2>
 
-            <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-5">
+            <p className="font-normal text-base text-gray-600 leading-[1.8] mb-5">
               I&apos;m an{' '}
               <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 decoration-orange/50 h-hover:decoration-orange h-can:transition-colors">IAHIP</a>
               {' '}and{' '}
@@ -216,12 +216,12 @@ export default function AboutPage() {
               {' '}accredited integrative psychotherapist based in Dublin. I work with
               adults in person and online across Ireland and the UK.
             </p>
-            <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-5">
+            <p className="font-normal text-base text-gray-600 leading-[1.8] mb-5">
               I adapt therapy to you. We might focus on what&apos;s happening now, or take time to
               understand where things come from. My work draws on approaches including ACT, CBT,
               ERP, psychodynamic, and person-centred therapy.
             </p>
-            <p className="font-normal text-sm text-gray-600 leading-[1.8] mb-10">
+            <p className="font-normal text-base text-gray-600 leading-[1.8] mb-10">
               I&apos;ll be engaged in the process with you. I work with curiosity and honesty —
               that means I&apos;ll support you fully, and I&apos;ll also challenge you when
               it&apos;s needed.
@@ -301,7 +301,7 @@ export default function AboutPage() {
                 <h3 className="font-heading font-light text-xl text-forest mb-4">
                   {heading}
                 </h3>
-                <p className="font-normal text-sm text-gray-600 leading-[1.8]">
+                <p className="font-normal text-base text-gray-600 leading-[1.8]">
                   {body}
                 </p>
               </div>
@@ -341,12 +341,12 @@ export default function AboutPage() {
                     href={link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-normal text-sm text-gray-700 leading-[1.8] underline underline-offset-2 decoration-orange/50 h-hover:decoration-orange h-can:transition-colors"
+                    className="font-normal text-base text-gray-700 leading-[1.8] underline underline-offset-2 decoration-orange/50 h-hover:decoration-orange h-can:transition-colors"
                   >
                     {text}
                   </a>
                 ) : (
-                  <span className="font-normal text-sm text-gray-700 leading-[1.8]">
+                  <span className="font-normal text-base text-gray-700 leading-[1.8]">
                     {text}
                   </span>
                 )}
@@ -423,7 +423,7 @@ export default function AboutPage() {
           >
             Ready to take the first step?
           </h2>
-          <p className="font-normal text-sm text-cream/70 leading-[1.8] mb-10">
+          <p className="font-normal text-base text-cream/70 leading-[1.8] mb-10">
             Getting started can feel daunting. Send me a message and I&apos;ll get back to you
             within one working day.
           </p>
