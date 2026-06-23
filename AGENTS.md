@@ -40,6 +40,11 @@ Pages: Home, About, Services, Contact, FAQ. Blog in progress.
   (accent/buttons only), gold #D4A843 (dividers/tile accents only), linen #F5F0E8
 - Fonts: Avenir Light / Montserrat 300 fallback for headings (weight 300);
   Poppins for body and nav
+- Type scale (public site — see docs/STYLE-GUIDE.md for the full table):
+  H1 40–48px (text-4xl–5xl), H2 24–32px (text-2xl–3xl), body 16–18px
+  (text-base–lg, and the global `body` base is 16px), utility/captions 12–14px
+  (text-xs–sm). The scale lives in the Tailwind v4 `@theme` tokens in
+  src/app/globals.css; change it there, not per-component.
 - Voice: warm, honest, human. No wellness buzzwords, no overclaiming, no
   promising outcomes. Stigma-free, non-deficit language throughout.
 <!-- END:project-context -->
