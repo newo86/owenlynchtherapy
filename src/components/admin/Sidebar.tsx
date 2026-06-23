@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus, TrendingUp, ShieldCheck } from 'lucide-react';
+import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus, TrendingUp, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import type { AdminSection } from './types';
 
 interface Props {
@@ -8,6 +8,8 @@ interface Props {
   onNavigate: (s: AdminSection) => void;
   onSignOut: () => void;
   onOpenMfa: () => void;
+  privacy: boolean;
+  onTogglePrivacy: () => void;
 }
 
 const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> = [
@@ -19,7 +21,7 @@ const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> =
   { id: 'new-client', label: 'Onboarding', Icon: UserRoundPlus },
 ];
 
-export function Sidebar({ active, onNavigate, onSignOut, onOpenMfa }: Props) {
+export function Sidebar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onTogglePrivacy }: Props) {
   return (
     <aside className="admin-sidebar" aria-label="Admin navigation">
       <button
@@ -53,6 +55,22 @@ export function Sidebar({ active, onNavigate, onSignOut, onOpenMfa }: Props) {
           </button>
         ))}
       </nav>
+
+      <button
+        type="button"
+        onClick={onTogglePrivacy}
+        className="admin-nav-btn"
+        title={privacy ? 'Privacy mode on — client info hidden (click to show)' : 'Privacy mode — hide client info to show others'}
+        aria-label="Toggle privacy mode"
+        aria-pressed={privacy}
+        style={privacy
+          ? { marginBottom: 10, background: 'var(--terracotta)', color: '#fff' }
+          : { marginBottom: 10 }}
+      >
+        {privacy
+          ? <EyeOff size={22} strokeWidth={1.6} aria-hidden />
+          : <Eye size={22} strokeWidth={1.6} aria-hidden />}
+      </button>
 
       <button
         type="button"

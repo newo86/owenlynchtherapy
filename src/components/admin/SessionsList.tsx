@@ -245,8 +245,8 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <Avatar name={c.full_name} size={32} />
                     <div>
-                      <div style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{c.full_name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{c.email}</div>
+                      <div className="pii" style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{c.full_name}</div>
+                      <div className="pii" style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{c.email}</div>
                     </div>
                   </div>
                 </td>

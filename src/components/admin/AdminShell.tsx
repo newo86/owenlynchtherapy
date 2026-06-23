@@ -62,6 +62,20 @@ export function AdminShell() {
   const [editSession, setEditSession] = useState<{ session: SessionRow; client: ClientRow } | null>(null);
   const [editGcalData, setEditGcalData] = useState<GcalRef | null>(null);
   const [mfaOpen, setMfaOpen] = useState(false);
+
+  // Privacy mode — blurs client-identifying info so the dashboard can be shown
+  // to others / screen-shared. Persisted so it survives navigation & refresh.
+  const [privacy, setPrivacy] = useState(false);
+  useEffect(() => {
+    try { setPrivacy(localStorage.getItem('ol_admin_privacy') === '1'); } catch {}
+  }, []);
+  const togglePrivacy = useCallback(() => {
+    setPrivacy(p => {
+      const next = !p;
+      try { localStorage.setItem('ol_admin_privacy', next ? '1' : '0'); } catch {}
+      return next;
+    });
+  }, []);
   // Filter intents carried when a Quick Action card navigates between sections.
   const [sessionsFilter, setSessionsFilter] = useState<SessionFilter | undefined>();
   const [formsTab, setFormsTab] = useState<FormsTab | undefined>();
@@ -173,7 +187,7 @@ export function AdminShell() {
   }
 
   return (
-    <div className="admin-root">
+    <div className={`admin-root${privacy ? ' is-private' : ''}`}>
       <div className="admin-bg-shapes" aria-hidden>
         <div className="admin-blob admin-blob-1" />
         <div className="admin-blob admin-blob-2" />
@@ -197,6 +211,8 @@ export function AdminShell() {
           }}
           onSignOut={() => { void logout().then(() => window.location.reload()); }}
           onOpenMfa={() => setMfaOpen(true)}
+          privacy={privacy}
+          onTogglePrivacy={togglePrivacy}
         />
 
         <main className="admin-main">

@@ -138,8 +138,8 @@ export function ClientsList({ clients, onOpen, onNewClient, onScheduleSession }:
                 <Avatar name={c.full_name} size={42} />
 
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--forest-deep)' }}>{c.full_name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{c.email}</div>
+                  <div className="pii" style={{ fontSize: 14, fontWeight: 500, color: 'var(--forest-deep)' }}>{c.full_name}</div>
+                  <div className="pii" style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{c.email}</div>
                 </div>
 
                 <div>

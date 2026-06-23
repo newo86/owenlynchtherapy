@@ -21,6 +21,7 @@ export function Avatar({ name, size = 38 }: { name: string; size?: number }) {
   return (
     <div
       aria-hidden
+      className="pii"
       style={{
         width: size,
         height: size,

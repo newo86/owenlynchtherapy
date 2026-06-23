@@ -249,12 +249,12 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
         }}>
           <Avatar name={client.full_name} size={48} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
+            <div className="pii" style={{
               fontFamily: 'var(--font-montserrat), Avenir, sans-serif',
               fontWeight: 300, fontSize: 22, color: 'white',
               letterSpacing: '0.5px',
             }}>{client.full_name}</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>
+            <div className="pii" style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>
               {client.email}{client.phone ? ` · ${client.phone}` : ''}
             </div>
           </div>
@@ -375,7 +375,7 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="pii" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <ContactField label="Email" value={contactFields.email} editing={editingContact} type="email"
                 onChange={v => setContactFields(f => ({ ...f, email: v }))} />
               <ContactField label="Phone" value={contactFields.phone} editing={editingContact} type="tel"
@@ -463,7 +463,7 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
               onChange={e => handleNotesChange(e.target.value)}
               placeholder="Private notes about this client. Auto-saves as you type."
               rows={6}
-              className="admin-textarea"
+              className="admin-textarea pii"
             />
           </section>
         </div>

@@ -5,6 +5,19 @@
    Scoped to .admin-root so nothing leaks into the marketing site.
    ────────────────────────────────────────────────────────────────────────── */
 
+/* Privacy mode — blurs client-identifying info so the dashboard can be shown
+   to others or screen-shared. Toggled from the sidebar; adds .is-private to
+   .admin-root. Covers anything tagged .pii plus the named client-name classes.
+   user-select:none stops the blurred text being selected/copied to reveal it. */
+.admin-root.is-private .pii,
+.admin-root.is-private .admin-session-name,
+.admin-root.is-private .admin-clientrow-name,
+.admin-root.is-private .admin-event-name {
+  filter: blur(7px);
+  user-select: none;
+  transition: filter 120ms ease;
+}
+
 .admin-root {
   --forest-deep:   #2A4D3C;
   --forest:        #2D5A42;

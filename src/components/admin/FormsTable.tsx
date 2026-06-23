@@ -123,10 +123,10 @@ export function FormsTable({ submissions, tokens, initialTab }: Props) {
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <Avatar name={sub.full_name} size={32} />
-                    <div style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{sub.full_name}</div>
+                    <div className="pii" style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{sub.full_name}</div>
                   </div>
                 </td>
-                <td>{sub.email ?? '—'}</td>
+                <td className="pii">{sub.email ?? '—'}</td>
                 <td>{FORMAT_LABELS[sub.session_format] ?? sub.session_format}</td>
                 <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(sub.submitted_at)}</td>
                 <td style={{ textAlign: 'right' as const }}>

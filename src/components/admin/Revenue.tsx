@@ -360,7 +360,7 @@ function DrillDownModal({ title, rows, onClose }: { title: string; rows: DrillRo
                     borderRadius: 10,
                   }}>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--forest-deep)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div className="pii" style={{ fontSize: 13, fontWeight: 500, color: 'var(--forest-deep)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {c.full_name}
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginTop: 2 }}>
