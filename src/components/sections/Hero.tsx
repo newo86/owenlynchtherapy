@@ -36,7 +36,7 @@ export default function Hero() {
           fontSize: '26px',
           color: '#F5F0E8',
           textTransform: 'uppercase',
-          letterSpacing: '5px',
+          letterSpacing: '0',
           marginTop: '16px',
         }}>
           Owen Lynch
@@ -46,11 +46,11 @@ export default function Hero() {
         <p style={{
           fontFamily: 'var(--font-poppins),Poppins,sans-serif',
           fontWeight: 600,
-          fontSize: '13px',
+          fontSize: '20px',
           color: '#C85A1A',
           textTransform: 'uppercase',
-          letterSpacing: '7px',
-          marginTop: '4px',
+          letterSpacing: '0',
+          marginTop: '6px',
         }}>
           Psychotherapy
         </p>
