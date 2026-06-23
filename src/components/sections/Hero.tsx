@@ -46,11 +46,11 @@ export default function Hero() {
         <p style={{
           fontFamily: 'var(--font-poppins),Poppins,sans-serif',
           fontWeight: 600,
-          fontSize: '20px',
+          fontSize: '13px',
           color: '#C85A1A',
           textTransform: 'uppercase',
-          letterSpacing: '0',
-          marginTop: '6px',
+          letterSpacing: '7px',
+          marginTop: '4px',
         }}>
           Psychotherapy
         </p>

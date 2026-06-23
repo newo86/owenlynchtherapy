@@ -66,11 +66,11 @@ export default function ServiceCard({ name, url, description, index }: Props) {
           }}
         />
 
-        <h3 className="font-heading font-light text-xl text-forest">{name}</h3>
+        <h3 className="font-heading font-light text-2xl text-forest">{name}</h3>
 
-        <p className="font-normal text-gray-500 text-xs leading-relaxed flex-1">{description}</p>
+        <p className="font-normal text-gray-500 text-base leading-relaxed flex-1">{description}</p>
 
-        <span className="inline-flex items-center gap-2 text-orange text-[10px] font-normal uppercase tracking-normal">
+        <span className="inline-flex items-center gap-2 text-orange text-xs font-normal uppercase tracking-normal">
           Learn more{' '}
           <span
             aria-hidden="true"
