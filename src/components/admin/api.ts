@@ -89,31 +89,30 @@ export async function adminFetch(input: string, init: RequestInit = {}): Promise
   return fetch(input, { ...init, headers, cache: 'no-store', credentials: 'same-origin' });
 }
 
-/**
- * After a session is marked paid, offer to email the client their receipt.
- * Uses a simple confirm() (consistent with the calendar's delete confirm) so
- * sending a receipt is always a deliberate, per-payment choice — never
- * automatic. Reuses the existing /api/admin/send-receipt route untouched.
- */
-export async function offerSendReceipt(sessionId: string): Promise<void> {
-  if (typeof window === 'undefined') return;
-  if (!window.confirm('Marked as paid. Send a receipt to the client now?')) return;
-  try {
-    const res = await adminFetch('/api/admin/send-receipt', {
-      method: 'POST',
-      body: JSON.stringify({ session_id: sessionId }),
-    });
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      window.alert(json.error ? `Could not send receipt: ${json.error}` : 'Could not send the receipt — please try again.');
-    }
-  } catch {
-    window.alert('Could not send the receipt — please try again.');
-  }
-}
-
 export function displayFee(cents: number): string {
   return `€${Math.round(cents / 100)}`;
+}
+
+/** Fetch an admin PDF (via the auth cookie) and trigger a browser download. */
+export async function downloadAdminPdf(url: string, filename: string): Promise<void> {
+  try {
+    const res = await adminFetch(url);
+    if (!res.ok) {
+      window.alert('Could not generate the PDF — please try again.');
+      return;
+    }
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(objUrl);
+  } catch {
+    window.alert('Could not download the PDF — please try again.');
+  }
 }
 
 export function initials(name: string): string {

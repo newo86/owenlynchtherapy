@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Pencil, Trash2, Mail, CircleCheck } from 'lucide-react';
-import { adminFetch, formatTime, isSameDay, startOfWeek, dedupeSessions, offerSendReceipt } from './api';
+import { adminFetch, formatTime, isSameDay, startOfWeek, dedupeSessions } from './api';
 import type { ClientRow, SessionRow, CalendarEvent, GcalRef } from './types';
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -129,7 +129,6 @@ export function CalendarWeekGrid({
         const json = await res.json().catch(() => ({}));
         throw new Error(json.error ?? 'update failed');
       }
-      if (next === 'paid') await offerSendReceipt(session.id);
       onReload();
     } catch (err) {
       // Revert the optimistic flip and let the user know it didn't take.

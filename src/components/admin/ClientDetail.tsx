@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, Download, Trash2, Pencil, Check } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { adminFetch, displayFee, formatDateTime } from './api';
+import { adminFetch, displayFee, formatDateTime, downloadAdminPdf } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SessionRow, SubmissionRow } from './types';
 
@@ -414,7 +414,23 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
           </section>
 
           <section>
-            <p className="admin-eyebrow" style={{ marginBottom: 10 }}>Session history</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 10 }}>
+              <p className="admin-eyebrow" style={{ margin: 0 }}>Session history</p>
+              {sortedSessions.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => downloadAdminPdf(
+                    `/api/admin/receipts/statement?client_id=${client.id}`,
+                    `statement-${client.full_name.replace(/\s+/g, '-').toLowerCase()}.pdf`,
+                  )}
+                  className="admin-btn-secondary"
+                  style={{ padding: '6px 12px', fontSize: 10 }}
+                  title="Download a PDF statement of all this client's sessions"
+                >
+                  <Download size={11} strokeWidth={1.8} /> Download statement
+                </button>
+              )}
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {sortedSessions.length === 0 && (
                 <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: 0 }}>No sessions.</p>
@@ -431,16 +447,32 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
                     <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>
                       {FORMAT_LABELS[s.session_format] ?? s.session_format} · {displayFee(s.fee)}
                     </span>
-                    {onEditSession && client && (
-                      <button
-                        type="button"
-                        onClick={() => onEditSession(s, client)}
-                        className="admin-btn-secondary"
-                        style={{ padding: '5px 10px', fontSize: 10, marginLeft: 'auto' }}
-                      >
-                        <Pencil size={11} strokeWidth={1.8} /> Edit
-                      </button>
-                    )}
+                    <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+                      {s.payment_status === 'paid' && (
+                        <button
+                          type="button"
+                          onClick={() => downloadAdminPdf(
+                            `/api/admin/receipts?session_id=${s.id}`,
+                            `receipt-${client.full_name.replace(/\s+/g, '-').toLowerCase()}-${new Date(s.session_date).toISOString().split('T')[0]}.pdf`,
+                          )}
+                          className="admin-btn-secondary"
+                          style={{ padding: '5px 10px', fontSize: 10 }}
+                          title="Download a receipt PDF for this session"
+                        >
+                          <Download size={11} strokeWidth={1.8} /> Receipt
+                        </button>
+                      )}
+                      {onEditSession && client && (
+                        <button
+                          type="button"
+                          onClick={() => onEditSession(s, client)}
+                          className="admin-btn-secondary"
+                          style={{ padding: '5px 10px', fontSize: 10 }}
+                        >
+                          <Pencil size={11} strokeWidth={1.8} /> Edit
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
                     <span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span>
