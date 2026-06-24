@@ -21,6 +21,9 @@ const FORMAT_LABELS: Record<string, string> = {
   no_preference: 'No Preference',
 };
 
+const PRACTITIONER = 'Owen Lynch';
+const IAHIP_NO = '1890';
+
 export interface ReceiptSession {
   session_date: string;   // UTC ISO
   session_format: string;
@@ -87,16 +90,20 @@ function header(doc: PDFKit.PDFDocument, logo: Buffer | null, subtitle: string) 
 }
 
 function footer(doc: PDFKit.PDFDocument) {
-  const y = doc.page.height - 70;
-  doc.save().moveTo(L, y).lineTo(L + W, y).strokeColor(GOLD).lineWidth(0.5).stroke().restore();
-  doc.font('Helvetica').fontSize(8).fillColor(MUTED)
-    .text('Owen Lynch Psychotherapy · IAHIP & ICP Accredited · Dublin & Online', L, y + 8, { width: W, align: 'center' })
-    .text('owenlynchtherapy.com · info@owenlynchtherapy.com', { width: W, align: 'center' });
+  // Drop the bottom margin to 0 so placing text near the page bottom can't
+  // trigger an automatic page break (PDFKit paginates on the margin, even with
+  // lineBreak:false). The document ends right after, so this is safe.
+  doc.page.margins.bottom = 0;
+  const yLine = doc.page.height - 66;
+  doc.save().moveTo(L, yLine).lineTo(L + W, yLine).strokeColor(GOLD).lineWidth(0.5).stroke().restore();
+  doc.font('Helvetica').fontSize(8).fillColor(MUTED);
+  doc.text('Owen Lynch Psychotherapy · IAHIP & ICP Accredited · Dublin & Online', L, yLine + 9, { width: W, align: 'center', lineBreak: false });
+  doc.text('owenlynchtherapy.com · info@owenlynchtherapy.com', L, yLine + 21, { width: W, align: 'center', lineBreak: false });
 }
 
 function buildToBuffer(build: (doc: PDFKit.PDFDocument) => void, info: PDFKit.DocumentInfo): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margins: { top: 50, bottom: 70, left: L, right: L }, info });
+    const doc = new PDFDocument({ size: 'A4', margins: { top: 50, bottom: 40, left: L, right: L }, info });
     const chunks: Buffer[] = [];
     doc.on('data', (c: Buffer) => chunks.push(c));
     doc.on('error', reject);
@@ -120,28 +127,35 @@ export async function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
       .font('Helvetica-Bold').text(clientName);
     doc.font('Helvetica').fontSize(9).fillColor(MUTED)
       .text(`Receipt date: ${dublinDateShort(session.paid_at ?? session.session_date)}`);
-    doc.moveDown(1);
 
-    // Detail rows
+    // Divider with clear breathing room before the detail table.
+    doc.moveDown(0.9);
+    doc.save().moveTo(L, doc.y).lineTo(L + W, doc.y).strokeColor(GOLD).lineWidth(0.5).stroke().restore();
+    doc.moveDown(1.1);
+
+    // Detail rows (aligned two-column).
     const row = (label: string, value: string, bold = false) => {
       const y = doc.y;
       doc.font('Helvetica').fontSize(10).fillColor(MUTED).text(label, L, y, { width: 160 });
       doc.font(bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(bold ? 12 : 10)
-        .fillColor(bold ? FOREST : DARK).text(value, L + 160, y, { width: W - 160 });
-      doc.moveDown(bold ? 0.6 : 0.5);
+        .fillColor(bold ? FOREST : DARK).text(value, L + 165, y, { width: W - 165 });
+      doc.moveDown(bold ? 0.85 : 0.7);
     };
 
-    doc.save().rect(L, doc.y, W, 0).restore();
     row('Date', dateOnly ? dublinDate(session.session_date) : `${dublinDate(session.session_date)} at ${dublinTime(session.session_date)}`);
     row('Service', 'Psychotherapy Session (50 minutes)');
     row('Format', isOnline ? 'Online' : 'In Person — Insight Matters, Capel Street, Dublin');
     row('Amount', euros(session.fee), true);
     const paid = session.payment_status === 'paid';
-    const y = doc.y;
-    doc.font('Helvetica').fontSize(10).fillColor(MUTED).text('Status', L, y, { width: 160 });
+    const yStatus = doc.y;
+    doc.font('Helvetica').fontSize(10).fillColor(MUTED).text('Status', L, yStatus, { width: 160 });
     doc.font('Helvetica-Bold').fontSize(10).fillColor(paid ? SAGE : '#A04714')
-      .text(paid ? `Paid${session.paid_at ? ` on ${dublinDateShort(session.paid_at)}` : ''}` : 'Unpaid', L + 160, y);
-    doc.moveDown(2);
+      .text(paid ? `Paid${session.paid_at ? ` on ${dublinDateShort(session.paid_at)}` : ''}` : 'Unpaid', L + 165, yStatus);
+    doc.moveDown(1.4);
+
+    row('Psychotherapist', PRACTITIONER);
+    row('IAHIP Reg. No.', IAHIP_NO);
+    doc.moveDown(1.2);
 
     doc.font('Helvetica').fontSize(10).fillColor(DARK)
       .text('Thank you for your payment.', L, doc.y, { width: W });
