@@ -32,6 +32,9 @@ export interface ReceiptSession {
 export interface ReceiptData {
   clientName: string;
   session: ReceiptSession;
+  /** When true the Date row shows only the date (no time) — used for
+   *  back-dated/batch receipts where the exact session time isn't recorded. */
+  dateOnly?: boolean;
 }
 
 export interface StatementData {
@@ -106,7 +109,7 @@ function buildToBuffer(build: (doc: PDFKit.PDFDocument) => void, info: PDFKit.Do
 /** Single-session receipt. */
 export async function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
   const logo = loadLogo();
-  const { clientName, session } = data;
+  const { clientName, session, dateOnly } = data;
   const isOnline = session.session_format === 'online';
 
   return buildToBuffer((doc) => {
@@ -129,7 +132,7 @@ export async function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
     };
 
     doc.save().rect(L, doc.y, W, 0).restore();
-    row('Date', `${dublinDate(session.session_date)} at ${dublinTime(session.session_date)}`);
+    row('Date', dateOnly ? dublinDate(session.session_date) : `${dublinDate(session.session_date)} at ${dublinTime(session.session_date)}`);
     row('Service', 'Psychotherapy Session (50 minutes)');
     row('Format', isOnline ? 'Online' : 'In Person — Insight Matters, Capel Street, Dublin');
     row('Amount', euros(session.fee), true);
