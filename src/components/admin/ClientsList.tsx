@@ -1,10 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Search, UsersRound } from 'lucide-react';
+import { Search, UsersRound, CalendarDays } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { displayFee, formatDate } from './api';
-import { FORMAT_LABELS } from './types';
+import { formatDate, formatTime } from './api';
 import type { ClientRow, SessionRow } from './types';
 
 interface Props {
@@ -16,15 +15,24 @@ interface Props {
 
 type Filter = 'all' | 'active' | 'new' | 'completed';
 
-function nextSession(c: ClientRow): SessionRow | null {
+/** Soonest still-scheduled future session, or null. */
+function upcomingSession(c: ClientRow): SessionRow | null {
   const now = new Date();
-  const upcoming = c.sessions
+  const up = c.sessions
     .filter(s => s.status === 'scheduled' && new Date(s.session_date) > now)
     .sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime());
-  if (upcoming.length) return upcoming[0];
-  return c.sessions
-    .slice()
-    .sort((a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime())[0] ?? null;
+  return up[0] ?? null;
+}
+
+function ageFromDob(dob: string | null | undefined): number | null {
+  if (!dob) return null;
+  const d = new Date(dob);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age >= 0 && age < 120 ? age : null;
 }
 
 export function ClientsList({ clients, onOpen, onNewClient, onScheduleSession }: Props) {
@@ -68,18 +76,10 @@ export function ClientsList({ clients, onOpen, onNewClient, onScheduleSession }:
         </div>
 
         <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-          <button
-            onClick={onScheduleSession}
-            className="admin-btn-secondary"
-            title="Schedule a session for an existing client"
-          >
+          <button onClick={onScheduleSession} className="admin-btn-secondary" title="Schedule a session for an existing client">
             + Add
           </button>
-          <button
-            onClick={onNewClient}
-            className="admin-btn-primary"
-            title="Create a brand new client"
-          >
+          <button onClick={onNewClient} className="admin-btn-primary" title="Create a brand new client">
             + New
           </button>
         </div>
@@ -105,71 +105,47 @@ export function ClientsList({ clients, onOpen, onNewClient, onScheduleSession }:
           )}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(248px, 1fr))', gap: 12 }}>
           {filtered.map(c => {
-            const s = nextSession(c);
-            const paymentTag = !s ? null
-              : s.payment_status === 'paid' ? 'admin-tag-paid'
-              : s.payment_status === 'refunded' ? 'admin-tag-scheduled'
-              : 'admin-tag-unpaid';
-            const paymentLabel = !s ? null
-              : s.payment_status === 'paid' ? 'Paid'
-              : s.payment_status === 'refunded' ? 'Refunded'
-              : 'Unpaid';
-
+            const up = upcomingSession(c);
+            const age = ageFromDob(c.date_of_birth);
             return (
-              <div
+              <button
                 key={c.id}
-                role="button"
-                tabIndex={0}
                 onClick={() => onOpen(c)}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onOpen(c); }}
-                className="admin-card"
-                style={{
-                  padding: '18px 22px',
-                  display: 'grid',
-                  gridTemplateColumns: 'auto 2.5fr 2fr 1fr 1fr auto',
-                  gap: 18,
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  borderRadius: 16,
-                }}
+                className="admin-client-card"
+                aria-label={`Open ${c.full_name}`}
               >
-                <Avatar name={c.full_name} size={42} />
-
-                <div style={{ minWidth: 0 }}>
-                  <div className="pii" style={{ fontSize: 14, fontWeight: 500, color: 'var(--forest-deep)' }}>{c.full_name}</div>
-                  <div className="pii" style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{c.email}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <Avatar name={c.full_name} size={40} />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
+                      className="pii"
+                      style={{
+                        fontSize: 14, fontWeight: 500, color: 'var(--forest-deep)',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}
+                    >{c.full_name}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 2 }}>
+                      {age != null ? `Age ${age}` : 'Age not on file'}
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  {s ? (
-                    <>
-                      <div style={{ fontSize: 13, color: 'var(--forest-deep)' }}>{formatDate(s.session_date)}</div>
-                      <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginTop: 2 }}>
-                        {FORMAT_LABELS[s.session_format] ?? s.session_format} · {displayFee(s.fee)}
-                      </div>
-                    </>
-                  ) : (
-                    <div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>—</div>
-                  )}
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 7,
+                    fontSize: 12, lineHeight: 1.4,
+                    color: up ? 'var(--forest-deep)' : 'var(--ink-muted)',
+                    borderTop: '1px solid var(--line-soft)', paddingTop: 9,
+                  }}
+                >
+                  <CalendarDays size={13} strokeWidth={1.8} aria-hidden style={{ color: up ? 'var(--sage)' : 'var(--ink-muted)', flexShrink: 0 }} />
+                  {up
+                    ? <span><span style={{ color: 'var(--sage)', fontWeight: 500 }}>Next</span>&nbsp; {formatDate(up.session_date)}, {formatTime(up.session_date)}</span>
+                    : <span>No upcoming session</span>}
                 </div>
-
-                <div>
-                  {paymentTag && paymentLabel && (
-                    <span className={`admin-tag ${paymentTag}`}>{paymentLabel}</span>
-                  )}
-                </div>
-
-                <div style={{ fontSize: 12, color: 'var(--ink-muted)' }}>
-                  {c.sessions.length} session{c.sessions.length === 1 ? '' : 's'}
-                </div>
-
-                <button
-                  onClick={e => { e.stopPropagation(); onOpen(c); }}
-                  className="admin-btn-secondary"
-                >View</button>
-              </div>
+              </button>
             );
           })}
         </div>

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { X, Download, Trash2, Pencil, Check } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { X, Download, Trash2, Pencil, Check, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { adminFetch, displayFee, formatDateTime, downloadAdminPdf } from './api';
+import { adminFetch, displayFee, formatDateTime, formatTime, downloadAdminPdf } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SessionRow, SubmissionRow } from './types';
 
@@ -52,14 +52,29 @@ function payLabel(status: string) {
   return status === 'paid' ? 'Paid' : status === 'refunded' ? 'Refunded' : 'Unpaid';
 }
 
+function ageFromDob(dob: string | null | undefined): number | null {
+  if (!dob) return null;
+  const d = new Date(dob);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age >= 0 && age < 120 ? age : null;
+}
+
+/** Year-month (YYYY-MM) of a UTC instant in Europe/Dublin. */
+function dublinYearMonth(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Europe/Dublin' }).slice(0, 7);
+}
+
 interface NextAction {
   kind: 'warn' | 'info' | 'ok';
   label: string;
   detail: string;
 }
 
-/** The single most useful thing to do next for this client, surfaced at the
- *  top of the record so common tasks don't require scanning session history. */
+/** The single most useful next step for this client, surfaced at a glance. */
 function nextAction(client: ClientRow): NextAction {
   const now = new Date();
   const active = client.sessions.filter(s => s.status !== 'cancelled');
@@ -75,9 +90,7 @@ function nextAction(client: ClientRow): NextAction {
     return {
       kind: 'warn',
       label: client.is_low_cost ? 'Record cash payment' : 'Collect payment',
-      detail: `${unpaidDue.length} past session${unpaidDue.length === 1 ? '' : 's'} unpaid — oldest ${formatDateTime(
-        unpaidDue.sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime())[0].session_date
-      )}.`,
+      detail: `${unpaidDue.length} past session${unpaidDue.length === 1 ? '' : 's'} unpaid.`,
     };
   }
   if (needsReceipt.length > 0) {
@@ -88,17 +101,9 @@ function nextAction(client: ClientRow): NextAction {
     };
   }
   if (upcoming) {
-    return {
-      kind: 'ok',
-      label: 'All up to date',
-      detail: `Next session ${formatDateTime(upcoming.session_date)}.`,
-    };
+    return { kind: 'ok', label: 'All up to date', detail: `Next session ${formatDateTime(upcoming.session_date)}.` };
   }
-  return {
-    kind: 'info',
-    label: 'Schedule next session',
-    detail: 'No upcoming sessions booked for this client.',
-  };
+  return { kind: 'info', label: 'Schedule next session', detail: 'No upcoming sessions booked.' };
 }
 
 interface ContactFields {
@@ -124,23 +129,30 @@ function toContactFields(c: ClientRow): ContactFields {
 }
 
 export function ClientDetail({ client, submissions, onClose, onReload, onEditSession }: Props) {
-  const [notes, setNotes] = useState('');
-  const [notesSaving, setNotesSaving] = useState(false);
-  const [notesSaved, setNotesSaved] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [monthOffset, setMonthOffset] = useState(0);
 
   const [editingContact, setEditingContact] = useState(false);
   const [contactFields, setContactFields] = useState<ContactFields>({ email: '', phone: '', date_of_birth: '', emergency_contact_name: '', emergency_contact_phone: '', gp_name: '', gp_phone: '' });
   const [contactSaving, setContactSaving] = useState(false);
   const [contactSaved, setContactSaved] = useState(false);
 
+  // Reset transient view state whenever a different client is opened.
   useEffect(() => {
-    setNotes(client?.notes ?? '');
-    setNotesSaved(false);
     setEditingContact(false);
+    setShowDetails(false);
+    setMonthOffset(0);
     if (client) setContactFields(toContactFields(client));
   }, [client]);
+
+  // Close on Escape.
+  useEffect(() => {
+    if (!client) return;
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose(); }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [client, onClose]);
 
   if (!client) return null;
 
@@ -148,28 +160,20 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
     submissions.find(s => s.client_id && s.client_id === client.id)
     ?? legacySubmissionMatch(submissions, client);
 
-  const sortedSessions = client.sessions
-    .slice()
-    .sort((a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime());
+  const age = ageFromDob(client.date_of_birth);
 
-  function handleNotesChange(v: string) {
-    setNotes(v);
-    setNotesSaved(false);
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => persistNotes(v), 700);
-  }
+  // Target month (Dublin), navigable with the chevrons; defaults to this month.
+  const nowDub = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Dublin' });
+  const [ny, nm] = nowDub.split('-').map(Number);
+  let ty = ny, tm = nm + monthOffset;
+  while (tm < 1) { tm += 12; ty--; }
+  while (tm > 12) { tm -= 12; ty++; }
+  const targetKey = `${ty}-${String(tm).padStart(2, '0')}`;
+  const monthLabel = new Date(Date.UTC(ty, tm - 1, 15)).toLocaleDateString('en-IE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 
-  async function persistNotes(v: string) {
-    if (!client) return;
-    setNotesSaving(true);
-    try {
-      const res = await adminFetch('/api/admin/clients/notes', {
-        method: 'POST',
-        body: JSON.stringify({ client_id: client.id, notes: v }),
-      });
-      if (res.ok) { setNotesSaved(true); onReload(); }
-    } finally { setNotesSaving(false); }
-  }
+  const monthSessions = client.sessions
+    .filter(s => dublinYearMonth(s.session_date) === targetKey)
+    .sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime());
 
   async function saveContact() {
     if (!client) return;
@@ -196,7 +200,16 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
     } finally { setContactSaving(false); }
   }
 
-  async function downloadPdf() {
+  async function toggleClientFlag(patch: Record<string, unknown>) {
+    if (!client) return;
+    const res = await adminFetch('/api/admin/clients/update', {
+      method: 'POST',
+      body: JSON.stringify({ client_id: client.id, ...patch }),
+    });
+    if (res.ok) onReload();
+  }
+
+  async function downloadIntake() {
     if (!submission) return;
     setDownloading(true);
     try {
@@ -214,209 +227,113 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
     } finally { setDownloading(false); }
   }
 
+  async function deleteClient() {
+    if (!client) return;
+    if (!confirm(`Are you sure you want to delete ${client.full_name}? This will permanently delete all their sessions and intake data. This cannot be undone.`)) return;
+    const res = await adminFetch('/api/admin/clients/delete', {
+      method: 'POST',
+      body: JSON.stringify({ client_id: client.id }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      alert(`Failed to delete client: ${json.error ?? res.status}`);
+      return;
+    }
+    onReload();
+    onClose();
+  }
+
+  const action = nextAction(client);
+  const actionPalette = {
+    warn: { bg: 'rgba(200,90,27,0.10)', border: 'rgba(200,90,27,0.4)', fg: '#A04714' },
+    info: { bg: 'rgba(212,168,67,0.12)', border: 'rgba(212,168,67,0.4)', fg: '#7a611f' },
+    ok:   { bg: 'rgba(79,138,104,0.10)', border: 'rgba(79,138,104,0.35)', fg: '#2D5A42' },
+  }[action.kind];
+
   return (
-    <>
+    <div
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(42,77,60,0.34)',
+        backdropFilter: 'blur(3px)',
+        zIndex: 400,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 16,
+        animation: 'admin-fade-in 150ms ease',
+      }}
+    >
       <div
-        onClick={onClose}
+        onClick={e => e.stopPropagation()}
         style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(42, 77, 60, 0.32)',
-          zIndex: 90,
-          animation: 'admin-fade-in 150ms ease',
-        }}
-      />
-      <aside
-        style={{
-          position: 'fixed',
-          top: 0, right: 0,
-          height: '100vh',
-          width: 'min(560px, 100vw)',
           background: 'var(--cream)',
-          boxShadow: '0 24px 64px rgba(42, 77, 60, 0.18)',
-          zIndex: 100,
-          overflowY: 'auto',
+          borderRadius: 22,
+          width: 'min(640px, 100%)',
+          maxHeight: '88vh',
           display: 'flex',
           flexDirection: 'column',
-          animation: 'admin-slide-in-right 220ms ease',
+          overflow: 'hidden',
+          boxShadow: '0 28px 70px rgba(42,77,60,0.30)',
+          animation: 'admin-pop-in 180ms ease',
         }}
       >
+        {/* Header */}
         <div style={{
-          padding: '22px 28px',
+          padding: '20px 22px',
           background: 'var(--forest-deep)',
           color: 'white',
-          display: 'flex', alignItems: 'center', gap: 16,
-          position: 'sticky', top: 0, zIndex: 2,
+          display: 'flex', alignItems: 'center', gap: 14,
+          flexShrink: 0,
         }}>
-          <Avatar name={client.full_name} size={48} />
+          <Avatar name={client.full_name} size={46} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="pii" style={{
               fontFamily: 'var(--font-montserrat), Avenir, sans-serif',
-              fontWeight: 300, fontSize: 22, color: 'white',
-              letterSpacing: '0.5px',
+              fontWeight: 300, fontSize: 21, color: 'white', letterSpacing: '0.4px',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>{client.full_name}</div>
-            <div className="pii" style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>
-              {client.email}{client.phone ? ` · ${client.phone}` : ''}
+            <div className="pii" style={{ fontSize: 12, color: 'rgba(255,255,255,0.72)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {age != null ? `Age ${age} · ` : ''}{client.email}
             </div>
           </div>
-          <button
-            onClick={async () => {
-              if (!confirm(`Are you sure you want to delete ${client.full_name}? This will permanently delete all their sessions and intake data. This cannot be undone.`)) return;
-              const res = await adminFetch('/api/admin/clients/delete', {
-                method: 'POST',
-                body: JSON.stringify({ client_id: client.id }),
-              });
-              if (!res.ok) {
-                const json = await res.json().catch(() => ({}));
-                alert(`Failed to delete client: ${json.error ?? res.status}`);
-                return;
-              }
-              onReload();
-              onClose();
-            }}
-            aria-label="Delete client"
-            title="Delete client"
-            style={{
-              background: 'transparent', border: 'none',
-              color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: 6,
-              marginRight: 4,
-            }}
-          >
+          <button onClick={deleteClient} aria-label="Delete client" title="Delete client"
+            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', padding: 6 }}>
             <Trash2 size={18} strokeWidth={1.8} />
           </button>
           <button onClick={onClose} aria-label="Close"
-            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', padding: 6 }}>
+            style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.9)', cursor: 'pointer', padding: 6 }}>
             <X size={20} strokeWidth={1.8} />
           </button>
         </div>
 
-        <div style={{ padding: '26px 28px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {(() => {
-            const action = nextAction(client);
-            const palette = {
-              warn: { bg: 'rgba(200,90,27,0.10)',  border: 'rgba(200,90,27,0.4)',  fg: '#A04714' },
-              info: { bg: 'rgba(212,168,67,0.12)', border: 'rgba(212,168,67,0.4)', fg: '#7a611f' },
-              ok:   { bg: 'rgba(79,138,104,0.10)', border: 'rgba(79,138,104,0.35)', fg: '#2D5A42' },
-            }[action.kind];
-            return (
-              <div style={{
-                padding: '12px 16px', borderRadius: 12,
-                background: palette.bg, border: `1px solid ${palette.border}`,
-              }}>
-                <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: palette.fg }}>
-                  Next action
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--forest-deep)', marginTop: 4 }}>
-                  {action.label}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>
-                  {action.detail}
-                </div>
-              </div>
-            );
-          })()}
-
-          <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <Field label="Status" value={client.status} />
-            <Field label="Default fee" value={displayFee(client.session_fee)} />
-            <Field label="Joined" value={new Date(client.created_at).toLocaleDateString('en-IE')} />
-            <div>
-              <p className="admin-eyebrow" style={{ marginBottom: 4 }}>Pricing tier</p>
-              <button
-                type="button"
-                onClick={async () => {
-                  const next = !client.is_low_cost;
-                  const res = await adminFetch('/api/admin/clients/update', {
-                    method: 'POST',
-                    body: JSON.stringify({ client_id: client.id, is_low_cost: next }),
-                  });
-                  if (res.ok) onReload();
-                }}
-                className={`admin-tag ${client.is_low_cost ? 'admin-tag-new' : 'admin-tag-active'}`}
-                style={{ cursor: 'pointer', border: 'none' }}
-                title="Click to toggle"
-              >
-                {client.is_low_cost ? 'Low cost · click to unmark' : 'Full-paying · click to mark low cost'}
-              </button>
-            </div>
-            <div>
-              <p className="admin-eyebrow" style={{ marginBottom: 4 }}>Reminders</p>
-              <button
-                type="button"
-                onClick={async () => {
-                  const next = !client.reminders_opted_out;
-                  const res = await adminFetch('/api/admin/clients/update', {
-                    method: 'POST',
-                    body: JSON.stringify({ client_id: client.id, reminders_opted_out: next }),
-                  });
-                  if (res.ok) onReload();
-                }}
-                className={`admin-tag ${client.reminders_opted_out ? 'admin-tag-pause' : 'admin-tag-active'}`}
-                style={{ cursor: 'pointer', border: 'none' }}
-                title="Click to toggle reminder emails for this client"
-              >
-                {client.reminders_opted_out ? 'Opted out · click to re-enable' : 'On · click to opt out'}
-              </button>
-            </div>
-            {submission && (
-              <button
-                onClick={downloadPdf}
-                disabled={downloading}
-                className="admin-btn-secondary"
-                style={{ marginLeft: 'auto' }}
-              >
-                <Download size={14} strokeWidth={1.8} />
-                {downloading ? 'Generating…' : 'Intake PDF'}
-              </button>
-            )}
+        {/* Scrollable body */}
+        <div style={{ padding: '22px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {/* Next action — one glanceable line */}
+          <div style={{ padding: '11px 15px', borderRadius: 12, background: actionPalette.bg, border: `1px solid ${actionPalette.border}` }}>
+            <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1.5px', textTransform: 'uppercase', color: actionPalette.fg }}>
+              {action.label}
+            </span>
+            <span style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginLeft: 8 }}>{action.detail}</span>
           </div>
 
-          {/* Contact details */}
-          <section style={{ background: 'white', border: '1px solid var(--line)', borderRadius: 14, padding: '18px 20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <p className="admin-eyebrow" style={{ margin: 0 }}>Contact details</p>
-              {!editingContact ? (
-                <button
-                  type="button"
-                  onClick={() => { setEditingContact(true); setContactSaved(false); }}
-                  className="admin-btn-secondary"
-                  style={{ padding: '6px 12px', fontSize: 11 }}
-                >
-                  <Pencil size={11} strokeWidth={1.8} /> Edit
-                </button>
-              ) : (
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  {contactSaved && <span style={{ fontSize: 11, color: 'var(--sage)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={11} /> Saved</span>}
-                  <button type="button" onClick={() => { setEditingContact(false); if (client) setContactFields(toContactFields(client)); }} className="admin-btn-secondary" style={{ padding: '6px 12px', fontSize: 11 }}>Cancel</button>
-                  <button type="button" onClick={saveContact} disabled={contactSaving} className="admin-btn-primary" style={{ padding: '6px 14px', fontSize: 11 }}>
-                    {contactSaving ? 'Saving…' : 'Save'}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="pii" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <ContactField label="Email" value={contactFields.email} editing={editingContact} type="email"
-                onChange={v => setContactFields(f => ({ ...f, email: v }))} />
-              <ContactField label="Phone" value={contactFields.phone} editing={editingContact} type="tel"
-                onChange={v => setContactFields(f => ({ ...f, phone: v }))} />
-              <ContactField label="Date of birth" value={contactFields.date_of_birth} editing={editingContact} type="date"
-                onChange={v => setContactFields(f => ({ ...f, date_of_birth: v }))} />
-              <div />
-              <ContactField label="Emergency contact name" value={contactFields.emergency_contact_name} editing={editingContact}
-                onChange={v => setContactFields(f => ({ ...f, emergency_contact_name: v }))} />
-              <ContactField label="Emergency contact phone" value={contactFields.emergency_contact_phone} editing={editingContact} type="tel"
-                onChange={v => setContactFields(f => ({ ...f, emergency_contact_phone: v }))} />
-              <ContactField label="GP name" value={contactFields.gp_name} editing={editingContact}
-                onChange={v => setContactFields(f => ({ ...f, gp_name: v }))} />
-              <ContactField label="GP phone" value={contactFields.gp_phone} editing={editingContact} type="tel"
-                onChange={v => setContactFields(f => ({ ...f, gp_phone: v }))} />
-            </div>
-          </section>
-
+          {/* Sessions — this month, navigable */}
           <section>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 10 }}>
-              <p className="admin-eyebrow" style={{ margin: 0 }}>Session history</p>
-              {sortedSessions.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <button onClick={() => setMonthOffset(o => o - 1)} className="admin-btn-secondary" aria-label="Previous month" style={{ padding: '6px 8px' }}>
+                  <ChevronLeft size={13} />
+                </button>
+                <div style={{ minWidth: 140, textAlign: 'center', fontSize: 13, fontWeight: 500, color: 'var(--forest-deep)' }}>{monthLabel}</div>
+                <button onClick={() => setMonthOffset(o => o + 1)} className="admin-btn-secondary" aria-label="Next month" style={{ padding: '6px 8px' }}>
+                  <ChevronRight size={13} />
+                </button>
+                {monthOffset !== 0 && (
+                  <button onClick={() => setMonthOffset(0)} className="admin-btn-secondary" style={{ padding: '6px 10px', fontSize: 10 }}>This month</button>
+                )}
+              </div>
+              {client.sessions.length > 0 && (
                 <button
                   type="button"
                   onClick={() => downloadAdminPdf(
@@ -424,25 +341,25 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
                     `statement-${client.full_name.replace(/\s+/g, '-').toLowerCase()}.pdf`,
                   )}
                   className="admin-btn-secondary"
-                  style={{ padding: '6px 12px', fontSize: 10 }}
+                  style={{ padding: '6px 12px', fontSize: 10, marginLeft: 'auto' }}
                   title="Download a PDF statement of all this client's sessions"
                 >
-                  <Download size={11} strokeWidth={1.8} /> Download statement
+                  <Download size={11} strokeWidth={1.8} /> Statement
                 </button>
               )}
             </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {sortedSessions.length === 0 && (
-                <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: 0 }}>No sessions.</p>
+              {monthSessions.length === 0 && (
+                <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: '4px 0', padding: '16px', textAlign: 'center', background: 'white', border: '1px solid var(--line)', borderRadius: 12 }}>
+                  No sessions in {monthLabel}.
+                </p>
               )}
-              {sortedSessions.map(s => (
-                <div key={s.id} style={{
-                  padding: '14px 16px', borderRadius: 12,
-                  background: 'white', border: '1px solid var(--line)',
-                }}>
+              {monthSessions.map(s => (
+                <div key={s.id} style={{ padding: '13px 15px', borderRadius: 12, background: 'white', border: '1px solid var(--line)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                     <strong style={{ fontSize: 13, color: 'var(--forest-deep)', fontWeight: 500 }}>
-                      {formatDateTime(s.session_date)}
+                      {new Date(s.session_date).toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Dublin' })}, {formatTime(s.session_date)}
                     </strong>
                     <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>
                       {FORMAT_LABELS[s.session_format] ?? s.session_format} · {displayFee(s.fee)}
@@ -462,13 +379,8 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
                           <Download size={11} strokeWidth={1.8} /> Receipt
                         </button>
                       )}
-                      {onEditSession && client && (
-                        <button
-                          type="button"
-                          onClick={() => onEditSession(s, client)}
-                          className="admin-btn-secondary"
-                          style={{ padding: '5px 10px', fontSize: 10 }}
-                        >
+                      {onEditSession && (
+                        <button type="button" onClick={() => onEditSession(s, client)} className="admin-btn-secondary" style={{ padding: '5px 10px', fontSize: 10 }}>
                           <Pencil size={11} strokeWidth={1.8} /> Edit
                         </button>
                       )}
@@ -477,49 +389,111 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
                     <span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span>
                     <span className={`admin-tag ${payTag(s.payment_status)}`}>{payLabel(s.payment_status)}</span>
+                    {s.receipt_sent_at && (
+                      <span style={{ fontSize: 11, color: 'var(--ink-muted)', alignSelf: 'center' }}>· Receipt sent</span>
+                    )}
                   </div>
-                  {s.paid_at && (
-                    <div style={{ fontSize: 11, color: 'var(--sage)', marginTop: 8, fontWeight: 500 }}>
-                      Paid {formatDateTime(s.paid_at)} · €{Math.round((s.fee ?? 0) / 100)}
-                    </div>
-                  )}
-                  {s.receipt_sent_at && (
-                    <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginTop: 4 }}>
-                      Receipt sent {formatDateTime(s.receipt_sent_at)}
-                    </div>
-                  )}
-                  {s.notes && (
-                    <div style={{
-                      fontSize: 12, color: 'var(--ink-muted)',
-                      fontStyle: 'italic', marginTop: 6,
-                    }}>{s.notes}</div>
-                  )}
                 </div>
               ))}
             </div>
           </section>
 
+          {/* Details — collapsed by default */}
           <section>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-              <p className="admin-eyebrow" style={{ margin: 0 }}>Notes</p>
-              <div style={{
-                fontSize: 11,
-                color: notesSaved ? 'var(--sage)' : 'var(--ink-muted)',
-              }}>
-                {notesSaving ? 'Saving…' : notesSaved ? 'Saved' : 'Auto-saves'}
+            <button
+              type="button"
+              onClick={() => setShowDetails(v => !v)}
+              aria-expanded={showDetails}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: 'white', border: '1px solid var(--line)', borderRadius: 12,
+                padding: '12px 15px', cursor: 'pointer', fontFamily: 'inherit',
+                color: 'var(--forest-deep)', fontSize: 13, fontWeight: 500,
+              }}
+            >
+              Details &amp; contact
+              <ChevronDown size={16} strokeWidth={2} style={{ transition: 'transform 200ms ease', transform: showDetails ? 'rotate(180deg)' : 'none', color: 'var(--ink-muted)' }} />
+            </button>
+
+            {showDetails && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 14 }}>
+                <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                  <Field label="Status" value={client.status} />
+                  <Field label="Default fee" value={displayFee(client.session_fee)} />
+                  <Field label="Joined" value={new Date(client.created_at).toLocaleDateString('en-IE')} />
+                  <div>
+                    <p className="admin-eyebrow" style={{ marginBottom: 4 }}>Pricing tier</p>
+                    <button
+                      type="button"
+                      onClick={() => toggleClientFlag({ is_low_cost: !client.is_low_cost })}
+                      className={`admin-tag ${client.is_low_cost ? 'admin-tag-new' : 'admin-tag-active'}`}
+                      style={{ cursor: 'pointer', border: 'none' }}
+                    >
+                      {client.is_low_cost ? 'Low cost · click to unmark' : 'Full-paying · click to mark low cost'}
+                    </button>
+                  </div>
+                  <div>
+                    <p className="admin-eyebrow" style={{ marginBottom: 4 }}>Reminders</p>
+                    <button
+                      type="button"
+                      onClick={() => toggleClientFlag({ reminders_opted_out: !client.reminders_opted_out })}
+                      className={`admin-tag ${client.reminders_opted_out ? 'admin-tag-pause' : 'admin-tag-active'}`}
+                      style={{ cursor: 'pointer', border: 'none' }}
+                      title="Click to toggle reminder emails"
+                    >
+                      {client.reminders_opted_out ? 'Opted out · click to re-enable' : 'On · click to opt out'}
+                    </button>
+                  </div>
+                  {submission && (
+                    <button onClick={downloadIntake} disabled={downloading} className="admin-btn-secondary" style={{ marginLeft: 'auto' }}>
+                      <Download size={14} strokeWidth={1.8} />
+                      {downloading ? 'Generating…' : 'Intake PDF'}
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ background: 'white', border: '1px solid var(--line)', borderRadius: 14, padding: '16px 18px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                    <p className="admin-eyebrow" style={{ margin: 0 }}>Contact details</p>
+                    {!editingContact ? (
+                      <button type="button" onClick={() => { setEditingContact(true); setContactSaved(false); }} className="admin-btn-secondary" style={{ padding: '6px 12px', fontSize: 11 }}>
+                        <Pencil size={11} strokeWidth={1.8} /> Edit
+                      </button>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        {contactSaved && <span style={{ fontSize: 11, color: 'var(--sage)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={11} /> Saved</span>}
+                        <button type="button" onClick={() => { setEditingContact(false); setContactFields(toContactFields(client)); }} className="admin-btn-secondary" style={{ padding: '6px 12px', fontSize: 11 }}>Cancel</button>
+                        <button type="button" onClick={saveContact} disabled={contactSaving} className="admin-btn-primary" style={{ padding: '6px 14px', fontSize: 11 }}>
+                          {contactSaving ? 'Saving…' : 'Save'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pii" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <ContactField label="Email" value={contactFields.email} editing={editingContact} type="email"
+                      onChange={v => setContactFields(f => ({ ...f, email: v }))} />
+                    <ContactField label="Phone" value={contactFields.phone} editing={editingContact} type="tel"
+                      onChange={v => setContactFields(f => ({ ...f, phone: v }))} />
+                    <ContactField label="Date of birth" value={contactFields.date_of_birth} editing={editingContact} type="date"
+                      onChange={v => setContactFields(f => ({ ...f, date_of_birth: v }))} />
+                    <div />
+                    <ContactField label="Emergency contact name" value={contactFields.emergency_contact_name} editing={editingContact}
+                      onChange={v => setContactFields(f => ({ ...f, emergency_contact_name: v }))} />
+                    <ContactField label="Emergency contact phone" value={contactFields.emergency_contact_phone} editing={editingContact} type="tel"
+                      onChange={v => setContactFields(f => ({ ...f, emergency_contact_phone: v }))} />
+                    <ContactField label="GP name" value={contactFields.gp_name} editing={editingContact}
+                      onChange={v => setContactFields(f => ({ ...f, gp_name: v }))} />
+                    <ContactField label="GP phone" value={contactFields.gp_phone} editing={editingContact} type="tel"
+                      onChange={v => setContactFields(f => ({ ...f, gp_phone: v }))} />
+                  </div>
+                </div>
               </div>
-            </div>
-            <textarea
-              value={notes}
-              onChange={e => handleNotesChange(e.target.value)}
-              placeholder="Private notes about this client. Auto-saves as you type."
-              rows={6}
-              className="admin-textarea pii"
-            />
+            )}
           </section>
         </div>
-      </aside>
-    </>
+      </div>
+    </div>
   );
 }
 

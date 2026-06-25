@@ -18,6 +18,33 @@
   transition: filter 120ms ease;
 }
 
+/* ── Compact client card (Clients list) ──────────────────────────────── */
+.admin-client-card {
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: inherit;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+@media (hover: hover) {
+  .admin-client-card:hover {
+    border-color: var(--sage-soft);
+    box-shadow: 0 8px 20px rgba(42, 77, 60, 0.08);
+    transform: translateY(-2px);
+  }
+}
+.admin-client-card:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 2px;
+}
+
 .admin-root {
   --forest-deep:   #2A4D3C;
   --forest:        #2D5A42;
