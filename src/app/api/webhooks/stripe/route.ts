@@ -244,6 +244,7 @@ async function sendReceipt(
   if (emailResult.error) {
     console.error('[stripe-webhook] Receipt email failed:', JSON.stringify(emailResult.error, null, 2));
   } else {
-    console.log(`[stripe-webhook] Receipt sent to ${client.email}`);
+    // No client email in logs (docs/DATA-RETENTION.md).
+    console.log('[stripe-webhook] Receipt sent');
   }
 }

@@ -63,6 +63,6 @@ export async function GET(req: NextRequest) {
     sent.push(kind);
   }
 
-  console.log(`[test-reminder] sent ${sent.join(', ')} to ${email}`);
+  console.log(`[test-reminder] sent ${sent.join(', ')}`);
   return NextResponse.json({ ok: true, sent, to: email });
 }

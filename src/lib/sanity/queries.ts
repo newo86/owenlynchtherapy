@@ -23,6 +23,7 @@ export const postBySlugQuery = groq`
     excerpt,
     category,
     publishedAt,
+    _updatedAt,
     "body": body[]{
       ...,
       _type == "image" => {

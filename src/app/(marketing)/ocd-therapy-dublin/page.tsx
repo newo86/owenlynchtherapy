@@ -4,6 +4,7 @@ import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
 import ServiceCTA from '@/components/sections/ServiceCTA';
+import RelatedServices from '@/components/sections/RelatedServices';
 
 const BASE_URL = 'https://owenlynchtherapy.com';
 const SLUG = 'ocd-therapy-dublin';
@@ -201,6 +202,7 @@ export default function OcdTherapyPage() {
         </div>
       </section>
 
+      <RelatedServices current={SLUG} />
       <ServiceHowSessionsWork />
       <ServiceCTA />
     </>

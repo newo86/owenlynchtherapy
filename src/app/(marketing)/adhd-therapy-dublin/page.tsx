@@ -3,6 +3,7 @@ import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
 import ServiceCTA from '@/components/sections/ServiceCTA';
+import RelatedServices from '@/components/sections/RelatedServices';
 
 const BASE_URL = 'https://owenlynchtherapy.com';
 const SLUG = 'adhd-therapy-dublin';
@@ -57,6 +58,7 @@ export const metadata: Metadata = {
       'ADHD therapy for adults in Dublin and online across Ireland & the UK. Support for diagnosed and self-identifying adults. IAHIP-accredited psychotherapist.',
     type: 'website',
     url: PAGE_URL,
+    images: [{ url: `${BASE_URL}/og-image.jpg`, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -189,6 +191,7 @@ export default function AdhdTherapyPage() {
         </div>
       </section>
 
+      <RelatedServices current={SLUG} />
       <ServiceHowSessionsWork />
       <ServiceCTA />
     </>

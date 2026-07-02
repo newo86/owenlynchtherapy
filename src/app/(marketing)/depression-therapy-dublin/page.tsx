@@ -3,6 +3,7 @@ import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
 import ServiceCTA from '@/components/sections/ServiceCTA';
+import RelatedServices from '@/components/sections/RelatedServices';
 
 const BASE_URL = 'https://owenlynchtherapy.com';
 const SLUG = 'depression-therapy-dublin';
@@ -44,7 +45,7 @@ const breadcrumbJsonLd = {
 };
 
 export const metadata: Metadata = {
-  title: { absolute: 'Depression Therapy Dublin & Online | Owen Lynch Psychotherapy' },
+  title: { absolute: 'Depression Therapy Dublin & Online | Owen Lynch' },
   description:
     'Therapy for depression in Dublin and online across Ireland & the UK. Evidence-based support for low mood, hopelessness, and burnout. IAHIP accredited.',
   alternates: {
@@ -52,15 +53,16 @@ export const metadata: Metadata = {
     languages: { 'en': PAGE_URL, 'x-default': PAGE_URL },
   },
   openGraph: {
-    title: 'Depression Therapy Dublin & Online | Owen Lynch Psychotherapy',
+    title: 'Depression Therapy Dublin & Online | Owen Lynch',
     description:
       'Therapy for depression in Dublin and online across Ireland & the UK. Evidence-based support for low mood, hopelessness, and burnout. IAHIP accredited.',
     type: 'website',
     url: PAGE_URL,
+    images: [{ url: `${BASE_URL}/og-image.jpg`, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Depression Therapy Dublin & Online | Owen Lynch Psychotherapy',
+    title: 'Depression Therapy Dublin & Online | Owen Lynch',
     description:
       'Therapy for depression in Dublin and online across Ireland & the UK. Evidence-based support for low mood, hopelessness, and burnout.',
   },
@@ -192,6 +194,7 @@ export default function DepressionTherapyPage() {
         </div>
       </section>
 
+      <RelatedServices current={SLUG} />
       <ServiceHowSessionsWork />
       <ServiceCTA />
     </>

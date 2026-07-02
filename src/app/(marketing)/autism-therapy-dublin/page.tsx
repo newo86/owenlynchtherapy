@@ -3,6 +3,7 @@ import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
 import ServiceCTA from '@/components/sections/ServiceCTA';
+import RelatedServices from '@/components/sections/RelatedServices';
 
 const BASE_URL = 'https://owenlynchtherapy.com';
 const SLUG = 'autism-therapy-dublin';
@@ -13,7 +14,7 @@ const serviceJsonLd = {
   '@type': 'MedicalTherapy',
   name: 'Autism Therapy',
   description:
-    'Affirming therapy for autistic adults in Dublin and online across Ireland & the UK. Late-diagnosed and self-identifying welcome. IAHIP-accredited psychotherapist.',
+    'Affirming therapy for autistic adults in Dublin and online across Ireland & the UK. Late-diagnosed and self-identifying welcome. IAHIP accredited.',
   url: PAGE_URL,
   provider: {
     '@type': 'Person',
@@ -46,7 +47,7 @@ const breadcrumbJsonLd = {
 export const metadata: Metadata = {
   title: { absolute: 'Autism Therapy Dublin & Online | Owen Lynch Psychotherapy' },
   description:
-    'Affirming therapy for autistic adults in Dublin and online across Ireland & the UK. Late-diagnosed and self-identifying welcome. IAHIP-accredited psychotherapist.',
+    'Affirming therapy for autistic adults in Dublin and online across Ireland & the UK. Late-diagnosed and self-identifying welcome. IAHIP accredited.',
   alternates: {
     canonical: PAGE_URL,
     languages: { 'en': PAGE_URL, 'x-default': PAGE_URL },
@@ -54,9 +55,10 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Autism Therapy Dublin & Online | Owen Lynch Psychotherapy',
     description:
-      'Affirming therapy for autistic adults in Dublin and online across Ireland & the UK. Late-diagnosed and self-identifying welcome. IAHIP-accredited psychotherapist.',
+      'Affirming therapy for autistic adults in Dublin and online across Ireland & the UK. Late-diagnosed and self-identifying welcome. IAHIP accredited.',
     type: 'website',
     url: PAGE_URL,
+    images: [{ url: `${BASE_URL}/og-image.jpg`, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -193,6 +195,7 @@ export default function AutismTherapyPage() {
         </div>
       </section>
 
+      <RelatedServices current={SLUG} />
       <ServiceHowSessionsWork />
       <ServiceCTA />
     </>

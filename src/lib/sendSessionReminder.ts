@@ -140,6 +140,7 @@ export async function sendSessionReminder(
     }
   }
 
-  console.log(`[send-reminder] Sent ${kind} reminder to ${client.email} for session ${sessionId}`);
+  // Log opaque IDs only — no client emails in logs (docs/DATA-RETENTION.md).
+  console.log(`[send-reminder] Sent ${kind} reminder for session ${sessionId}`);
   return { success: true, email: client.email };
 }

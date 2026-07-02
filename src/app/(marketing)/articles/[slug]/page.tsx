@@ -165,8 +165,13 @@ export default async function ArticlePage({ params }: Props) {
       '@type': 'Organization',
       name: 'Owen Lynch Psychotherapy',
       url: BASE_URL,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${BASE_URL}/images/logo-horizontal-pdf.png`,
+      },
     },
     datePublished: post.publishedAt,
+    ...(post._updatedAt ? { dateModified: post._updatedAt } : {}),
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${BASE_URL}/articles/${slug}` },
   };
 

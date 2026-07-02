@@ -22,6 +22,7 @@ export const metadata: Metadata = {
       'Owen Lynch is an IAHIP and ICP accredited integrative psychotherapist based in Dublin, working with adults in person and online across Ireland and the UK.',
     url: 'https://owenlynchtherapy.com/about',
     type: 'profile',
+    images: [{ url: 'https://owenlynchtherapy.com/og-image.jpg', width: 1200, height: 630 }],
   },
 };
 

@@ -3,6 +3,7 @@ import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
 import ServiceCTA from '@/components/sections/ServiceCTA';
+import RelatedServices from '@/components/sections/RelatedServices';
 
 const BASE_URL = 'https://owenlynchtherapy.com';
 const SLUG = 'lgbtqia-therapy-dublin';
@@ -57,6 +58,7 @@ export const metadata: Metadata = {
       'Affirming LGBTQIA+ therapy in Dublin and online across Ireland & the UK. Identity, relationships, minority stress, chemsex. IAHIP-accredited psychotherapist.',
     type: 'website',
     url: PAGE_URL,
+    images: [{ url: `${BASE_URL}/og-image.jpg`, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -188,6 +190,7 @@ export default function LgbtqiaTherapyPage() {
         </div>
       </section>
 
+      <RelatedServices current={SLUG} />
       <ServiceHowSessionsWork />
       <ServiceCTA />
     </>

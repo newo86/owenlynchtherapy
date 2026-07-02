@@ -48,7 +48,10 @@ Anything else (unset/false) silently blocks every send.
 
 ## Domains / SEO
 
-- Currently the apex 307-redirects to `www`, but the pages' canonical tags point to the apex → mismatch. This caused Google Search Console "redirect error" on some pages. **Cleaner long-term fix:** make the apex the *primary* domain in Vercel so canonical + serving + webhook all align on the bare domain.
+- Currently the apex 307-redirects to `www`, but the pages' canonical tags point to the apex → mismatch. This caused Google Search Console "redirect error" on some pages. **Cleaner long-term fix:** make the apex the *primary* domain in Vercel so canonical + serving + webhook all align on the bare domain. Step-by-step (incl. the Stripe-webhook re-point that must happen at the same time) is in **docs/ROADMAP.md → Horizon 1, item 1**.
+- The canonical origin + NAP/opening-hours facts used in metadata and JSON-LD live in `src/lib/siteConfig.ts`. The single LocalBusiness/MedicalBusiness entity is emitted for all marketing pages from `src/app/(marketing)/layout.tsx`; pages reference it by `@id` instead of re-declaring it.
+- The sitemap (`src/app/sitemap.ts`) pulls article slugs from Sanity at build time, with a hardcoded fallback if Sanity is unreachable. New posts enter the sitemap on the next deploy.
+- The social share card is `public/og-image.jpg` (1200×630), set as the site-wide default in `src/app/layout.tsx` and per-page in each page's `openGraph.images`.
 
 ## Environment variables (Vercel)
 

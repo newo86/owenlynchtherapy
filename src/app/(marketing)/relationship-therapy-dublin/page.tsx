@@ -3,6 +3,7 @@ import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
 import ServiceCTA from '@/components/sections/ServiceCTA';
+import RelatedServices from '@/components/sections/RelatedServices';
 
 const BASE_URL = 'https://owenlynchtherapy.com';
 const SLUG = 'relationship-therapy-dublin';
@@ -13,7 +14,7 @@ const serviceJsonLd = {
   '@type': 'MedicalTherapy',
   name: 'Relationship Therapy',
   description:
-    'Therapy for relationship difficulties in Dublin and online for individuals across Ireland & the UK. Support for patterns, communication, attachment. IAHIP accredited.',
+    'Therapy for relationship difficulties in Dublin and online across Ireland & the UK. Support for patterns, communication and attachment. IAHIP accredited.',
   url: PAGE_URL,
   provider: {
     '@type': 'Person',
@@ -44,25 +45,26 @@ const breadcrumbJsonLd = {
 };
 
 export const metadata: Metadata = {
-  title: { absolute: 'Relationship Therapy Dublin & Online | Owen Lynch Psychotherapy' },
+  title: { absolute: 'Relationship Therapy Dublin & Online | Owen Lynch' },
   description:
-    'Therapy for relationship difficulties in Dublin and online for individuals across Ireland & the UK. Support for patterns, communication, attachment. IAHIP accredited.',
+    'Therapy for relationship difficulties in Dublin and online across Ireland & the UK. Support for patterns, communication and attachment. IAHIP accredited.',
   alternates: {
     canonical: PAGE_URL,
     languages: { 'en': PAGE_URL, 'x-default': PAGE_URL },
   },
   openGraph: {
-    title: 'Relationship Therapy Dublin & Online | Owen Lynch Psychotherapy',
+    title: 'Relationship Therapy Dublin & Online | Owen Lynch',
     description:
-      'Therapy for relationship difficulties in Dublin and online for individuals across Ireland & the UK. Support for patterns, communication, attachment. IAHIP accredited.',
+      'Therapy for relationship difficulties in Dublin and online across Ireland & the UK. Support for patterns, communication and attachment. IAHIP accredited.',
     type: 'website',
     url: PAGE_URL,
+    images: [{ url: `${BASE_URL}/og-image.jpg`, width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Relationship Therapy Dublin & Online | Owen Lynch Psychotherapy',
+    title: 'Relationship Therapy Dublin & Online | Owen Lynch',
     description:
-      'Therapy for relationship difficulties in Dublin and online for individuals across Ireland & the UK. Support for patterns, communication, attachment.',
+      'Therapy for relationship difficulties in Dublin and online across Ireland & the UK. Support for patterns, communication and attachment.',
   },
   robots: { index: true, follow: true },
 };
@@ -182,6 +184,7 @@ export default function RelationshipTherapyPage() {
         </div>
       </section>
 
+      <RelatedServices current={SLUG} />
       <ServiceHowSessionsWork />
       <ServiceCTA />
     </>
