@@ -13,19 +13,18 @@ const navLinks = [
 export default function Footer() {
   return (
     <footer style={{ backgroundColor: '#2A4D3C' }} className="text-cream" role="contentinfo">
-      <div className="max-w-6xl mx-auto px-6 lg:px-16 pt-16 pb-24 md:pb-10">
+      <div className="max-w-6xl mx-auto px-6 lg:px-16 pt-12 pb-24 md:pb-8">
 
         {/* Three-column grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1.2fr] gap-10 md:gap-8">
 
           {/* Left — brand */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3">
             <p className="font-heading font-light text-xl text-white leading-snug">
               Owen Lynch Psychotherapy
             </p>
             <p className="text-sm text-cream/60 leading-relaxed max-w-xs">
-              Evidence-based therapy for anxiety, OCD, ADHD, autism, depression, and relationship
-              difficulties.
+              Evidence-based therapy in Dublin &amp; online.
             </p>
             <a
               href="https://www.instagram.com/owenlynchtherapy"
@@ -53,12 +52,12 @@ export default function Footer() {
             </a>
           </div>
 
-          {/* Middle — pages */}
-          <nav aria-label="Footer navigation" className="flex flex-col gap-5">
+          {/* Middle — pages, two columns to stay short */}
+          <nav aria-label="Footer navigation" className="flex flex-col gap-4">
             <p className="text-xs font-normal uppercase tracking-widest text-cream/40">
               Pages
             </p>
-            <ul className="flex flex-col gap-2.5 list-none">
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-2 list-none max-w-[200px]">
               {navLinks.map(({ href, label }) => (
                 <li key={href}>
                   <Link
@@ -73,28 +72,42 @@ export default function Footer() {
           </nav>
 
           {/* Right — contact */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4">
             <p className="text-xs font-normal uppercase tracking-widest text-cream/40">
               Contact
             </p>
-            <div className="flex flex-col gap-3 items-start">
-              <Link
-                href="/contact"
-                className="inline-block bg-[#C85A1A] text-white px-6 py-3 rounded-md text-xs uppercase tracking-normal font-normal h-hover:opacity-90 h-can:transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            <address className="text-sm text-cream/60 not-italic leading-relaxed">
+              Insight Matters, 106 Capel Street, Dublin 1, D01 WY40
+              <br />
+              <a
+                href="tel:+353851471689"
+                className="h-hover:text-white h-can:transition-colors"
               >
-                Get in touch
-              </Link>
-              <p className="text-xs text-cream/40">Dublin &amp; Online</p>
-            </div>
+                085 147 1689
+              </a>
+              {' · '}
+              <a
+                href="mailto:info@owenlynchtherapy.com"
+                className="h-hover:text-white h-can:transition-colors"
+              >
+                info@owenlynchtherapy.com
+              </a>
+            </address>
+            <Link
+              href="/contact"
+              className="inline-block w-fit bg-[#C85A1A] text-white px-6 py-3 rounded-md text-xs uppercase tracking-normal font-normal h-hover:opacity-90 h-can:transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              Get in touch
+            </Link>
           </div>
 
         </div>
 
         {/* Divider */}
-        <div className="mt-14 border-t border-white/10" />
+        <div className="mt-10 border-t border-white/10" />
 
         {/* Bottom bar */}
-        <div className="mt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
           {/* Badges */}
           <div className="flex flex-wrap items-center gap-3">
@@ -111,7 +124,7 @@ export default function Footer() {
                 alt="IAHIP accredited psychotherapist"
                 width={962}
                 height={437}
-                className="h-8 w-auto object-contain"
+                className="h-7 w-auto object-contain"
               />
             </a>
 
@@ -128,7 +141,7 @@ export default function Footer() {
                 alt="Irish Council for Psychotherapy member"
                 width={324}
                 height={90}
-                className="h-8 w-auto object-contain"
+                className="h-7 w-auto object-contain"
               />
             </a>
 
@@ -151,10 +164,9 @@ export default function Footer() {
           </div>
 
           {/* Copyright */}
-          <div className="flex flex-col items-start md:items-end gap-1 text-xs text-cream/40">
-            <p>&copy; 2026 Owen Lynch Psychotherapy. All rights reserved.</p>
-            <p>IAHIP &amp; ICP Accredited Psychotherapist</p>
-          </div>
+          <p className="text-xs text-cream/40 md:text-right">
+            &copy; 2026 Owen Lynch Psychotherapy · IAHIP &amp; ICP Accredited
+          </p>
 
         </div>
 

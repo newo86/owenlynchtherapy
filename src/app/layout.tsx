@@ -36,19 +36,25 @@ export const metadata: Metadata = {
     title: 'Owen Lynch Psychotherapy | Professional Therapy Services',
     description:
       'Professional psychotherapy services with Owen Lynch. Evidence-based therapy in Ireland.',
+    images: [
+      {
+        url: 'https://owenlynchtherapy.com/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Owen Lynch Psychotherapy — Psychotherapy in Dublin & Online',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Owen Lynch Psychotherapy',
-    description: 'Professional psychotherapy services.',
+    description:
+      'IAHIP and ICP accredited psychotherapist in Dublin. In-person and online therapy across Ireland and the UK.',
+    images: ['https://owenlynchtherapy.com/og-image.jpg'],
   },
-  alternates: {
-    canonical: 'https://owenlynchtherapy.com',
-    languages: {
-      'en': 'https://owenlynchtherapy.com',
-      'x-default': 'https://owenlynchtherapy.com',
-    },
-  },
+  // NOTE: deliberately no root-level `alternates.canonical` — a global
+  // canonical pointing at the homepage would apply to every page that doesn't
+  // override it. Each indexable page declares its own canonical.
   robots: {
     index: true,
     follow: true,

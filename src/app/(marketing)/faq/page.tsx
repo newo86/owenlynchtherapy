@@ -7,7 +7,7 @@ import FloatingCircles from '@/components/ui/floating-circles';
 export const metadata: Metadata = {
   title: { absolute: 'FAQ | Psychotherapy Dublin & Online | Owen Lynch' },
   description:
-    'Answers to common questions about psychotherapy in Dublin and online therapy in Ireland. IAHIP accredited. OCD therapy, ADHD therapy, anxiety, confidential sessions.',
+    'Answers to common questions about psychotherapy in Dublin and online therapy in Ireland: fees, session format, confidentiality and accreditation.',
   alternates: {
     canonical: 'https://owenlynchtherapy.com/faq',
     languages: {
@@ -18,8 +18,9 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'FAQ | Psychotherapy Dublin & Online | Owen Lynch',
     description:
-      'Answers to common questions about psychotherapy in Dublin and online therapy in Ireland. IAHIP accredited. OCD therapy, ADHD therapy, anxiety, confidential sessions.',
+      'Answers to common questions about psychotherapy in Dublin and online therapy in Ireland: fees, session format, confidentiality and accreditation.',
     url: 'https://owenlynchtherapy.com/faq',
+    images: [{ url: 'https://owenlynchtherapy.com/og-image.jpg', width: 1200, height: 630 }],
   },
 };
 

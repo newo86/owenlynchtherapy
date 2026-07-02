@@ -106,7 +106,9 @@ export async function POST(req: NextRequest) {
         const eventId = await createCalendarEvent({
           summary: `Session — ${client_name.trim()}`,
           description: [
-            `Client: ${client_name.trim()}${client_email ? ` <${client_email.trim()}>` : ''}`,
+            // Name only — per docs/DATA-RETENTION.md, client emails must not
+            // be written into Google Calendar event descriptions.
+            `Client: ${client_name.trim()}`,
             `Format: ${format === 'in_person' ? 'In Person' : 'Online'}`,
             format === 'online' ? 'Join: https://doxy.me/owenlynchtherapy' : '',
             `Fee: €${Math.round(Number(session_fee))}`,

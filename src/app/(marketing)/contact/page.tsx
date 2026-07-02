@@ -7,7 +7,7 @@ import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 
 export const metadata: Metadata = {
-  title: 'Contact Owen Lynch | Psychotherapist Dublin',
+  title: { absolute: 'Contact Owen Lynch | Psychotherapist Dublin' },
   description:
     'Get in touch with Owen Lynch, IAHIP and ICP accredited psychotherapist in Dublin. Currently accepting new clients on Tuesday evenings and Friday evenings.',
   alternates: {
@@ -22,28 +22,17 @@ export const metadata: Metadata = {
     description:
       'Get in touch with Owen Lynch, IAHIP and ICP accredited psychotherapist in Dublin.',
     url: 'https://owenlynchtherapy.com/contact',
+    images: [{ url: 'https://owenlynchtherapy.com/og-image.jpg', width: 1200, height: 630 }],
   },
 };
 
+// The business entity (NAP + opening hours) lives in (marketing)/layout.tsx;
+// this page just declares itself as the contact page for that entity.
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'LocalBusiness',
-  '@id': 'https://owenlynchtherapy.com/#business',
-  name: 'Owen Lynch Psychotherapy',
-  url: 'https://owenlynchtherapy.com',
-  telephone: '+353851471689',
-  email: 'info@owenlynchtherapy.com',
-  address: {
-    '@type': 'PostalAddress',
-    streetAddress: '106 Capel Street',
-    addressLocality: 'Dublin',
-    postalCode: 'D01 WY40',
-    addressCountry: 'IE',
-  },
-  openingHoursSpecification: [
-    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Tuesday', opens: '17:00', closes: '20:00' },
-    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Friday',  opens: '16:00', closes: '20:00' },
-  ],
+  '@type': 'ContactPage',
+  url: 'https://owenlynchtherapy.com/contact',
+  mainEntity: { '@id': 'https://owenlynchtherapy.com/#business' },
 };
 
 const availability = [

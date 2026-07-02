@@ -8,7 +8,7 @@ import FloatingCircles from '@/components/ui/floating-circles';
 export const metadata: Metadata = {
   title: 'Therapy Services Dublin & Online',
   description:
-    'IAHIP and ICP accredited psychotherapy in Dublin and online. Specialist support for OCD, anxiety, ADHD, autism, depression, relationships, trauma, and LGBTQIA+ mental health.',
+    'IAHIP and ICP accredited psychotherapy in Dublin and online. Support for OCD, anxiety, ADHD, autism, depression, relationships and trauma.',
   alternates: {
     canonical: 'https://owenlynchtherapy.com/services',
     languages: {
@@ -19,26 +19,18 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Therapy Services Dublin & Online | Owen Lynch Psychotherapy',
     description:
-      'IAHIP and ICP accredited psychotherapy in Dublin and online. Specialist support for OCD, anxiety, ADHD, autism, depression, relationships, trauma, and LGBTQIA+ mental health.',
+      'IAHIP and ICP accredited psychotherapy in Dublin and online. Support for OCD, anxiety, ADHD, autism, depression, relationships and trauma.',
     url: 'https://owenlynchtherapy.com/services',
+    images: [{ url: 'https://owenlynchtherapy.com/og-image.jpg', width: 1200, height: 630 }],
   },
 };
 
+// Adds the service catalogue to the single business entity declared in
+// (marketing)/layout.tsx — same @id, so Google merges the two nodes.
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'MedicalBusiness',
   '@id': 'https://owenlynchtherapy.com/#business',
-  name: 'Owen Lynch Psychotherapy',
-  url: 'https://owenlynchtherapy.com',
-  description:
-    'IAHIP and ICP accredited psychotherapy in Dublin and online.',
-  address: {
-    '@type': 'PostalAddress',
-    streetAddress: '106 Capel Street',
-    addressLocality: 'Dublin',
-    postalCode: 'D01 WY40',
-    addressCountry: 'IE',
-  },
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
     name: 'Psychotherapy Services',
