@@ -23,7 +23,9 @@ Pages: Home, About, Services, Contact, FAQ. Blog in progress.
 - Lives at /admin/intake, password-protected via INTAKE_ADMIN_SECRET
 - Client intake forms, PDF generation, email receipts, session tracking, week calendar
 - Do NOT rename or remove existing API routes (generate-token, submit,
-  download-pdf, mark-attended, send-receipt, auth/google, admin/calendar)
+  download-pdf, mark-attended, send-receipt, send-reminder, reminders/run,
+  receipts, receipts/statement, mark-paid, reminders/unsubscribe, webhooks/stripe,
+  auth/google, admin/calendar)
 - Supabase tables clients, sessions, intake_submissions, intake_tokens already
   exist — don't recreate them
 - Google Calendar is two-way: the app reads events for the week view AND writes
@@ -34,6 +36,28 @@ Pages: Home, About, Services, Contact, FAQ. Blog in progress.
   deliberately read-only toward Google — it only updates Supabase — to avoid
   sync loops; keep it that way.
 - Run npm run build locally before pushing to catch TypeScript errors
+
+## Current systems & gotchas — read docs/OPERATIONS.md
+Full detail in **docs/OPERATIONS.md**. The must-knows:
+- **Email kill switch:** all email flows through `getResend()` (src/lib/resend.ts)
+  and only sends when env `EMAILS_ENABLED === 'true'`. Set it false + redeploy to
+  pause everything instantly. (Follows a duplicate-email incident — treat email
+  changes with care.)
+- **Reminders:** daily cron `/api/admin/reminders/run` (06:00 UTC). Hardened:
+  reconcile-with-Google first, one-per-session DB UNIQUE, hard cap 25, abort
+  alerts to info@. Clients can opt out (`clients.reminders_opted_out`).
+- **Mark-paid never auto-sends a receipt** (decoupled). Receipts are manual:
+  email button, or PDF download / statement in the client record modal
+  (src/lib/generateReceiptPDF.ts, IAHIP Reg. No. 1890 on them).
+- **Stripe webhook** must point at the host that serves 200 (the apex 307-redirects
+  to www; Stripe won't follow redirects). `STRIPE_WEBHOOK_SECRET` must match that
+  endpoint.
+- **Known latent bugs (unfixed):** (1) recurring-session time changes in Google
+  don't reliably sync to the dashboard (conflict-resolver in calendarSync.ts is
+  instance-id only); (2) deleting a client can leave ghost GCal events
+  (deleteCalendarEvent 400 on recurring series).
+- Build in a sandbox fails only at `/articles` page-data (can't reach Sanity) —
+  that's environment-only; it compiles + type-checks fine.
 
 ## Branding
 - Colours: forest green #2A4D3C (primary bg), sage #4F8A68, terracotta #C85A1A
