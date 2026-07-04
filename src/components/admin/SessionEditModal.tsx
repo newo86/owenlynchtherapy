@@ -195,7 +195,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
         style={{
           position: 'fixed', inset: 0,
           background: 'rgba(42, 77, 60, 0.32)',
-          zIndex: 110,
+          zIndex: 500,
           animation: 'admin-fade-in 150ms ease',
         }}
       />
@@ -206,7 +206,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
         background: 'white',
         borderRadius: 18,
         boxShadow: '0 24px 64px rgba(42, 77, 60, 0.18)',
-        zIndex: 120,
+        zIndex: 510,
         width: 'min(560px, 92vw)',
         maxHeight: '92vh',
         overflowY: 'auto',

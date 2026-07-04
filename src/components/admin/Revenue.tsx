@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { TrendingUp, Video, MapPin, Wallet, X, Send } from 'lucide-react';
-import { startOfWeek, isSameDay, formatDateTime, adminFetch, dedupeSessions } from './api';
+import { startOfWeek, formatDateTime, adminFetch, dedupeSessions } from './api';
 import type { ClientRow, SessionRow } from './types';
 
 interface Props {
@@ -17,12 +17,25 @@ const ROOM_COST_CENTS = 2000;
 // screen is shown per category, with "Overall" as the only combined view.
 type Category = 'online' | 'in_person' | 'low_cost';
 
+// 'paid' = money actually received (the headline truth); 'attended' = work
+// billed whether or not it's been paid yet. One definition, labelled.
+type Basis = 'paid' | 'attended';
+
 function categoryOf(s: SessionRow, c: ClientRow): Category {
   if (c.is_low_cost) return 'low_cost';
   return s.session_format === 'online' ? 'online' : 'in_person';
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
+
+/** YYYY-MM-DD / YYYY-MM of an instant in Europe/Dublin — bucketing must match
+ *  the Dublin-pinned display layer, not the browser's timezone. */
+function dublinDay(d: Date | string): string {
+  return new Date(d).toLocaleDateString('en-CA', { timeZone: 'Europe/Dublin' });
+}
+function dublinYM(d: Date | string): string {
+  return dublinDay(d).slice(0, 7);
+}
 
 function startOfMonth(now = new Date()): Date {
   const d = new Date(now); d.setDate(1); d.setHours(0, 0, 0, 0); return d;
@@ -38,8 +51,8 @@ function inScope(iso: string, scope: Scope, now: Date): boolean {
     const sunday = new Date(monday); sunday.setDate(monday.getDate() + 7);
     return d >= monday && d < sunday;
   }
-  if (scope === 'month') return d >= startOfMonth(now);
-  return d >= startOfYear(now);
+  if (scope === 'month') return dublinYM(d) === dublinYM(now);
+  return dublinDay(d).slice(0, 4) === dublinDay(now).slice(0, 4);
 }
 
 function netCents(s: SessionRow): number {
@@ -73,11 +86,13 @@ type DrillRow = { s: SessionRow; c: ClientRow };
 
 export function Revenue({ clients }: Props) {
   const [scope, setScope] = useState<Scope>('month');
-  const [basis, setBasis] = useState<'attended' | 'all_scheduled'>('attended');
+  const [basis, setBasis] = useState<Basis>('paid');
   const [drill, setDrill] = useState<{ title: string; rows: DrillRow[] } | null>(null);
   const [reportStatus, setReportStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
-  const now = new Date();
+  // Captured once per data refresh so the memos below actually memoise.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const now = useMemo(() => new Date(), [clients]);
 
   const byCategory = useMemo(() => {
     const out: Record<Category, DrillRow[]> = { online: [], in_person: [], low_cost: [] };
@@ -86,7 +101,8 @@ export function Revenue({ clients }: Props) {
       // isn't counted twice or shadowed by an unpaid duplicate.
       for (const s of dedupeSessions(c.sessions)) {
         if (s.status === 'cancelled') continue;
-        if (basis === 'attended' && s.status !== 'attended') continue;
+        if (s.payment_status === 'refunded') continue; // refunds are not revenue
+        if (basis === 'paid' ? s.payment_status !== 'paid' : s.status !== 'attended') continue;
         if (!inScope(s.session_date, scope, now)) continue;
         out[categoryOf(s, c)].push({ s, c });
       }
@@ -116,38 +132,37 @@ export function Revenue({ clients }: Props) {
   const chartEyebrow =
     scope === 'week'  ? 'Weekly trend' :
     scope === 'year'  ? 'Yearly trend' : 'Monthly trend';
+  const basisLabel = basis === 'paid' ? 'earned (paid)' : 'billed (attended)';
   const chartTitle =
     scope === 'week'  ? 'This week · paid sessions only' :
-    scope === 'year'  ? `${now.getFullYear()} · month by month · gross` :
-    'Last 12 months · gross';
+    scope === 'year'  ? `${now.getFullYear()} · month by month · ${basisLabel}` :
+    `Last 12 months · ${basisLabel}`;
 
   const lowCostClientCount = clients.filter(c => c.is_low_cost && c.status === 'active').length;
 
-  // Year projection for the Overall card: run-rate based on what's actually
-  // been earned (attended sessions, all categories) so far this year.
+  // Yearly pace: average PAID revenue over the last 4 completed weeks × 52.
+  // (The old ms-elapsed run-rate produced absurd figures early in the year
+  // and counted unpaid/refunded sessions as income.)
   const projection = useMemo(() => {
-    const yearStart = startOfYear(now);
+    const cutoff = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
     const rows: DrillRow[] = [];
     let gross = 0, net = 0;
     for (const c of clients) {
       for (const s of dedupeSessions(c.sessions)) {
-        if (s.status !== 'attended') continue;
+        if (s.status === 'cancelled' || s.payment_status !== 'paid') continue;
         const d = new Date(s.session_date);
-        if (d < yearStart || d > now) continue;
+        if (d < cutoff || d > now) continue;
         rows.push({ s, c });
         gross += s.fee ?? 0;
         net += netCents(s);
       }
     }
-    const msElapsed = Math.max(1, now.getTime() - yearStart.getTime());
-    const msInYear = new Date(now.getFullYear() + 1, 0, 1).getTime() - yearStart.getTime();
-    const factor = msInYear / msElapsed;
     return {
       rows,
-      ytdGross: gross,
-      ytdSessions: rows.length,
-      projectedGross: Math.round(gross * factor),
-      projectedNet: Math.round(net * factor),
+      last4wGross: gross,
+      last4wSessions: rows.length,
+      projectedGross: Math.round((gross / 4) * 52),
+      projectedNet: Math.round((net / 4) * 52),
     };
   }, [clients, now]);
 
@@ -172,8 +187,8 @@ export function Revenue({ clients }: Props) {
 
         <div className="admin-segmented" style={{ marginLeft: 'auto' }}>
           {([
-            { id: 'attended',      label: 'Attended only' },
-            { id: 'all_scheduled', label: 'Inc. scheduled' },
+            { id: 'paid',     label: 'Earned (paid)' },
+            { id: 'attended', label: 'Billed (attended)' },
           ] as const).map(b => (
             <button
               key={b.id}
@@ -207,7 +222,7 @@ export function Revenue({ clients }: Props) {
       </div>
 
       {/* Per-category cards + overall — the three categories are never merged */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18 }}>
         <RevenueCard
           label="Online"
           accent="sage"
@@ -233,18 +248,18 @@ export function Revenue({ clients }: Props) {
           onClick={() => setDrill({ title: `Low cost · ${scopeLabel}`, rows: byCategory.low_cost })}
         />
         <RevenueCard
-          label={`Projected ${now.getFullYear()}`}
+          label="Yearly pace"
           accent="terracotta"
           totals={{
-            sessions: projection.ytdSessions,
+            sessions: projection.last4wSessions,
             gross: projection.projectedGross,
             net: projection.projectedNet,
           }}
-          grossNote={`Projected gross for ${now.getFullYear()}`}
-          subtext={`Based on ${euro(projection.ytdGross)} earned from ${projection.ytdSessions} attended session${projection.ytdSessions === 1 ? '' : 's'} so far this year`}
+          grossNote="If the last 4 weeks continued all year"
+          subtext={`Based on ${euro(projection.last4wGross)} earned from ${projection.last4wSessions} paid session${projection.last4wSessions === 1 ? '' : 's'} in the last 4 weeks`}
           Icon={TrendingUp}
           emphasised
-          onClick={() => setDrill({ title: `Attended ${now.getFullYear()} · year to date`, rows: projection.rows })}
+          onClick={() => setDrill({ title: 'Paid · last 4 weeks', rows: projection.rows })}
         />
       </div>
 
@@ -508,9 +523,9 @@ function buildWeekly(clients: ClientRow[], now: Date): ChartBucket[] {
     const bucket: ChartBucket = { label: DAY_LABELS[i], online: 0, inPerson: 0, low: 0, rows: [] };
     for (const c of clients) {
       for (const s of dedupeSessions(c.sessions)) {
-        if (s.status === 'cancelled') continue;
+        if (s.status === 'cancelled' || s.payment_status === 'refunded') continue;
         if (s.payment_status !== 'paid') continue;
-        if (!isSameDay(new Date(s.session_date), day)) continue;
+        if (dublinDay(s.session_date) !== dublinDay(day)) continue;
         addToBucket(bucket, s, c);
       }
     }
@@ -518,17 +533,17 @@ function buildWeekly(clients: ClientRow[], now: Date): ChartBucket[] {
   });
 }
 
-function buildYearly(clients: ClientRow[], basis: 'attended' | 'all_scheduled', now: Date): ChartBucket[] {
-  const year = now.getFullYear();
+function buildYearly(clients: ClientRow[], basis: Basis, now: Date): ChartBucket[] {
+  const year = dublinDay(now).slice(0, 4);
   return Array.from({ length: 12 }, (_, month) => {
-    const label = new Date(year, month, 1).toLocaleDateString('en-IE', { month: 'short' });
+    const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const label = new Date(Number(year), month, 15).toLocaleDateString('en-IE', { month: 'short' });
     const bucket: ChartBucket = { label, online: 0, inPerson: 0, low: 0, rows: [] };
     for (const c of clients) {
       for (const s of dedupeSessions(c.sessions)) {
-        if (s.status === 'cancelled') continue;
-        if (basis === 'attended' && s.status !== 'attended') continue;
-        const d = new Date(s.session_date);
-        if (d.getFullYear() !== year || d.getMonth() !== month) continue;
+        if (s.status === 'cancelled' || s.payment_status === 'refunded') continue;
+        if (basis === 'paid' ? s.payment_status !== 'paid' : s.status !== 'attended') continue;
+        if (dublinYM(s.session_date) !== key) continue;
         addToBucket(bucket, s, c);
       }
     }
@@ -536,20 +551,24 @@ function buildYearly(clients: ClientRow[], basis: 'attended' | 'all_scheduled', 
   });
 }
 
-function buildMonthly(clients: ClientRow[], basis: 'attended' | 'all_scheduled', now: Date): ChartBucket[] {
-  const months: Array<{ year: number; month: number; label: string }> = [];
+function buildMonthly(clients: ClientRow[], basis: Basis, now: Date): ChartBucket[] {
+  const [ny, nm] = dublinYM(now).split('-').map(Number);
+  const months: Array<{ key: string; label: string }> = [];
   for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push({ year: d.getFullYear(), month: d.getMonth(), label: d.toLocaleDateString('en-IE', { month: 'short' }) });
+    let y = ny, m = nm - i;
+    while (m < 1) { m += 12; y--; }
+    months.push({
+      key: `${y}-${String(m).padStart(2, '0')}`,
+      label: new Date(y, m - 1, 15).toLocaleDateString('en-IE', { month: 'short' }),
+    });
   }
-  return months.map(({ year, month, label }) => {
+  return months.map(({ key, label }) => {
     const bucket: ChartBucket = { label, online: 0, inPerson: 0, low: 0, rows: [] };
     for (const c of clients) {
       for (const s of dedupeSessions(c.sessions)) {
-        if (s.status === 'cancelled') continue;
-        if (basis === 'attended' && s.status !== 'attended') continue;
-        const d = new Date(s.session_date);
-        if (d.getFullYear() !== year || d.getMonth() !== month) continue;
+        if (s.status === 'cancelled' || s.payment_status === 'refunded') continue;
+        if (basis === 'paid' ? s.payment_status !== 'paid' : s.status !== 'attended') continue;
+        if (dublinYM(s.session_date) !== key) continue;
         addToBucket(bucket, s, c);
       }
     }
