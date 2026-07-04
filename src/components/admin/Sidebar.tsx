@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus, TrendingUp, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus, TrendingUp, ShieldCheck, Eye, EyeOff, Hourglass } from 'lucide-react';
 import type { AdminSection } from './types';
 
 interface Props {
@@ -18,6 +18,7 @@ const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> =
   { id: 'sessions',   label: 'Calendar',   Icon: CalendarDays },
   { id: 'revenue',    label: 'Revenue',    Icon: TrendingUp },
   { id: 'forms',      label: 'Forms',      Icon: FileText },
+  { id: 'waitlist',   label: 'Waitlist',   Icon: Hourglass },
   { id: 'new-client', label: 'Onboarding', Icon: UserRoundPlus },
 ];
 

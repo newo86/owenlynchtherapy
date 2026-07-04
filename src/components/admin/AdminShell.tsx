@@ -8,6 +8,7 @@ import { ClientDetail } from './ClientDetail';
 import { SessionsList } from './SessionsList';
 import { FormsTable } from './FormsTable';
 import { Revenue } from './Revenue';
+import { Waitlist } from './Waitlist';
 import { NewClientModal } from './NewClientModal';
 import { ScheduleSessionModal } from './ScheduleSessionModal';
 import { SessionEditModal } from './SessionEditModal';
@@ -17,7 +18,7 @@ import { Plus } from 'lucide-react';
 import { adminFetch, logout } from './api';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
-  SessionFilter, FormsTab, GcalRef, ReminderHealth,
+  SessionFilter, FormsTab, GcalRef, ReminderHealth, WaitlistRow,
 } from './types';
 
 const SECTION_TITLES: Record<AdminSection, string> = {
@@ -26,6 +27,7 @@ const SECTION_TITLES: Record<AdminSection, string> = {
   sessions: 'Calendar',
   revenue: 'Revenue',
   forms: 'Forms',
+  waitlist: 'Waiting List',
   'new-client': 'Onboarding',
 };
 
@@ -56,6 +58,7 @@ export function AdminShell() {
   const [modalOpen, setModalOpen] = useState(false);
   const [, setLoadingAll] = useState(false);
   const [reminderHealth, setReminderHealth] = useState<ReminderHealth | null>(null);
+  const [waitlist, setWaitlist] = useState<WaitlistRow[]>([]);
   // Set when a refresh fails — the UI keeps showing the last good data with a
   // banner instead of silently rendering zeros (which read as "no revenue").
   const [loadError, setLoadError] = useState(false);
@@ -111,12 +114,13 @@ export function AdminShell() {
   const reload = useCallback(async () => {
     setLoadingAll(true);
     try {
-      const [cRes, tRes, sRes, calStatusRes, healthRes] = await Promise.all([
+      const [cRes, tRes, sRes, calStatusRes, healthRes, wRes] = await Promise.all([
         adminFetch('/api/admin/clients'),
         adminFetch('/api/intake/tokens'),
         adminFetch('/api/intake/submissions'),
         adminFetch('/api/auth/google/status'),
         adminFetch('/api/admin/reminders/status'),
+        adminFetch('/api/admin/waitlist'),
       ]);
 
       if (cRes.status === 401) { window.dispatchEvent(new Event('admin-unauthorized')); return; }
@@ -127,6 +131,7 @@ export function AdminShell() {
       if (tRes.ok) setTokens((await tRes.json()).tokens ?? []);
       if (sRes.ok) setSubmissions((await sRes.json()).submissions ?? []);
       if (healthRes.ok) setReminderHealth((await healthRes.json()) as ReminderHealth);
+      if (wRes.ok) setWaitlist((await wRes.json()).waitlist ?? []);
 
       let connected = calStatus?.connected ?? false;
       if (calStatusRes.ok) {
@@ -348,6 +353,10 @@ export function AdminShell() {
 
               {section === 'forms' && (
                 <FormsTable submissions={submissions} tokens={tokens} initialTab={formsTab} />
+              )}
+
+              {section === 'waitlist' && (
+                <Waitlist waitlist={waitlist} onReload={reload} />
               )}
             </>
           )}
