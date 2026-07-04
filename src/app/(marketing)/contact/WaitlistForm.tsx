@@ -74,7 +74,7 @@ export default function WaitlistForm() {
         Join the waiting list
       </p>
       <p className="font-normal text-sm text-gray-600 leading-[1.7] mb-5">
-        Leave your details and I&apos;ll contact you as soon as an in-person space opens up.
+        Leave your details and I&apos;ll contact you as soon as another space opens up.
       </p>
 
       {/* Honeypot — hidden from people, filled by bots. */}

@@ -10,7 +10,7 @@ import FloatingCircles from '@/components/ui/floating-circles';
 export const metadata: Metadata = {
   title: { absolute: 'Contact Owen Lynch | Psychotherapist Dublin' },
   description:
-    'Get in touch with Owen Lynch, IAHIP and ICP accredited psychotherapist in Dublin. Currently accepting new clients for online sessions — limited slots available.',
+    'Get in touch with Owen Lynch, IAHIP and ICP accredited psychotherapist in Dublin. Currently accepting new clients — limited in-person and online slots.',
   alternates: {
     canonical: 'https://owenlynchtherapy.com/contact',
     languages: {
@@ -36,13 +36,12 @@ const jsonLd = {
   mainEntity: { '@id': 'https://owenlynchtherapy.com/#business' },
 };
 
-// The specific slots currently open to new clients (all online — in-person
-// is full; the waitlist form below the cards collects interest for when an
-// in-person space opens up).
+// The specific slots currently open to new clients. The waitlist form below
+// the cards collects interest from anyone these times don't suit.
 const availability = [
-  { day: 'Monday',  hours: '7:00pm', format: 'Online' },
+  { day: 'Monday',  hours: '7:00pm', format: 'In Person' },
   { day: 'Tuesday', hours: '5:00pm', format: 'Online' },
-  { day: 'Friday',  hours: '3:00pm · every second week', format: 'Online' },
+  { day: 'Friday',  hours: '3:00pm · every second week', format: 'In Person' },
 ];
 
 const reassurance = [
@@ -133,10 +132,10 @@ export default function ContactPage() {
                 </div>
               ))}
               <p className="font-normal text-base leading-[1.8]" style={{ color: '#555555' }}>
-                Online sessions are available to clients across Ireland and the UK.
-                In-person sessions at Insight Matters, 106 Capel Street, Dublin 1 are
-                currently full — join the waiting list below and I&apos;ll be in touch
-                when a space opens up.
+                In-person sessions take place at Insight Matters, 106 Capel Street,
+                Dublin 1. Online sessions are available to clients across Ireland and
+                the UK. If none of these times suit, join the waiting list below and
+                I&apos;ll be in touch when another space opens up.
               </p>
               <WaitlistForm />
             </div>
