@@ -51,7 +51,7 @@ what is retained, what is purged automatically, and the items still open.
 
 ## Waiting list (public signup)
 
-- The contact page offers a waiting-list form (in-person sessions full).
+- The contact page offers a waiting-list form (for when no open slot suits).
   Stored: **name, email, optional phone only** — no health data. Explicit
   consent is required (the API refuses without it) and the exact consent
   wording is stored verbatim with each entry (`waitlist.consent_text`,
