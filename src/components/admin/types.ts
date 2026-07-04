@@ -14,6 +14,8 @@ export interface SessionRow {
   receipt_sent_at: string | null;
   notes: string | null;
   gcal_event_id?: string | null;
+  /** Reminder log rows for this session (nested from session_reminders). */
+  session_reminders?: { sent_at: string; reminder_type: string }[];
 }
 
 export interface ClientRow {
@@ -75,6 +77,20 @@ export interface GcalRef {
   title: string;
   start: string;     // ISO (RFC 3339 from GCal)
   location?: string; // used to detect in_person vs online on first open
+}
+
+/** Latest automatic reminder run + kill-switch state, from /api/admin/reminders/status. */
+export interface ReminderHealth {
+  lastRun: {
+    ran_at: string;
+    outcome: string; // 'completed' | 'completed:with-failures' | 'aborted:<reason>' | 'error:<reason>'
+    candidates: number;
+    sent: number;
+    skipped: number;
+    failed: number;
+    detail: unknown;
+  } | null;
+  emailsEnabled: boolean;
 }
 
 export type AdminSection = 'dashboard' | 'clients' | 'sessions' | 'revenue' | 'forms' | 'new-client';

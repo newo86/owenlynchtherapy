@@ -56,14 +56,35 @@ export function SendReminderModal({ session, client, onClose }: Props) {
     }
   }
 
-  async function sendReceipt() {
+  const [receiptError, setReceiptError] = useState<string | null>(null);
+
+  async function sendReceipt(force = false) {
     setReceiptStatus('sending');
+    setReceiptError(null);
     try {
       const res = await adminFetch('/api/admin/send-receipt', {
         method: 'POST',
-        body: JSON.stringify({ session_id: session.id }),
+        body: JSON.stringify({ session_id: session.id, force }),
       });
-      setReceiptStatus(res.ok ? 'sent' : 'error');
+      const json = await res.json().catch(() => ({}));
+      if (res.status === 409 && json.already_sent_at) {
+        const when = new Date(json.already_sent_at).toLocaleString('en-IE', {
+          day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true,
+          timeZone: 'Europe/Dublin',
+        });
+        if (confirm(`A receipt for this session was already emailed on ${when}. Send it again?`)) {
+          await sendReceipt(true);
+          return;
+        }
+        setReceiptStatus('idle');
+        return;
+      }
+      if (!res.ok) {
+        setReceiptStatus('error');
+        setReceiptError(json.error ?? null);
+        return;
+      }
+      setReceiptStatus('sent');
     } catch {
       setReceiptStatus('error');
     }
@@ -104,6 +125,11 @@ export function SendReminderModal({ session, client, onClose }: Props) {
             <p style={{ fontSize: 12, color: 'var(--sage)', margin: '8px 0 0', lineHeight: 1.5 }}>
               {contents}
             </p>
+            {(session.session_reminders?.length ?? 0) > 0 && (
+              <p style={{ fontSize: 12, color: 'var(--terracotta)', margin: '6px 0 0', lineHeight: 1.5 }}>
+                A reminder was already sent for this session — sending again will email the client twice.
+              </p>
+            )}
             {!canSend && (
               <p style={{ fontSize: 12, color: 'var(--terracotta)', margin: '6px 0 0' }}>
                 This session is {session.status === 'attended' ? 'already attended' : session.status} — reminders only go to scheduled sessions.
@@ -166,7 +192,7 @@ export function SendReminderModal({ session, client, onClose }: Props) {
           <div style={{ display: 'flex', gap: 10, marginLeft: 'auto' }}>
             {/* Send Receipt — wired to the existing /api/admin/send-receipt route. */}
             <button
-              onClick={sendReceipt}
+              onClick={() => void sendReceipt()}
               disabled={receiptStatus === 'sending' || receiptStatus === 'sent'}
               className="admin-btn-secondary is-filled"
               style={{ background: 'var(--sage)', borderColor: 'var(--sage)' }}
@@ -188,7 +214,7 @@ export function SendReminderModal({ session, client, onClose }: Props) {
         </div>
         {receiptStatus === 'error' && (
           <p style={{ fontSize: 12, color: 'var(--terracotta)', textAlign: 'right', margin: '10px 0 0' }}>
-            Couldn&apos;t send the receipt — please try again.
+            {receiptError ?? "Couldn't send the receipt — please try again."}
           </p>
         )}
       </div>

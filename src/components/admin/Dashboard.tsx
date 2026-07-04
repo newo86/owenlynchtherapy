@@ -13,7 +13,7 @@ import { SendReminderModal } from './SendReminderModal';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow,
-  CalendarEvent, CalendarStatus, SessionFilter, FormsTab, GcalRef,
+  CalendarEvent, CalendarStatus, SessionFilter, FormsTab, GcalRef, ReminderHealth,
 } from './types';
 
 interface Props {
@@ -42,6 +42,7 @@ interface Props {
   flash: { kind: 'success' | 'error'; msg: string } | null;
   sectionTitle: string;
   onEditGcalEvent?: (event: GcalRef) => void;
+  reminderHealth: ReminderHealth | null;
 }
 
 type OutstandingScope = 'week' | 'month' | 'all';
@@ -50,6 +51,55 @@ type OutstandingScope = 'week' | 'month' | 'all';
 const OUTSTANDING_FLOOR = new Date('2026-06-01');
 
 // ── helpers ────────────────────────────────────────────────────────────────
+
+// Translate the latest reminder run into a one-line status for the health
+// strip. Green = the morning run happened and sent what it should; anything
+// else says exactly what's wrong in plain language. `null` = still loading.
+function reminderStripState(health: ReminderHealth | null):
+  | { tone: 'ok' | 'warn' | 'alert'; msg: string }
+  | null {
+  if (!health) return null;
+  if (!health.emailsEnabled) {
+    return { tone: 'alert', msg: 'Email sending is switched OFF — no reminders or receipts are going out (EMAILS_ENABLED).' };
+  }
+  const run = health.lastRun;
+  if (!run) {
+    return { tone: 'warn', msg: 'No automatic reminder run recorded yet — the health log starts with the next 7 a.m. run.' };
+  }
+  const ranAt = new Date(run.ran_at);
+  const when = ranAt.toLocaleString('en-IE', {
+    weekday: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
+  });
+  if (Date.now() - ranAt.getTime() > 26 * 60 * 60 * 1000) {
+    return { tone: 'alert', msg: `The automatic reminder run hasn't fired since ${when} — reminders may not be going out.` };
+  }
+  if (run.outcome.startsWith('aborted') || run.outcome.startsWith('error')) {
+    const reason: Record<string, string> = {
+      'aborted:kill-switch': 'email sending was switched off',
+      'aborted:google-not-connected': 'Google Calendar was not connected',
+      'aborted:calendar-sync-failed': "Google Calendar couldn't be reached",
+      'aborted:exceeds-cap': 'an unusually high session count tripped the safety cap',
+      'error:candidates-query': "today's sessions couldn't be read",
+    };
+    return {
+      tone: 'alert',
+      msg: `This morning's reminders were held back (${reason[run.outcome] ?? run.outcome}) — no clients were emailed. Send today's by hand if needed.`,
+    };
+  }
+  if (run.failed > 0) {
+    return {
+      tone: 'warn',
+      msg: `Reminders ${when}: ${run.sent} sent, ${run.failed} failed — the failed clients got nothing; send theirs by hand.`,
+    };
+  }
+  if (run.candidates === 0) {
+    return { tone: 'ok', msg: `Reminders ${when}: no sessions to remind — all quiet.` };
+  }
+  return {
+    tone: 'ok',
+    msg: `Reminders ${when}: ${run.sent} sent${run.skipped > 0 ? `, ${run.skipped} already covered` : ''}.`,
+  };
+}
 
 function meridiem(iso: string) {
   return new Date(iso).toLocaleTimeString('en-IE', {
@@ -69,7 +119,7 @@ export function Dashboard({
   weekOffset, onWeekOffsetChange,
   onReload, onConnectCalendar, onDisconnectCalendar, onNewClient,
   onScheduleDay, onClickSession, onNavigateSection,
-  greeting, dateLine, flash, sectionTitle, onEditGcalEvent,
+  greeting, dateLine, flash, sectionTitle, onEditGcalEvent, reminderHealth,
 }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -182,13 +232,23 @@ export function Dashboard({
     } catch { setFeedback({ id: sessionId, msg: 'Network error.' }); }
     finally { setBusyId(null); }
   }
-  async function sendReceipt(sessionId: string) {
+  async function sendReceipt(sessionId: string, force = false) {
     setBusyId(sessionId);
     try {
       const res = await adminFetch('/api/admin/send-receipt', {
-        method: 'POST', body: JSON.stringify({ session_id: sessionId }),
+        method: 'POST', body: JSON.stringify({ session_id: sessionId, force }),
       });
       const json = await res.json();
+      if (res.status === 409 && json.already_sent_at) {
+        const when = new Date(json.already_sent_at).toLocaleString('en-IE', {
+          day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true,
+          timeZone: 'Europe/Dublin',
+        });
+        if (confirm(`A receipt for this session was already emailed on ${when}. Send it again?`)) {
+          await sendReceipt(sessionId, true);
+        }
+        return;
+      }
       if (!res.ok) { setFeedback({ id: sessionId, msg: json.error ?? 'Failed.' }); return; }
       setFeedback({ id: sessionId, msg: 'Receipt sent.' });
       onReload();
@@ -259,6 +319,38 @@ export function Dashboard({
           fontSize: 13,
         }}>{flash.msg}</div>
       )}
+
+      {/* Reminder health strip — answers "did this morning's reminders go
+          out?" at a glance. Quiet when healthy, loud when they didn't. */}
+      {(() => {
+        const strip = reminderStripState(reminderHealth);
+        if (!strip) return null;
+        const palette = {
+          ok:    { bg: 'rgba(79,138,104,0.10)', border: 'rgba(79,138,104,0.3)',  color: '#2D5A42' },
+          warn:  { bg: 'rgba(212,168,67,0.14)', border: 'rgba(212,168,67,0.45)', color: '#7A5E12' },
+          alert: { bg: 'rgba(200,90,27,0.12)',  border: 'rgba(200,90,27,0.45)',  color: '#A04714' },
+        }[strip.tone];
+        return (
+          <div
+            role={strip.tone === 'ok' ? 'status' : 'alert'}
+            style={{
+              margin: '0 0 22px', padding: '10px 18px', borderRadius: 12,
+              background: palette.bg, border: `1px solid ${palette.border}`,
+              color: palette.color, fontSize: 13,
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}
+          >
+            <span
+              aria-hidden
+              style={{
+                width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                background: strip.tone === 'ok' ? '#4F8A68' : strip.tone === 'warn' ? '#D4A843' : '#C85A1A',
+              }}
+            />
+            {strip.msg}
+          </div>
+        );
+      })()}
 
       {/* Unlinked calendar events banner */}
       {onEditGcalEvent && visibleUnlinked.length > 0 && (
@@ -631,6 +723,13 @@ function SessionRow({
           {isLowCost && <span className="admin-tag admin-tag-new">Low cost · cash</span>}
           <span className={`admin-tag ${paymentTag}`}>{paymentLabel}</span>
         </div>
+        {(session.receipt_sent_at || (session.session_reminders?.length ?? 0) > 0) && (
+          <div style={{ fontSize: 10, color: 'var(--sage)', fontWeight: 500, textAlign: 'right' }}>
+            {(session.session_reminders?.length ?? 0) > 0 && <span>✓ Reminder sent</span>}
+            {session.receipt_sent_at && (session.session_reminders?.length ?? 0) > 0 && <span> · </span>}
+            {session.receipt_sent_at && <span>✓ Receipt sent</span>}
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {session.status === 'scheduled' && onMarkAttended && (
             <button onClick={onMarkAttended} disabled={busy} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
@@ -647,9 +746,9 @@ function SessionRow({
               {isLowCost ? 'Cash Received' : 'Mark Paid'}
             </button>
           )}
-          {onSendReceipt && (
+          {onSendReceipt && session.payment_status === 'paid' && (
             <button onClick={onSendReceipt} disabled={busy} className="admin-btn-secondary">
-              Send Receipt
+              {session.receipt_sent_at ? 'Resend Receipt' : 'Send Receipt'}
             </button>
           )}
         </div>

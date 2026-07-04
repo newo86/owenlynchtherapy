@@ -6,7 +6,7 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 // Partial update of a client row. Accepts client_id + any subset of the
 // admin-editable fields. We whitelist the columns so a malicious body
-// can't touch status / email / id directly.
+// can't touch other columns (id, created_at, …) directly.
 export async function POST(req: NextRequest) {
   const denied = requireAdmin(req);
   if (denied) return denied;
@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     notes?: string;
     status?: 'active' | 'new' | 'completed';
     // Contact / personal detail fields
+    email?: string;
     phone?: string;
     date_of_birth?: string;
     emergency_contact_name?: string;
@@ -44,6 +45,16 @@ export async function POST(req: NextRequest) {
   }
   if (typeof body.notes === 'string') patch.notes = body.notes;
   if (body.status && ['active', 'new', 'completed'].includes(body.status)) patch.status = body.status;
+  // Email: reminders and receipts go here, so it must stay a valid address —
+  // never cleared to null, and rejected (not silently dropped) when invalid.
+  // The contact form in ClientDetail sends it; it used to be discarded here.
+  if (typeof body.email === 'string' && body.email.trim() !== '') {
+    const email = body.email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'That email address doesn’t look valid.' }, { status: 400 });
+    }
+    patch.email = email;
+  }
   // Contact / personal detail fields (empty string clears the value)
   if (typeof body.phone === 'string') patch.phone = body.phone || null;
   if (typeof body.date_of_birth === 'string') patch.date_of_birth = body.date_of_birth || null;

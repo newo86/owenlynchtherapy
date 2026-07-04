@@ -54,6 +54,20 @@ function payLabel(status: string) {
   return status === 'paid' ? 'Paid' : status === 'refunded' ? 'Refunded' : 'Unpaid';
 }
 
+/** Latest reminder timestamp for a session, or null. */
+export function lastReminderAt(s: SessionRow): string | null {
+  const rows = s.session_reminders ?? [];
+  if (rows.length === 0) return null;
+  return rows.reduce((max, r) => (r.sent_at > max ? r.sent_at : max), rows[0].sent_at);
+}
+
+function shortWhen(iso: string) {
+  return new Date(iso).toLocaleString('en-IE', {
+    day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true,
+    timeZone: 'Europe/Dublin',
+  });
+}
+
 export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter, onClickSession, onScheduleDay, onNewClient, onEditGcalEvent }: Props) {
   // Default to calendar; only drop to list when arriving with a filter intent
   // (Quick Actions like "Unpaid this week") because filters only apply in list view.
@@ -61,6 +75,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
   const [filter, setFilter] = useState<SessionFilter>(initialFilter ?? 'all');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ id: string; kind: 'ok' | 'error'; msg: string } | null>(null);
   const [reminderData, setReminderData] = useState<{ session: SessionRow; client: ClientRow } | null>(null);
 
   // Sync filter AND view if a parent navigates here with a different intent.
@@ -110,29 +125,48 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
   async function doMark(sessionId: string) {
     setBusyId(sessionId); setConfirmId(null);
     try {
-      await adminFetch('/api/admin/mark-attended', {
+      const res = await adminFetch('/api/admin/mark-attended', {
         method: 'POST', body: JSON.stringify({ session_id: sessionId }),
       });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setFeedback({ id: sessionId, kind: 'error', msg: json.error ?? 'Failed to mark attended.' }); return; }
+      setFeedback({ id: sessionId, kind: 'ok', msg: json.receipt_sent ? 'Marked attended — receipt emailed.' : 'Marked attended.' });
       onReload();
-    } finally { setBusyId(null); }
+    } catch { setFeedback({ id: sessionId, kind: 'error', msg: 'Network error — not saved.' }); }
+    finally { setBusyId(null); }
   }
-  async function sendReceipt(sessionId: string) {
+  async function sendReceipt(sessionId: string, force = false) {
     setBusyId(sessionId);
     try {
-      await adminFetch('/api/admin/send-receipt', {
-        method: 'POST', body: JSON.stringify({ session_id: sessionId }),
+      const res = await adminFetch('/api/admin/send-receipt', {
+        method: 'POST', body: JSON.stringify({ session_id: sessionId, force }),
       });
+      const json = await res.json().catch(() => ({}));
+      if (res.status === 409 && json.already_sent_at) {
+        // Receipt was already emailed — make resending a deliberate choice.
+        if (confirm(`A receipt for this session was already emailed on ${shortWhen(json.already_sent_at)}. Send it again?`)) {
+          await sendReceipt(sessionId, true);
+        }
+        return;
+      }
+      if (!res.ok) { setFeedback({ id: sessionId, kind: 'error', msg: json.error ?? 'Receipt not sent.' }); return; }
+      setFeedback({ id: sessionId, kind: 'ok', msg: 'Receipt emailed.' });
       onReload();
-    } finally { setBusyId(null); }
+    } catch { setFeedback({ id: sessionId, kind: 'error', msg: 'Network error — receipt not sent.' }); }
+    finally { setBusyId(null); }
   }
-  async function markPaid(sessionId: string) {
+  async function markPaid(sessionId: string, isLowCost: boolean) {
     setBusyId(sessionId);
     try {
-      await adminFetch('/api/admin/mark-paid', {
+      const res = await adminFetch('/api/admin/mark-paid', {
         method: 'POST', body: JSON.stringify({ session_id: sessionId }),
       });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setFeedback({ id: sessionId, kind: 'error', msg: json.error ?? 'Failed to record payment.' }); return; }
+      setFeedback({ id: sessionId, kind: 'ok', msg: isLowCost ? 'Cash payment recorded.' : 'Marked paid.' });
       onReload();
-    } finally { setBusyId(null); }
+    } catch { setFeedback({ id: sessionId, kind: 'error', msg: 'Network error — not saved.' }); }
+    finally { setBusyId(null); }
   }
 
   const weekStart = (() => {
@@ -269,8 +303,20 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                       Low cost · cash
                     </span>
                   )}
+                  {s.receipt_sent_at && (
+                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sage)', marginTop: 3, fontWeight: 500 }}>
+                      ✓ Receipt sent {shortWhen(s.receipt_sent_at)}
+                    </span>
+                  )}
                 </td>
-                <td><span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span></td>
+                <td>
+                  <span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span>
+                  {lastReminderAt(s) && (
+                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sage)', marginTop: 3, fontWeight: 500 }}>
+                      ✓ Reminder sent {shortWhen(lastReminderAt(s)!)}
+                    </span>
+                  )}
+                </td>
                 <td style={{ textAlign: 'right' as const }}>
                   <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {onClickSession && (
@@ -285,7 +331,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     )}
                     {s.payment_status !== 'paid' && s.status !== 'cancelled' && (
                       <button
-                        onClick={() => markPaid(s.id)}
+                        onClick={() => markPaid(s.id, Boolean(c.is_low_cost))}
                         disabled={busyId === s.id}
                         className="admin-btn-secondary"
                         title={c.is_low_cost ? 'Record cash received for this session' : 'Mark this session as paid'}
@@ -308,6 +354,14 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                       <button onClick={() => doMark(s.id)} style={confirmLink}>Confirm</button>
                       {' '}
                       <button onClick={() => setConfirmId(null)} style={confirmLinkMuted}>Cancel</button>
+                    </div>
+                  )}
+                  {feedback?.id === s.id && (
+                    <div style={{
+                      marginTop: 8, fontSize: 11,
+                      color: feedback.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)',
+                    }}>
+                      {feedback.msg}
                     </div>
                   )}
                 </td>

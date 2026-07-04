@@ -138,13 +138,24 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
   const [contactSaving, setContactSaving] = useState(false);
   const [contactSaved, setContactSaved] = useState(false);
 
-  // Reset transient view state whenever a different client is opened.
+  // Reset transient view state only when a DIFFERENT client is opened — keyed
+  // on the id, not the object. The 30s poll replaces the client object with a
+  // fresh identity on every refresh, and keying on it used to cancel edits
+  // mid-type and yank the month view back to "now" every half minute.
+  const clientId = client?.id;
   useEffect(() => {
     setEditingContact(false);
     setShowDetails(false);
     setMonthOffset(0);
-    if (client) setContactFields(toContactFields(client));
-  }, [client]);
+  }, [clientId]);
+
+  // Keep the contact fields fresh from server data, but never clobber the
+  // form while the practitioner is editing it. Sync-props-to-state is the
+  // point here (the 30s poll refreshes `client`), hence the rule exception.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (client && !editingContact) setContactFields(toContactFields(client));
+  }, [client, editingContact]);
 
   // Close on Escape.
   useEffect(() => {
@@ -183,6 +194,7 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
         method: 'POST',
         body: JSON.stringify({
           client_id: client.id,
+          email: contactFields.email,
           phone: contactFields.phone,
           date_of_birth: contactFields.date_of_birth,
           emergency_contact_name: contactFields.emergency_contact_name,
@@ -196,7 +208,12 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
         setEditingContact(false);
         onReload();
         setTimeout(() => setContactSaved(false), 2500);
+      } else {
+        const json = await res.json().catch(() => ({}));
+        alert(json.error ?? 'Could not save contact details — please try again.');
       }
+    } catch {
+      alert('Network error — contact details were not saved.');
     } finally { setContactSaving(false); }
   }
 
