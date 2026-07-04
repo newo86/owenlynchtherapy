@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
-import { getResend } from '@/lib/resend';
-import { buildReceiptHtml } from '@/lib/emailTemplates';
+import { sendReceiptEmail } from '@/lib/sendReceiptEmail';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 export async function POST(req: NextRequest) {
@@ -55,34 +54,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const firstName = client.full_name.split(' ')[0];
-  const feeEuros = Math.round((session.fee as number) / 100);
-  const sessionDate = new Date(session.session_date as string);
-  const formattedDate = sessionDate.toLocaleDateString('en-IE', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Dublin',
-  });
-  const formattedTime = sessionDate.toLocaleTimeString('en-IE', {
-    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
-  });
+  const sent = await sendReceiptEmail(
+    {
+      id: session_id,
+      fee: session.fee as number,
+      session_date: session.session_date as string,
+      session_format: session.session_format as string,
+    },
+    client,
+  );
 
-  const emailResult = await getResend().emails.send({
-    from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
-    to: client.email,
-    subject: 'Receipt — Psychotherapy Session with Owen Lynch',
-    html: buildReceiptHtml({ firstName, date: formattedDate, time: formattedTime, feeEuros, sessionFormat: session.session_format as string }),
-  });
-
-  if (emailResult.error) {
-    console.error('[send-receipt] Resend error:', JSON.stringify(emailResult.error, null, 2));
+  if (!sent) {
     return NextResponse.json({ error: 'Failed to send receipt email' }, { status: 500 });
   }
 
-  // Update receipt_sent_at
-  await supabaseAdmin
-    .from('sessions')
-    .update({ receipt_sent_at: new Date().toISOString() })
-    .eq('id', session_id);
-
-  console.log('[send-receipt] sent for session', session_id);
   return NextResponse.json({ success: true }, { headers: noCache });
 }

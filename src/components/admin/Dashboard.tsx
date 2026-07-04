@@ -11,6 +11,7 @@ import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatDateTime, isSameDay, startOfWeek, dedupeSessions } from './api';
 import { SendReminderModal } from './SendReminderModal';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
+import { SessionDoneOptions, type SessionDoneChoice } from './SessionDoneOptions';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow,
   CalendarEvent, CalendarStatus, SessionFilter, FormsTab, GcalRef, ReminderHealth,
@@ -234,19 +235,27 @@ export function Dashboard({
   const activeClients = clients.filter(c => c.status === 'active').length;
 
   // ── Mutations
-  async function markAttended(sessionId: string, paymentStatus: string) {
-    if (paymentStatus === 'unpaid') { setConfirmId(sessionId); return; }
-    await doMarkAttended(sessionId);
+  // "Session done" — one explicit call that marks attended and, per the
+  // chosen option, records the payment and emails the receipt.
+  function sessionDone(s: SessionRow) {
+    if (s.payment_status === 'paid' && s.receipt_sent_at) {
+      void doDone(s.id, { record_payment: false, send_receipt: false });
+      return;
+    }
+    setConfirmId(s.id);
   }
-  async function doMarkAttended(sessionId: string) {
+  async function doDone(sessionId: string, choice: SessionDoneChoice) {
     setBusyId(sessionId); setConfirmId(null);
     try {
       const res = await adminFetch('/api/admin/mark-attended', {
-        method: 'POST', body: JSON.stringify({ session_id: sessionId }),
+        method: 'POST', body: JSON.stringify({ session_id: sessionId, ...choice }),
       });
       const json = await res.json();
       if (!res.ok) { setFeedback({ id: sessionId, msg: json.error ?? 'Failed.' }); return; }
-      setFeedback({ id: sessionId, msg: json.receipt_sent ? 'Marked attended — receipt sent.' : 'Marked attended.' });
+      const parts = ['Marked attended'];
+      if (choice.record_payment && json.paid) parts.push('payment recorded');
+      if (json.receipt_sent) parts.push('receipt emailed');
+      setFeedback({ id: sessionId, msg: parts.join(' — ') + '.' });
       onReload();
     } catch { setFeedback({ id: sessionId, msg: 'Network error.' }); }
     finally { setBusyId(null); }
@@ -571,9 +580,9 @@ export function Dashboard({
                   client={c}
                   busy={busyId === s.id}
                   feedback={feedback?.id === s.id ? feedback.msg : null}
-                  needsAttendedConfirm={confirmId === s.id}
-                  onMarkAttended={() => markAttended(s.id, s.payment_status)}
-                  onConfirmAttended={() => doMarkAttended(s.id)}
+                  showDoneOptions={confirmId === s.id}
+                  onSessionDone={() => sessionDone(s)}
+                  onDoneChoice={choice => void doDone(s.id, choice)}
                   onCancelConfirm={() => setConfirmId(null)}
                   onSendReceipt={() => sendReceipt(s.id)}
                   onMarkPaid={() => markPaid(s.id, Boolean(c.is_low_cost))}
@@ -712,9 +721,9 @@ interface SessionRowProps {
   client: ClientRow;
   busy?: boolean;
   feedback?: string | null;
-  needsAttendedConfirm?: boolean;
-  onMarkAttended?: () => void;
-  onConfirmAttended?: () => void;
+  showDoneOptions?: boolean;
+  onSessionDone?: () => void;
+  onDoneChoice?: (choice: SessionDoneChoice) => void;
   onCancelConfirm?: () => void;
   onSendReceipt?: () => void;
   onMarkPaid?: () => void;
@@ -723,13 +732,14 @@ interface SessionRowProps {
 
 function SessionRow({
   session, client, busy, feedback,
-  needsAttendedConfirm,
-  onMarkAttended, onConfirmAttended, onCancelConfirm, onSendReceipt, onMarkPaid, onEdit,
+  showDoneOptions,
+  onSessionDone, onDoneChoice, onCancelConfirm, onSendReceipt, onMarkPaid, onEdit,
 }: SessionRowProps) {
   const formatTag = session.session_format === 'in_person' ? 'admin-tag-inperson' : 'admin-tag-online';
   const formatLabel = session.session_format === 'in_person' ? 'In person' : 'Online';
   const paymentTag = session.payment_status === 'paid' ? 'admin-tag-paid' : 'admin-tag-unpaid';
-  const paymentLabel = session.payment_status === 'paid' ? 'Paid' : 'Unpaid';
+  const viaStripe = session.payment_status === 'paid' && Boolean(session.stripe_payment_intent_id);
+  const paymentLabel = session.payment_status === 'paid' ? (viaStripe ? 'Paid · Stripe' : 'Paid') : 'Unpaid';
   const isLowCost = Boolean(client.is_low_cost);
 
   return (
@@ -782,9 +792,9 @@ function SessionRow({
           </div>
         )}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {session.status === 'scheduled' && onMarkAttended && (
-            <button onClick={onMarkAttended} disabled={busy} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
-              Mark Attended
+          {session.status === 'scheduled' && onSessionDone && (
+            <button onClick={onSessionDone} disabled={busy} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
+              Session Done
             </button>
           )}
           {session.payment_status !== 'paid' && session.status !== 'cancelled' && onMarkPaid && (
@@ -803,13 +813,14 @@ function SessionRow({
             </button>
           )}
         </div>
-        {needsAttendedConfirm && (
-          <div style={{ fontSize: 11, color: 'var(--terracotta)' }}>
-            Unpaid.{' '}
-            <button onClick={onConfirmAttended} style={confirmLink}>Confirm</button>
-            {' '}
-            <button onClick={onCancelConfirm} style={confirmLinkMuted}>Cancel</button>
-          </div>
+        {showDoneOptions && onDoneChoice && onCancelConfirm && (
+          <SessionDoneOptions
+            session={session}
+            client={client}
+            busy={busy}
+            onChoose={onDoneChoice}
+            onCancel={onCancelConfirm}
+          />
         )}
         {feedback && (
           <div style={{ fontSize: 11, color: 'var(--sage)' }}>{feedback}</div>
@@ -818,14 +829,6 @@ function SessionRow({
     </div>
   );
 }
-
-const confirmLink: React.CSSProperties = {
-  background: 'none', border: 'none', padding: 0,
-  color: 'var(--terracotta)', textDecoration: 'underline', cursor: 'pointer', fontSize: 11,
-};
-const confirmLinkMuted: React.CSSProperties = {
-  ...confirmLink, color: 'var(--ink-muted)',
-};
 
 interface QuickProps {
   unpaidThisWeek: number;
