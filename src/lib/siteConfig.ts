@@ -26,10 +26,14 @@ export const PRACTICE = {
     addressCountry: 'IE',
   },
   geo: { latitude: '53.3488', longitude: '-6.2687' },
-  // Keep in sync with the availability shown on /contact.
+  // Practice days (feeds Google's opening-hours display). Session days are
+  // Monday/Tuesday evenings and Friday afternoons — schema.org can't express
+  // "every second Friday", so Friday is listed plainly. Keep roughly in sync
+  // with the availability shown on /contact.
   openingHours: [
+    { dayOfWeek: 'Monday', opens: '17:00', closes: '20:00' },
     { dayOfWeek: 'Tuesday', opens: '17:00', closes: '20:00' },
-    { dayOfWeek: 'Friday', opens: '16:00', closes: '20:00' },
+    { dayOfWeek: 'Friday', opens: '15:00', closes: '20:00' },
   ],
   sameAs: [
     'https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757',

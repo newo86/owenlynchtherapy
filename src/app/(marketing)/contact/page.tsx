@@ -10,7 +10,7 @@ import FloatingCircles from '@/components/ui/floating-circles';
 export const metadata: Metadata = {
   title: { absolute: 'Contact Owen Lynch | Psychotherapist Dublin' },
   description:
-    'Get in touch with Owen Lynch, IAHIP and ICP accredited psychotherapist in Dublin. Currently accepting new clients on Tuesday evenings and Friday evenings.',
+    'Get in touch with Owen Lynch, IAHIP and ICP accredited psychotherapist in Dublin. Currently accepting new clients for online sessions — limited slots available.',
   alternates: {
     canonical: 'https://owenlynchtherapy.com/contact',
     languages: {
@@ -36,11 +36,13 @@ const jsonLd = {
   mainEntity: { '@id': 'https://owenlynchtherapy.com/#business' },
 };
 
-// In-person is currently full — the waitlist form below the cards collects
-// interest for when a space opens up.
+// The specific slots currently open to new clients (all online — in-person
+// is full; the waitlist form below the cards collects interest for when an
+// in-person space opens up).
 const availability = [
-  { day: 'Tuesday Evenings', hours: '5:00pm – 8:00pm', format: 'Online' },
-  { day: 'Friday Evenings',  hours: '4:00pm – 8:00pm', format: 'Online' },
+  { day: 'Monday',  hours: '7:00pm', format: 'Online' },
+  { day: 'Tuesday', hours: '5:00pm', format: 'Online' },
+  { day: 'Friday',  hours: '3:00pm · every second week', format: 'Online' },
 ];
 
 const reassurance = [
