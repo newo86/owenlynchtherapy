@@ -17,7 +17,7 @@ import { Plus } from 'lucide-react';
 import { adminFetch, logout } from './api';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
-  SessionFilter, FormsTab, GcalRef,
+  SessionFilter, FormsTab, GcalRef, ReminderHealth,
 } from './types';
 
 const SECTION_TITLES: Record<AdminSection, string> = {
@@ -55,6 +55,10 @@ export function AdminShell() {
   const [openClient, setOpenClient] = useState<ClientRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [, setLoadingAll] = useState(false);
+  const [reminderHealth, setReminderHealth] = useState<ReminderHealth | null>(null);
+  // Set when a refresh fails — the UI keeps showing the last good data with a
+  // banner instead of silently rendering zeros (which read as "no revenue").
+  const [loadError, setLoadError] = useState(false);
   const [flash, setFlash] = useState<{ kind: 'success' | 'error'; msg: string } | null>(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -107,39 +111,48 @@ export function AdminShell() {
   const reload = useCallback(async () => {
     setLoadingAll(true);
     try {
-      const [cRes, tRes, sRes, calStatusRes] = await Promise.all([
+      const [cRes, tRes, sRes, calStatusRes, healthRes] = await Promise.all([
         adminFetch('/api/admin/clients'),
         adminFetch('/api/intake/tokens'),
         adminFetch('/api/intake/submissions'),
         adminFetch('/api/auth/google/status'),
+        adminFetch('/api/admin/reminders/status'),
       ]);
 
       if (cRes.status === 401) { window.dispatchEvent(new Event('admin-unauthorized')); return; }
 
-      const [cJson, tJson, sJson, calStatusJson] = await Promise.all([
-        cRes.ok ? cRes.json() : { clients: [] },
-        tRes.ok ? tRes.json() : { tokens: [] },
-        sRes.ok ? sRes.json() : { submissions: [] },
-        calStatusRes.ok ? calStatusRes.json() : { connected: false },
-      ]);
+      // On a failed fetch keep the previous data (don't blank the dashboard);
+      // the banner tells the user the numbers may be stale.
+      if (cRes.ok) setClients((await cRes.json()).clients ?? []);
+      if (tRes.ok) setTokens((await tRes.json()).tokens ?? []);
+      if (sRes.ok) setSubmissions((await sRes.json()).submissions ?? []);
+      if (healthRes.ok) setReminderHealth((await healthRes.json()) as ReminderHealth);
 
-      setClients(cJson.clients ?? []);
-      setTokens(tJson.tokens ?? []);
-      setSubmissions(sJson.submissions ?? []);
-      setCalStatus(calStatusJson as CalendarStatus);
-
-      if ((calStatusJson as CalendarStatus).connected) {
+      let connected = calStatus?.connected ?? false;
+      if (calStatusRes.ok) {
+        const calStatusJson = (await calStatusRes.json()) as CalendarStatus;
+        setCalStatus(calStatusJson);
+        connected = calStatusJson.connected;
+        if (!connected) setEvents([]);
+      }
+      if (connected) {
         const evRes = await adminFetch(`/api/admin/calendar?weekOffset=${weekOffset}`);
         if (evRes.ok) {
           const evJson = await evRes.json();
           setEvents(evJson.events ?? []);
         }
-      } else {
-        setEvents([]);
       }
+
+      setLoadError(!cRes.ok || !tRes.ok || !sRes.ok);
+    } catch {
+      setLoadError(true);
     } finally {
       setLoadingAll(false);
     }
+    // calStatus?.connected is deliberately not a dependency: it's only the
+    // fallback when the status fetch fails, and depending on it would
+    // re-create reload (and re-arm the 30s poll) on every status change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekOffset]);
 
   useEffect(() => { void reload(); }, [reload]);
@@ -216,6 +229,29 @@ export function AdminShell() {
         />
 
         <main className="admin-main">
+          {loadError && (
+            <div
+              role="alert"
+              style={{
+                margin: '0 0 18px', padding: '12px 18px', borderRadius: 12,
+                background: 'rgba(200,90,27,0.12)', border: '1px solid rgba(200,90,27,0.4)',
+                color: '#A04714', fontSize: 13, display: 'flex', alignItems: 'center',
+                justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
+              }}
+            >
+              <span>Couldn&apos;t refresh the dashboard — the numbers below are from the last successful load.</span>
+              <button
+                onClick={() => void reload()}
+                style={{
+                  border: '1px solid rgba(200,90,27,0.5)', background: 'transparent', color: '#A04714',
+                  borderRadius: 8, padding: '4px 12px', fontSize: 12, cursor: 'pointer',
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           {section === 'dashboard' && (
             <Dashboard
               clients={clients}
@@ -236,6 +272,7 @@ export function AdminShell() {
               flash={flash}
               sectionTitle={SECTION_TITLES[section]}
               onEditGcalEvent={setEditGcalData}
+              reminderHealth={reminderHealth}
             />
           )}
 

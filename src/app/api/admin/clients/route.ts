@@ -8,9 +8,11 @@ export async function GET(req: NextRequest) {
   const denied = requireAdmin(req);
   if (denied) return denied;
 
+  // session_reminders is nested so the UI can show "Reminder sent 07:01"
+  // on session rows without a second request.
   const { data, error } = await supabaseAdmin
     .from('clients')
-    .select('*, sessions(*)')
+    .select('*, sessions(*, session_reminders(sent_at, reminder_type))')
     .order('created_at', { ascending: false });
 
   if (error) {

@@ -78,11 +78,17 @@ export function CalendarWeekGrid({
     setBusyDeleteId(session.id);
     setOpenCardId(null);
     try {
-      await adminFetch('/api/admin/sessions/delete', {
+      const res = await adminFetch('/api/admin/sessions/delete', {
         method: 'POST',
         body: JSON.stringify({ session_id: session.id }),
       });
+      if (!res.ok) {
+        setFlash({ id: session.id, text: 'Could not delete — try again' });
+        return;
+      }
       onReload();
+    } catch {
+      setFlash({ id: session.id, text: 'Could not delete — try again' });
     } finally {
       setBusyDeleteId(null);
     }
@@ -93,11 +99,17 @@ export function CalendarWeekGrid({
     setBusyDeleteId(gcalId);
     setOpenCardId(null);
     try {
-      await adminFetch('/api/admin/sessions/delete', {
+      const res = await adminFetch('/api/admin/sessions/delete', {
         method: 'POST',
         body: JSON.stringify({ gcal_event_id: gcalId }),
       });
+      if (!res.ok) {
+        setFlash({ id: gcalId, text: 'Could not delete — try again' });
+        return;
+      }
       onReload();
+    } catch {
+      setFlash({ id: gcalId, text: 'Could not delete — try again' });
     } finally {
       setBusyDeleteId(null);
     }

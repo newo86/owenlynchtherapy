@@ -25,11 +25,42 @@ import { getResend } from '@/lib/resend';
 //   4. KILL SWITCH — getResend() still honours EMAILS_ENABLED.
 
 export const dynamic = 'force-dynamic';
+// The run does a full Google Calendar reconcile plus sequential sends; the
+// platform default timeout could kill it between a claim and its send, which
+// would permanently burn that session's one reminder. Give it headroom.
+export const maxDuration = 60;
 
 // A normal day has a handful of sessions. If we ever see more candidates than
 // this, treat it as a fault and send nothing — the circuit breaker that makes
 // a mass-email physically impossible.
 const MAX_PER_RUN = 25;
+
+// Persist the outcome of EVERY run — aborts included — so the dashboard
+// health strip can show "reminders went out this morning" (or that they
+// didn't) without anyone reading server logs. Best-effort: a logging failure
+// must never affect the run itself.
+async function recordRun(entry: {
+  outcome: string;
+  candidates?: number;
+  sent?: number;
+  skipped?: number;
+  failed?: number;
+  detail?: unknown;
+}): Promise<void> {
+  try {
+    const { error } = await supabaseAdmin.from('reminder_runs').insert({
+      outcome: entry.outcome,
+      candidates: entry.candidates ?? 0,
+      sent: entry.sent ?? 0,
+      skipped: entry.skipped ?? 0,
+      failed: entry.failed ?? 0,
+      detail: entry.detail ?? null,
+    });
+    if (error) console.error('[reminders-cron] could not record run:', error.message);
+  } catch (err) {
+    console.error('[reminders-cron] could not record run:', err instanceof Error ? err.message : String(err));
+  }
+}
 
 // Heads-up email to the practitioner when a run is held back, so silence always
 // means "all good". Best-effort and routed through getResend(), so it respects
@@ -65,6 +96,19 @@ export async function GET(req: NextRequest) {
   const startOfToday = localDublinToUtcIso(`${dublinDate}T00:00`);
   const endOfToday = localDublinToUtcIso(`${dublinDate}T23:59`);
 
+  // 0. KILL SWITCH — check up front, before anything can claim a reminder row.
+  //    Previously a blocked send looked like a success (the resend stub returns
+  //    no error), so runs during a switched-off window kept their claims and
+  //    those sessions became permanently unremindable. Abort loudly instead.
+  if (process.env.EMAILS_ENABLED !== 'true') {
+    console.error('[reminders-cron] ABORT: EMAILS_ENABLED is not true — sending nothing.');
+    await recordRun({
+      outcome: 'aborted:kill-switch',
+      detail: { message: 'EMAILS_ENABLED is not true; no reminders sent and no claims recorded.' },
+    });
+    return NextResponse.json({ ok: false, aborted: 'kill-switch', sent: 0 }, { status: 200 });
+  }
+
   // 1. GCAL CHECK — refresh Supabase against the live calendar before sending.
   //    Fail-closed: if Google isn't connected or the sync errors, send nothing.
   const gcal = await getAuthorizedClient();
@@ -74,6 +118,7 @@ export async function GET(req: NextRequest) {
       "Google Calendar isn't connected",
       "We couldn't check today's sessions against your calendar, so reminders were paused. Reconnect Google Calendar in the dashboard to resume automatic reminders.",
     );
+    await recordRun({ outcome: 'aborted:google-not-connected' });
     return NextResponse.json(
       { ok: false, aborted: 'google-not-connected', sent: 0 },
       { status: 200 },
@@ -89,6 +134,7 @@ export async function GET(req: NextRequest) {
       "Couldn't sync with Google Calendar",
       `We couldn't reach Google Calendar to verify today's sessions, so reminders were paused. (Technical detail: ${msg})`,
     );
+    await recordRun({ outcome: 'aborted:calendar-sync-failed', detail: { message: msg } });
     return NextResponse.json(
       { ok: false, aborted: 'calendar-sync-failed', sent: 0 },
       { status: 200 },
@@ -106,6 +152,7 @@ export async function GET(req: NextRequest) {
 
   if (error) {
     console.error('[reminders-cron] Supabase error:', error);
+    await recordRun({ outcome: 'error:candidates-query', detail: { message: error.message } });
     return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
   }
 
@@ -128,6 +175,7 @@ export async function GET(req: NextRequest) {
       'Unusually high number of reminders',
       `The run found ${unique.length} sessions to remind today, which is above the safety limit of ${MAX_PER_RUN}. That's unexpected, so nothing was sent. Please check today's sessions in the dashboard.`,
     );
+    await recordRun({ outcome: 'aborted:exceeds-cap', candidates: unique.length });
     return NextResponse.json(
       { ok: false, aborted: 'exceeds-cap', candidates: unique.length, cap: MAX_PER_RUN, sent: 0 },
       { status: 200 },
@@ -138,10 +186,18 @@ export async function GET(req: NextRequest) {
   const details: Array<{ session_id: string; outcome: string }> = [];
 
   for (const s of unique) {
-    const result = await sendSessionReminder(s.id, { skipIfAlreadySent: true });
+    // A thrown exception (misconfigured Resend key, network fault) must not
+    // kill the run for the remaining candidates — and sendSessionReminder
+    // releases its claim on failure so the session stays remindable.
+    let result;
+    try {
+      result = await sendSessionReminder(s.id, { skipIfAlreadySent: true });
+    } catch (err) {
+      result = { success: false as const, error: err instanceof Error ? err.message : String(err) };
+    }
     if (result.success) {
       results.sent += 1;
-      details.push({ session_id: s.id, outcome: `sent to ${result.email}` });
+      details.push({ session_id: s.id, outcome: 'sent' });
     } else if (result.skipped) {
       results.skipped += 1;
       details.push({ session_id: s.id, outcome: `skipped: ${result.error}` });
@@ -152,5 +208,22 @@ export async function GET(req: NextRequest) {
   }
 
   console.log(`[reminders-cron] today ${dublinDate}: candidates ${unique.length}, sent ${results.sent}, skipped ${results.skipped}, failed ${results.failed}`);
+  await recordRun({
+    outcome: results.failed > 0 ? 'completed:with-failures' : 'completed',
+    candidates: unique.length,
+    ...results,
+    detail: details,
+  });
+
+  // Individual send failures used to be invisible (only full aborts alerted).
+  // The July 2026 outage — every send failing for days — went unnoticed
+  // because of exactly that gap.
+  if (results.failed > 0) {
+    await sendAbortAlert(
+      `${results.failed} of today's ${unique.length} reminder${unique.length === 1 ? '' : 's'} failed to send`,
+      `Sent ${results.sent}, skipped ${results.skipped}, failed ${results.failed}. The failed clients did NOT get a reminder — please send those by hand from the dashboard and check the reminder health banner for details.`,
+    );
+  }
+
   return NextResponse.json({ ok: true, date: dublinDate, candidates: unique.length, ...results, details });
 }

@@ -64,6 +64,14 @@ export async function sendSessionReminder(
     return { success: false, skipped: true, error: 'Client has opted out of reminders' };
   }
 
+  // Kill switch, checked BEFORE any claim is recorded. The blocked-send stub
+  // in getResend() returns no error, so without this check a switched-off
+  // send would look successful, keep its claim, and make the session
+  // permanently unremindable once emails are re-enabled.
+  if (process.env.EMAILS_ENABLED !== 'true') {
+    return { success: false, error: 'Email sending is disabled (EMAILS_ENABLED is not true)' };
+  }
+
   // The cron path claims a reminder row BEFORE sending (see below); manual
   // sends just log afterwards. `auto` distinguishes the two.
   const auto = options.skipIfAlreadySent === true;
@@ -101,23 +109,30 @@ export async function sendSessionReminder(
     }
   }
 
-  const emailResult = await getResend().emails.send({
-    from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
-    to: client.email,
-    subject: isToday
-      ? 'Reminder — your session today with Owen Lynch'
-      : 'Reminder — your upcoming session with Owen Lynch',
-    html: buildReminderHtml({
-      firstName,
-      time: formattedTime,
-      dayPhrase,
-      kind,
-      sessionFormat: session.session_format as string,
-      paymentUrl: paymentLinkFor(kind, sessionId, client.email),
-      alreadyPaid: session.payment_status === 'paid',
-      optOutUrl: reminderOptOutUrl(session.client_id as string),
-    }),
-  });
+  // Any exception between claim and send (misconfigured key, network fault)
+  // must release the claim, or the session becomes permanently unremindable.
+  let emailResult;
+  try {
+    emailResult = await getResend().emails.send({
+      from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
+      to: client.email,
+      subject: isToday
+        ? 'Reminder — your session today with Owen Lynch'
+        : 'Reminder — your upcoming session with Owen Lynch',
+      html: buildReminderHtml({
+        firstName,
+        time: formattedTime,
+        dayPhrase,
+        kind,
+        sessionFormat: session.session_format as string,
+        paymentUrl: paymentLinkFor(kind, sessionId, client.email),
+        alreadyPaid: session.payment_status === 'paid',
+        optOutUrl: reminderOptOutUrl(session.client_id as string),
+      }),
+    });
+  } catch (err) {
+    emailResult = { error: { message: err instanceof Error ? err.message : String(err) } };
+  }
 
   if (emailResult.error) {
     console.error('[send-reminder] Resend error:', JSON.stringify(emailResult.error, null, 2));

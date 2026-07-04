@@ -38,6 +38,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Client email not found' }, { status: 400 });
   }
 
+  // GUARDS — this used to send unconditionally: a receipt could go out for an
+  // unpaid or future session, and every extra click emailed a duplicate.
+  if (session.payment_status !== 'paid') {
+    return NextResponse.json(
+      { error: "This session isn't marked paid — record the payment first, then send the receipt." },
+      { status: 400 },
+    );
+  }
+  if (session.receipt_sent_at && !body.force) {
+    // 409 tells the UI a receipt already went out; resending requires an
+    // explicit force after the practitioner confirms.
+    return NextResponse.json(
+      { error: 'Receipt already sent', already_sent_at: session.receipt_sent_at },
+      { status: 409 },
+    );
+  }
+
   const firstName = client.full_name.split(' ')[0];
   const feeEuros = Math.round((session.fee as number) / 100);
   const sessionDate = new Date(session.session_date as string);
