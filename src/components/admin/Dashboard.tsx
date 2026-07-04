@@ -165,6 +165,25 @@ export function Dashboard({
 
   const visibleUnlinked = unlinkedEvents.filter(e => !dismissedEventIds.has(e.id));
 
+  // "Upcoming" card: the next few client sessions, and the OTHER calendar
+  // events (personal appointments etc.) as a gentle heads-up rather than the
+  // old amber "unlinked events" warning.
+  const now = new Date();
+  const upcomingSessions = allSessions
+    .filter(({ s }) => s.status === 'scheduled' && new Date(s.session_date) > now)
+    .sort((a, b) => new Date(a.s.session_date).getTime() - new Date(b.s.session_date).getTime())
+    .slice(0, 5);
+  const upcomingEvents = visibleUnlinked
+    .filter(e => new Date(e.start) > now)
+    .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+    .slice(0, 6);
+
+  const upcomingWhen = (iso: string) =>
+    new Date(iso).toLocaleString('en-IE', {
+      weekday: 'short', day: 'numeric', month: 'short',
+      hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
+    });
+
   const monday = startOfWeek(today);
   const sunday = new Date(monday); sunday.setDate(monday.getDate() + 7);
 
@@ -352,81 +371,113 @@ export function Dashboard({
         );
       })()}
 
-      {/* Unlinked calendar events banner */}
-      {onEditGcalEvent && visibleUnlinked.length > 0 && (
-        <div style={{
-          margin: '0 0 22px',
-          padding: '14px 18px',
-          borderRadius: 14,
-          background: 'rgba(212,168,67,0.12)',
-          border: '1px solid rgba(212,168,67,0.4)',
-          display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap',
-        }}>
-          <CalendarCheck2 size={18} color="#a3801a" style={{ flexShrink: 0, marginTop: 2 }} />
-          <div style={{ flex: 1, minWidth: 180 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--forest-deep)' }}>
-              {visibleUnlinked.length} unlinked calendar event{visibleUnlinked.length === 1 ? '' : 's'}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>
-              Link any that belong to a client, or dismiss the rest.
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-              {visibleUnlinked.slice(0, 5).map(e => (
-                <div
-                  key={e.id}
-                  style={{
-                    display: 'flex', alignItems: 'center',
-                    border: '1px solid rgba(212,168,67,0.5)',
-                    borderRadius: 8, overflow: 'hidden',
-                    background: 'rgba(255,255,255,0.6)',
-                  }}
-                >
-                  <span style={{
-                    padding: '5px 10px', fontSize: 11,
-                    color: 'var(--forest-deep)', whiteSpace: 'nowrap',
-                    maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}
-                    title={`${e.title} · ${formatDateTime(e.start)}`}
-                  >
-                    {e.title}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => onEditGcalEvent({ id: e.id, title: e.title, start: e.start, location: e.location })}
-                    style={{
-                      padding: '5px 9px', fontSize: 11, fontWeight: 500,
-                      background: 'rgba(79,138,104,0.12)', border: 'none',
-                      borderLeft: '1px solid rgba(212,168,67,0.4)',
-                      color: 'var(--sage)', cursor: 'pointer',
-                    }}
-                    title={`Link "${e.title}" to a client`}
-                  >
-                    Link
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDismissedEventIds(prev => { const s = new Set(prev); s.add(e.id); return s; })}
-                    style={{
-                      padding: '5px 8px', fontSize: 13, lineHeight: 1,
-                      background: 'none', border: 'none',
-                      borderLeft: '1px solid rgba(212,168,67,0.4)',
-                      color: 'var(--ink-muted)', cursor: 'pointer',
-                    }}
-                    title={`Dismiss "${e.title}"`}
-                    aria-label={`Dismiss ${e.title}`}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              {visibleUnlinked.length > 5 && (
-                <span style={{ fontSize: 12, color: 'var(--ink-muted)', alignSelf: 'center' }}>
-                  +{visibleUnlinked.length - 5} more
-                </span>
-              )}
+      {/* Upcoming — the next client sessions and the other things on the
+          calendar, presented as a helpful heads-up (previously an amber
+          "unlinked events" warning). */}
+      {(upcomingSessions.length > 0 || upcomingEvents.length > 0) && (
+        <section className="admin-card" style={{ marginBottom: 22 }}>
+          <div className="admin-card-head">
+            <div>
+              <p className="admin-eyebrow">The days ahead</p>
+              <h2 className="admin-h2">Upcoming</h2>
             </div>
           </div>
-        </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 20,
+          }}>
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-muted)', margin: '0 0 10px' }}>
+                Sessions
+              </p>
+              {upcomingSessions.length === 0 && (
+                <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: 0 }}>No sessions scheduled.</p>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {upcomingSessions.map(({ s, c }) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => onClickSession(s, c)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      background: 'none', border: 'none', padding: 0,
+                      cursor: 'pointer', textAlign: 'left',
+                    }}
+                    title={`Open session for ${c.full_name}`}
+                  >
+                    <CalendarCheck2 size={14} color="var(--sage)" style={{ flexShrink: 0 }} aria-hidden />
+                    <span className="pii" style={{ fontSize: 13, fontWeight: 500, color: 'var(--forest-deep)' }}>
+                      {c.full_name}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-muted)', marginLeft: 'auto', whiteSpace: 'nowrap' }}>
+                      {upcomingWhen(s.session_date)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-muted)', margin: '0 0 10px' }}>
+                Events
+              </p>
+              {upcomingEvents.length === 0 && (
+                <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: 0 }}>
+                  Nothing else on the calendar this week.
+                </p>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {upcomingEvents.map(e => (
+                  <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span
+                      aria-hidden
+                      style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold, #D4A843)', flexShrink: 0 }}
+                    />
+                    <span
+                      className="admin-event-name"
+                      style={{ fontSize: 13, color: 'var(--forest-deep)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                      title={`${e.title} · ${formatDateTime(e.start)}`}
+                    >
+                      {e.title}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--ink-muted)', marginLeft: 'auto', whiteSpace: 'nowrap' }}>
+                      {upcomingWhen(e.start)}
+                    </span>
+                    {onEditGcalEvent && (
+                      <button
+                        type="button"
+                        onClick={() => onEditGcalEvent({ id: e.id, title: e.title, start: e.start, location: e.location })}
+                        style={{
+                          padding: '3px 8px', fontSize: 10, fontWeight: 500,
+                          background: 'rgba(79,138,104,0.10)', border: '1px solid rgba(79,138,104,0.25)',
+                          borderRadius: 6, color: 'var(--sage)', cursor: 'pointer', flexShrink: 0,
+                        }}
+                        title={`This is actually a client session? Link "${e.title}" to a client`}
+                      >
+                        Link
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setDismissedEventIds(prev => { const s = new Set(prev); s.add(e.id); return s; })}
+                      style={{
+                        padding: '2px 6px', fontSize: 13, lineHeight: 1,
+                        background: 'none', border: 'none',
+                        color: 'var(--ink-muted)', cursor: 'pointer', flexShrink: 0,
+                      }}
+                      title={`Hide "${e.title}"`}
+                      aria-label={`Hide ${e.title}`}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
       )}
 
       {/* Stats */}

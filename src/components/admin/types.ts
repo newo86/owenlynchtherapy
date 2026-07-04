@@ -93,7 +93,17 @@ export interface ReminderHealth {
   emailsEnabled: boolean;
 }
 
-export type AdminSection = 'dashboard' | 'clients' | 'sessions' | 'revenue' | 'forms' | 'new-client';
+export interface WaitlistRow {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  status: 'waiting' | 'contacted' | string;
+  created_at: string;
+  contacted_at: string | null;
+}
+
+export type AdminSection = 'dashboard' | 'clients' | 'sessions' | 'revenue' | 'forms' | 'waitlist' | 'new-client';
 
 export type SessionFilter = 'all' | 'unpaid' | 'needs_receipt' | 'this_week' | 'unpaid_this_week';
 export type FormsTab = 'submitted' | 'pending';

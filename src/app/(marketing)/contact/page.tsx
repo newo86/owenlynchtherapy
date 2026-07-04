@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import Image from 'next/image';
 import Script from 'next/script';
 import ContactForm from './ContactForm';
+import WaitlistForm from './WaitlistForm';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 
@@ -35,9 +36,11 @@ const jsonLd = {
   mainEntity: { '@id': 'https://owenlynchtherapy.com/#business' },
 };
 
+// In-person is currently full — the waitlist form below the cards collects
+// interest for when a space opens up.
 const availability = [
   { day: 'Tuesday Evenings', hours: '5:00pm – 8:00pm', format: 'Online' },
-  { day: 'Friday Evenings',  hours: '4:00pm – 8:00pm', format: 'In Person & Online' },
+  { day: 'Friday Evenings',  hours: '4:00pm – 8:00pm', format: 'Online' },
 ];
 
 const reassurance = [
@@ -128,9 +131,12 @@ export default function ContactPage() {
                 </div>
               ))}
               <p className="font-normal text-base leading-[1.8]" style={{ color: '#555555' }}>
-                In-person sessions take place at Insight Matters, 106 Capel Street, Dublin 1.
                 Online sessions are available to clients across Ireland and the UK.
+                In-person sessions at Insight Matters, 106 Capel Street, Dublin 1 are
+                currently full — join the waiting list below and I&apos;ll be in touch
+                when a space opens up.
               </p>
+              <WaitlistForm />
             </div>
 
             {/* Right — venue image, proportional */}

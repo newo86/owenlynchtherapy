@@ -49,6 +49,22 @@ what is retained, what is purged automatically, and the items still open.
   password-only, so there's no lockout risk. (`src/lib/totp.ts`,
   `src/lib/adminMfa.ts`)
 
+## Waiting list (public signup)
+
+- The contact page offers a waiting-list form (in-person sessions full).
+  Stored: **name, email, optional phone only** — no health data. Explicit
+  consent is required (the API refuses without it) and the exact consent
+  wording is stored verbatim with each entry (`waitlist.consent_text`,
+  `consent_at`). One entry per email (DB unique).
+- Signup is rate-limited (in-memory + durable) with a honeypot; a
+  notification email goes to info@ per signup.
+- **Erasure:** the dashboard's Waitlist section has a "Remove" action —
+  a hard delete, nothing retained. Use it when someone becomes a client,
+  asks to be removed, or the entry goes stale.
+- **Retention:** review the list periodically and remove entries older
+  than ~12 months (a future maintenance cron can automate this).
+- Migration: `supabase/migrations/waitlist.sql`.
+
 ## Right to erasure (Art 17)
 
 - A client and all their sessions can be deleted via the dashboard
