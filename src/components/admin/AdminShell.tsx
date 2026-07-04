@@ -9,6 +9,7 @@ import { SessionsList } from './SessionsList';
 import { FormsTable } from './FormsTable';
 import { Revenue } from './Revenue';
 import { Waitlist } from './Waitlist';
+import { StatementImport } from './StatementImport';
 import { NewClientModal } from './NewClientModal';
 import { ScheduleSessionModal } from './ScheduleSessionModal';
 import { SessionEditModal } from './SessionEditModal';
@@ -348,7 +349,10 @@ export function AdminShell() {
               )}
 
               {section === 'revenue' && (
-                <Revenue clients={clients} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  <Revenue clients={clients} />
+                  <StatementImport clients={clients} onReload={reload} />
+                </div>
               )}
 
               {section === 'forms' && (

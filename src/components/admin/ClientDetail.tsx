@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { X, Download, Trash2, Pencil, Check, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { adminFetch, displayFee, formatDateTime, formatTime, downloadAdminPdf } from './api';
+import { adminFetch, displayFee, formatDateTime, formatTime, downloadAdminPdf, dedupeSessions } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SessionRow, SubmissionRow } from './types';
 
@@ -77,7 +77,7 @@ interface NextAction {
 /** The single most useful next step for this client, surfaced at a glance. */
 function nextAction(client: ClientRow): NextAction {
   const now = new Date();
-  const active = client.sessions.filter(s => s.status !== 'cancelled');
+  const active = dedupeSessions(client.sessions).filter(s => s.status !== 'cancelled');
   const unpaidDue = active.filter(s =>
     s.payment_status !== 'paid' && s.payment_status !== 'refunded' && new Date(s.session_date) <= now
   );
@@ -182,9 +182,23 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
   const targetKey = `${ty}-${String(tm).padStart(2, '0')}`;
   const monthLabel = new Date(Date.UTC(ty, tm - 1, 15)).toLocaleDateString('en-IE', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 
-  const monthSessions = client.sessions
+  // Deduped — the recurring-sync artefact used to show twin rows here.
+  const sessions = dedupeSessions(client.sessions);
+  const monthSessions = sessions
     .filter(s => dublinYearMonth(s.session_date) === targetKey)
     .sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime());
+
+  // At-a-glance numbers for the summary strip.
+  const nowMs = Date.now();
+  const activeSessions = sessions.filter(s => s.status !== 'cancelled');
+  const pastCount = activeSessions.filter(s => new Date(s.session_date).getTime() <= nowMs).length;
+  const outstandingCents = activeSessions
+    .filter(s => s.payment_status !== 'paid' && s.payment_status !== 'refunded'
+      && new Date(s.session_date).getTime() <= nowMs)
+    .reduce((sum, s) => sum + (s.fee ?? 0), 0);
+  const nextSession = activeSessions
+    .filter(s => s.status === 'scheduled' && new Date(s.session_date).getTime() > nowMs)
+    .sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime())[0] ?? null;
 
   async function saveContact() {
     if (!client) return;
@@ -333,6 +347,42 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
               {action.label}
             </span>
             <span style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginLeft: 8 }}>{action.detail}</span>
+          </div>
+
+          {/* At a glance — next session, outstanding, history size */}
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10,
+          }}>
+            {[
+              {
+                label: 'Next session',
+                value: nextSession ? formatDateTime(nextSession.session_date) : 'None booked',
+                sub: nextSession ? (nextSession.session_format === 'in_person' ? 'In person' : 'Online') : null,
+              },
+              {
+                label: 'Outstanding',
+                value: outstandingCents > 0 ? `€${Math.round(outstandingCents / 100)}` : '€0',
+                sub: outstandingCents > 0 ? 'past sessions unpaid' : 'all settled',
+              },
+              {
+                label: 'Sessions to date',
+                value: String(pastCount),
+                sub: `since ${new Date(client.created_at).toLocaleDateString('en-IE', { month: 'short', year: 'numeric' })}`,
+              },
+            ].map(card => (
+              <div key={card.label} style={{
+                background: 'white', borderRadius: 12, padding: '10px 14px',
+                border: '1px solid var(--line)',
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>
+                  {card.label}
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--forest-deep)', marginTop: 3 }}>
+                  {card.value}
+                </div>
+                {card.sub && <div style={{ fontSize: 11, color: 'var(--ink-muted)', marginTop: 1 }}>{card.sub}</div>}
+              </div>
+            ))}
           </div>
 
           {/* Sessions — this month, navigable */}
