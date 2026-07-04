@@ -31,8 +31,14 @@ Anything else (unset/false) silently blocks every send.
 
 ## Receipts & statements
 
-- **Marking a session paid never auto-sends a receipt** (deliberately decoupled — the calendar tick, sessions-list "Mark paid", and dashboard just record payment).
-- Receipts are always a separate, explicit action:
+- **No receipt is ever emailed implicitly.** Marking a session paid never
+  auto-sends one, and (since Phase 2) neither does marking attended — the old
+  hidden auto-send on mark-attended is gone. The one-tap **"Session done"**
+  button states its outcome up front ("Done — paid €80 + email receipt") and
+  only does what the chosen option says. Stripe payments remain the automatic
+  path: the webhook marks paid AND emails the receipt, and rows show
+  "Paid · Stripe" with the receipt tick.
+- Receipts otherwise remain a separate, explicit action:
   - **Email** receipt: "Receipt" button in the sessions list and the Send-Reminder modal (`/api/admin/send-receipt`).
   - **PDF download** receipt (per paid session) and **PDF statement** (all sessions + total): buttons in the client record modal.
 - PDF generator: `src/lib/generateReceiptPDF.ts` (`generateReceiptPDF` + `generateStatementPDF`), routes `/api/admin/receipts` and `/api/admin/receipts/statement`. Includes "Psychotherapist: Owen Lynch" and "IAHIP Reg. No. 1890"; has a `dateOnly` option for back-dated batches.

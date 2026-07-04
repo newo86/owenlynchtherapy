@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { updateCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso, utcToDublinLocal } from '@/lib/dateUtils';
+import { sessionKind } from '@/lib/emailTemplates';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
@@ -64,7 +65,26 @@ export async function POST(req: NextRequest) {
       ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
       : 'https://doxy.me/owenlynchtherapy';
   }
-  if (typeof body.payment_status === 'string' && VALID_PAYMENT.includes(body.payment_status)) {
+  // Payment changes go through the same bookkeeping as the mark-paid route —
+  // this path used to bypass the payments ledger entirely, so payments
+  // recorded via the edit form were invisible to the finance books.
+  let paymentTransition: 'to_paid' | 'to_unpaid' | null = null;
+  if (typeof body.payment_status === 'string' && VALID_PAYMENT.includes(body.payment_status)
+      && body.payment_status !== existing.payment_status) {
+    if (existing.payment_status === 'paid' && body.payment_status === 'unpaid') {
+      if (existing.stripe_payment_intent_id) {
+        return NextResponse.json(
+          { error: 'This payment was confirmed by Stripe — it can only be changed via a refund in Stripe' },
+          { status: 409 },
+        );
+      }
+      paymentTransition = 'to_unpaid';
+      sessionPatch.paid_at = null;
+    }
+    if (body.payment_status === 'paid') {
+      paymentTransition = 'to_paid';
+      sessionPatch.paid_at = new Date().toISOString();
+    }
     sessionPatch.payment_status = body.payment_status;
   }
   if (typeof body.status === 'string' && VALID_STATUS.includes(body.status)) {
@@ -82,6 +102,38 @@ export async function POST(req: NextRequest) {
     if (sessionErr) {
       console.error('[sessions/update] session update error:', sessionErr);
       return NextResponse.json({ error: sessionErr.message }, { status: 500 });
+    }
+  }
+
+  // Mirror mark-paid's ledger bookkeeping for payment transitions (best-effort,
+  // like mark-paid: a missing payments table never fails the request).
+  if (paymentTransition === 'to_paid') {
+    const { data: clientRow } = await supabaseAdmin
+      .from('clients').select('is_low_cost').eq('id', client_id).single();
+    const isLowCost = Boolean(clientRow?.is_low_cost);
+    const { error: ledgerErr } = await supabaseAdmin.from('payments').insert({
+      session_id,
+      client_id,
+      amount_cents: (sessionPatch.fee as number | undefined) ?? existing.fee ?? 0,
+      currency: 'eur',
+      session_type: sessionKind(
+        (sessionPatch.session_format ?? existing.session_format) as string,
+        isLowCost,
+      ),
+      method: isLowCost ? 'cash' : 'manual',
+      paid_at: sessionPatch.paid_at,
+    });
+    if (ledgerErr) {
+      console.warn('[sessions/update] Could not log payment (run the payments migration):', ledgerErr.message);
+    }
+  } else if (paymentTransition === 'to_unpaid') {
+    const { error: ledgerErr } = await supabaseAdmin
+      .from('payments')
+      .delete()
+      .eq('session_id', session_id)
+      .in('method', ['cash', 'manual']);
+    if (ledgerErr) {
+      console.warn('[sessions/update] Could not clean ledger:', ledgerErr.message);
     }
   }
 

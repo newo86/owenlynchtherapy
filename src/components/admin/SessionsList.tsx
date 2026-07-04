@@ -8,6 +8,7 @@ import { FORMAT_LABELS } from './types';
 import type { ClientRow, SessionRow, CalendarEvent, SessionFilter, GcalRef } from './types';
 import { SendReminderModal } from './SendReminderModal';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
+import { SessionDoneOptions, type SessionDoneChoice } from './SessionDoneOptions';
 
 interface Props {
   clients: ClientRow[];
@@ -118,19 +119,28 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
     });
   }, [rows, filter]);
 
-  async function markAttended(sessionId: string, paymentStatus: string) {
-    if (paymentStatus === 'unpaid') { setConfirmId(sessionId); return; }
-    await doMark(sessionId);
+  // "Session done" — one explicit call that can mark attended, record the
+  // payment, and email the receipt, per the option the practitioner chose.
+  function sessionDone(s: SessionRow) {
+    if (s.payment_status === 'paid' && s.receipt_sent_at) {
+      // Nothing left to decide — close it out directly.
+      void doDone(s.id, { record_payment: false, send_receipt: false });
+      return;
+    }
+    setConfirmId(s.id);
   }
-  async function doMark(sessionId: string) {
+  async function doDone(sessionId: string, choice: SessionDoneChoice) {
     setBusyId(sessionId); setConfirmId(null);
     try {
       const res = await adminFetch('/api/admin/mark-attended', {
-        method: 'POST', body: JSON.stringify({ session_id: sessionId }),
+        method: 'POST', body: JSON.stringify({ session_id: sessionId, ...choice }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setFeedback({ id: sessionId, kind: 'error', msg: json.error ?? 'Failed to mark attended.' }); return; }
-      setFeedback({ id: sessionId, kind: 'ok', msg: json.receipt_sent ? 'Marked attended — receipt emailed.' : 'Marked attended.' });
+      const parts = ['Marked attended'];
+      if (choice.record_payment && json.paid) parts.push('payment recorded');
+      if (json.receipt_sent) parts.push('receipt emailed');
+      setFeedback({ id: sessionId, kind: 'ok', msg: parts.join(' — ') + '.' });
       onReload();
     } catch { setFeedback({ id: sessionId, kind: 'error', msg: 'Network error — not saved.' }); }
     finally { setBusyId(null); }
@@ -298,6 +308,11 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                 <td>{displayFee(s.fee)}</td>
                 <td>
                   <span className={`admin-tag ${payTag(s.payment_status)}`}>{payLabel(s.payment_status)}</span>
+                  {s.payment_status === 'paid' && s.stripe_payment_intent_id && (
+                    <span style={{ display: 'block', fontSize: 10, color: 'var(--ink-muted)', marginTop: 3, fontWeight: 500 }}>
+                      via Stripe · automatic
+                    </span>
+                  )}
                   {c.is_low_cost && (
                     <span style={{ display: 'block', fontSize: 10, color: 'var(--lilac-dark)', marginTop: 3, fontWeight: 500 }}>
                       Low cost · cash
@@ -325,8 +340,8 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                       </button>
                     )}
                     {s.status === 'scheduled' && (
-                      <button onClick={() => markAttended(s.id, s.payment_status)} disabled={busyId === s.id} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
-                        Attended
+                      <button onClick={() => sessionDone(s)} disabled={busyId === s.id} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
+                        Session done
                       </button>
                     )}
                     {s.payment_status !== 'paid' && s.status !== 'cancelled' && (
@@ -349,12 +364,13 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     </button>
                   </div>
                   {confirmId === s.id && (
-                    <div style={{ marginTop: 8, fontSize: 11, color: 'var(--terracotta)' }}>
-                      Unpaid.{' '}
-                      <button onClick={() => doMark(s.id)} style={confirmLink}>Confirm</button>
-                      {' '}
-                      <button onClick={() => setConfirmId(null)} style={confirmLinkMuted}>Cancel</button>
-                    </div>
+                    <SessionDoneOptions
+                      session={s}
+                      client={c}
+                      busy={busyId === s.id}
+                      onChoose={choice => void doDone(s.id, choice)}
+                      onCancel={() => setConfirmId(null)}
+                    />
                   )}
                   {feedback?.id === s.id && (
                     <div style={{
@@ -397,11 +413,3 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
   );
 }
 
-
-const confirmLink: React.CSSProperties = {
-  background: 'none', border: 'none', padding: 0,
-  color: 'var(--terracotta)', textDecoration: 'underline', cursor: 'pointer', fontSize: 11,
-};
-const confirmLinkMuted: React.CSSProperties = {
-  ...confirmLink, color: 'var(--ink-muted)',
-};
