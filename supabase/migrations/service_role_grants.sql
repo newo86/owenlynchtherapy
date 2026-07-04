@@ -14,20 +14,29 @@
 --   - admin_mfa: isMfaEnabled() fails to "disabled" on error
 --   - payments: ledger inserts from mark-paid / Stripe webhook error
 --
+-- Written as a DO block so it works even when some of these tables were
+-- never created (e.g. admin_mfa doesn't exist until admin_mfa.sql is run —
+-- a plain GRANT would abort the whole batch with 42P01). Check the NOTICE
+-- output: any "skipped" table means its own migration was never applied.
+--
 -- Safe to re-run (grants are idempotent).
 
-GRANT ALL ON public.session_reminders TO service_role;
-GRANT ALL ON public.payments          TO service_role;
-GRANT ALL ON public.rate_limits       TO service_role;
-GRANT ALL ON public.admin_mfa         TO service_role;
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['session_reminders', 'payments', 'rate_limits', 'admin_mfa'] loop
+    if to_regclass('public.' || t) is not null then
+      execute format('grant all on table public.%I to service_role', t);
+      execute format('alter table public.%I enable row level security', t);
+      raise notice 'granted + RLS enabled: %', t;
+    else
+      raise notice 'SKIPPED — table does not exist (its migration was never run): %', t;
+    end if;
+  end loop;
+end $$;
 
 -- Future-proof: any table created from now on in public gets service_role
 -- access automatically, so a forgotten grant can't silently disable a
 -- feature again.
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;
-
--- Keep the deny-all posture for the public keys on the newer tables too.
-ALTER TABLE public.session_reminders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.payments          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.rate_limits       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.admin_mfa         ENABLE ROW LEVEL SECURITY;
+alter default privileges in schema public grant all on tables to service_role;
