@@ -57,6 +57,8 @@ export function SettingsPanel() {
   const [saving, setSaving] = useState(false);
   const [storageUnavailable, setStorageUnavailable] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'error'; msg: string } | null>(null);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [backupNote, setBackupNote] = useState<{ kind: 'ok' | 'error'; msg: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -103,6 +105,31 @@ export function SettingsPanel() {
       setFeedback({ kind: 'error', msg: 'Network error — nothing was saved.' });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function downloadBackup() {
+    setBackupBusy(true);
+    setBackupNote(null);
+    try {
+      const res = await adminFetch('/api/admin/backup');
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setBackupNote({ kind: 'error', msg: json.error ?? 'Backup failed — try again.' });
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `practice-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setBackupNote({ kind: 'ok', msg: 'Backup downloaded — store it somewhere safe, it contains client information.' });
+    } catch {
+      setBackupNote({ kind: 'error', msg: 'Network error — no backup was downloaded.' });
+    } finally {
+      setBackupBusy(false);
     }
   }
 
@@ -275,6 +302,28 @@ export function SettingsPanel() {
           </span>
         )}
       </div>
+
+      <section className="admin-card" style={{ padding: 24, marginTop: 8 }}>
+        <h2 className="admin-h2" style={{ marginBottom: 4 }}>Backup</h2>
+        <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '0 0 16px', maxWidth: 560 }}>
+          Downloads a complete copy of your practice data — clients, sessions, payments,
+          intake forms, waitlist — as one file to keep on your own computer. Your data
+          always stays in your database; this is an extra copy for peace of mind.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <button className="admin-btn-secondary" onClick={() => void downloadBackup()} disabled={backupBusy}>
+            {backupBusy ? 'Preparing…' : 'Download backup'}
+          </button>
+          {backupNote && (
+            <span role="status" style={{
+              fontSize: 13,
+              color: backupNote.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)',
+            }}>
+              {backupNote.msg}
+            </span>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

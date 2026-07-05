@@ -97,6 +97,11 @@ clones work with no database. Consumers migrate onto `getPractice()`
 incrementally; anything still reading `practice.config.ts` directly only
 changes via code.
 
+The Settings page also has **Download backup** — `/api/admin/backup` exports
+every business table (clients, sessions, payments, intake, waitlist…) as one
+JSON file for offline safekeeping. OAuth/MFA secret tables are deliberately
+excluded; a missing table is reported in the file, never fatal.
+
 ## Known latent bugs (not yet fixed)
 
 1. **Recurring-session time changes** made in Google Calendar don't reliably reflect in the dashboard. The conflict-resolver in `src/lib/calendarSync.ts` only matches sessions tracked by their exact instance id; in-app recurring sessions are stamped with the SERIES id, so a moved occurrence is missed (and can even be wrongly auto-cancelled). Fix: make conflict resolution slot- and series-aware (match a series-tracked session to the one instance of that series in the window; update its `session_date`).
