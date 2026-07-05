@@ -18,7 +18,17 @@ Custom website for owenlynchtherapy.com. Private psychotherapy practice, Dublin 
 - Deployed on Vercel · repo: newo86/owenlynchtherapy
 
 ## Public site
-Pages: Home, About, Services, Contact, FAQ. Blog in progress.
+Pages: Home, About, Services, Contact, FAQ, Privacy. Blog in progress.
+
+## Platform / template (July 2026)
+The repo doubles as a cloneable template for other therapists. Practice facts
+live in src/practice.config.ts, editable at runtime via the dashboard
+Settings page (practice_settings table merged over config defaults by
+getPractice()). **To spin up a new practice, follow docs/ONBOARDING.md
+step by step** — it is self-contained (accounts, migrations incl.
+000_base_schema.sql, env vars, GDPR checklist, first-run tests). Owen's own
+site is customer #1 and must keep working unchanged. Database design notes:
+docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
 
 ## Admin dashboard — handle with care
 - Lives at /admin/intake, password-protected via INTAKE_ADMIN_SECRET
