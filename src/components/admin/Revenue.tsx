@@ -130,9 +130,12 @@ export function Revenue({ clients }: Props) {
     return buildMonthly(clients, basis, now);
   }, [clients, scope, basis, now]);
 
+  // "Current" bar index derived from the DUBLIN date — the buckets are
+  // Dublin-keyed, so a browser in another timezone must not shift the highlight.
+  const dublinWeekday = new Date(dublinDay(now) + 'T00:00:00Z').getUTCDay();
   const chartCurrentIdx =
-    scope === 'week'  ? (now.getDay() === 0 ? 6 : now.getDay() - 1) :
-    scope === 'year'  ? now.getMonth() :
+    scope === 'week'  ? (dublinWeekday === 0 ? 6 : dublinWeekday - 1) :
+    scope === 'year'  ? parseInt(dublinYM(now).slice(5, 7), 10) - 1 :
     11;
   const chartEyebrow =
     scope === 'week'  ? 'Weekly trend' :
@@ -291,7 +294,7 @@ export function Revenue({ clients }: Props) {
           label="Online"
           accent="sage"
           totals={onlineTotals}
-          subtext="Standard rate €70 · paid via Stripe"
+          subtext={`Standard rate ${euro(PRACTICE.fees.onlineCents)} · paid via Stripe`}
           Icon={Video}
           onClick={() => setDrill({ title: `Online · ${scopeLabel}`, rows: byCategory.online })}
         />
@@ -299,7 +302,7 @@ export function Revenue({ clients }: Props) {
           label="In person"
           accent="gold"
           totals={inPersonTotals}
-          subtext="Standard rate €80 · €20 room cost"
+          subtext={`Standard rate ${euro(PRACTICE.fees.inPersonCents)} · ${euro(PRACTICE.fees.roomCostCents)} room cost`}
           Icon={MapPin}
           onClick={() => setDrill({ title: `In person · ${scopeLabel}`, rows: byCategory.in_person })}
         />

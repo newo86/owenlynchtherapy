@@ -98,7 +98,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
           client_email:        clientEmail,
           phone:               clientPhone,
           session_date:        sessionDate,
-          fee:                 Number(fee),
+          fee:                 Number(fee), // sessions/update expects EUROS (converts to cents itself)
           session_format:      format,
           payment_status:      paymentStatus,
           status,
@@ -127,7 +127,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
             client_id:        client.id,
             session_date:     nextDate,
             session_format:   format,
-            fee:              Number(fee) * 100,
+            fee:              Number(fee) * 100, // sessions (create) expects CENTS
             recurrence:       apiCadence,
             occurrence_count: followUpContinuous ? 52 : followUpCount,
             continuous:       followUpContinuous,
@@ -473,7 +473,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                 </div>
                 <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--ink-muted)' }}>
                   {followUpContinuous
-                    ? `Schedules ongoing ${followUpCadence} sessions indefinitely until cancelled.`
+                    ? `Schedules about a year of ${followUpCadence} sessions (52). Extend or cancel any time.`
                     : `Creates ${followUpCount} ${followUpCadence} sessions starting the ${followUpCadence === 'weekly' ? 'next week' : followUpCadence === 'fortnightly' ? 'next fortnight' : 'next month'}.`
                   }
                 </p>

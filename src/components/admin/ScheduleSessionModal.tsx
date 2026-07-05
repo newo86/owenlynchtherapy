@@ -262,7 +262,7 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
               </div>
               <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--ink-muted)' }}>
                 {continuous
-                  ? 'Schedules ongoing sessions indefinitely until cancelled.'
+                  ? 'Schedules about a year of sessions (52). Extend or cancel any time.'
                   : `Creates ${occurrenceCount} sessions and a recurring event on Google Calendar.`
                 }
               </p>
