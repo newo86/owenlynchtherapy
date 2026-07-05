@@ -171,8 +171,16 @@ export function Dashboard({
   // appointments...) as a gentle heads-up. Client sessions live in the
   // "Sessions this week" stat card below.
   const now = new Date();
+  const monday = startOfWeek(today);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 7);
+  // Only the REST OF THIS WEEK — the card is "Sessions this week", so its
+  // pills and "see all" must never count the months of future recurring
+  // sessions (that was the confusing "See all 325").
   const upcomingSessions = allSessions
-    .filter(({ s }) => s.status === 'scheduled' && new Date(s.session_date) > now)
+    .filter(({ s }) => {
+      const d = new Date(s.session_date);
+      return s.status === 'scheduled' && d > now && d < sunday;
+    })
     .sort((a, b) => new Date(a.s.session_date).getTime() - new Date(b.s.session_date).getTime());
   const upcomingEvents = visibleUnlinked
     .filter(e => new Date(e.start) > now)
@@ -185,9 +193,6 @@ export function Dashboard({
       weekday: 'short', day: 'numeric', month: 'short',
       hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
     });
-
-  const monday = startOfWeek(today);
-  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 7);
 
   const todaySessions = allSessions
     .filter(({ s }) => isSameDay(new Date(s.session_date), today) && s.status !== 'cancelled')
@@ -208,6 +213,10 @@ export function Dashboard({
   const inScope = (iso: string) => {
     const d = new Date(iso);
     if (d < OUTSTANDING_FLOOR) return false;
+    // Outstanding = money owed for sessions that have already happened.
+    // Future scheduled sessions are created "unpaid", so without this cap the
+    // card counted months of recurring bookings as debt (€23k of nonsense).
+    if (d > now) return false;
     if (outstandingScope === 'all')   return true;
     if (outstandingScope === 'week')  return d >= monday && d < sunday;
     return d >= startOfMonth;
@@ -445,13 +454,13 @@ export function Dashboard({
               {upcomingSessions.length > 3 && (
                 <button
                   type="button"
-                  onClick={() => onNavigateSection('sessions')}
+                  onClick={() => onNavigateSection('sessions', { sessionsFilter: 'this_week' })}
                   style={{
                     background: 'none', border: 'none', padding: 0, cursor: 'pointer',
                     fontSize: 11, fontWeight: 600, color: 'var(--terracotta)', textAlign: 'left',
                   }}
                 >
-                  See all {upcomingSessions.length} →
+                  See all {upcomingSessions.length} this week →
                 </button>
               )}
             </div>
@@ -481,7 +490,7 @@ export function Dashboard({
           Icon={Wallet}
           foot={
             outstandingCount > 0
-              ? `${outstandingCount} invoice${outstandingCount === 1 ? '' : 's'} · ${
+              ? `${outstandingCount} session${outstandingCount === 1 ? '' : 's'} unpaid · ${
                   outstandingScope === 'week' ? 'this week'
                   : outstandingScope === 'month' ? 'this month'
                   : 'all time'
