@@ -15,7 +15,7 @@ import { CalendarWeekGrid } from './CalendarWeekGrid';
 import { SessionDoneOptions, type SessionDoneChoice } from './SessionDoneOptions';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow,
-  CalendarEvent, CalendarStatus, SessionFilter, FormsTab, GcalRef, ReminderHealth,
+  CalendarEvent, CalendarStatus, SessionFilter, FormsTab, GcalRef, ReminderHealth, WaitlistRow,
 } from './types';
 
 interface Props {
@@ -45,6 +45,7 @@ interface Props {
   sectionTitle: string;
   onEditGcalEvent?: (event: GcalRef) => void;
   reminderHealth: ReminderHealth | null;
+  waitlist: WaitlistRow[];
 }
 
 type OutstandingScope = 'week' | 'month' | 'all';
@@ -121,7 +122,7 @@ export function Dashboard({
   weekOffset, onWeekOffsetChange,
   onReload, onConnectCalendar, onDisconnectCalendar, onNewClient,
   onScheduleDay, onClickSession, onNavigateSection,
-  greeting, dateLine, flash, sectionTitle, onEditGcalEvent, reminderHealth,
+  greeting, dateLine, flash, sectionTitle, onEditGcalEvent, reminderHealth, waitlist,
 }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -228,15 +229,6 @@ export function Dashboard({
   const outstandingCents = outstandingScoped.reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
   const outstandingCount = outstandingScoped.length;
 
-  // Unpaid this week — fixed scope, used by the Quick Actions "Unpaid" tile.
-  // Same definition as the Outstanding card: already-held sessions only.
-  const unpaidThisWeekCount = allSessions.filter(({ s }) => {
-    const d = new Date(s.session_date);
-    return d >= OUTSTANDING_FLOOR
-      && s.payment_status !== 'paid' && s.payment_status !== 'refunded'
-      && s.status !== 'cancelled' && d >= monday && d < sunday && d <= now;
-  }).length;
-
   // Attended sessions that haven't had a receipt emailed yet.
   const needsReceiptCount = allSessions.filter(({ s }) =>
     s.status === 'attended' && !s.receipt_sent_at
@@ -244,6 +236,22 @@ export function Dashboard({
 
   const formsPending = tokens.filter(t => !t.is_used && new Date(t.expires_at) > today).length;
   const activeClients = clients.filter(c => c.status === 'active').length;
+
+  // Quick-action tiles: who's waiting for a space, and next week at a glance.
+  const waitingList = useMemo(() =>
+    [...waitlist].filter(w => w.status === 'waiting')
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+  [waitlist]);
+  const nextWeekSessions = useMemo(() => {
+    const nextSunday = new Date(sunday); nextSunday.setDate(sunday.getDate() + 7);
+    return allSessions
+      .filter(({ s }) => {
+        const d = new Date(s.session_date);
+        return s.status !== 'cancelled' && d >= sunday && d < nextSunday;
+      })
+      .sort((a, b) => new Date(a.s.session_date).getTime() - new Date(b.s.session_date).getTime());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allSessions]);
 
   // ── Mutations
   // "Session done" — one explicit call that marks attended and, per the
@@ -580,11 +588,16 @@ export function Dashboard({
         </section>
 
         <QuickActions
-          unpaidThisWeek={unpaidThisWeekCount}
           needsReceipt={needsReceiptCount}
           formsPending={formsPending}
           pendingNames={tokens.filter(t => !t.is_used && new Date(t.expires_at) > today).map(t => t.client_name ?? '—')}
+          waitingCount={waitingList.length}
+          newestWaiting={waitingList[0]?.full_name ?? null}
+          nextWeekCount={nextWeekSessions.length}
+          nextWeekFirst={nextWeekSessions[0] ? upcomingWhen(nextWeekSessions[0].s.session_date) : null}
           onNavigateSection={onNavigateSection}
+          onOpenWaitlist={() => onNavigateSection('waitlist')}
+          onOpenNextWeek={() => { onWeekOffsetChange(1); onNavigateSection('sessions'); }}
         />
       </div>
 
@@ -800,14 +813,23 @@ function SessionRow({
 }
 
 interface QuickProps {
-  unpaidThisWeek: number;
   needsReceipt: number;
   formsPending: number;
   pendingNames: string[];
+  waitingCount: number;
+  newestWaiting: string | null;
+  nextWeekCount: number;
+  nextWeekFirst: string | null;
   onNavigateSection: (section: 'sessions' | 'forms', opts?: { sessionsFilter?: SessionFilter; formsTab?: FormsTab }) => void;
+  onOpenWaitlist: () => void;
+  onOpenNextWeek: () => void;
 }
 
-function QuickActions({ unpaidThisWeek, needsReceipt, formsPending, pendingNames, onNavigateSection }: QuickProps) {
+function QuickActions({
+  needsReceipt, formsPending, pendingNames,
+  waitingCount, newestWaiting, nextWeekCount, nextWeekFirst,
+  onNavigateSection, onOpenWaitlist, onOpenNextWeek,
+}: QuickProps) {
   return (
     <section className="admin-card">
       <div className="admin-card-head">
@@ -818,22 +840,22 @@ function QuickActions({ unpaidThisWeek, needsReceipt, formsPending, pendingNames
       </div>
 
       <div className="admin-quickgrid">
-        {/* Unpaid sessions this week */}
+        {/* Waiting list — the action that fills the book when a slot opens */}
         <button
           type="button"
-          onClick={() => onNavigateSection('sessions', { sessionsFilter: 'unpaid_this_week' })}
+          onClick={onOpenWaitlist}
           className="admin-task warn"
         >
-          <div className="admin-task-eyebrow">Unpaid · {unpaidThisWeek}</div>
+          <div className="admin-task-eyebrow">Waitlist · {waitingCount}</div>
           <div className="admin-task-title">
-            {unpaidThisWeek === 0 ? 'All clear this week' : 'Unpaid this week'}
+            {waitingCount === 0 ? 'No one waiting' : `${waitingCount} ${waitingCount === 1 ? 'person' : 'people'} waiting for a space`}
           </div>
           <div className="admin-task-body">
-            {unpaidThisWeek === 0
-              ? 'No unpaid sessions in the current week.'
-              : `${unpaidThisWeek} unpaid this week`}
+            {waitingCount === 0
+              ? 'The waitlist form is on your contact page.'
+              : <>Newest: <span className="pii">{newestWaiting}</span>. When a slot opens, this is where to look.</>}
           </div>
-          <div className="admin-task-cta">View unpaid</div>
+          <div className="admin-task-cta">Open waitlist</div>
         </button>
 
         {/* Attendance + receipts */}
@@ -867,26 +889,30 @@ function QuickActions({ unpaidThisWeek, needsReceipt, formsPending, pendingNames
           <div className="admin-task-body">
             {formsPending === 0
               ? 'No outstanding intake links.'
-              : `${pendingNames.slice(0, 2).join(' & ')}${pendingNames.length > 2 ? ` and ${pendingNames.length - 2} other${pendingNames.length - 2 === 1 ? '' : 's'}` : ''} haven't returned theirs.`}
+              : <>
+                  <span className="pii">{pendingNames.slice(0, 2).join(' & ')}</span>
+                  {pendingNames.length > 2 ? ` and ${pendingNames.length - 2} other${pendingNames.length - 2 === 1 ? '' : 's'}` : ''}
+                  {pendingNames.length === 1 ? " hasn't" : " haven't"} returned theirs.
+                </>}
           </div>
           <div className="admin-task-cta">Review status</div>
         </button>
 
-        {/* Inbox — opens Gmail in a new tab */}
-        <a
-          href="https://mail.google.com"
-          target="_blank"
-          rel="noopener noreferrer"
+        {/* Next week at a glance */}
+        <button
+          type="button"
+          onClick={onOpenNextWeek}
           className="admin-task lilac"
-          style={{ textDecoration: 'none' }}
         >
-          <div className="admin-task-eyebrow">Inbox</div>
-          <div className="admin-task-title">Open Gmail</div>
-          <div className="admin-task-body">
-            Jump to your inbox at {PRACTICE.email}.
+          <div className="admin-task-eyebrow">Next week · {nextWeekCount}</div>
+          <div className="admin-task-title">
+            {nextWeekCount === 0 ? 'Nothing booked yet' : `${nextWeekCount} session${nextWeekCount === 1 ? '' : 's'} booked`}
           </div>
-          <div className="admin-task-cta">Open inbox</div>
-        </a>
+          <div className="admin-task-body">
+            {nextWeekFirst ? `First: ${nextWeekFirst}.` : 'Open the calendar to schedule next week.'}
+          </div>
+          <div className="admin-task-cta">View next week</div>
+        </button>
       </div>
     </section>
   );
