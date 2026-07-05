@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git fetch:*)",
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run typecheck:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[primer] Today (Europe/Dublin): $(TZ=Europe/Dublin date '+%A %d %B %Y, %H:%M')\"; [ -d node_modules ] && echo '[primer] node_modules: present' || echo '[primer] node_modules: MISSING - run npm ci before builds'; echo '[primer] Sandbox has NO Sanity/Supabase env: build always fails at /articles page-data (that is a PASS - see /check), admin pages cannot render locally.'; echo '[primer] Ship flow: /check then /ship. Schema changes: /db-migrate. UI changes: /preview first.'"
+          }
+        ]
+      }
+    ]
+  }
+}

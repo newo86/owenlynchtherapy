@@ -37,6 +37,27 @@ Pages: Home, About, Services, Contact, FAQ. Blog in progress.
   sync loops; keep it that way.
 - Run npm run build locally before pushing to catch TypeScript errors
 
+## Working practices (learned from past sessions — follow these)
+- **Ship flow:** `/check` → (`/preview` if UI is visible) → `/ship`. Never
+  `sleep` blindly for CI — poll. After every squash merge, restart the working
+  branch from origin/main before committing again.
+- **UI changes:** show the user a `/preview` screenshot BEFORE shipping.
+  History: 6 commits of hero-typography thrash in one day, 3 rounds on one
+  dashboard banner — all avoidable with one screenshot first.
+- **Database:** merging a PR never touches Supabase. Every schema change goes
+  through `/db-migrate`; SQL must be idempotent and existence-guarded (a
+  single 42P01 aborts the whole SQL-editor batch). Production can lag the
+  repo — a missing migration caused a silent week-long reminder outage.
+- **Practice facts** (availability, hours, fees, formats) live in
+  `src/lib/siteConfig.ts`. Never infer them from page copy or old docs — they
+  changed three times in one day once. If unknown, ask Owen.
+- **Dates:** trust the environment's date (the SessionStart primer prints it
+  in Europe/Dublin). Owen sees clients Mon/Tue/Fri — don't assume from
+  marketing copy.
+- **Docs drift is real:** OPERATIONS.md has been wrong before (sync direction,
+  domain state). When code and docs disagree, verify against code/production,
+  then fix the doc in the same PR.
+
 ## Current systems & gotchas — read docs/OPERATIONS.md
 Full detail in **docs/OPERATIONS.md**. The must-knows:
 - **Email kill switch:** all email flows through `getResend()` (src/lib/resend.ts)
@@ -46,12 +67,13 @@ Full detail in **docs/OPERATIONS.md**. The must-knows:
 - **Reminders:** daily cron `/api/admin/reminders/run` (06:00 UTC). Hardened:
   reconcile-with-Google first, one-per-session DB UNIQUE, hard cap 25, abort
   alerts to info@. Clients can opt out (`clients.reminders_opted_out`).
-- **Mark-paid never auto-sends a receipt** (decoupled). Receipts are manual:
-  email button, or PDF download / statement in the client record modal
-  (src/lib/generateReceiptPDF.ts, IAHIP Reg. No. 1890 on them).
-- **Stripe webhook** must point at the host that serves 200 (the apex 307-redirects
-  to www; Stripe won't follow redirects). `STRIPE_WEBHOOK_SECRET` must match that
-  endpoint.
+- **No receipt is ever emailed implicitly.** The one-tap "Session done" flow
+  states its outcome up front; Stripe payments are the automatic path (webhook
+  marks paid + emails receipt, rows show "Paid · Stripe"). PDFs/statements in
+  the client record modal (src/lib/generateReceiptPDF.ts, IAHIP Reg. No. 1890).
+- **Stripe webhook** points at the apex `https://owenlynchtherapy.com/api/webhooks/stripe`
+  (apex is the primary domain since 2 Jul 2026; www 308-redirects to it; Stripe
+  won't follow redirects, so never point it at a redirecting host).
 - **Known latent bugs (unfixed):** (1) recurring-session time changes in Google
   don't reliably sync to the dashboard (conflict-resolver in calendarSync.ts is
   instance-id only); (2) deleting a client can leave ghost GCal events
