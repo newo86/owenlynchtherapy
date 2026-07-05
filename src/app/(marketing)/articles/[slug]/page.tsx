@@ -4,10 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
-import { PortableText } from '@portabletext/react';
-import type { PortableTextBlock } from '@portabletext/types';
-import { sanityClient } from '@/lib/sanity/client';
-import { postBySlugQuery, allPostSlugsQuery } from '@/lib/sanity/queries';
+import { articles, getArticle } from '@/content/articles';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -15,90 +12,24 @@ type Props = {
 
 const BASE_URL = 'https://owenlynchtherapy.com';
 
-// ── Shared prose classes ──────────────────────────────────────────────────────
+// Articles are typed content files in src/content/articles — written and
+// shipped through Claude sessions, no CMS. Body markup was captured from the
+// original rendered pages, so classes match the site's prose styles exactly.
 
-const p = 'font-normal text-base md:text-[1.05rem] text-gray-700 leading-[1.85] mb-7';
-const h2 = 'font-heading font-light text-2xl sm:text-[1.75rem] text-forest mt-14 mb-5 leading-snug';
-const inlineLink = 'underline underline-offset-2 decoration-orange/60 h-hover:decoration-orange h-can:transition-colors';
-
-// ── Portable text helpers ─────────────────────────────────────────────────────
-
-function hasText(block?: PortableTextBlock): boolean {
-  return (
-    block?.children?.some(child => {
-      const text = (child as { text?: string }).text;
-      return typeof text === 'string' && text.trim().length > 0;
-    }) ?? false
-  );
+export function generateStaticParams() {
+  return articles.map(a => ({ slug: a.slug }));
 }
-
-// ── Portable text components ──────────────────────────────────────────────────
-
-const portableTextComponents = {
-  block: {
-    normal: ({ children, value }: { children?: React.ReactNode; value?: PortableTextBlock }) =>
-      hasText(value) ? <p className={p}>{children}</p> : null,
-    h2: ({ children, value }: { children?: React.ReactNode; value?: PortableTextBlock }) =>
-      hasText(value) ? <h2 className={h2}>{children}</h2> : null,
-    h3: ({ children, value }: { children?: React.ReactNode; value?: PortableTextBlock }) =>
-      hasText(value) ? (
-        <h3 className="font-heading font-light text-xl text-forest mt-10 mb-4 leading-snug">{children}</h3>
-      ) : null,
-    blockquote: ({ children }: { children?: React.ReactNode }) => (
-      <blockquote className="border-l-2 border-orange pl-5 my-6 text-gray-600 italic">{children}</blockquote>
-    ),
-  },
-  marks: {
-    link: ({ value, children }: { value?: { href: string; blank?: boolean }; children?: React.ReactNode }) => (
-      <a
-        href={value?.href}
-        target={value?.blank ? '_blank' : undefined}
-        rel={value?.blank ? 'noopener noreferrer' : undefined}
-        className={inlineLink}
-      >
-        {children}
-      </a>
-    ),
-    strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-semibold">{children}</strong>,
-    em: ({ children }: { children?: React.ReactNode }) => <em>{children}</em>,
-  },
-  types: {
-    image: ({ value }: { value: { asset?: { url?: string }; alt?: string; caption?: string } }) =>
-      value?.asset?.url ? (
-        <figure className="my-10">
-          <Image
-            src={value.asset.url}
-            alt={value.alt ?? ''}
-            width={1200}
-            height={675}
-            className="w-full h-auto rounded-xl"
-            loading="lazy"
-          />
-          {value.caption && (
-            <figcaption className="mt-3 text-sm text-gray-500 text-center italic">{value.caption}</figcaption>
-          )}
-        </figure>
-      ) : null,
-  },
-};
-
-// ── Static params ─────────────────────────────────────────────────────────────
-
-export async function generateStaticParams() {
-  const slugs: { slug: string }[] = await sanityClient.fetch(allPostSlugsQuery);
-  return slugs.map(s => ({ slug: s.slug }));
-}
-
-// ── Metadata ──────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = await sanityClient.fetch(postBySlugQuery, { slug });
+  const post = getArticle(slug);
   if (!post) return { title: 'Post Not Found', robots: { index: false, follow: false } };
 
   const title = post.seoTitle || post.title;
-  const description = post.seoDescription || post.excerpt || '';
-  const imageUrl = post.featuredImageUrl ?? undefined;
+  const description = post.seoDescription || post.excerpt;
+  const imageUrl = post.featuredImage
+    ? new URL(post.featuredImage.src, BASE_URL).toString()
+    : `${BASE_URL}/og-image.jpg`;
 
   return {
     title,
@@ -115,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       type: 'article',
       url: `${BASE_URL}/articles/${slug}`,
-      ...(imageUrl ? { images: [{ url: imageUrl }] } : {}),
+      images: [{ url: imageUrl }],
       publishedTime: post.publishedAt,
       authors: [`${BASE_URL}/about`],
     },
@@ -123,42 +54,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title,
       description,
-      ...(imageUrl ? { images: [imageUrl] } : {}),
+      images: [imageUrl],
     },
   };
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
-type Reference = {
-  authors?: string;
-  year?: string;
-  title?: string;
-  journal?: string;
-  volume?: string;
-  issue?: string;
-  pages?: string;
-  doi?: string;
-};
-
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params;
-  const post = await sanityClient.fetch(postBySlugQuery, { slug });
+  const post = getArticle(slug);
   if (!post) notFound();
 
-  const publishedDate = post.publishedAt
-    ? new Date(post.publishedAt).toLocaleDateString('en-IE', { day: 'numeric', month: 'long', year: 'numeric' })
-    : null;
+  const publishedDate = new Date(post.publishedAt).toLocaleDateString('en-IE', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  });
 
   const postJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: post.title,
-    description: post.seoDescription || post.excerpt || '',
-    ...(post.featuredImageUrl ? { image: post.featuredImageUrl } : {}),
+    description: post.seoDescription || post.excerpt,
+    ...(post.featuredImage ? { image: new URL(post.featuredImage.src, BASE_URL).toString() } : {}),
     author: {
       '@type': 'Person',
-      name: post.author ?? 'Owen Lynch',
+      name: post.author,
       url: `${BASE_URL}/about`,
     },
     publisher: {
@@ -171,7 +89,7 @@ export default async function ArticlePage({ params }: Props) {
       },
     },
     datePublished: post.publishedAt,
-    ...(post._updatedAt ? { dateModified: post._updatedAt } : {}),
+    dateModified: post.updatedAt,
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${BASE_URL}/articles/${slug}` },
   };
 
@@ -217,15 +135,11 @@ export default async function ArticlePage({ params }: Props) {
             <span>
               By{' '}
               <Link href="/about" className="text-cream/90 h-hover:text-cream h-can:transition-colors underline underline-offset-2">
-                {post.author ?? 'Owen Lynch'}
+                {post.author}
               </Link>
             </span>
-            {publishedDate && (
-              <>
-                <span aria-hidden="true">·</span>
-                <time dateTime={post.publishedAt}>{publishedDate}</time>
-              </>
-            )}
+            <span aria-hidden="true">·</span>
+            <time dateTime={post.publishedAt}>{publishedDate}</time>
           </div>
         </div>
       </section>
@@ -238,11 +152,11 @@ export default async function ArticlePage({ params }: Props) {
       >
         <FloatingCircles />
         <div className="relative max-w-4xl mx-auto" style={{ zIndex: 1 }}>
-          {post.featuredImageUrl && (
+          {post.featuredImage && (
             <figure className="mb-14">
               <Image
-                src={post.featuredImageUrl}
-                alt={post.featuredImageAlt ?? post.title}
+                src={post.featuredImage.src}
+                alt={post.featuredImage.alt || post.title}
                 width={1200}
                 height={675}
                 className="w-full h-auto rounded-xl"
@@ -251,9 +165,11 @@ export default async function ArticlePage({ params }: Props) {
             </figure>
           )}
           <article className="max-w-[720px] mx-auto">
-            {post.body && <PortableText value={post.body} components={portableTextComponents} />}
+            {/* Trusted, repo-authored markup — same classes the prose styles
+                have always used; never user-generated. */}
+            <div dangerouslySetInnerHTML={{ __html: post.bodyHtml }} />
 
-            {post.references && post.references.length > 0 && (
+            {post.referencesHtml && (
               <details className="mt-16 border-t border-gray-200 pt-8 group">
                 <summary className="font-heading font-light text-xl text-forest cursor-pointer select-none h-hover:text-orange h-can:transition-colors list-none flex items-center gap-2">
                   <span>References</span>
@@ -268,26 +184,10 @@ export default async function ArticlePage({ params }: Props) {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </svg>
                 </summary>
-                <div className="mt-6 space-y-5">
-                  {post.references.map((ref: Reference, i: number) => (
-                    <p key={i} className="text-sm text-gray-600 leading-[1.75]">
-                      {[ref.authors, ref.year ? `(${ref.year}).` : null, ref.title ? `${ref.title}.` : null]
-                        .filter(Boolean)
-                        .join(' ')}
-                      {ref.journal && <>{' '}<em>{ref.journal}</em></>}
-                      {[
-                        ref.volume ?? null,
-                        ref.issue ? `(${ref.issue})` : null,
-                        ref.pages ? `, ${ref.pages}.` : null,
-                      ]
-                        .filter(Boolean)
-                        .join('')}
-                      {ref.doi && (
-                        <>{' '}<a href={`https://doi.org/${ref.doi}`} target="_blank" rel="noopener noreferrer" className={inlineLink}>{`doi:${ref.doi}`}</a></>
-                      )}
-                    </p>
-                  ))}
-                </div>
+                <div
+                  className="mt-6 space-y-5"
+                  dangerouslySetInnerHTML={{ __html: post.referencesHtml }}
+                />
               </details>
             )}
           </article>

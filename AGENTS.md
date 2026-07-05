@@ -11,7 +11,8 @@ Custom website for owenlynchtherapy.com. Private psychotherapy practice, Dublin 
 
 ## Stack
 - Next.js 16.2 (App Router) + TypeScript + Tailwind CSS
-- Sanity.io (headless CMS) for content
+- Blog articles are typed repo content in src/content/articles (no CMS —
+  Sanity was removed Jul 2026; publish by adding a content file + /ship)
 - Supabase (Postgres) for the admin/intake data
 - Resend (email), Stripe (payments), Google Calendar (two-way sync)
 - Deployed on Vercel · repo: newo86/owenlynchtherapy
@@ -78,8 +79,8 @@ Full detail in **docs/OPERATIONS.md**. The must-knows:
   don't reliably sync to the dashboard (conflict-resolver in calendarSync.ts is
   instance-id only); (2) deleting a client can leave ghost GCal events
   (deleteCalendarEvent 400 on recurring series).
-- Build in a sandbox fails only at `/articles` page-data (can't reach Sanity) —
-  that's environment-only; it compiles + type-checks fine.
+- The build has no network dependencies and must pass fully everywhere
+  (the old "fails at /articles page-data" sandbox quirk died with Sanity).
 
 ## Branding
 - Colours: forest green #2A4D3C (primary bg), sage #4F8A68, terracotta #C85A1A

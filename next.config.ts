@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
+        // Article images still served from the old Sanity CDN — keep until
+        // they are localised into /public/images/articles (needs an env with
+        // network access to cdn.sanity.io). Do NOT delete the Sanity project
+        // before that happens.
         protocol: 'https',
         hostname: 'cdn.sanity.io',
         pathname: '/images/**',
@@ -47,7 +51,6 @@ const nextConfig: NextConfig = {
     // Next's inline hydration scripts; img-src is broad so analytics pixels and
     // CMS images aren't blocked. The stricter adminCsp is ALSO applied to
     // /admin/* (browsers enforce both policies there).
-    // NOTE: this policy is intentionally NOT applied to /studio — see studioCsp.
     const siteCsp = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://va.vercel-scripts.com https://challenges.cloudflare.com https://member.psychologytoday.com https://www.google-analytics.com",
@@ -61,23 +64,6 @@ const nextConfig: NextConfig = {
       "object-src 'none'",
     ].join('; ');
 
-    // CSP for the embedded Sanity Studio at /studio. siteCsp cannot be applied
-    // here because multiple CSP headers are additive/restrictive — the browser
-    // enforces all of them simultaneously, so you cannot loosen siteCsp with a
-    // second rule. The studio needs to fetch from *.sanity.io (API, CDN, auth),
-    // load fonts and images from the CDN, and open the Sanity login popup.
-    const studioCsp = [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://*.sanity.io",
-      "style-src 'self' 'unsafe-inline' https://*.sanity.io",
-      "img-src 'self' data: blob: https:",
-      "font-src 'self' data: https://*.sanity.io https://cdn.sanity.io",
-      "connect-src 'self' https://*.sanity.io",
-      "frame-src 'self' https://*.sanity.io https://www.sanity.io",
-      "form-action 'self' https://*.sanity.io https://www.sanity.io",
-      "base-uri 'self'",
-      "object-src 'none'",
-    ].join('; ');
 
     return [
       {
@@ -92,23 +78,10 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // siteCsp + X-Frame-Options: DENY on every route except /studio.
-        // Multiple CSP headers are additive, so excluding /studio here is the
-        // only way to give it a different (more permissive) policy via studioCsp.
-        source: '/((?!studio).*)',
+        source: '/(.*)',
         headers: [
           { key: 'Content-Security-Policy', value: siteCsp },
           { key: 'X-Frame-Options', value: 'DENY' },
-        ],
-      },
-      {
-        // Studio-specific CSP: allows connections to *.sanity.io so the
-        // embedded studio can reach the Sanity API, CDN, and auth endpoints.
-        // X-Frame-Options is intentionally omitted so Sanity's dashboard can
-        // embed the studio in an iframe.
-        source: '/studio/:path*',
-        headers: [
-          { key: 'Content-Security-Policy', value: studioCsp },
         ],
       },
       {

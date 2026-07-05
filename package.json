@@ -11,9 +11,6 @@
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",
-    "@sanity/client": "^7.22.0",
-    "@sanity/image-url": "^2.1.1",
-    "@sanity/vision": "^5.26.0",
     "@supabase/supabase-js": "^2.106.1",
     "@types/pdfkit": "^0.17.6",
     "@vercel/analytics": "^2.0.1",
@@ -21,15 +18,12 @@
     "googleapis": "^172.0.0",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
-    "next-sanity": "^12.4.5",
     "pdfkit": "^0.18.0",
     "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "resend": "^6.12.3",
-    "sanity": "^5.26.0",
-    "stripe": "^22.1.1",
-    "styled-components": "^6.4.2"
+    "stripe": "^22.1.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

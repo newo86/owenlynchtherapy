@@ -13,15 +13,11 @@ npx eslint <changed dirs> 2>&1 | tail -5
 npm run build 2>&1 | grep -E "Compiled|Finished TypeScript|Failed|Error" | head -6
 ```
 
-## Reading the build result — IMPORTANT
+## Reading the build result
 
-In this sandbox the build **always** dies at "Collecting page data" for
-`/articles` or `/articles/[slug]` with `Configuration must contain 'projectId'`
-— Sanity is unreachable here by network policy. That exact failure is a **PASS**
-(it builds fully on Vercel). Any OTHER failure is real.
-
-Pass = `Compiled successfully` + `Finished TypeScript` + only the Sanity
-page-data error. Report one verdict line, not logs.
+Since the Sanity removal (Jul 2026) the build has NO network dependencies and
+must pass fully, everywhere. Pass = `Compiled successfully` + TypeScript
+finished + page data collected with zero errors. Any failure is real.
 
 ## Lint baseline
 
