@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { TrendingUp, Video, MapPin, Wallet, X, Send, Download, AlertCircle } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { TrendingUp, Video, MapPin, Wallet, X, Send, Download, AlertCircle, GraduationCap } from 'lucide-react';
 import { startOfWeek, formatDateTime, adminFetch, dedupeSessions } from './api';
 import type { ClientRow, SessionRow } from './types';
 import { PRACTICE } from '@/practice.config';
@@ -174,6 +174,45 @@ export function Revenue({ clients }: Props) {
     };
   }, [clients, now]);
 
+  // Accreditation client-hours tracker: a stored baseline (hours accrued
+  // before the dashboard's records begin) + an automatic count of every
+  // non-cancelled, non-no-show session on/after the count-from date.
+  // Settings can adjust all three numbers; config defaults apply meanwhile.
+  const [accred, setAccred] = useState({
+    hoursTarget: PRACTICE.accreditation.hoursTarget,
+    hoursBaseline: PRACTICE.accreditation.hoursBaseline,
+    hoursCountFrom: PRACTICE.accreditation.hoursCountFrom as string,
+  });
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await adminFetch('/api/admin/settings');
+        if (!res.ok) return;
+        const a = (await res.json())?.settings?.accreditation;
+        if (a && typeof a.hoursTarget === 'number') {
+          setAccred({
+            hoursTarget: a.hoursTarget,
+            hoursBaseline: typeof a.hoursBaseline === 'number' ? a.hoursBaseline : 0,
+            hoursCountFrom: typeof a.hoursCountFrom === 'string' ? a.hoursCountFrom : accred.hoursCountFrom,
+          });
+        }
+      } catch { /* keep config defaults */ }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const accredHours = useMemo(() => {
+    const from = new Date(accred.hoursCountFrom + 'T00:00:00');
+    let count = 0;
+    for (const c of clients) {
+      for (const s of dedupeSessions(c.sessions)) {
+        if (s.status === 'cancelled' || s.status === 'no_show') continue;
+        const d = new Date(s.session_date);
+        if (d >= from && d <= now) count++;
+      }
+    }
+    return { sessionsSince: count, total: accred.hoursBaseline + count };
+  }, [clients, accred, now]);
+
   // Outstanding = unpaid money for sessions that have ALREADY HAPPENED.
   // Future scheduled sessions are always "unpaid" — they are not debt.
   const outstanding = useMemo(() => {
@@ -339,6 +378,35 @@ export function Revenue({ clients }: Props) {
           emphasised
           onClick={() => setDrill({ title: 'Paid · last 4 weeks', rows: projection.rows })}
         />
+        {/* Accreditation client-hours progress (1 session = 1 hour) */}
+        <div className="admin-stat">
+          <div className="admin-stat-accent" style={{ background: 'var(--sage)' }} />
+          <div className="admin-stat-blob" style={{ background: '#d8e8de' }} aria-hidden />
+          <div className="admin-stat-top">
+            <div className="admin-stat-label">Accreditation hours</div>
+            <div className="admin-stat-icontile" style={{ background: 'rgba(79,138,104,0.14)', color: 'var(--sage)' }}>
+              <GraduationCap size={20} strokeWidth={1.7} aria-hidden />
+            </div>
+          </div>
+          <div className="admin-stat-value">
+            <span>{accredHours.total.toLocaleString('en-IE')}</span>
+          </div>
+          <div style={{ marginTop: 8, fontSize: 12, color: 'var(--ink-muted)' }}>
+            of {accred.hoursTarget.toLocaleString('en-IE')} client hours ·{' '}
+            {Math.min(100, Math.round((accredHours.total / Math.max(accred.hoursTarget, 1)) * 100))}% there
+          </div>
+          <div style={{ marginTop: 8, height: 6, borderRadius: 3, background: 'rgba(42,77,60,0.12)', overflow: 'hidden' }}>
+            <div style={{
+              width: `${Math.min(100, (accredHours.total / Math.max(accred.hoursTarget, 1)) * 100)}%`,
+              height: '100%', background: 'var(--sage)', borderRadius: 3,
+            }} />
+          </div>
+          <div className="admin-stat-foot" style={{ marginTop: 10 }}>
+            {accred.hoursBaseline} before{' '}
+            {new Date(accred.hoursCountFrom + 'T00:00:00').toLocaleDateString('en-IE', { month: 'long', year: 'numeric' })}
+            {' '}+ {accredHours.sessionsSince} session{accredHours.sessionsSince === 1 ? '' : 's'} since · no-shows excluded · adjust in Settings
+          </div>
+        </div>
       </div>
 
       {/* Trend chart */}

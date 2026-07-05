@@ -181,6 +181,15 @@ export function SettingsPanel() {
           onChange={v => setIn('accreditation', 'regNumber', v)} />
         <Field label="Summary line" value={s.accreditation.summary}
           onChange={v => setIn('accreditation', 'summary', v)} hint="Shown in footers, e.g. “IAHIP & ICP Accredited”." />
+        <Field label="Client hours target" type="number" value={String(s.accreditation.hoursTarget)}
+          onChange={v => setIn('accreditation', 'hoursTarget', Number(v || '0'))}
+          hint="The accreditation milestone you're working towards (e.g. 500)." />
+        <Field label="Hours before the count started" type="number" value={String(s.accreditation.hoursBaseline)}
+          onChange={v => setIn('accreditation', 'hoursBaseline', Number(v || '0'))}
+          hint="Client hours accrued before the dashboard's records begin — added to the automatic count." />
+        <Field label="Count sessions from" type="date" value={s.accreditation.hoursCountFrom}
+          onChange={v => setIn('accreditation', 'hoursCountFrom', v)}
+          hint="Sessions in the dashboard on/after this date are counted automatically." />
       </Card>
 
       <Card title="Contact & location" sub="Your public contact details (they also drive local-SEO data).">

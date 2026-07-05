@@ -62,6 +62,14 @@ function validate(s: PracticeSettings): string | null {
   if (!isNum(s.sessionMinutes) || s.sessionMinutes < 10 || s.sessionMinutes > 240) {
     return 'Session length must be 10–240 minutes.';
   }
+  const acc = s.accreditation;
+  if (!isNum(acc?.hoursTarget) || acc.hoursTarget < 0 || acc.hoursTarget > 100_000
+    || !isNum(acc?.hoursBaseline) || acc.hoursBaseline < 0 || acc.hoursBaseline > 100_000) {
+    return 'Accreditation hours target/baseline must be sensible numbers.';
+  }
+  if (!isStr(acc?.hoursCountFrom) || !/^\d{4}-\d{2}-\d{2}$/.test(acc.hoursCountFrom)) {
+    return 'Accreditation "count from" must be a date (YYYY-MM-DD).';
+  }
   if (!Array.isArray(s.openingHours) || s.openingHours.some(h =>
     !isStr(h?.dayOfWeek) || !/^\d{2}:\d{2}$/.test(h?.opens ?? '') || !/^\d{2}:\d{2}$/.test(h?.closes ?? ''))) {
     return 'Opening hours rows need a day and HH:MM times.';
