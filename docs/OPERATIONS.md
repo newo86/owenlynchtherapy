@@ -80,8 +80,22 @@ are obsolete since Jul 2026 and can be removed from Vercel.)
 Applied in the Supabase SQL editor. Notably: `session_reminders.sql` +
 `session_reminders_unique.sql` (the one-per-session UNIQUE constraint),
 `clients_reminders_opt_out.sql` (`reminders_opted_out` column), `payments.sql`,
-`rate_limits.sql`, `admin_mfa.sql`. If a feature "doesn't save", check its
-migration was run in production.
+`rate_limits.sql`, `admin_mfa.sql`, `practice_settings.sql` (dashboard Settings
+page storage). If a feature "doesn't save", check its migration was run in
+production.
+
+## Practice settings (dashboard Settings page)
+
+Public-facing practice facts (names, accreditation, contact/NAP, fees, hours,
+links, profiles) are editable at **Admin → Settings**. Stored as one jsonb row
+in `practice_settings`, merged over the code defaults in
+`src/practice.config.ts` by `getPractice()` (`src/lib/practiceSettings.ts`,
+cache tag `practice`). Saving revalidates the tag so the footer + business
+JSON-LD update on the next page view. If the table is missing the app serves
+the code defaults and the Settings page warns instead of failing — builds and
+clones work with no database. Consumers migrate onto `getPractice()`
+incrementally; anything still reading `practice.config.ts` directly only
+changes via code.
 
 ## Known latent bugs (not yet fixed)
 

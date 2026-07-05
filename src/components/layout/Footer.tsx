@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { getPractice } from '@/lib/practiceSettings';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -10,7 +11,18 @@ const navLinks = [
   { href: '/contact', label: 'Contact' },
 ];
 
-export default function Footer() {
+export default async function Footer() {
+  // Live practice settings (dashboard Settings page) merged over the code
+  // defaults — the footer NAP block is the canonical public copy of them.
+  const p = await getPractice();
+
+  const addressLine = [
+    p.hasInPerson ? p.address.venue : null,
+    p.hasInPerson ? p.address.streetAddress : null,
+    p.address.addressLocality,
+    p.address.postalCode,
+  ].filter(Boolean).join(', ');
+
   return (
     <footer style={{ backgroundColor: '#2A4D3C' }} className="text-cream" role="contentinfo">
       <div className="max-w-6xl mx-auto px-6 lg:px-16 pt-12 pb-24 md:pb-8">
@@ -21,35 +33,37 @@ export default function Footer() {
           {/* Left — brand */}
           <div className="flex flex-col gap-3">
             <p className="font-heading font-light text-xl text-white leading-snug">
-              Owen Lynch Psychotherapy
+              {p.businessName}
             </p>
             <p className="text-sm text-cream/60 leading-relaxed max-w-xs">
               Evidence-based therapy in Dublin &amp; online.
             </p>
-            <a
-              href="https://www.instagram.com/owenlynchtherapy"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Owen Lynch Psychotherapy on Instagram"
-              className="inline-flex text-white/50 h-hover:text-white h-can:transition-colors w-fit"
-            >
-              {/* Instagram icon */}
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
+            {p.socials.instagram && (
+              <a
+                href={p.socials.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${p.businessName} on Instagram`}
+                className="inline-flex text-white/50 h-hover:text-white h-can:transition-colors w-fit"
               >
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                <circle cx="12" cy="12" r="4" />
-                <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
-              </svg>
-            </a>
+                {/* Instagram icon */}
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+                </svg>
+              </a>
+            )}
           </div>
 
           {/* Middle — pages, two columns to stay short */}
@@ -77,20 +91,20 @@ export default function Footer() {
               Contact
             </p>
             <address className="text-sm text-cream/60 not-italic leading-relaxed">
-              Insight Matters, 106 Capel Street, Dublin 1, D01 WY40
+              {addressLine}
               <br />
               <a
-                href="tel:+353851471689"
+                href={`tel:${p.telephone}`}
                 className="h-hover:text-white h-can:transition-colors"
               >
-                085 147 1689
+                {p.telephoneDisplay}
               </a>
               {' · '}
               <a
-                href="mailto:info@owenlynchtherapy.com"
+                href={`mailto:${p.email}`}
                 className="h-hover:text-white h-can:transition-colors"
               >
-                info@owenlynchtherapy.com
+                {p.email}
               </a>
             </address>
             <Link
@@ -109,63 +123,70 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-          {/* Badges */}
+          {/* Badges — the images are per-practice assets in /public; each badge
+              only renders when its profile link is set in Settings. */}
           <div className="flex flex-wrap items-center gap-3">
-            <a
-              href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
-              style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
-              aria-label="IAHIP accredited psychotherapist — view directory listing"
-            >
-              <Image
-                src="/images/IAHIPLogo.jpg"
-                alt="IAHIP accredited psychotherapist"
-                width={962}
-                height={437}
-                className="h-7 w-auto object-contain"
-              />
-            </a>
+            {p.socials.directoryProfiles[0] && (
+              <a
+                href={p.socials.directoryProfiles[0]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
+                style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
+                aria-label="IAHIP accredited psychotherapist — view directory listing"
+              >
+                <Image
+                  src="/images/IAHIPLogo.jpg"
+                  alt="IAHIP accredited psychotherapist"
+                  width={962}
+                  height={437}
+                  className="h-7 w-auto object-contain"
+                />
+              </a>
+            )}
 
-            <a
-              href="https://psychotherapycouncil.ie/therapist/owen-lynch/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
-              style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
-              aria-label="Irish Council for Psychotherapy member — view directory listing"
-            >
-              <Image
-                src="/images/ICP.png"
-                alt="Irish Council for Psychotherapy member"
-                width={324}
-                height={90}
-                className="h-7 w-auto object-contain"
-              />
-            </a>
+            {p.socials.directoryProfiles[1] && (
+              <a
+                href={p.socials.directoryProfiles[1]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
+                style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
+                aria-label="Irish Council for Psychotherapy member — view directory listing"
+              >
+                <Image
+                  src="/images/ICP.png"
+                  alt="Irish Council for Psychotherapy member"
+                  width={324}
+                  height={90}
+                  className="h-7 w-auto object-contain"
+                />
+              </a>
+            )}
 
-            <a
-              href="https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 h-hover:opacity-80 h-can:transition-opacity"
-              style={{ background: '#c85a1a', borderRadius: '6px', padding: '5px 12px' }}
-              aria-label="Verified by Psychology Today"
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <circle cx="8" cy="8" r="7" stroke="white" strokeWidth="1.5" />
-                <path d="M5 8l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="text-white text-xs font-normal" style={{ letterSpacing: '0.03em' }}>
-                Verified by Psychology Today
-              </span>
-            </a>
+            {p.socials.psychologyToday && (
+              <a
+                href={p.socials.psychologyToday}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 h-hover:opacity-80 h-can:transition-opacity"
+                style={{ background: '#c85a1a', borderRadius: '6px', padding: '5px 12px' }}
+                aria-label="Verified by Psychology Today"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <circle cx="8" cy="8" r="7" stroke="white" strokeWidth="1.5" />
+                  <path d="M5 8l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span className="text-white text-xs font-normal" style={{ letterSpacing: '0.03em' }}>
+                  Verified by Psychology Today
+                </span>
+              </a>
+            )}
           </div>
 
           {/* Copyright */}
           <p className="text-xs text-cream/40 md:text-right">
-            &copy; 2026 Owen Lynch Psychotherapy · IAHIP &amp; ICP Accredited
+            &copy; 2026 {p.businessName} · {p.accreditation.summary}
           </p>
 
         </div>
