@@ -6,6 +6,7 @@ import ContactForm from './ContactForm';
 import WaitlistForm from './WaitlistForm';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
+import { getPractice } from '@/lib/practiceSettings';
 
 export const metadata: Metadata = {
   title: { absolute: 'Contact Owen Lynch | Psychotherapist Dublin' },
@@ -36,13 +37,9 @@ const jsonLd = {
   mainEntity: { '@id': 'https://owenlynchtherapy.com/#business' },
 };
 
-// The specific slots currently open to new clients. The waitlist form below
-// the cards collects interest from anyone these times don't suit.
-const availability = [
-  { day: 'Monday',  hours: '7:00pm', format: 'In Person' },
-  { day: 'Tuesday', hours: '5:00pm', format: 'Online' },
-  { day: 'Friday',  hours: '3:00pm · every second week', format: 'In Person' },
-];
+// The specific slots currently open to new clients come from the live
+// practice settings (dashboard Settings → Available slots). The waitlist form
+// below the cards collects interest from anyone these times don't suit.
 
 const reassurance = [
   {
@@ -62,7 +59,13 @@ const reassurance = [
 const labelClass =
   'block text-xs font-normal uppercase tracking-normal text-gray-500 mb-1.5';
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const practice = await getPractice();
+  const availability = practice.availability.map(s => ({
+    day: s.day,
+    hours: s.note ? `${s.time} · ${s.note}` : s.time,
+    format: s.format === 'online' ? 'Online' : 'In Person',
+  }));
   return (
     <>
       <script
@@ -103,7 +106,7 @@ export default function ContactPage() {
         <FloatingCircles />
         <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
           <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-            Accepting new clients
+            {availability.length > 0 ? 'Accepting new clients' : 'Waiting list open'}
           </p>
           <h2
             id="availability-heading"
@@ -117,8 +120,8 @@ export default function ContactPage() {
 
             {/* Left — stacked cards + note */}
             <div className="flex flex-col gap-6">
-              {availability.map(({ day, hours, format }) => (
-                <div key={day} className="service-card-border rounded-lg">
+              {availability.map(({ day, hours, format }, i) => (
+                <div key={`${day}-${i}`} className="service-card-border rounded-lg">
                   <div
                     className="relative z-[1] bg-white rounded-lg shadow-md p-6"
                     style={{ borderTop: '3px solid #c85a1a' }}
@@ -134,8 +137,10 @@ export default function ContactPage() {
               <p className="font-normal text-base leading-[1.8]" style={{ color: '#555555' }}>
                 In-person sessions take place at Insight Matters, 106 Capel Street,
                 Dublin 1. Online sessions are available to clients across Ireland and
-                the UK. If none of these times suit, join the waiting list below and
-                I&apos;ll be in touch when another space opens up.
+                the UK.{' '}
+                {availability.length > 0
+                  ? "If none of these times suit, join the waiting list below and I'll be in touch when another space opens up."
+                  : "All of my current times are full — join the waiting list below and I'll be in touch as soon as a space opens up."}
               </p>
               <WaitlistForm />
             </div>

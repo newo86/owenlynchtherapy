@@ -47,6 +47,8 @@ export interface PracticeSettings {
   sessionMinutes: number;
   priceRange: string;
   openingHours: Array<{ dayOfWeek: string; opens: string; closes: string }>;
+  /** Open slots shown on /contact. Empty = fully booked (waitlist leads). */
+  availability: Array<{ day: string; time: string; format: 'in_person' | 'online'; note: string }>;
   telehealthUrl: string;
   stripeLinks: { online: string; inPerson: string };
   gtmId: string;
@@ -83,6 +85,7 @@ export const PRACTICE_DEFAULTS: PracticeSettings = {
   sessionMinutes: PRACTICE.sessionMinutes,
   priceRange: PRACTICE.priceRange,
   openingHours: PRACTICE.openingHours.map(h => ({ ...h })),
+  availability: PRACTICE.availability.map(s => ({ ...s })),
   telehealthUrl: PRACTICE.telehealthUrl,
   stripeLinks: { ...PRACTICE.stripeLinks },
   gtmId: PRACTICE.gtmId,
@@ -109,6 +112,7 @@ export function mergeSettings(stored: Partial<PracticeSettings> | null | undefin
     stripeLinks: { ...d.stripeLinks, ...(stored.stripeLinks ?? {}) },
     socials: { ...d.socials, ...(stored.socials ?? {}) },
     openingHours: stored.openingHours ?? d.openingHours,
+    availability: stored.availability ?? d.availability,
   };
 }
 
