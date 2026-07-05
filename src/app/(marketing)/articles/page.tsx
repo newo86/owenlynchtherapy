@@ -4,8 +4,7 @@ import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import AnimatedCard from '@/components/ui/AnimatedCard';
 import FloatingCircles from '@/components/ui/floating-circles';
-import { sanityClient } from '@/lib/sanity/client';
-import { allPostsQuery } from '@/lib/sanity/queries';
+import { articles } from '@/content/articles';
 
 export const metadata: Metadata = {
   title: { absolute: 'Articles | Owen Lynch Psychotherapy' },
@@ -44,17 +43,6 @@ const breadcrumbJsonLd = {
   ],
 };
 
-type Post = {
-  _id: string;
-  slug: { current: string };
-  title: string;
-  excerpt: string;
-  publishedAt: string;
-  category: string;
-  featuredImageUrl: string | null;
-  featuredImageAlt: string | null;
-};
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-IE', {
     day: 'numeric',
@@ -65,40 +53,10 @@ function formatDate(iso: string) {
 
 const PAGE_SIZE = 9;
 
-// Fallback so the OCD article always appears in the listing, even if the Sanity
-// fetch is unavailable. If the same post comes back from Sanity (matched by
-// slug) the static copy is dropped below, so there's never a duplicate card.
-const STATIC_POSTS: Post[] = [
-  {
-    _id: 'static-how-ocd-therapy-works',
-    slug: { current: 'how-ocd-therapy-works' },
-    title: 'How OCD Therapy Works: An Evidence-Based Guide',
-    excerpt:
-      'An integrative look at I-CBT, ACT, ERP, and psychodynamic approaches to OCD treatment — and what effective, compassionate help actually looks like.',
-    publishedAt: '2026-05-13',
-    category: 'OCD',
-    featuredImageUrl: '/images/blog-hero-ocd-therapy.png',
-    featuredImageAlt:
-      'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta',
-  },
-];
-
-export default async function ArticlesPage() {
-  let posts: Post[] = [];
-  try {
-    posts = await sanityClient.fetch(allPostsQuery);
-  } catch {
-    posts = [];
-  }
-
-  // Merge in any static fallback posts Sanity didn't already return (by slug),
-  // then sort newest-first so the order is stable regardless of source.
-  const sanitySlugs = new Set(posts.map(p => p.slug?.current));
-  const merged = [...posts, ...STATIC_POSTS.filter(p => !sanitySlugs.has(p.slug.current))];
-  merged.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
-
-  const visiblePosts = merged.slice(0, PAGE_SIZE);
-  const hasMore = merged.length > PAGE_SIZE;
+// Articles live in the repo (src/content/articles) — no CMS, no network.
+export default function ArticlesPage() {
+  const visiblePosts = articles.slice(0, PAGE_SIZE);
+  const hasMore = articles.length > PAGE_SIZE;
 
   return (
     <>
@@ -148,27 +106,26 @@ export default async function ArticlesPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
               {visiblePosts.map((post, i) => (
-                <AnimatedCard key={post._id} index={i} className="service-card-border rounded-2xl">
+                <AnimatedCard key={post.slug} index={i} className="service-card-border rounded-2xl">
                   <article
                     className="relative z-[1] group flex flex-col flex-1 rounded-2xl bg-white h-hover:-translate-y-1 h-can:transition-all h-can:duration-300"
                     style={{ boxShadow: '0 2px 16px rgba(42,77,60,0.07)' }}
                   >
                     <Link
-                      href={`/articles/${post.slug.current}`}
+                      href={`/articles/${post.slug}`}
                       className="flex flex-col flex-1 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-2 focus-visible:ring-offset-linen"
                       aria-label={`Read article: ${post.title}`}
                     >
                       {/* Featured image */}
-                      {post.featuredImageUrl && (
+                      {post.featuredImage && (
                       <div className="relative aspect-video overflow-hidden rounded-t-2xl">
                         <Image
-                          src={post.featuredImageUrl}
-                          alt={post.featuredImageAlt ?? post.title}
+                          src={post.featuredImage.src}
+                          alt={post.featuredImage.alt || post.title}
                           fill
                           className="object-cover h-can:transition-transform h-can:duration-700 ease-out group-h-hover:scale-[1.04]"
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           priority={i === 0}
-                          unoptimized={post.featuredImageUrl.startsWith('https://images.unsplash')}
                         />
                       </div>
                       )}
@@ -176,7 +133,7 @@ export default async function ArticlesPage() {
                       {/* Category pill — pulls up slightly into the image zone */}
                       <div className="relative z-10 px-5 -mt-[14px] mb-4">
                         <span className="inline-flex items-center bg-forest text-white text-[9px] font-semibold uppercase tracking-[2px] px-3 py-1.5 rounded-full shadow-sm">
-                          {post.category}
+                          {post.category ?? 'Article'}
                         </span>
                       </div>
 

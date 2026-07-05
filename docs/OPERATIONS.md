@@ -50,7 +50,7 @@ Anything else (unset/false) silently blocks every send.
 ## Stripe payments
 
 - Webhook `src/app/api/webhooks/stripe/route.ts` handles `checkout.session.completed` → marks the session paid, logs to the `payments` ledger, and emails the receipt (once). Needs `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`.
-- **GOTCHA:** the Stripe webhook endpoint URL must point at the domain that answers **200 without a redirect**. Stripe does not follow redirects. The **apex `owenlynchtherapy.com` 307-redirects to `www`**, so a webhook on the apex fails every time. Point the Stripe endpoint at whichever host serves 200 (currently `https://www.owenlynchtherapy.com/api/webhooks/stripe`), and make sure `STRIPE_WEBHOOK_SECRET` matches THAT endpoint's signing secret.
+- **GOTCHA:** the Stripe webhook endpoint URL must point at the host that answers **200 without a redirect** — Stripe does not follow redirects. Since 2 Jul 2026 that host is the apex: `https://owenlynchtherapy.com/api/webhooks/stripe` (www 308-redirects to it). If the primary domain ever changes again, move the webhook in the same sitting and confirm the next delivery is 200.
 
 ## Domains / SEO
 
@@ -64,15 +64,16 @@ Anything else (unset/false) silently blocks every send.
   redirect loop and was reverted same-day — domain redirects belong in Vercel's
   dashboard, never in next.config.
 - The canonical origin + NAP/opening-hours facts used in metadata and JSON-LD live in `src/lib/siteConfig.ts`. The single LocalBusiness/MedicalBusiness entity is emitted for all marketing pages from `src/app/(marketing)/layout.tsx`; pages reference it by `@id` instead of re-declaring it.
-- The sitemap (`src/app/sitemap.ts`) pulls article slugs from Sanity at build time, with a hardcoded fallback if Sanity is unreachable. New posts enter the sitemap on the next deploy.
+- The sitemap (`src/app/sitemap.ts`) is fully static: article entries come from the repo content index (`src/content/articles`). New posts enter it on the next deploy.
 - The social share card is `public/og-image.jpg` (1200×630), set as the site-wide default in `src/app/layout.tsx` and per-page in each page's `openGraph.images`.
 
 ## Environment variables (Vercel)
 
 `EMAILS_ENABLED`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
 `INTAKE_ADMIN_SECRET` (admin login + signs unsubscribe tokens), `CRON_SECRET`,
-`TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_SANITY_PROJECT_ID` /
-`NEXT_PUBLIC_SANITY_DATASET`, Google OAuth creds, Supabase service-role key.
+`TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY`, Google OAuth creds, Supabase
+service-role key. (The `NEXT_PUBLIC_SANITY_*` vars and the Sanity integration
+are obsolete since Jul 2026 and can be removed from Vercel.)
 
 ## Supabase migrations (`supabase/migrations/`)
 
@@ -89,5 +90,10 @@ migration was run in production.
 
 ## Build / deploy notes
 
-- Run `npm run build` before pushing. In an isolated sandbox the build **compiles and type-checks fine but fails at "Collecting page data" for `/articles`** because it can't reach Sanity (network policy). That's environment-only, not a code error — on Vercel (real Sanity creds) it builds fully.
+- Run `npm run build` before pushing. Since the Sanity removal (Jul 2026) the
+  build has no network dependencies and must pass fully in any environment.
+- **Articles/blog:** repo content files in `src/content/articles/` (one .ts per
+  article: metadata + bodyHtml). To publish: add a file, register it in
+  `index.ts`, `/preview`, `/ship`. Slugs are permanent (they're indexed URLs).
+  The /studio route and Sanity subscription are gone.
 - Visible UI changes are usually previewed on a branch before merging to `main`. Long branch names get a hashed Vercel preview URL — grab it from Vercel → Deployments rather than guessing.
