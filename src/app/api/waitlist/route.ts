@@ -5,6 +5,7 @@ import { rateLimit } from '@/lib/rateLimit';
 import { rateLimitDurable } from '@/lib/rateLimitDurable';
 import { escapeHtml } from '@/lib/sanitise';
 import { WAITLIST_CONSENT_TEXT } from '@/lib/waitlistConsent';
+import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 
 // Public waiting-list signup (in-person sessions currently full).
 //
@@ -68,8 +69,8 @@ export async function POST(req: NextRequest) {
   // Heads-up to the practitioner (best-effort; respects the kill switch).
   try {
     await getResend().emails.send({
-      from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
-      to: 'info@owenlynchtherapy.com',
+      from: EMAIL_FROM,
+      to: CONTACT_EMAIL,
       subject: 'New waiting-list signup',
       html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
         <p><strong>${escapeHtml(fullName)}</strong> joined the waiting list.</p>

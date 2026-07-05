@@ -1,14 +1,24 @@
 // Shared client-facing email templates. Single source of truth for the
 // reminder and receipt HTML so the manual admin routes, the Stripe webhook
 // and the reminder cron all send identical, on-brand emails.
+//
+// The practice-specific bits (telehealth room, venue, Stripe links, from
+// address) are re-exported from the master config so a cloned practice's
+// emails and calendar events use ITS details, never Owen's.
+import { PRACTICE } from '@/practice.config';
 
-export const DOXY_URL = 'https://doxy.me/owenlynchtherapy';
-export const INSIGHT_MATTERS_ADDRESS = 'Insight Matters, 106 Capel Street, Dublin, D01 WY40';
+export const DOXY_URL = PRACTICE.telehealthUrl;
+export const INSIGHT_MATTERS_ADDRESS =
+  `${PRACTICE.address.venue}, ${PRACTICE.address.streetAddress}, ${PRACTICE.address.addressLocality}, ${PRACTICE.address.postalCode}`;
+/** From-address for all outgoing mail (Resend-verified domain). */
+export const EMAIL_FROM = PRACTICE.emailFrom;
+/** Practice reply-to / contact address. */
+export const CONTACT_EMAIL = PRACTICE.email;
 
 // Stripe payment links. Static links — per-session matching is done by
 // appending ?client_reference_id=<session_id> when the link is emailed.
-export const STRIPE_LINK_ONLINE    = 'https://buy.stripe.com/8x27sN4Yx3y70ha1A17g40p';
-export const STRIPE_LINK_IN_PERSON = 'https://buy.stripe.com/5kQ8wR8aJc4D9RK2E57g40q';
+export const STRIPE_LINK_ONLINE    = PRACTICE.stripeLinks.online;
+export const STRIPE_LINK_IN_PERSON = PRACTICE.stripeLinks.inPerson;
 
 /** The three billing categories a session can fall into. Low cost is a
  *  property of the client (clients.is_low_cost), not the session format. */

@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
-import { buildReminderHtml, paymentLinkFor, sessionKind } from '@/lib/emailTemplates';
+import { buildReminderHtml, paymentLinkFor, sessionKind, EMAIL_FROM } from '@/lib/emailTemplates';
 import { reminderOptOutUrl } from '@/lib/reminderOptOut';
 
 export interface ReminderResult {
@@ -114,7 +114,7 @@ export async function sendSessionReminder(
   let emailResult;
   try {
     emailResult = await getResend().emails.send({
-      from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
+      from: EMAIL_FROM,
       to: client.email,
       subject: isToday
         ? 'Reminder — your session today with Owen Lynch'

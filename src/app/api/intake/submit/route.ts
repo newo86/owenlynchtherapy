@@ -5,6 +5,7 @@ import { sanitiseInput } from '@/lib/sanitise';
 import { rateLimit } from '@/lib/rateLimit';
 import { rateLimitDurable } from '@/lib/rateLimitDurable';
 import { getResend } from '@/lib/resend';
+import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
@@ -216,8 +217,8 @@ export async function POST(req: NextRequest) {
     };
 
     const emailResult = await getResend().emails.send({
-      from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
-      to: 'info@owenlynchtherapy.com',
+      from: EMAIL_FROM,
+      to: CONTACT_EMAIL,
       subject: `New intake form: ${full_name}`,
       html: buildEmailHtml(sanitisedData),
       ...(pdfBuffer ? { attachments: [{ filename, content: pdfBuffer }] } : {}),

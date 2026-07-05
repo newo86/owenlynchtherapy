@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import { PRACTICE } from '@/practice.config';
 
 export interface SubmissionData {
   id: string;
@@ -77,7 +78,7 @@ export async function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
       bufferPages: true,
       info: {
         Title: `Intake Form — ${data.full_name}`,
-        Author: 'Owen Lynch Psychotherapy',
+        Author: PRACTICE.businessName,
         Subject: 'Client Intake',
       },
     });
@@ -141,7 +142,7 @@ export async function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
       doc.y = 44 + logoH + 10;
     } else {
       doc.font('Helvetica-Bold').fontSize(16).fillColor(FOREST)
-        .text('Owen Lynch Psychotherapy', { align: 'center' });
+        .text(PRACTICE.businessName, { align: 'center' });
       doc.moveDown(0.3);
     }
 
@@ -222,7 +223,7 @@ export async function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
       const footerY = doc.page.height - 32;
       const pageLabel = range.count > 1 ? `Page ${i + 1} of ${range.count}  ·  ` : '';
       doc.font('Helvetica').fontSize(7.5).fillColor(MUTED)
-        .text(`${pageLabel}Owen Lynch Psychotherapy · Confidential`, L, footerY, {
+        .text(`${pageLabel}${PRACTICE.businessName} · Confidential`, L, footerY, {
           align: 'center',
           width: W,
         });

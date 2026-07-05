@@ -7,8 +7,7 @@ import {
   buildReceiptHtml,
   sessionKind,
   STRIPE_LINK_IN_PERSON,
-  STRIPE_LINK_ONLINE,
-} from '@/lib/emailTemplates';
+  STRIPE_LINK_ONLINE, EMAIL_FROM } from '@/lib/emailTemplates';
 
 // Must be force-dynamic so Next.js never pre-renders or caches this route.
 // A cached response would consume request.body before Stripe's raw-body
@@ -229,7 +228,7 @@ async function sendReceipt(
   });
 
   const emailResult = await getResend().emails.send({
-    from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
+    from: EMAIL_FROM,
     to: client.email,
     subject: 'Receipt — Psychotherapy Session with Owen Lynch',
     html: buildReceiptHtml({

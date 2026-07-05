@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { getResend } from '@/lib/resend';
 import { escapeHtml } from '@/lib/sanitise';
+import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 
 export async function submitContactForm(formData: FormData) {
   // Honeypot: if bot filled the hidden field, silently redirect as success
@@ -57,8 +58,8 @@ export async function submitContactForm(formData: FormData) {
   };
 
   const { error } = await getResend().emails.send({
-    from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
-    to: 'info@owenlynchtherapy.com',
+    from: EMAIL_FROM,
+    to: CONTACT_EMAIL,
     subject: `New enquiry from ${firstName} ${lastName}`.replace(/[\r\n]+/g, ' '),
     html: `
       <table style="font-family:sans-serif;font-size:14px;color:#333;max-width:560px;width:100%">

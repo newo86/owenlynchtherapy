@@ -1,51 +1,36 @@
-// Single source of truth for the public site's canonical origin and
-// local-business facts (NAP: name / address / phone). Import from here rather
-// than hardcoding URLs so a future host change (apex vs www) is one edit.
-//
-// IMPORTANT: this must match the PRIMARY domain configured in Vercel. The apex
-// currently 307-redirects to www while canonicals point at the apex — the fix
-// tracked in docs/ROADMAP.md is to make the apex primary in Vercel so serving,
-// canonicals, sitemap and the Stripe webhook all align on this origin.
-export const SITE_URL = 'https://owenlynchtherapy.com';
+// Backwards-compatible facade over the master config in src/practice.config.ts.
+// Existing modules import { SITE_URL, PRACTICE, ... } from '@/lib/siteConfig';
+// keep that working while the single source of truth moves to practice.config.
+// New code can import from '@/practice.config' directly.
+import { PRACTICE as CFG, SITE_URL as ORIGIN, SAME_AS } from '@/practice.config';
 
+export const SITE_URL = ORIGIN;
 export const BUSINESS_ID = `${SITE_URL}/#business`;
 export const PERSON_ID = `${SITE_URL}/#person`;
 
+// Re-shaped to the structure existing consumers expect (name/address/geo/...).
 export const PRACTICE = {
-  name: 'Owen Lynch Psychotherapy',
-  legalName: 'Owen Lynch Psychotherapy',
-  telephone: '+353851471689',
-  telephoneDisplay: '085 147 1689',
-  email: 'info@owenlynchtherapy.com',
-  priceRange: '€70-€80',
+  name: CFG.businessName,
+  legalName: CFG.businessName,
+  telephone: CFG.telephone,
+  telephoneDisplay: CFG.telephoneDisplay,
+  email: CFG.email,
+  priceRange: CFG.priceRange,
   address: {
-    venue: 'Insight Matters',
-    streetAddress: '106 Capel Street',
-    addressLocality: 'Dublin',
-    postalCode: 'D01 WY40',
-    addressCountry: 'IE',
+    venue: CFG.address.venue,
+    streetAddress: CFG.address.streetAddress,
+    addressLocality: CFG.address.addressLocality,
+    postalCode: CFG.address.postalCode,
+    addressCountry: CFG.address.addressCountry,
   },
-  geo: { latitude: '53.3488', longitude: '-6.2687' },
-  // Practice days (feeds Google's opening-hours display). Session days are
-  // Monday/Tuesday evenings and Friday afternoons — schema.org can't express
-  // "every second Friday", so Friday is listed plainly. Keep roughly in sync
-  // with the availability shown on /contact.
-  openingHours: [
-    { dayOfWeek: 'Monday', opens: '17:00', closes: '20:00' },
-    { dayOfWeek: 'Tuesday', opens: '17:00', closes: '20:00' },
-    { dayOfWeek: 'Friday', opens: '15:00', closes: '20:00' },
-  ],
-  sameAs: [
-    'https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757',
-    'https://psychotherapistdirectory.iahip.org/therapist/owen-lynch',
-    'https://psychotherapycouncil.ie/therapist/owen-lynch/',
-    'https://www.instagram.com/owenlynchtherapy',
-  ],
+  geo: CFG.geo,
+  openingHours: CFG.openingHours,
+  sameAs: SAME_AS,
 } as const;
 
 export const DEFAULT_OG_IMAGE = {
-  url: `${SITE_URL}/og-image.jpg`,
+  url: `${SITE_URL}${CFG.assets.ogImage}`,
   width: 1200,
   height: 630,
-  alt: 'Owen Lynch Psychotherapy — Psychotherapy in Dublin & Online',
+  alt: `${CFG.businessName} — ${CFG.serviceArea}`,
 } as const;

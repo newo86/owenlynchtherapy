@@ -1,6 +1,7 @@
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import { PRACTICE } from '@/practice.config';
 
 // Branded receipt + statement PDFs for a client's sessions. Mirrors the look
 // of the intake PDF (same logo header, forest/gold palette). Admin-only; used
@@ -21,8 +22,13 @@ const FORMAT_LABELS: Record<string, string> = {
   no_preference: 'No Preference',
 };
 
-const PRACTITIONER = 'Owen Lynch';
-const IAHIP_NO = '1890';
+// Legal receipt identity — comes from the practice config so a cloned
+// practice prints ITS practitioner + registration number, never Owen's.
+const PRACTITIONER = PRACTICE.practitionerName;
+const BUSINESS_NAME = PRACTICE.businessName;
+const REG_BODY = PRACTICE.accreditation.bodyAbbrev;
+const REG_NO = PRACTICE.accreditation.regNumber;
+const ACCRED_SUMMARY = PRACTICE.accreditation.summary;
 
 export interface ReceiptSession {
   session_date: string;   // UTC ISO
@@ -81,7 +87,7 @@ function header(doc: PDFKit.PDFDocument, logo: Buffer | null, subtitle: string) 
     doc.y = 44 + logoH + 12;
   } else {
     doc.font('Helvetica-Bold').fontSize(16).fillColor(FOREST)
-      .text('Owen Lynch Psychotherapy', { align: 'center' });
+      .text(BUSINESS_NAME, { align: 'center' });
     doc.moveDown(0.3);
   }
   doc.font('Helvetica').fontSize(9).fillColor(MUTED)
@@ -97,8 +103,8 @@ function footer(doc: PDFKit.PDFDocument) {
   const yLine = doc.page.height - 66;
   doc.save().moveTo(L, yLine).lineTo(L + W, yLine).strokeColor(GOLD).lineWidth(0.5).stroke().restore();
   doc.font('Helvetica').fontSize(8).fillColor(MUTED);
-  doc.text('Owen Lynch Psychotherapy · IAHIP & ICP Accredited · Dublin & Online', L, yLine + 9, { width: W, align: 'center', lineBreak: false });
-  doc.text('owenlynchtherapy.com · info@owenlynchtherapy.com', L, yLine + 21, { width: W, align: 'center', lineBreak: false });
+  doc.text(`${BUSINESS_NAME} · ${ACCRED_SUMMARY} · ${PRACTICE.serviceArea}`, L, yLine + 9, { width: W, align: 'center', lineBreak: false });
+  doc.text(`${PRACTICE.siteUrl.replace(/^https?:\/\//, '')} · ${PRACTICE.email}`, L, yLine + 21, { width: W, align: 'center', lineBreak: false });
 }
 
 function buildToBuffer(build: (doc: PDFKit.PDFDocument) => void, info: PDFKit.DocumentInfo): Promise<Buffer> {
@@ -143,8 +149,8 @@ export async function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
     };
 
     row('Date', dateOnly ? dublinDate(session.session_date) : `${dublinDate(session.session_date)} at ${dublinTime(session.session_date)}`);
-    row('Service', 'Psychotherapy Session (50 minutes)');
-    row('Format', isOnline ? 'Online' : 'In Person — Insight Matters, Capel Street, Dublin');
+    row('Service', `Psychotherapy Session (${PRACTICE.sessionMinutes} minutes)`);
+    row('Format', isOnline ? 'Online' : `In Person — ${PRACTICE.address.venue}, ${PRACTICE.address.streetAddress}, ${PRACTICE.address.addressLocality}`);
     row('Amount', euros(session.fee), true);
     const paid = session.payment_status === 'paid';
     const yStatus = doc.y;
@@ -154,14 +160,14 @@ export async function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
     doc.moveDown(1.4);
 
     row('Psychotherapist', PRACTITIONER);
-    row('IAHIP Reg. No.', IAHIP_NO);
+    row(`${REG_BODY} Reg. No.`, REG_NO);
     doc.moveDown(1.2);
 
     doc.font('Helvetica').fontSize(10).fillColor(DARK)
       .text('Thank you for your payment.', L, doc.y, { width: W });
 
     footer(doc);
-  }, { Title: `Receipt — ${clientName}`, Author: 'Owen Lynch Psychotherapy', Subject: 'Session receipt' });
+  }, { Title: `Receipt — ${clientName}`, Author: BUSINESS_NAME, Subject: 'Session receipt' });
 }
 
 /** Statement listing every session for a client. */
@@ -232,5 +238,5 @@ export async function generateStatementPDF(data: StatementData): Promise<Buffer>
       .text(euros(totalPaid), cFee, ty, { width: L + W - cFee });
 
     footer(doc);
-  }, { Title: `Statement — ${clientName}`, Author: 'Owen Lynch Psychotherapy', Subject: 'Statement of account' });
+  }, { Title: `Statement — ${clientName}`, Author: BUSINESS_NAME, Subject: 'Statement of account' });
 }

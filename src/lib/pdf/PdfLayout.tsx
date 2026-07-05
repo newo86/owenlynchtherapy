@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer';
 import { colors, fonts } from './pdfBrand';
+import { PRACTICE } from '@/practice.config';
 
 // ── Stylesheet ────────────────────────────────────────────────────────────────
 
@@ -185,7 +186,7 @@ export function BrandedDoc({ title, logoSrc, children }: BrandedDocProps) {
   const logoImg = { data: logoSrc, format: 'png' as const };
 
   return (
-    <Document title={title} author="Owen Lynch Psychotherapy">
+    <Document title={title} author={PRACTICE.businessName}>
       <Page size="A4" style={pdfStyles.page}>
         {/* Cream banner with logo — fixed so it repeats on every page */}
         <View style={pdfStyles.banner} fixed>
@@ -197,7 +198,7 @@ export function BrandedDoc({ title, logoSrc, children }: BrandedDocProps) {
 
         <View style={pdfStyles.footer} fixed>
           <Text style={pdfStyles.footerText}>
-            Owen Lynch Psychotherapy · owenlynchtherapy.com · IAHIP &amp; ICP Accredited
+            {PRACTICE.businessName} · {PRACTICE.siteUrl.replace(/^https?:\/\//, '')} · {PRACTICE.accreditation.summary}
           </Text>
           <Text
             style={pdfStyles.footerText}
