@@ -101,8 +101,12 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
     const monday = startOfWeek(now);
     const sunday = new Date(monday); sunday.setDate(monday.getDate() + 7);
     return rows.filter(({ s }) => {
+      // "Unpaid" means money owed for sessions that have ALREADY HAPPENED —
+      // future recurring bookings are created unpaid and are not debt.
       if (filter === 'unpaid') {
-        return s.payment_status !== 'paid' && s.payment_status !== 'refunded' && s.status !== 'cancelled';
+        const d = new Date(s.session_date);
+        return s.payment_status !== 'paid' && s.payment_status !== 'refunded'
+          && s.status !== 'cancelled' && d <= now;
       }
       if (filter === 'needs_receipt') {
         return s.status === 'attended' && !s.receipt_sent_at;
@@ -114,7 +118,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
       if (filter === 'unpaid_this_week') {
         const d = new Date(s.session_date);
         return s.payment_status !== 'paid' && s.payment_status !== 'refunded'
-          && s.status !== 'cancelled' && d >= monday && d < sunday;
+          && s.status !== 'cancelled' && d >= monday && d < sunday && d <= now;
       }
       return true;
     });

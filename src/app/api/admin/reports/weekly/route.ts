@@ -9,13 +9,21 @@ import { SITE_URL } from '@/practice.config';
 // Also callable manually with the INTAKE_ADMIN_SECRET for testing.
 
 function getWeekBounds(now: Date): { monday: Date; sunday: Date } {
-  const day = now.getDay(); // 0 Sun … 6 Sat
+  // Compute the week from the DUBLIN wall-clock date — the server runs in
+  // UTC, and during Irish summer time a UTC-based Monday 00:00 is an hour
+  // off, dropping late-Sunday/early-Monday sessions into the wrong week.
+  const dublinDate = now.toLocaleDateString('en-CA', { timeZone: 'Europe/Dublin' }); // YYYY-MM-DD
+  // Dublin's offset from UTC right now (0 in winter, +1h in summer).
+  const offsetMs =
+    new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Dublin' })).getTime()
+    - new Date(now.toLocaleString('en-US', { timeZone: 'UTC' })).getTime();
+  const dublinMidnightAsUtc = new Date(dublinDate + 'T00:00:00Z');
+  const day = dublinMidnightAsUtc.getUTCDay(); // 0 Sun … 6 Sat
   const diffToMonday = day === 0 ? -6 : 1 - day;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diffToMonday);
-  monday.setHours(0, 0, 0, 0);
+  const monday = new Date(dublinMidnightAsUtc.getTime() - offsetMs);
+  monday.setUTCDate(monday.getUTCDate() + diffToMonday);
   const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 7);
+  sunday.setUTCDate(monday.getUTCDate() + 7);
   return { monday, sunday };
 }
 
@@ -48,6 +56,9 @@ export async function GET(req: NextRequest) {
     format: string;
     feeCents: number;
     paid: boolean;
+    refunded: boolean;
+    /** Session has already happened — future bookings are never "outstanding". */
+    held: boolean;
     attended: boolean;
   };
 
@@ -70,6 +81,8 @@ export async function GET(req: NextRequest) {
         format: s.session_format,
         feeCents: s.fee ?? 0,
         paid: s.payment_status === 'paid',
+        refunded: s.payment_status === 'refunded',
+        held: d <= now,
         attended: s.status === 'attended',
       });
     }
@@ -79,8 +92,11 @@ export async function GET(req: NextRequest) {
 
   const totalSessions = entries.length;
   const totalPaidCents = entries.filter(e => e.paid).reduce((s, e) => s + e.feeCents, 0);
-  const totalOutstandingCents = entries.filter(e => !e.paid).reduce((s, e) => s + e.feeCents, 0);
-  const outstandingCount = entries.filter(e => !e.paid).length;
+  // Outstanding = already-held sessions that are neither paid nor refunded —
+  // the same definition as the dashboard and Revenue views.
+  const outstandingEntries = entries.filter(e => !e.paid && !e.refunded && e.held);
+  const totalOutstandingCents = outstandingEntries.reduce((s, e) => s + e.feeCents, 0);
+  const outstandingCount = outstandingEntries.length;
 
   const weekLabel = monday.toLocaleDateString('en-IE', {
     day: 'numeric', month: 'long', timeZone: 'Europe/Dublin',
@@ -112,6 +128,8 @@ type Entry = {
   format: string;
   feeCents: number;
   paid: boolean;
+  refunded: boolean;
+  held: boolean;
   attended: boolean;
 };
 
@@ -136,12 +154,18 @@ function buildReportHtml(
   outstandingCount: number,
 ): string {
   const rows = entries.map(e => {
-    const bg    = e.paid ? '#FFFFFF' : '#FFF7F3';
-    const badge = e.paid
-      ? `<span style="background:#E6F4EC;color:#2A6B47;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">Paid</span>`
-      : `<span style="background:#FDEEE7;color:#C85A1A;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">Unpaid</span>`;
+    // Only already-held, non-refunded sessions get the red "Unpaid" treatment;
+    // upcoming and refunded rows are informational, not warnings.
+    const owed = !e.paid && !e.refunded && e.held;
+    const bg    = owed ? '#FFF7F3' : '#FFFFFF';
+    const pill = (text: string, bgc: string, fg: string) =>
+      `<span style="background:${bgc};color:${fg};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;">${text}</span>`;
+    const badge = e.paid ? pill('Paid', '#E6F4EC', '#2A6B47')
+      : e.refunded ? pill('Refunded', '#EFEAF3', '#6B5B7A')
+      : e.held ? pill('Unpaid', '#FDEEE7', '#C85A1A')
+      : pill('Upcoming', '#F0F1F3', '#667085');
     const attendedLabel = e.attended ? 'Attended' : 'Scheduled';
-    const leftBorder = e.paid ? '' : 'border-left:3px solid #C85A1A;';
+    const leftBorder = owed ? 'border-left:3px solid #C85A1A;' : '';
     return `
       <tr style="background:${bg};${leftBorder}">
         <td style="padding:10px 14px;font-size:13px;color:#2A4D3C;font-weight:500;">${e.clientName}</td>

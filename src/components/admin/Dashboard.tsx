@@ -229,11 +229,12 @@ export function Dashboard({
   const outstandingCount = outstandingScoped.length;
 
   // Unpaid this week — fixed scope, used by the Quick Actions "Unpaid" tile.
+  // Same definition as the Outstanding card: already-held sessions only.
   const unpaidThisWeekCount = allSessions.filter(({ s }) => {
     const d = new Date(s.session_date);
     return d >= OUTSTANDING_FLOOR
       && s.payment_status !== 'paid' && s.payment_status !== 'refunded'
-      && s.status !== 'cancelled' && d >= monday && d < sunday;
+      && s.status !== 'cancelled' && d >= monday && d < sunday && d <= now;
   }).length;
 
   // Attended sessions that haven't had a receipt emailed yet.
@@ -428,7 +429,9 @@ export function Dashboard({
           accent="terracotta"
           value={String(sessionsThisWeek.length)}
           Icon={CalendarDays}
-          foot={events.length > 0 ? `+${events.length} calendar events` : 'No external events'}
+          foot={weekOffset === 0
+            ? (events.length > 0 ? `+${events.length} calendar events` : 'No external events')
+            : `+${events.length} events in the week you're viewing`}
           footKind="ok"
           onClick={() => onNavigateSection('sessions', { sessionsFilter: 'this_week' })}
           pills={upcomingSessions.length > 0 ? (
@@ -730,7 +733,7 @@ function SessionRow({
           >
             <div className="admin-session-name" style={onEdit ? { textDecoration: 'underline', textDecorationColor: 'rgba(42,77,60,0.3)', textUnderlineOffset: 3 } : undefined}>{client.full_name}</div>
           </button>
-          <div className="admin-session-meta">{displayFee(session.fee)} · 50 min</div>
+          <div className="admin-session-meta">{displayFee(session.fee)} · {PRACTICE.sessionMinutes} min</div>
           {session.session_format === 'online' && (
             <a
               href={PRACTICE.telehealthUrl}
@@ -912,20 +915,25 @@ interface Revenue {
 
 const ROOM_COST_CENTS_DASH = PRACTICE.fees.roomCostCents;
 
+/** YYYY-MM of an instant in Europe/Dublin — bucketing must match the
+ *  Dublin-pinned Revenue page, not the viewer's browser timezone. */
+function dublinYMDash(d: Date | string): string {
+  return new Date(d).toLocaleDateString('en-CA', { timeZone: 'Europe/Dublin' }).slice(0, 7);
+}
+
 function computeRevenue(all: Array<{ s: SessionRow; c: ClientRow }>): Revenue {
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const endOfPrev = new Date(now.getFullYear(), now.getMonth(), 1);
+  // Same rules as the Revenue page: Dublin month buckets, paid only,
+  // cancelled and refunded never counted.
+  const counts = (s: SessionRow) =>
+    s.payment_status === 'paid' && s.status !== 'cancelled';
+  const thisYM = dublinYMDash(now);
 
-  // Headline = full-paying sessions confirmed paid via Stripe this month.
   let monthGross = 0;
   let monthNet = 0;
   let monthLowCost = 0;
   for (const { s, c } of all) {
-    const d = new Date(s.session_date);
-    if (d < startOfMonth || d > now) continue;
-    if (s.payment_status !== 'paid') continue;
+    if (!counts(s) || dublinYMDash(s.session_date) !== thisYM) continue;
     if (c.is_low_cost) {
       monthLowCost += s.fee ?? 0;
       continue;
@@ -935,32 +943,21 @@ function computeRevenue(all: Array<{ s: SessionRow; c: ClientRow }>): Revenue {
     monthNet += s.session_format === 'in_person' ? Math.max(0, gross - ROOM_COST_CENTS_DASH) : gross;
   }
 
-  const prevCents = all
-    .filter(({ s, c }) => {
-      const d = new Date(s.session_date);
-      return !c.is_low_cost && d >= startOfPrev && d < endOfPrev && s.payment_status === 'paid';
-    })
-    .reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
-
-  // Last 6 months — each bar shows full-paying paid gross for that month.
+  // This month + the 5 before it, keyed by Dublin YYYY-MM.
   const recentMonths = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
-    const isCurrentMonth = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 15);
+    const ym = dublinYMDash(d);
     const cents = all
-      .filter(({ s, c }) => {
-        const sd = new Date(s.session_date);
-        return !c.is_low_cost
-          && sd.getFullYear() === d.getFullYear()
-          && sd.getMonth() === d.getMonth()
-          && s.payment_status === 'paid';
-      })
+      .filter(({ s, c }) => !c.is_low_cost && counts(s) && dublinYMDash(s.session_date) === ym)
       .reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
     return {
       label: d.toLocaleDateString('en-IE', { month: 'short' }),
       cents,
-      isCurrent: isCurrentMonth,
+      isCurrent: ym === thisYM,
     };
   });
+
+  const prevCents = recentMonths[4].cents;
 
   return { monthGrossCents: monthGross, monthNetCents: monthNet, monthLowCostCents: monthLowCost, prevMonthCents: prevCents, recentMonths };
 }
