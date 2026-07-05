@@ -282,6 +282,7 @@ export function AdminShell() {
               sectionTitle={SECTION_TITLES[section]}
               onEditGcalEvent={setEditGcalData}
               reminderHealth={reminderHealth}
+              waitlist={waitlist}
             />
           )}
 
