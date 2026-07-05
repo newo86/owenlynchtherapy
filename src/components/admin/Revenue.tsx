@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { TrendingUp, Video, MapPin, Wallet, X, Send } from 'lucide-react';
+import { TrendingUp, Video, MapPin, Wallet, X, Send, Download, AlertCircle } from 'lucide-react';
 import { startOfWeek, formatDateTime, adminFetch, dedupeSessions } from './api';
 import type { ClientRow, SessionRow } from './types';
 import { PRACTICE } from '@/practice.config';
@@ -13,6 +13,10 @@ interface Props {
 type Scope = 'week' | 'month' | 'year' | 'all';
 
 const ROOM_COST_CENTS = PRACTICE.fees.roomCostCents;
+
+// Sessions before this date predate proper payment tracking and are excluded
+// from outstanding-money views (same floor as the dashboard card).
+const OUTSTANDING_FLOOR = new Date('2026-06-01');
 
 // The three billing categories. They are never merged — every figure on this
 // screen is shown per category, with "Overall" as the only combined view.
@@ -167,6 +171,55 @@ export function Revenue({ clients }: Props) {
     };
   }, [clients, now]);
 
+  // Outstanding = unpaid money for sessions that have ALREADY HAPPENED.
+  // Future scheduled sessions are always "unpaid" — they are not debt.
+  const outstanding = useMemo(() => {
+    const rows: DrillRow[] = [];
+    for (const c of clients) {
+      for (const s of dedupeSessions(c.sessions)) {
+        if (s.status === 'cancelled' || s.payment_status === 'paid' || s.payment_status === 'refunded') continue;
+        const d = new Date(s.session_date);
+        if (d < OUTSTANDING_FLOOR || d > now) continue;
+        rows.push({ s, c });
+      }
+    }
+    rows.sort((a, b) => new Date(a.s.session_date).getTime() - new Date(b.s.session_date).getTime());
+    return rows;
+  }, [clients, now]);
+  const outstandingTotals = useMemo(() => aggregate(outstanding), [outstanding]);
+
+  // CSV for the accountant: the sessions behind the numbers on screen
+  // (current period + basis), EXCLUDING low-cost — generated in the browser.
+  function exportCsv() {
+    const rows = [...byCategory.online, ...byCategory.in_person]
+      .sort((a, b) => new Date(a.s.session_date).getTime() - new Date(b.s.session_date).getTime());
+    const esc = (v: string) => '"' + v.replace(/"/g, '""') + '"';
+    const totalCents = rows.reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
+    const lines = [
+      `Income report — ${basisLabel} — ${scopeLabel} — excludes low-cost sessions — generated ${dublinDay(now)}`,
+      '',
+      ['Date', 'Time', 'Client', 'Format', 'Fee (EUR)', 'Payment', 'Paid on'].join(','),
+      ...rows.map(({ s, c }) => [
+        dublinDay(s.session_date),
+        new Date(s.session_date).toLocaleTimeString('en-IE', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin' }).replace(',', ''),
+        esc(c.full_name),
+        s.session_format === 'online' ? 'Online' : 'In person',
+        ((s.fee ?? 0) / 100).toFixed(2),
+        s.payment_status === 'paid' ? (s.stripe_payment_intent_id ? 'Paid (Stripe)' : 'Paid') : 'Unpaid',
+        s.paid_at ? dublinDay(s.paid_at) : '',
+      ].join(',')),
+      '',
+      `Total,,,${rows.length} sessions,${(totalCents / 100).toFixed(2)},,`,
+    ];
+    const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `income-${basis}-${scope}-${dublinDay(now)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Period selector */}
@@ -198,6 +251,16 @@ export function Revenue({ clients }: Props) {
             >{b.label}</button>
           ))}
         </div>
+
+        <button
+          className="admin-btn-secondary"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}
+          onClick={exportCsv}
+          title="Downloads the sessions behind the numbers on screen (current period and basis) as a spreadsheet. Low-cost sessions are excluded."
+        >
+          <Download size={12} strokeWidth={1.8} />
+          CSV for accountant
+        </button>
 
         <button
           className="admin-btn-secondary"
@@ -247,6 +310,17 @@ export function Revenue({ clients }: Props) {
           subtext={`${lowCostClientCount} client${lowCostClientCount === 1 ? '' : 's'} · cash, recorded manually`}
           Icon={Wallet}
           onClick={() => setDrill({ title: `Low cost · ${scopeLabel}`, rows: byCategory.low_cost })}
+        />
+        <RevenueCard
+          label="Outstanding"
+          accent="terracotta"
+          totals={{ sessions: outstandingTotals.sessions, gross: outstandingTotals.gross, net: outstandingTotals.gross }}
+          grossNote="Owed for sessions already held"
+          subtext={outstanding.length > 0
+            ? `Oldest: ${new Date(outstanding[0].s.session_date).toLocaleDateString('en-IE', { day: 'numeric', month: 'short', timeZone: 'Europe/Dublin' })} · future bookings not counted`
+            : 'All sessions to date are paid'}
+          Icon={AlertCircle}
+          onClick={() => setDrill({ title: 'Outstanding · sessions already held, not yet paid', rows: outstanding })}
         />
         <RevenueCard
           label="Yearly pace"
