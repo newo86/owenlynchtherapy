@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { createCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
+import { DOXY_URL, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
@@ -75,8 +76,8 @@ export async function POST(req: NextRequest) {
   if (first_session_date) {
     const format = VALID_FORMATS.includes(first_session_format ?? '') ? first_session_format! : 'in_person';
     const location = format === 'in_person'
-      ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
-      : 'https://doxy.me/owenlynchtherapy';
+      ? INSIGHT_MATTERS_ADDRESS
+      : DOXY_URL;
 
     // Convert wall-clock Dublin time to UTC for Supabase timestamptz storage.
     // Keep the original wall-clock string for Google Calendar (which expects
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest) {
             // be written into Google Calendar event descriptions.
             `Client: ${client_name.trim()}`,
             `Format: ${format === 'in_person' ? 'In Person' : 'Online'}`,
-            format === 'online' ? 'Join: https://doxy.me/owenlynchtherapy' : '',
+            format === 'online' ? `Join: ${DOXY_URL}` : '',
             `Fee: €${Math.round(Number(session_fee))}`,
             'One-off session',
           ].filter(Boolean).join('\n'),

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PRACTICE } from '@/practice.config';
 
 type Status = 'idle' | 'sending' | 'done' | 'error';
 
@@ -36,7 +37,7 @@ export default function UnsubscribeForm({ token }: { token: string }) {
         <h1 className="font-heading font-light text-2xl text-forest mb-3">Link not recognised</h1>
         <p className="font-normal text-base text-gray-600 leading-[1.8]">
           This unsubscribe link looks incomplete. Please use the link from your reminder email, or email{' '}
-          <a href="mailto:info@owenlynchtherapy.com" className="text-orange underline">info@owenlynchtherapy.com</a> and we&apos;ll take care of it.
+          <a href={`mailto:${PRACTICE.email}`} className="text-orange underline">{PRACTICE.email}</a> and we&apos;ll take care of it.
         </p>
       </>
     );
@@ -50,7 +51,7 @@ export default function UnsubscribeForm({ token }: { token: string }) {
           You won&apos;t receive any more automatic session reminders. You&apos;ll still get receipts and any direct messages from Owen.
         </p>
         <p className="font-normal text-sm text-gray-500 leading-[1.8] mt-4">
-          Changed your mind? Just email <a href="mailto:info@owenlynchtherapy.com" className="text-orange underline">info@owenlynchtherapy.com</a> to turn reminders back on.
+          Changed your mind? Just email <a href={`mailto:${PRACTICE.email}`} className="text-orange underline">{PRACTICE.email}</a> to turn reminders back on.
         </p>
       </>
     );

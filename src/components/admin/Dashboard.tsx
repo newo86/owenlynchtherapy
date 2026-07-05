@@ -1,5 +1,6 @@
 'use client';
 
+import { PRACTICE } from '@/practice.config';
 import { useMemo, useState } from 'react';
 import {
   CalendarDays, Users, FileText, Wallet,
@@ -306,7 +307,7 @@ export function Dashboard({
       <header className="admin-topbar">
         <div>
           <p className="admin-eyebrow">{sectionTitle}</p>
-          <h1 className="admin-h1">{greeting}, Owen</h1>
+          <h1 className="admin-h1">{greeting}, {PRACTICE.practitionerFirstName}</h1>
           <p className="admin-subline">{dateLine}</p>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -723,7 +724,7 @@ function SessionRow({
           <div className="admin-session-meta">{displayFee(session.fee)} · 50 min</div>
           {session.session_format === 'online' && (
             <a
-              href="https://doxy.me/owenlynchtherapy"
+              href={PRACTICE.telehealthUrl}
               target="_blank"
               rel="noopener noreferrer"
               style={{ fontSize: 11, color: 'var(--sage)', textDecoration: 'underline', textUnderlineOffset: 2, display: 'inline-block', marginTop: 2 }}
@@ -870,7 +871,7 @@ function QuickActions({ unpaidThisWeek, needsReceipt, formsPending, pendingNames
           <div className="admin-task-eyebrow">Inbox</div>
           <div className="admin-task-title">Open Gmail</div>
           <div className="admin-task-body">
-            Jump to your inbox at info@owenlynchtherapy.com.
+            Jump to your inbox at {PRACTICE.email}.
           </div>
           <div className="admin-task-cta">Open inbox</div>
         </a>
@@ -900,7 +901,7 @@ interface Revenue {
   recentMonths: Array<{ label: string; cents: number; isCurrent: boolean }>;
 }
 
-const ROOM_COST_CENTS_DASH = 2000;
+const ROOM_COST_CENTS_DASH = PRACTICE.fees.roomCostCents;
 
 function computeRevenue(all: Array<{ s: SessionRow; c: ClientRow }>): Revenue {
   const now = new Date();

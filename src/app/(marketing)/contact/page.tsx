@@ -7,24 +7,25 @@ import WaitlistForm from './WaitlistForm';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import { getPractice } from '@/lib/practiceSettings';
+import { SITE_URL } from '@/practice.config';
 
 export const metadata: Metadata = {
   title: { absolute: 'Contact Owen Lynch | Psychotherapist Dublin' },
   description:
     'Get in touch with Owen Lynch, IAHIP and ICP accredited psychotherapist in Dublin. Currently accepting new clients — limited in-person and online slots.',
   alternates: {
-    canonical: 'https://owenlynchtherapy.com/contact',
+    canonical: `${SITE_URL}/contact`,
     languages: {
-      'en': 'https://owenlynchtherapy.com/contact',
-      'x-default': 'https://owenlynchtherapy.com/contact',
+      'en': `${SITE_URL}/contact`,
+      'x-default': `${SITE_URL}/contact`,
     },
   },
   openGraph: {
     title: 'Contact Owen Lynch | Psychotherapist Dublin',
     description:
       'Get in touch with Owen Lynch, IAHIP and ICP accredited psychotherapist in Dublin.',
-    url: 'https://owenlynchtherapy.com/contact',
-    images: [{ url: 'https://owenlynchtherapy.com/og-image.jpg', width: 1200, height: 630 }],
+    url: `${SITE_URL}/contact`,
+    images: [{ url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 }],
   },
 };
 
@@ -33,8 +34,8 @@ export const metadata: Metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ContactPage',
-  url: 'https://owenlynchtherapy.com/contact',
-  mainEntity: { '@id': 'https://owenlynchtherapy.com/#business' },
+  url: `${SITE_URL}/contact`,
+  mainEntity: { '@id': `${SITE_URL}/#business` },
 };
 
 // The specific slots currently open to new clients come from the live
@@ -181,19 +182,19 @@ export default async function ContactPage() {
               <div>
                 <p className={labelClass}>Email</p>
                 <a
-                  href="mailto:info@owenlynchtherapy.com"
+                  href={`mailto:${practice.email}`}
                   className="font-normal text-base text-orange h-hover:underline"
                 >
-                  info@owenlynchtherapy.com
+                  {practice.email}
                 </a>
               </div>
               <div>
                 <p className={labelClass}>Phone</p>
                 <a
-                  href="tel:+353851471689"
+                  href={`tel:${practice.telephone}`}
                   className="font-normal text-base text-orange h-hover:underline"
                 >
-                  085 147 1689
+                  {practice.telephoneDisplay}
                 </a>
               </div>
               <div>

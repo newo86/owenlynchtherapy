@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 import { buildReceiptHtml, EMAIL_FROM } from '@/lib/emailTemplates';
+import { PRACTICE } from '@/practice.config';
 
 interface ReceiptSession {
   id: string;
@@ -36,7 +37,7 @@ export async function sendReceiptEmail(
     emailResult = await getResend().emails.send({
       from: EMAIL_FROM,
       to: client.email,
-      subject: 'Receipt — Psychotherapy Session with Owen Lynch',
+      subject: `Receipt — Psychotherapy Session with ${PRACTICE.practitionerName}`,
       html: buildReceiptHtml({
         firstName,
         date: formattedDate,

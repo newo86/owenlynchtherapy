@@ -4,8 +4,9 @@ import FloatingCircles from '@/components/ui/floating-circles';
 import ServiceHowSessionsWork from '@/components/sections/ServiceHowSessionsWork';
 import ServiceCTA from '@/components/sections/ServiceCTA';
 import RelatedServices from '@/components/sections/RelatedServices';
+import { SITE_URL, PRACTICE } from '@/practice.config';
 
-const BASE_URL = 'https://owenlynchtherapy.com';
+const BASE_URL = SITE_URL;
 const SLUG = 'anxiety-therapy-dublin';
 const PAGE_URL = `${BASE_URL}/${SLUG}`;
 
@@ -18,7 +19,7 @@ const serviceJsonLd = {
   url: PAGE_URL,
   provider: {
     '@type': 'Person',
-    name: 'Owen Lynch',
+    name: PRACTICE.practitionerName,
     jobTitle: 'Psychotherapist',
     url: `${BASE_URL}/about`,
   },

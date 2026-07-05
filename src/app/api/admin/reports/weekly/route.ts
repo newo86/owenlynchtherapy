@@ -3,6 +3,7 @@ import { bearerMatches, requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
+import { SITE_URL } from '@/practice.config';
 
 // Called by Vercel Cron every Saturday at 08:00 UTC (≈ 09:00 IST / 08:00 GMT).
 // Also callable manually with the INTAKE_ADMIN_SECRET for testing.
@@ -212,7 +213,7 @@ function buildReportHtml(
     </table>
 
     <hr style="border:none;border-top:1px solid #F0EAE0;margin:28px 0 20px;">
-    <p style="color:#999;font-size:12px;margin:0;">This report is sent automatically every Saturday morning. View the full dashboard at <a href="https://owenlynchtherapy.com/admin/intake" style="color:#4F8A68;">owenlynchtherapy.com/admin/intake</a></p>
+    <p style="color:#999;font-size:12px;margin:0;">This report is sent automatically every Saturday morning. View the full dashboard at <a href="${SITE_URL}/admin/intake" style="color:#4F8A68;">${SITE_URL.replace("https://","")}/admin/intake</a></p>
   </div>
 </div>`;
 }

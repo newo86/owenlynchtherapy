@@ -9,6 +9,7 @@ const navLinks = [
   { href: '/articles', label: 'Articles' },
   { href: '/faq', label: 'FAQ' },
   { href: '/contact', label: 'Contact' },
+  { href: '/privacy', label: 'Privacy' },
 ];
 
 export default async function Footer() {

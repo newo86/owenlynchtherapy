@@ -3,29 +3,30 @@ import Hero from '@/components/sections/Hero';
 import Services from '@/components/sections/Services';
 import AboutTeaser from '@/components/sections/AboutTeaser';
 import HomeCta from '@/components/sections/HomeCta';
+import { SITE_URL } from '@/practice.config';
 
 export const metadata: Metadata = {
   title: { absolute: 'Psychotherapy in Dublin & Online | Owen Lynch' },
   description:
     'IAHIP and ICP accredited psychotherapist in Dublin. In-person and online therapy for anxiety, OCD, ADHD, autism, depression and relationships.',
   alternates: {
-    canonical: 'https://owenlynchtherapy.com',
+    canonical: `${SITE_URL}`,
     languages: {
-      'en':        'https://owenlynchtherapy.com',
-      'x-default': 'https://owenlynchtherapy.com',
+      'en':        `${SITE_URL}`,
+      'x-default': `${SITE_URL}`,
     },
   },
   openGraph: {
     title: 'Psychotherapy in Dublin & Online | Owen Lynch',
     description:
       'IAHIP and ICP accredited psychotherapist in Dublin. In-person and online therapy for anxiety, OCD, ADHD, autism, depression and relationships.',
-    url: 'https://owenlynchtherapy.com',
+    url: `${SITE_URL}`,
     type: 'website',
     siteName: 'Owen Lynch Psychotherapy',
     locale: 'en_IE',
     images: [
       {
-        url: 'https://owenlynchtherapy.com/og-image.jpg',
+        url: `${SITE_URL}/og-image.jpg`,
         width: 1200,
         height: 630,
         alt: 'Owen Lynch Psychotherapy — Psychotherapy in Dublin & Online',

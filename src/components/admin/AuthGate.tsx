@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { login, logout, checkSession } from './api';
+import { PRACTICE } from '@/practice.config';
 
 interface Props {
   children: React.ReactNode;
@@ -50,7 +51,7 @@ export function AuthGate({ children }: Props) {
           maxWidth: 420,
           borderRadius: 22,
         }}>
-          <p className="admin-eyebrow" style={{ marginBottom: 10 }}>Owen Lynch · Admin</p>
+          <p className="admin-eyebrow" style={{ marginBottom: 10 }}>{PRACTICE.practitionerName} · Admin</p>
           <h1 className="admin-h1" style={{ fontSize: 28, margin: '6px 0 4px' }}>{mfaStep ? 'Verify it’s you' : 'Sign in'}</h1>
           <p className="admin-subline">{mfaStep ? 'Enter the 6-digit code from your authenticator app.' : 'Enter the admin secret to continue.'}</p>
           <form

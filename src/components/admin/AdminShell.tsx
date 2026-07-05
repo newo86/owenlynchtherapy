@@ -22,6 +22,7 @@ import type {
   AdminSection, ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
   SessionFilter, FormsTab, GcalRef, ReminderHealth, WaitlistRow,
 } from './types';
+import { PRACTICE } from '@/practice.config';
 
 const SECTION_TITLES: Record<AdminSection, string> = {
   dashboard: 'Practice Overview',
@@ -369,7 +370,7 @@ export function AdminShell() {
             </>
           )}
 
-          <div className="admin-foot">Owen Lynch Psychotherapy · Practice Management</div>
+          <div className="admin-foot">{PRACTICE.businessName} · Practice Management</div>
         </main>
       </div>
 

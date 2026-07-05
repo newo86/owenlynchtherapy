@@ -1,3 +1,4 @@
+import { PRACTICE } from '@/practice.config';
 const OLMark = () => (
   <svg width="56" height="56" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <circle cx="100" cy="100" r="82" fill="none" stroke="#C85A1A" strokeWidth="9"
@@ -37,12 +38,10 @@ export default function IntakeConfirmation({ displayName }: { displayName: strin
         <p className="text-sm leading-relaxed mb-4" style={{ color: '#555', lineHeight: 1.8 }}>
           If you have any questions in the meantime, feel free to email me at{' '}
           <a
-            href="mailto:info@owenlynchtherapy.com"
+            href={`mailto:${PRACTICE.email}`}
             className="underline underline-offset-2"
             style={{ color: '#C85A1A' }}
-          >
-            info@owenlynchtherapy.com
-          </a>
+          >{PRACTICE.email}</a>
           .
         </p>
         <p className="text-sm leading-relaxed" style={{ color: '#555', lineHeight: 1.8 }}>

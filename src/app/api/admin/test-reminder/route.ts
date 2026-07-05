@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { getResend } from '@/lib/resend';
 import { buildReminderHtml, paymentLinkFor, type SessionKind, EMAIL_FROM } from '@/lib/emailTemplates';
+import { PRACTICE } from '@/practice.config';
 
 // Sends sample reminder emails with dummy session data so the practitioner
 // can preview exactly what clients receive — no client records are touched
@@ -40,9 +41,9 @@ export async function GET(req: NextRequest) {
     const result = await getResend().emails.send({
       from: EMAIL_FROM,
       to: email,
-      subject: `[TEST · ${labels[kind]}] Reminder — your session today with Owen Lynch`,
+      subject: `[TEST · ${labels[kind]}] Reminder — your session today with ${PRACTICE.practitionerName}`,
       html: buildReminderHtml({
-        firstName: 'Owen',
+        firstName: PRACTICE.practitionerFirstName,
         time: '5:00 p.m.',
         dayPhrase: 'today',
         kind,

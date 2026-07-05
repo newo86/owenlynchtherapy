@@ -9,6 +9,7 @@ import type { ClientRow, SessionRow, CalendarEvent, SessionFilter, GcalRef } fro
 import { SendReminderModal } from './SendReminderModal';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
 import { SessionDoneOptions, type SessionDoneChoice } from './SessionDoneOptions';
+import { PRACTICE } from '@/practice.config';
 
 interface Props {
   clients: ClientRow[];
@@ -298,7 +299,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   {FORMAT_LABELS[s.session_format] ?? s.session_format}
                   {s.session_format === 'online' && (
                     <a
-                      href="https://doxy.me/owenlynchtherapy"
+                      href={PRACTICE.telehealthUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ display: 'block', fontSize: 11, color: 'var(--sage)', textDecoration: 'underline', textUnderlineOffset: 2, marginTop: 2 }}

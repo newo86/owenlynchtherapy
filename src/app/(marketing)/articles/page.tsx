@@ -5,16 +5,17 @@ import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import AnimatedCard from '@/components/ui/AnimatedCard';
 import FloatingCircles from '@/components/ui/floating-circles';
 import { articles } from '@/content/articles';
+import { SITE_URL } from '@/practice.config';
 
 export const metadata: Metadata = {
   title: { absolute: 'Articles | Owen Lynch Psychotherapy' },
   description:
     'Articles on OCD, anxiety, ADHD, autism, and mental health by Owen Lynch, psychotherapist in Dublin. Evidence-based insights and practical guidance.',
   alternates: {
-    canonical: 'https://owenlynchtherapy.com/articles',
+    canonical: `${SITE_URL}/articles`,
     languages: {
-      'en': 'https://owenlynchtherapy.com/articles',
-      'x-default': 'https://owenlynchtherapy.com/articles',
+      'en': `${SITE_URL}/articles`,
+      'x-default': `${SITE_URL}/articles`,
     },
   },
   openGraph: {
@@ -22,15 +23,15 @@ export const metadata: Metadata = {
     description:
       'Articles on OCD, anxiety, ADHD, autism, and mental health by Owen Lynch, psychotherapist in Dublin. Evidence-based insights and practical guidance.',
     type: 'website',
-    url: 'https://owenlynchtherapy.com/articles',
-    images: [{ url: 'https://owenlynchtherapy.com/images/blog-hero-ocd-therapy.png', width: 3200, height: 1800, alt: 'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta' }],
+    url: `${SITE_URL}/articles`,
+    images: [{ url: `${SITE_URL}/images/blog-hero-ocd-therapy.png`, width: 3200, height: 1800, alt: 'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Articles | Owen Lynch Psychotherapy',
     description:
       'Articles on OCD, anxiety, ADHD, autism, and mental health by Owen Lynch, psychotherapist in Dublin.',
-    images: ['https://owenlynchtherapy.com/images/blog-hero-ocd-therapy.png'],
+    images: [`${SITE_URL}/images/blog-hero-ocd-therapy.png`],
   },
 };
 
@@ -38,8 +39,8 @@ const breadcrumbJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
   itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://owenlynchtherapy.com' },
-    { '@type': 'ListItem', position: 2, name: 'Articles', item: 'https://owenlynchtherapy.com/articles' },
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}` },
+    { '@type': 'ListItem', position: 2, name: 'Articles', item: `${SITE_URL}/articles` },
   ],
 };
 

@@ -1,6 +1,10 @@
 import { renderToBuffer, View, Text } from '@react-pdf/renderer';
 import { BrandedDoc, H1, P, Bullet, HighlightBox, HighlightP, pdfStyles } from './PdfLayout';
 import { loadHorizontalLogoPng } from './loadLogo';
+import { INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
+import { SITE_URL } from '@/practice.config';
+
+const SITE_HOST = SITE_URL.replace('https://', '');
 
 // The document is static — same bytes for every call. Memoise after the
 // first render so subsequent welcome emails go out in milliseconds instead
@@ -49,7 +53,7 @@ export async function generateTherapeuticAgreementPDF(): Promise<Buffer> {
       {/* 2 */}
       <H1>2. Sessions</H1>
       <P>Sessions are 50 minutes in duration. They take place:</P>
-      <Bullet>In person at: Insight Matters, 106 Capel Street, Dublin, D01 WY40</Bullet>
+      <Bullet>In person at: {INSIGHT_MATTERS_ADDRESS}</Bullet>
       <Bullet>
         Online via doxy.me, a secure and confidential video platform designed
         for healthcare professionals
@@ -163,7 +167,7 @@ export async function generateTherapeuticAgreementPDF(): Promise<Buffer> {
       <P>
         You have the right to request access to information held about you. Please
         see the Privacy Policy on my website for full details:
-        owenlynchtherapy.com/privacy
+        {SITE_HOST}/privacy
       </P>
 
       {/* 7 */}
@@ -212,7 +216,7 @@ export async function generateTherapeuticAgreementPDF(): Promise<Buffer> {
       <H1>9. Social Media &amp; Online Contact</H1>
       <P>
         You are welcome to follow my professional online accounts — these are
-        linked from owenlynchtherapy.com and contain articles, resources, and
+        linked from {SITE_HOST} and contain articles, resources, and
         general content related to mental health and therapy. Following these
         accounts is entirely optional and will have no bearing on our therapeutic
         work.

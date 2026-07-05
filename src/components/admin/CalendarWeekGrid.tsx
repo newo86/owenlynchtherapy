@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pencil, Trash2, Mail, CircleCheck } from 'lucide-react';
 import { adminFetch, formatTime, isSameDay, startOfWeek, dedupeSessions } from './api';
 import type { ClientRow, SessionRow, CalendarEvent, GcalRef } from './types';
+import { PRACTICE } from '@/practice.config';
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -278,7 +279,7 @@ export function CalendarWeekGrid({
                     <div className="admin-event-name">{e.label}</div>
                     {e.format === 'online' && (
                       <a
-                        href="https://doxy.me/owenlynchtherapy"
+                        href={PRACTICE.telehealthUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={ev => ev.stopPropagation()}

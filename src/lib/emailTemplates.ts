@@ -48,19 +48,23 @@ export function paymentLinkFor(kind: SessionKind, sessionId: string, email?: str
 
 // ── Shared shell ────────────────────────────────────────────────────────────
 
+const SITE_HOST = PRACTICE.siteUrl.replace('https://', '');
+const BRAND_TOP = PRACTICE.practitionerName;
+const BRAND_SUB = PRACTICE.businessName.replace(PRACTICE.practitionerName, '').trim() || PRACTICE.jobTitle;
+
 function emailShell(body: string): string {
   return `
 <div style="background-color:#F5F0E8;padding:40px 20px;font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
   <div style="background-color:#2A4D3C;padding:30px;text-align:center;border-radius:8px 8px 0 0;">
-    <p style="color:#C85A1A;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 8px 0;">Owen Lynch</p>
-    <p style="color:#FFFFFF;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin:0;">Psychotherapy</p>
+    <p style="color:#C85A1A;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 8px 0;">${BRAND_TOP}</p>
+    <p style="color:#FFFFFF;font-size:13px;letter-spacing:2px;text-transform:uppercase;margin:0;">${BRAND_SUB}</p>
   </div>
   <div style="background-color:#FFFFFF;padding:40px;border-radius:0 0 8px 8px;">
     ${body}
   </div>
   <div style="text-align:center;margin-top:24px;">
     <p style="color:#2A4D3C;font-size:11px;opacity:0.6;letter-spacing:1px;margin:0;">
-      owenlynchtherapy.com &middot; IAHIP &amp; ICP Accredited &middot; Dublin &amp; Online
+      ${SITE_HOST} &middot; ${PRACTICE.accreditation.summary.replace(/&/g, "&amp;")} &middot; ${PRACTICE.serviceArea.replace(/&/g, "&amp;")}
     </p>
   </div>
 </div>`;
@@ -136,12 +140,12 @@ export function buildReminderHtml(input: ReminderEmailInput): string {
       If you have any questions or need to reschedule, please get in touch.
     </p>
     <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 4px;">See you soon,</p>
-    <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">Owen Lynch<br>
-      <span style="font-weight:400;font-size:13px;color:#666;">Owen Lynch Psychotherapy<br>
-      owenlynchtherapy.com</span>
+    <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">${PRACTICE.practitionerName}<br>
+      <span style="font-weight:400;font-size:13px;color:#666;">${PRACTICE.businessName}<br>
+      ${SITE_HOST}</span>
     </p>${optOutUrl ? `
     <p style="color:#999;font-size:12px;line-height:1.6;margin:26px 0 0;border-top:1px solid #EFE9DF;padding-top:16px;">
-      You receive these because you have sessions booked with Owen Lynch Psychotherapy. If you&rsquo;d prefer not to get session reminders, you can <a href="${optOutUrl}" style="color:#999;text-decoration:underline;">unsubscribe from reminders</a>.
+      You receive these because you have sessions booked with ${PRACTICE.businessName}. If you&rsquo;d prefer not to get session reminders, you can <a href="${optOutUrl}" style="color:#999;text-decoration:underline;">unsubscribe from reminders</a>.
     </p>` : ''}`);
 }
 
@@ -161,8 +165,8 @@ export function buildReceiptHtml(input: ReceiptEmailInput): string {
   const { firstName, date, time, feeEuros, sessionFormat } = input;
   const isOnline = sessionFormat === 'online';
   const formatCell = isOnline
-    ? `Online &mdash; <a href="${DOXY_URL}" style="color:#4F8A68;text-decoration:none;font-weight:500;">doxy.me/owenlynchtherapy</a>`
-    : `In Person &mdash; Capel Street, Dublin`;
+    ? `Online &mdash; <a href="${DOXY_URL}" style="color:#4F8A68;text-decoration:none;font-weight:500;">${DOXY_URL.replace("https://", "")}</a>`
+    : `In Person &mdash; ${PRACTICE.address.streetAddress}, ${PRACTICE.address.addressLocality}`;
 
   return emailShell(`
     <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${firstName},</p>
@@ -176,7 +180,7 @@ export function buildReceiptHtml(input: ReceiptEmailInput): string {
         </tr>
         <tr>
           <td style="padding:7px 0;color:#777;border-bottom:1px solid #F0EAE0;">Service</td>
-          <td style="padding:7px 0;text-align:right;border-bottom:1px solid #F0EAE0;">Psychotherapy Session (50 minutes)</td>
+          <td style="padding:7px 0;text-align:right;border-bottom:1px solid #F0EAE0;">Psychotherapy Session (${PRACTICE.sessionMinutes} minutes)</td>
         </tr>
         <tr>
           <td style="padding:7px 0;color:#777;border-bottom:1px solid #F0EAE0;">Format</td>
@@ -199,8 +203,8 @@ export function buildReceiptHtml(input: ReceiptEmailInput): string {
     </div>` : ''}
     <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 12px;">
       If you have any questions, please email
-      <a href="mailto:info@owenlynchtherapy.com" style="color:#C85A1A;text-decoration:none;">info@owenlynchtherapy.com</a>.
+      <a href="mailto:${CONTACT_EMAIL}" style="color:#C85A1A;text-decoration:none;">${CONTACT_EMAIL}</a>.
     </p>
     <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">See you at your next session.</p>
-    <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">Owen</p>`);
+    <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">${PRACTICE.practitionerFirstName}</p>`);
 }

@@ -6,6 +6,7 @@ import { rateLimitDurable } from '@/lib/rateLimitDurable';
 import { escapeHtml } from '@/lib/sanitise';
 import { WAITLIST_CONSENT_TEXT } from '@/lib/waitlistConsent';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
+import { SITE_URL } from '@/practice.config';
 
 // Public waiting-list signup (in-person sessions currently full).
 //
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
       html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
         <p><strong>${escapeHtml(fullName)}</strong> joined the waiting list.</p>
         <p>Email: ${escapeHtml(email)}${phone ? `<br/>Phone: ${escapeHtml(phone)}` : ''}</p>
-        <p>View the list in the <a href="https://owenlynchtherapy.com/admin/intake">dashboard</a> → Waitlist.</p>
+        <p>View the list in the <a href="${SITE_URL}/admin/intake">dashboard</a> → Waitlist.</p>
       </div>`,
     });
   } catch (err) {

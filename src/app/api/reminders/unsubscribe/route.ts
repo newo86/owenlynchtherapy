@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { verifyOptOutToken } from '@/lib/reminderOptOut';
+import { PRACTICE } from '@/practice.config';
 
 // Public endpoint — no admin login. Authorised purely by the signed token in
 // the email link, which only ever resolves to the client it was issued for.
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error('[reminders/unsubscribe] update error:', error.message);
-    return NextResponse.json({ error: 'Sorry, something went wrong. Please email info@owenlynchtherapy.com.' }, { status: 500 });
+    return NextResponse.json({ error: `Sorry, something went wrong. Please email ${PRACTICE.email}.` }, { status: 500 });
   }
 
   console.log('[reminders/unsubscribe] client opted out of reminders');
