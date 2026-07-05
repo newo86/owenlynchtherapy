@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus, TrendingUp, ShieldCheck, Eye, EyeOff, Hourglass } from 'lucide-react';
+import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus, TrendingUp, ShieldCheck, Eye, EyeOff, Hourglass, Settings } from 'lucide-react';
 import type { AdminSection } from './types';
 
 interface Props {
@@ -20,6 +20,7 @@ const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> =
   { id: 'forms',      label: 'Forms',      Icon: FileText },
   { id: 'waitlist',   label: 'Waitlist',   Icon: Hourglass },
   { id: 'new-client', label: 'Onboarding', Icon: UserRoundPlus },
+  { id: 'settings',   label: 'Settings',   Icon: Settings },
 ];
 
 export function Sidebar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onTogglePrivacy }: Props) {
