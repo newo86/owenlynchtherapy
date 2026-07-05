@@ -8,7 +8,8 @@ import { generatePrivacyPolicyPDF } from '@/lib/pdf/generatePrivacyPolicyPDF';
 import { createCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { getResend } from '@/lib/resend';
-import { paymentLinkFor, EMAIL_FROM } from '@/lib/emailTemplates';
+import { paymentLinkFor, EMAIL_FROM, INSIGHT_MATTERS_ADDRESS, CONTACT_EMAIL } from '@/lib/emailTemplates';
+import { PRACTICE, SITE_URL } from '@/practice.config';
 const VALID_FORMATS = ['in_person', 'online'];
 const VALID_RECURRENCE = ['once', 'weekly', 'biweekly', 'monthly'] as const;
 type Recurrence = typeof VALID_RECURRENCE[number];
@@ -128,7 +129,7 @@ export async function POST(req: NextRequest) {
   const feeInCents = Math.round(Number(session_fee) * 100);
   const token = `${randomUUID()}-${randomBytes(16).toString('hex')}`;
   const expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://owenlynchtherapy.vercel.app').replace(/\/$/, '');
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? SITE_URL).replace(/\/$/, '');
   const intakeUrl = `${siteUrl}/intake?token=${token}`;
 
   const formattedDate = sessionDateObj.toLocaleDateString('en-IE', {
@@ -138,7 +139,7 @@ export async function POST(req: NextRequest) {
     hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
   });
   const location = session_format === 'in_person'
-    ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
+    ? INSIGHT_MATTERS_ADDRESS
     : "I'll send you a link to join shortly before your session.";
 
   // 1. Insert intake token
@@ -279,13 +280,13 @@ export async function POST(req: NextRequest) {
   const attachments: Array<{ filename: string; content: Buffer }> = [];
   if (therapeuticAgreementBuffer) {
     attachments.push({
-      filename: 'Owen-Lynch-Psychotherapy-Therapeutic-Agreement.pdf',
+      filename: `${PRACTICE.businessName.replace(/\s+/g, '-')}-Therapeutic-Agreement.pdf`,
       content: therapeuticAgreementBuffer,
     });
   }
   if (privacyPolicyBuffer) {
     attachments.push({
-      filename: 'Owen-Lynch-Psychotherapy-Privacy-Policy.pdf',
+      filename: `${PRACTICE.businessName.replace(/\s+/g, '-')}-Privacy-Policy.pdf`,
       content: privacyPolicyBuffer,
     });
   }
@@ -294,7 +295,7 @@ export async function POST(req: NextRequest) {
     const emailResult = await getResend().emails.send({
       from: EMAIL_FROM,
       to: emailTo,
-      subject: 'Your first session with Owen Lynch Psychotherapy',
+      subject: `Your first session with ${PRACTICE.businessName}`,
       html: buildWelcomeHtml({
         firstName,
         formattedDate,
@@ -345,14 +346,14 @@ function buildWelcomeHtml(d: WelcomeEmailData): string {
 
   const paymentBtn = d.paymentUrl
     ? `<a href="${d.paymentUrl}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;">PAY €${d.feeEuros} FOR YOUR FIRST SESSION</a>`
-    : `<p style="color:#666;font-size:14px;">Owen will send you payment details separately.</p>`;
+    : `<p style="color:#666;font-size:14px;">${PRACTICE.practitionerFirstName} will send you payment details separately.</p>`;
 
   const logoUrl = `${d.siteUrl}/images/logo-horizontal-dark-bg.svg`;
 
   return `
 <div style="background-color:#F5F0E8;padding:40px 20px;font-family:Arial,sans-serif;max-width:580px;margin:0 auto;">
   <div style="background-color:#2A4D3C;padding:24px 30px;text-align:center;border-radius:8px 8px 0 0;">
-    <img src="${logoUrl}" alt="Owen Lynch Psychotherapy" width="200" style="max-width:200px;height:auto;display:inline-block;" />
+    <img src="${logoUrl}" alt="${PRACTICE.businessName}" width="200" style="max-width:200px;height:auto;display:inline-block;" />
   </div>
   <div style="background-color:#FFFFFF;padding:40px;border-radius:0 0 8px 8px;">
     <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${d.firstName},</p>
@@ -406,17 +407,17 @@ function buildWelcomeHtml(d: WelcomeEmailData): string {
     <hr style="border:none;border-top:1px solid #F0EAE0;margin:32px 0;">
     <p style="color:#666;font-size:13px;line-height:1.7;margin:0 0 20px;">
       If you have any questions or need to reschedule, please don't hesitate to email me at
-      <a href="mailto:info@owenlynchtherapy.com" style="color:#C85A1A;text-decoration:none;">info@owenlynchtherapy.com</a>.
+      <a href="mailto:${CONTACT_EMAIL}" style="color:#C85A1A;text-decoration:none;">${CONTACT_EMAIL}</a>.
     </p>
     <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 4px;">Looking forward to working with you.</p>
-    <p style="color:#2A4D3C;font-size:14px;margin:16px 0 0;font-weight:500;">Owen Lynch<br>
-    <span style="font-weight:400;font-size:13px;color:#666;">Owen Lynch Psychotherapy<br>
-    owenlynchtherapy.com<br>
-    IAHIP &amp; ICP Accredited</span></p>
+    <p style="color:#2A4D3C;font-size:14px;margin:16px 0 0;font-weight:500;">${PRACTICE.practitionerName}<br>
+    <span style="font-weight:400;font-size:13px;color:#666;">${PRACTICE.businessName}<br>
+    ${SITE_URL.replace("https://", "")}<br>
+    ${PRACTICE.accreditation.summary.replace(/&/g, "&amp;")}</span></p>
   </div>
   <div style="text-align:center;margin-top:24px;">
     <p style="color:#2A4D3C;font-size:11px;opacity:0.6;letter-spacing:1px;margin:0;">
-      owenlynchtherapy.com · IAHIP &amp; ICP Accredited · Dublin &amp; Online
+      ${SITE_URL.replace("https://", "")} · ${PRACTICE.accreditation.summary.replace(/&/g, "&amp;")} · ${PRACTICE.serviceArea.replace(/&/g, "&amp;")}
     </p>
   </div>
 </div>`;

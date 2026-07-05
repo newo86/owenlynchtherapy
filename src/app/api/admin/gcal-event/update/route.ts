@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { updateCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
+import { DOXY_URL, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
@@ -33,8 +34,8 @@ export async function POST(req: NextRequest) {
 
   const format = VALID_FORMATS.includes(body.session_format ?? '') ? body.session_format! : 'in_person';
   const location = format === 'in_person'
-    ? 'Insight Matters, 106 Capel Street, Dublin, D01 WY40'
-    : 'https://doxy.me/owenlynchtherapy';
+    ? INSIGHT_MATTERS_ADDRESS
+    : DOXY_URL;
 
   // Update the Google Calendar event.
   // session_date is "YYYY-MM-DDTHH:MM" Dublin wall-clock — passed directly to
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     await updateCalendarEvent(gcal_event_id, {
       summary: title.trim(),
       location,
-      description: format === 'online' ? 'Join: https://doxy.me/owenlynchtherapy' : undefined,
+      description: format === 'online' ? `Join: ${DOXY_URL}` : undefined,
       startIso: session_date,
       durationMinutes: 50,
     });

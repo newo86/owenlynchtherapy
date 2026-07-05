@@ -13,6 +13,7 @@ const staticPages: MetadataRoute.Sitemap = [
   { url: `${SITE_URL}/articles`, changeFrequency: 'weekly', priority: 0.8 },
   { url: `${SITE_URL}/faq`, changeFrequency: 'monthly', priority: 0.6 },
   { url: `${SITE_URL}/contact`, changeFrequency: 'yearly', priority: 0.8 },
+  { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
   { url: `${SITE_URL}/ocd-therapy-dublin`, changeFrequency: 'monthly', priority: 0.9 },
   { url: `${SITE_URL}/anxiety-therapy-dublin`, changeFrequency: 'monthly', priority: 0.9 },
   { url: `${SITE_URL}/adhd-therapy-dublin`, changeFrequency: 'monthly', priority: 0.9 },

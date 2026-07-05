@@ -1,11 +1,12 @@
 import { google, calendar_v3 } from 'googleapis';
 import { supabaseAdmin } from '@/lib/supabase';
 import { utcToDublinLocal } from '@/lib/dateUtils';
+import { INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
 
 // The OAuth2 client instance returned by getAuthorizedClient().
 type AuthClient = InstanceType<typeof google.auth.OAuth2>;
 
-const INSIGHT_MATTERS = 'Insight Matters, 106 Capel Street, Dublin, D01 WY40';
+const INSIGHT_MATTERS = INSIGHT_MATTERS_ADDRESS;
 
 export interface MappedEvent {
   id: string;

@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 import { buildReminderHtml, paymentLinkFor, sessionKind, EMAIL_FROM } from '@/lib/emailTemplates';
 import { reminderOptOutUrl } from '@/lib/reminderOptOut';
+import { PRACTICE } from '@/practice.config';
 
 export interface ReminderResult {
   success: boolean;
@@ -117,8 +118,8 @@ export async function sendSessionReminder(
       from: EMAIL_FROM,
       to: client.email,
       subject: isToday
-        ? 'Reminder — your session today with Owen Lynch'
-        : 'Reminder — your upcoming session with Owen Lynch',
+        ? `Reminder — your session today with ${PRACTICE.practitionerName}`
+        : `Reminder — your upcoming session with ${PRACTICE.practitionerName}`,
       html: buildReminderHtml({
         firstName,
         time: formattedTime,

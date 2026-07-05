@@ -5,12 +5,13 @@ import { notFound } from 'next/navigation';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import { articles, getArticle } from '@/content/articles';
+import { SITE_URL, PRACTICE } from '@/practice.config';
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-const BASE_URL = 'https://owenlynchtherapy.com';
+const BASE_URL = SITE_URL;
 
 // Articles are typed content files in src/content/articles — written and
 // shipped through Claude sessions, no CMS. Body markup was captured from the
@@ -81,7 +82,7 @@ export default async function ArticlePage({ params }: Props) {
     },
     publisher: {
       '@type': 'Organization',
-      name: 'Owen Lynch Psychotherapy',
+      name: PRACTICE.businessName,
       url: BASE_URL,
       logo: {
         '@type': 'ImageObject',

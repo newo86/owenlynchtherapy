@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { submitContactForm } from './actions';
+import { PRACTICE } from '@/practice.config';
 
 // The post-submit banner state is read CLIENT-SIDE via useSearchParams (the
 // server action redirects to ?sent=1 / ?error=1). Doing it here — rather than
@@ -55,9 +56,7 @@ export default function ContactForm({ turnstileSiteKey }: { turnstileSiteKey?: s
               role="alert"
             >
               Something went wrong. Please try emailing{' '}
-              <a href="mailto:info@owenlynchtherapy.com" className="underline">
-                info@owenlynchtherapy.com
-              </a>{' '}
+              <a href={`mailto:${PRACTICE.email}`} className="underline">{PRACTICE.email}</a>{' '}
               directly.
             </div>
           )}

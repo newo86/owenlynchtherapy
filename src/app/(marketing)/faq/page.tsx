@@ -3,24 +3,25 @@ import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FaqAccordion, { type FaqCategory } from '@/components/sections/FaqAccordion';
 import FloatingCircles from '@/components/ui/floating-circles';
+import { SITE_URL, PRACTICE } from '@/practice.config';
 
 export const metadata: Metadata = {
   title: { absolute: 'FAQ | Psychotherapy Dublin & Online | Owen Lynch' },
   description:
     'Answers to common questions about psychotherapy in Dublin and online therapy in Ireland: fees, session format, confidentiality and accreditation.',
   alternates: {
-    canonical: 'https://owenlynchtherapy.com/faq',
+    canonical: `${SITE_URL}/faq`,
     languages: {
-      'en': 'https://owenlynchtherapy.com/faq',
-      'x-default': 'https://owenlynchtherapy.com/faq',
+      'en': `${SITE_URL}/faq`,
+      'x-default': `${SITE_URL}/faq`,
     },
   },
   openGraph: {
     title: 'FAQ | Psychotherapy Dublin & Online | Owen Lynch',
     description:
       'Answers to common questions about psychotherapy in Dublin and online therapy in Ireland: fees, session format, confidentiality and accreditation.',
-    url: 'https://owenlynchtherapy.com/faq',
-    images: [{ url: 'https://owenlynchtherapy.com/og-image.jpg', width: 1200, height: 630 }],
+    url: `${SITE_URL}/faq`,
+    images: [{ url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 }],
   },
 };
 
@@ -204,7 +205,7 @@ const jsonLd = {
   '@graph': [
     {
       '@type': 'FAQPage',
-      '@id': 'https://owenlynchtherapy.com/faq#faqpage',
+      '@id': `${SITE_URL}/faq#faqpage`,
       mainEntity: faqCategories.flatMap(cat =>
         cat.items.map(item => ({
           '@type': 'Question',
@@ -215,7 +216,7 @@ const jsonLd = {
     },
     {
       '@type': 'Article',
-      '@id': 'https://owenlynchtherapy.com/faq#article',
+      '@id': `${SITE_URL}/faq#article`,
       headline: 'FAQ | Psychotherapy Dublin and Online | Owen Lynch',
       description:
         'Answers to common questions about psychotherapy in Dublin and online therapy in Ireland. IAHIP accredited. OCD therapy, ADHD therapy, anxiety, confidential sessions.',
@@ -223,23 +224,23 @@ const jsonLd = {
       dateModified: '2026-05-17',
       author: {
         '@type': 'Person',
-        '@id': 'https://owenlynchtherapy.com/#person',
-        name: 'Owen Lynch',
+        '@id': `${SITE_URL}/#person`,
+        name: PRACTICE.practitionerName,
       },
-      publisher: { '@id': 'https://owenlynchtherapy.com/#business' },
+      publisher: { '@id': `${SITE_URL}/#business` },
     },
     {
       '@type': 'BreadcrumbList',
-      '@id': 'https://owenlynchtherapy.com/faq#breadcrumb',
+      '@id': `${SITE_URL}/faq#breadcrumb`,
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://owenlynchtherapy.com' },
-        { '@type': 'ListItem', position: 2, name: 'FAQ',  item: 'https://owenlynchtherapy.com/faq' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}` },
+        { '@type': 'ListItem', position: 2, name: 'FAQ',  item: `${SITE_URL}/faq` },
       ],
     },
     {
       '@type': 'WebPage',
-      '@id': 'https://owenlynchtherapy.com/faq',
-      url: 'https://owenlynchtherapy.com/faq',
+      '@id': `${SITE_URL}/faq`,
+      url: `${SITE_URL}/faq`,
       name: 'FAQ | Psychotherapy Dublin and Online | Owen Lynch',
       speakable: {
         '@type': 'SpeakableSpecification',

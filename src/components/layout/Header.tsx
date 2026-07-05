@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState, useEffect } from "react"
 import PillNav from "@/components/ui/pill-nav"
+import { PRACTICE } from '@/practice.config';
 
 const OLMark = ({ size = 48 }: { size?: number }) => (
   <svg
@@ -63,7 +64,7 @@ export default function Header() {
           {/* Logo — always in DOM for layout balance; invisible when transparent */}
           <Link
             href="/"
-            aria-label="Owen Lynch Psychotherapy — home"
+            aria-label={`${PRACTICE.businessName} — home`}
             tabIndex={transparent ? -1 : 0}
             aria-hidden={transparent}
             className={`flex-shrink-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest transition-opacity duration-300 ${
@@ -90,7 +91,7 @@ export default function Header() {
         >
           <Link
             href="/"
-            aria-label="Owen Lynch Psychotherapy — home"
+            aria-label={`${PRACTICE.businessName} — home`}
             tabIndex={transparent ? -1 : 0}
             aria-hidden={transparent}
             className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest"

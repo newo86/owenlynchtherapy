@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { SITE_URL } from '@/practice.config';
 
 // Signed, stateless opt-out links for reminder emails. The link carries
 // "<clientId>.<HMAC-SHA256(clientId)>" keyed by INTAKE_ADMIN_SECRET (the same
@@ -6,7 +7,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 // signature can't be forged without the secret, so a client can only ever
 // unsubscribe themselves — they can't guess another client's link.
 
-const BASE_URL = 'https://owenlynchtherapy.com';
+const BASE_URL = SITE_URL;
 
 function sign(clientId: string, key: string): string {
   return createHmac('sha256', key).update(`reminder-optout:${clientId}`).digest('base64url');

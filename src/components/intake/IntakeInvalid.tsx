@@ -1,3 +1,4 @@
+import { PRACTICE } from '@/practice.config';
 export type InvalidReason = 'no-token' | 'invalid' | 'expired' | 'used';
 
 const messages: Record<InvalidReason, { heading: string; body: string }> = {
@@ -56,7 +57,7 @@ export default function IntakeInvalid({ reason }: { reason: InvalidReason }) {
           {body}
         </p>
         <a
-          href="mailto:info@owenlynchtherapy.com"
+          href={`mailto:${PRACTICE.email}`}
           className="text-sm font-normal underline underline-offset-2"
           style={{ color: '#C85A1A' }}
         >

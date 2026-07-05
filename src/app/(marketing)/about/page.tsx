@@ -4,39 +4,40 @@ import Link from 'next/link';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import PsychologyTodayBadge from '@/components/sections/PsychologyTodayBadge';
 import FloatingCircles from '@/components/ui/floating-circles';
+import { SITE_URL, PRACTICE } from '@/practice.config';
 
 export const metadata: Metadata = {
   title: { absolute: 'About Owen Lynch | Psychotherapist Dublin' },
   description:
     'Owen Lynch is an IAHIP and ICP accredited integrative psychotherapist based in Dublin, working with adults in person and online across Ireland and the UK.',
   alternates: {
-    canonical: 'https://owenlynchtherapy.com/about',
+    canonical: `${SITE_URL}/about`,
     languages: {
-      'en': 'https://owenlynchtherapy.com/about',
-      'x-default': 'https://owenlynchtherapy.com/about',
+      'en': `${SITE_URL}/about`,
+      'x-default': `${SITE_URL}/about`,
     },
   },
   openGraph: {
     title: 'About Owen Lynch | Psychotherapist Dublin',
     description:
       'Owen Lynch is an IAHIP and ICP accredited integrative psychotherapist based in Dublin, working with adults in person and online across Ireland and the UK.',
-    url: 'https://owenlynchtherapy.com/about',
+    url: `${SITE_URL}/about`,
     type: 'profile',
-    images: [{ url: 'https://owenlynchtherapy.com/og-image.jpg', width: 1200, height: 630 }],
+    images: [{ url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 }],
   },
 };
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Person',
-  '@id': 'https://owenlynchtherapy.com/#person',
-  name: 'Owen Lynch',
+  '@id': `${SITE_URL}/#person`,
+  name: PRACTICE.practitionerName,
   jobTitle: 'Psychotherapist',
   description:
     'IAHIP and ICP accredited integrative psychotherapist based in Dublin, working with adults in person and online across Ireland and the UK.',
-  url: 'https://owenlynchtherapy.com/about',
-  image: 'https://owenlynchtherapy.com/images/Owen2.jpg',
-  worksFor: { '@id': 'https://owenlynchtherapy.com/#business' },
+  url: `${SITE_URL}/about`,
+  image: `${SITE_URL}/images/Owen2.jpg`,
+  worksFor: { '@id': `${SITE_URL}/#business` },
   sameAs: [
     'https://www.psychologytoday.com/ie/counselling/owen-lynch-dublin-dn/1745757',
     'https://psychotherapistdirectory.iahip.org/therapist/owen-lynch',

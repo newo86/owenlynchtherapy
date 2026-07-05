@@ -1,6 +1,9 @@
 import { renderToBuffer, View, Text } from '@react-pdf/renderer';
 import { BrandedDoc, H1, P, Bullet, pdfStyles } from './PdfLayout';
 import { loadHorizontalLogoPng } from './loadLogo';
+import { PRACTICE, SITE_URL } from '@/practice.config';
+
+const SITE_HOST = SITE_URL.replace('https://', '');
 
 // Static document — memoised after first render to keep welcome-email
 // sends fast (saves ~2–3 s per call).
@@ -11,12 +14,12 @@ export async function generatePrivacyPolicyPDF(): Promise<Buffer> {
   const logo = await loadHorizontalLogoPng();
 
   cached = await renderToBuffer(
-    <BrandedDoc title="Privacy Policy — Owen Lynch Psychotherapy" logoSrc={logo}>
+    <BrandedDoc title={`Privacy Policy — ${PRACTICE.businessName}`} logoSrc={logo}>
       <Text style={pdfStyles.title}>Privacy Policy</Text>
       <Text style={pdfStyles.subtitle}>Last updated: May 2026</Text>
 
       <Text style={pdfStyles.intro}>
-        This privacy policy explains how Owen Lynch Psychotherapy
+        This privacy policy explains how {PRACTICE.businessName}
         (&ldquo;I&rdquo;, &ldquo;me&rdquo;, &ldquo;my&rdquo;) collects, uses,
         stores, and protects your personal data. I am committed to handling your
         information with care, transparency, and in full compliance with the
@@ -27,16 +30,16 @@ export async function generatePrivacyPolicyPDF(): Promise<Buffer> {
       {/* 1 */}
       <H1>1. Who I Am</H1>
       <P>
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Data Controller: </Text>Owen Lynch
+        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Data Controller: </Text>{PRACTICE.practitionerName}
       </P>
       <P>
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Trading as: </Text>Owen Lynch Psychotherapy
+        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Trading as: </Text>{PRACTICE.businessName}
       </P>
       <P>
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Website: </Text>owenlynchtherapy.com
+        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Website: </Text>{SITE_HOST}
       </P>
       <P>
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Email: </Text>info@owenlynchtherapy.com
+        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Email: </Text>{PRACTICE.email}
       </P>
 
       {/* 2 */}
@@ -127,7 +130,7 @@ export async function generatePrivacyPolicyPDF(): Promise<Buffer> {
       <Bullet>Lodge a complaint with the Data Protection Commission (dataprotection.ie)</Bullet>
       <View style={{ height: 6 }} />
       <P>
-        To exercise any of these rights, please contact me at info@owenlynchtherapy.com.
+        To exercise any of these rights, please contact me at {PRACTICE.email}.
       </P>
 
       {/* 7 */}
@@ -154,7 +157,7 @@ export async function generatePrivacyPolicyPDF(): Promise<Buffer> {
       <H1>9. Changes to This Policy</H1>
       <P>
         I may update this policy from time to time. The current version will
-        always be available at owenlynchtherapy.com/privacy. If significant
+        always be available at {SITE_HOST}/privacy. If significant
         changes are made, I will notify current clients by email.
       </P>
 
@@ -166,13 +169,13 @@ export async function generatePrivacyPolicyPDF(): Promise<Buffer> {
       </P>
       <View style={{ height: 4 }} />
       <P>
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Owen Lynch</Text>
+        <Text style={{ fontFamily: 'Helvetica-Bold' }}>{PRACTICE.practitionerName}</Text>
       </P>
       <P>
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Email: </Text>info@owenlynchtherapy.com
+        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Email: </Text>{PRACTICE.email}
       </P>
       <P>
-        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Website: </Text>owenlynchtherapy.com
+        <Text style={{ fontFamily: 'Helvetica-Bold' }}>Website: </Text>{SITE_HOST}
       </P>
     </BrandedDoc>
   );

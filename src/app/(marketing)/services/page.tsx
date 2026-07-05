@@ -4,24 +4,25 @@ import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import ServiceCard from '@/components/ui/ServiceCard';
 import { Globe } from '@/components/ui/cobe-globe';
 import FloatingCircles from '@/components/ui/floating-circles';
+import { SITE_URL } from '@/practice.config';
 
 export const metadata: Metadata = {
   title: 'Therapy Services Dublin & Online',
   description:
     'IAHIP and ICP accredited psychotherapy in Dublin and online. Support for OCD, anxiety, ADHD, autism, depression, relationships and trauma.',
   alternates: {
-    canonical: 'https://owenlynchtherapy.com/services',
+    canonical: `${SITE_URL}/services`,
     languages: {
-      'en': 'https://owenlynchtherapy.com/services',
-      'x-default': 'https://owenlynchtherapy.com/services',
+      'en': `${SITE_URL}/services`,
+      'x-default': `${SITE_URL}/services`,
     },
   },
   openGraph: {
     title: 'Therapy Services Dublin & Online | Owen Lynch Psychotherapy',
     description:
       'IAHIP and ICP accredited psychotherapy in Dublin and online. Support for OCD, anxiety, ADHD, autism, depression, relationships and trauma.',
-    url: 'https://owenlynchtherapy.com/services',
-    images: [{ url: 'https://owenlynchtherapy.com/og-image.jpg', width: 1200, height: 630 }],
+    url: `${SITE_URL}/services`,
+    images: [{ url: `${SITE_URL}/og-image.jpg`, width: 1200, height: 630 }],
   },
 };
 
@@ -30,19 +31,19 @@ export const metadata: Metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'MedicalBusiness',
-  '@id': 'https://owenlynchtherapy.com/#business',
+  '@id': `${SITE_URL}/#business`,
   hasOfferCatalog: {
     '@type': 'OfferCatalog',
     name: 'Psychotherapy Services',
     itemListElement: [
-      { '@type': 'MedicalTherapy', name: 'OCD Therapy',          url: 'https://owenlynchtherapy.com/ocd-therapy-dublin' },
-      { '@type': 'MedicalTherapy', name: 'Anxiety Therapy',      url: 'https://owenlynchtherapy.com/anxiety-therapy-dublin' },
-      { '@type': 'MedicalTherapy', name: 'ADHD Therapy',         url: 'https://owenlynchtherapy.com/adhd-therapy-dublin' },
-      { '@type': 'MedicalTherapy', name: 'Autism Therapy',       url: 'https://owenlynchtherapy.com/autism-therapy-dublin' },
-      { '@type': 'MedicalTherapy', name: 'Depression Therapy',   url: 'https://owenlynchtherapy.com/depression-therapy-dublin' },
-      { '@type': 'MedicalTherapy', name: 'Relationship Therapy', url: 'https://owenlynchtherapy.com/relationship-therapy-dublin' },
-      { '@type': 'MedicalTherapy', name: 'Trauma Therapy',       url: 'https://owenlynchtherapy.com/trauma-therapy-dublin' },
-      { '@type': 'MedicalTherapy', name: 'LGBTQIA+ Therapy',     url: 'https://owenlynchtherapy.com/lgbtqia-therapy-dublin' },
+      { '@type': 'MedicalTherapy', name: 'OCD Therapy',          url: `${SITE_URL}/ocd-therapy-dublin` },
+      { '@type': 'MedicalTherapy', name: 'Anxiety Therapy',      url: `${SITE_URL}/anxiety-therapy-dublin` },
+      { '@type': 'MedicalTherapy', name: 'ADHD Therapy',         url: `${SITE_URL}/adhd-therapy-dublin` },
+      { '@type': 'MedicalTherapy', name: 'Autism Therapy',       url: `${SITE_URL}/autism-therapy-dublin` },
+      { '@type': 'MedicalTherapy', name: 'Depression Therapy',   url: `${SITE_URL}/depression-therapy-dublin` },
+      { '@type': 'MedicalTherapy', name: 'Relationship Therapy', url: `${SITE_URL}/relationship-therapy-dublin` },
+      { '@type': 'MedicalTherapy', name: 'Trauma Therapy',       url: `${SITE_URL}/trauma-therapy-dublin` },
+      { '@type': 'MedicalTherapy', name: 'LGBTQIA+ Therapy',     url: `${SITE_URL}/lgbtqia-therapy-dublin` },
     ],
   },
 };

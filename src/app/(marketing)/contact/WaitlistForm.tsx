@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { WAITLIST_CONSENT_TEXT } from '@/lib/waitlistConsent';
+import { PRACTICE } from '@/practice.config';
 
 const labelClass =
   'block text-xs font-normal uppercase tracking-normal text-gray-500 mb-1.5';
@@ -59,9 +60,7 @@ export default function WaitlistForm() {
         <p className="font-normal text-base text-gray-600 leading-[1.8]">
           I&apos;ll be in touch as soon as a space opens up. If anything changes in the
           meantime, you can email{' '}
-          <a href="mailto:info@owenlynchtherapy.com" className="text-orange h-hover:underline">
-            info@owenlynchtherapy.com
-          </a>{' '}
+          <a href={`mailto:${PRACTICE.email}`} className="text-orange h-hover:underline">{PRACTICE.email}</a>{' '}
           to update or remove your details.
         </p>
       </div>

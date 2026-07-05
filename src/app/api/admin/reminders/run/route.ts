@@ -7,6 +7,7 @@ import { reconcileCalendar } from '@/lib/calendarSync';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
+import { SITE_URL } from '@/practice.config';
 
 // Daily reminder run. Called by Vercel Cron each morning (see vercel.json);
 // also callable manually with the admin session cookie.
@@ -77,7 +78,7 @@ async function sendAbortAlert(reason: string, detail: string): Promise<void> {
         <p><strong>Reason:</strong> ${reason}</p>
         <p>${detail}</p>
         <p>No client received a reminder this morning. Please review today's sessions and send any needed reminders by hand from the dashboard:
-        <a href="https://owenlynchtherapy.com/admin/intake">owenlynchtherapy.com/admin/intake</a></p>
+        <a href="${SITE_URL}/admin/intake">${SITE_URL.replace("https://","")}/admin/intake</a></p>
       </div>`,
     });
   } catch (err) {

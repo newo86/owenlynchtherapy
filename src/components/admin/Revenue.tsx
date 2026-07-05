@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { TrendingUp, Video, MapPin, Wallet, X, Send } from 'lucide-react';
 import { startOfWeek, formatDateTime, adminFetch, dedupeSessions } from './api';
 import type { ClientRow, SessionRow } from './types';
+import { PRACTICE } from '@/practice.config';
 
 interface Props {
   clients: ClientRow[];
@@ -11,7 +12,7 @@ interface Props {
 
 type Scope = 'week' | 'month' | 'year' | 'all';
 
-const ROOM_COST_CENTS = 2000;
+const ROOM_COST_CENTS = PRACTICE.fees.roomCostCents;
 
 // The three billing categories. They are never merged — every figure on this
 // screen is shown per category, with "Overall" as the only combined view.

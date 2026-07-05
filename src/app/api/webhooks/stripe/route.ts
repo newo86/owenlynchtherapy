@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
+import { PRACTICE } from '@/practice.config';
 import {
   buildReceiptHtml,
   sessionKind,
@@ -230,7 +231,7 @@ async function sendReceipt(
   const emailResult = await getResend().emails.send({
     from: EMAIL_FROM,
     to: client.email,
-    subject: 'Receipt — Psychotherapy Session with Owen Lynch',
+    subject: `Receipt — Psychotherapy Session with ${PRACTICE.practitionerName}`,
     html: buildReceiptHtml({
       firstName,
       date: formattedDate,

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import IntakeProgress from './IntakeProgress';
 import IntakeConfirmation from './IntakeConfirmation';
 import FormField from './FormField';
+import { PRACTICE } from '@/practice.config';
 
 // ── Shared styles ──────────────────────────────────────────────────────────
 const inputCls =
@@ -263,7 +264,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
             className="text-xs font-normal uppercase mb-2"
             style={{ color: '#C85A1A', letterSpacing: '2px' }}
           >
-            Owen Lynch Psychotherapy
+            {PRACTICE.businessName}
           </p>
           <h1 className="font-heading font-light text-3xl" style={{ color: '#2A4D3C' }}>
             Client Intake Form
@@ -709,11 +710,9 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                       />
                       <span className="text-sm leading-relaxed" style={{ color: '#555', lineHeight: 1.8 }}>
                         I understand that the information I provide will be stored securely and used solely
-                        for the purpose of my therapy with Owen Lynch Psychotherapy. I can request access
+                        for the purpose of my therapy with {PRACTICE.businessName}. I can request access
                         to or deletion of my data at any time by contacting{' '}
-                        <a href="mailto:info@owenlynchtherapy.com" className="underline underline-offset-2" style={{ color: '#C85A1A' }}>
-                          info@owenlynchtherapy.com
-                        </a>
+                        <a href={`mailto:${PRACTICE.email}`} className="underline underline-offset-2" style={{ color: '#C85A1A' }}>{PRACTICE.email}</a>
                         . <span style={{ color: '#C85A1A' }}>*</span>
                       </span>
                     </label>
@@ -814,9 +813,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
 
         <p className="text-xs text-center mt-6" style={{ color: '#AAA' }}>
           Your responses are encrypted and stored securely. Questions?{' '}
-          <a href="mailto:info@owenlynchtherapy.com" className="underline" style={{ color: '#C85A1A' }}>
-            info@owenlynchtherapy.com
-          </a>
+          <a href={`mailto:${PRACTICE.email}`} className="underline" style={{ color: '#C85A1A' }}>{PRACTICE.email}</a>
         </p>
       </div>
     </div>
