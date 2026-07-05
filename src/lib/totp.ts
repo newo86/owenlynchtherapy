@@ -62,7 +62,9 @@ export function verifyTotp(token: string, secret: string): boolean {
 }
 
 /** Build the otpauth:// URL to enrol the secret in an authenticator app. */
-export function otpauthUrl(secret: string, label = 'Owen Lynch Admin', issuer = 'Owen Lynch Therapy'): string {
+import { PRACTICE } from '@/practice.config';
+
+export function otpauthUrl(secret: string, label = `${PRACTICE.businessName} Admin`, issuer = PRACTICE.businessName): string {
   return `otpauth://totp/${encodeURIComponent(label)}?secret=${secret}`
     + `&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
 }

@@ -6,6 +6,7 @@ import { getAuthorizedClient } from '@/lib/googleOAuth';
 import { reconcileCalendar } from '@/lib/calendarSync';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { getResend } from '@/lib/resend';
+import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 
 // Daily reminder run. Called by Vercel Cron each morning (see vercel.json);
 // also callable manually with the admin session cookie.
@@ -68,8 +69,8 @@ async function recordRun(entry: {
 async function sendAbortAlert(reason: string, detail: string): Promise<void> {
   try {
     await getResend().emails.send({
-      from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
-      to: 'info@owenlynchtherapy.com',
+      from: EMAIL_FROM,
+      to: CONTACT_EMAIL,
       subject: "Heads-up: today's session reminders were held back",
       html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
         <p>This morning's automatic reminder run did <strong>not</strong> send any emails — a safety check stopped it.</p>

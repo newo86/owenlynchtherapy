@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { bearerMatches, requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
+import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 
 // Called by Vercel Cron every Saturday at 08:00 UTC (≈ 09:00 IST / 08:00 GMT).
 // Also callable manually with the INTAKE_ADMIN_SECRET for testing.
@@ -89,8 +90,8 @@ export async function GET(req: NextRequest) {
   const html = buildReportHtml(entries, weekLabel, totalSessions, totalPaidCents, totalOutstandingCents, outstandingCount);
 
   const emailResult = await getResend().emails.send({
-    from: 'Owen Lynch Psychotherapy <noreply@owenlynchtherapy.com>',
-    to: 'info@owenlynchtherapy.com',
+    from: EMAIL_FROM,
+    to: CONTACT_EMAIL,
     subject: `Weekly Payment Report — ${weekLabel}`,
     html,
   });
