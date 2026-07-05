@@ -67,15 +67,11 @@ change both. Fonts are set in `src/app/layout.tsx`.
 ## 2 · Supabase (database)
 
 1. Create a project in an **EU region**. Save the database password.
-2. **Base schema first**: the original tables (`clients`, `sessions`,
-   `intake_tokens`, `intake_submissions`) predate the migrations folder.
-   Export their definitions from the source project (Supabase Table Editor →
-   table → *Definition* tab → copy SQL) and run them in the new project.
-   *(TODO: commit these as `supabase/migrations/000_base_schema.sql` the first
-   time this runbook is used.)*
-3. Run everything in `supabase/migrations/` in the new project's SQL editor
-   (all files are idempotent). Order only matters twice: base schema before
-   everything, `service_role_grants.sql` and `supabase/supabase-rls-policy.sql`
+2. Run everything in `supabase/migrations/` in the new project's SQL editor
+   (all files are idempotent). Order only matters twice:
+   `000_base_schema.sql` FIRST (the four original tables — reconstructed from
+   code; docs/DB-REVIEW.md has a query to double-check it against the source
+   project), `service_role_grants.sql` and `supabase/supabase-rls-policy.sql`
    last.
 4. Confirm RLS is enabled (deny-all) on every table — the app only ever
    connects with the service-role key from the server.
