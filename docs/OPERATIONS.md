@@ -90,8 +90,9 @@ Public-facing practice facts (names, accreditation, contact/NAP, fees, hours,
 links, profiles) are editable at **Admin → Settings**. Stored as one jsonb row
 in `practice_settings`, merged over the code defaults in
 `src/practice.config.ts` by `getPractice()` (`src/lib/practiceSettings.ts`,
-cache tag `practice`). Saving revalidates the tag so the footer + business
-JSON-LD update on the next page view. If the table is missing the app serves
+cache tag `practice`). Saving revalidates the tag so the footer, business
+JSON-LD and the /contact availability cards update on the next page view (an
+empty "Available slots" list flips /contact to waiting-list-first copy). If the table is missing the app serves
 the code defaults and the Settings page warns instead of failing — builds and
 clones work with no database. Consumers migrate onto `getPractice()`
 incrementally; anything still reading `practice.config.ts` directly only

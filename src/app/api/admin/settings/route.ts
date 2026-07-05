@@ -66,6 +66,11 @@ function validate(s: PracticeSettings): string | null {
     !isStr(h?.dayOfWeek) || !/^\d{2}:\d{2}$/.test(h?.opens ?? '') || !/^\d{2}:\d{2}$/.test(h?.closes ?? ''))) {
     return 'Opening hours rows need a day and HH:MM times.';
   }
+  if (!Array.isArray(s.availability) || s.availability.length > 20 || s.availability.some(a =>
+    !isStr(a?.day) || !a.day.trim() || !isStr(a?.time) || !a.time.trim()
+    || (a.format !== 'in_person' && a.format !== 'online'))) {
+    return 'Each available slot needs a day, a time, and a format.';
+  }
   for (const url of [s.telehealthUrl, s.stripeLinks?.online, s.stripeLinks?.inPerson]) {
     if (url && !/^https:\/\//.test(url)) return 'Links must start with https://';
   }

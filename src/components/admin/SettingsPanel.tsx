@@ -259,6 +259,46 @@ export function SettingsPanel() {
         </div>
       </section>
 
+      <section className="admin-card" style={{ padding: 24 }}>
+        <h2 className="admin-h2" style={{ marginBottom: 4 }}>Available slots</h2>
+        <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '0 0 16px', maxWidth: 560 }}>
+          The open slots shown to new clients on the contact page. Remove them all when
+          you&apos;re full — the page then leads with the waiting list instead.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {s.availability.map((a, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <input className="admin-input" style={{ maxWidth: 140 }} value={a.day} placeholder="Monday"
+                onChange={e => set('availability', s.availability.map((r, j) => j === i ? { ...r, day: e.target.value } : r))} />
+              <input className="admin-input" style={{ maxWidth: 110 }} value={a.time} placeholder="7:00pm"
+                onChange={e => set('availability', s.availability.map((r, j) => j === i ? { ...r, time: e.target.value } : r))} />
+              <select className="admin-input" style={{ maxWidth: 130 }} value={a.format}
+                onChange={e => set('availability', s.availability.map((r, j) => j === i ? { ...r, format: e.target.value as 'in_person' | 'online' } : r))}>
+                <option value="in_person">In person</option>
+                <option value="online">Online</option>
+              </select>
+              <input className="admin-input" style={{ maxWidth: 190 }} value={a.note} placeholder="Note, e.g. every second week"
+                onChange={e => set('availability', s.availability.map((r, j) => j === i ? { ...r, note: e.target.value } : r))} />
+              <button type="button" className="admin-btn-secondary"
+                onClick={() => set('availability', s.availability.filter((_, j) => j !== i))}>
+                Remove
+              </button>
+            </div>
+          ))}
+          {s.availability.length === 0 && (
+            <p style={{ fontSize: 12, color: 'var(--terracotta)', margin: 0 }}>
+              No open slots — the contact page will say you&apos;re currently full and offer the waiting list.
+            </p>
+          )}
+          <button
+            type="button" className="admin-btn-secondary" style={{ alignSelf: 'flex-start' }}
+            onClick={() => set('availability', [...s.availability, { day: '', time: '', format: 'in_person', note: '' }])}
+          >
+            + Add a slot
+          </button>
+        </div>
+      </section>
+
       <Card title="Links & integrations" sub="Public links only — API keys and secrets stay in Vercel, never here.">
         <Field label="Video session link" value={s.telehealthUrl} onChange={v => set('telehealthUrl', v)}
           placeholder="https://doxy.me/…" hint="Included in online-session reminder emails." />

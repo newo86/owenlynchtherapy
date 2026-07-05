@@ -83,6 +83,15 @@ export const PRACTICE = {
     { dayOfWeek: 'Friday', opens: '15:00', closes: '20:00' },
   ],
 
+  /** The specific slots currently open to new clients — the cards on the
+   *  /contact page. Empty array = fully booked (the page then leads with the
+   *  waiting list instead). `note` is free text, e.g. "every second week". */
+  availability: [
+    { day: 'Monday', time: '7:00pm', format: 'in_person', note: '' },
+    { day: 'Tuesday', time: '5:00pm', format: 'online', note: '' },
+    { day: 'Friday', time: '3:00pm', format: 'in_person', note: 'every second week' },
+  ] as Array<{ day: string; time: string; format: 'in_person' | 'online'; note: string }>,
+
   // ── Integrations (public, non-secret URLs/IDs) ───────────────────────
   /** Canonical site origin — MUST match the primary domain set in Vercel. */
   siteUrl: 'https://owenlynchtherapy.com',
