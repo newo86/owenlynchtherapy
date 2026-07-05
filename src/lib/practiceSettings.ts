@@ -23,6 +23,10 @@ export interface PracticeSettings {
     bodyName: string;
     regNumber: string;
     summary: string;
+    /** Client-hours tracker: target + hours accrued before hoursCountFrom. */
+    hoursTarget: number;
+    hoursBaseline: number;
+    hoursCountFrom: string;
   };
   email: string;
   telephone: string;
