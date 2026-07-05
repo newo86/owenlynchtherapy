@@ -37,12 +37,12 @@ export const PRACTICE = {
     // Short line used in footers / PDF footers.
     summary: 'IAHIP & ICP Accredited',
     // Post-accreditation client-hours tracker (Revenue page).
-    // hoursBaseline = hours accrued before hoursCountFrom (counted from the
-    // practitioner's calendars); from that date the dashboard's own session
-    // records are counted automatically, 1 hour per session.
+    // hoursBaseline = the verified total accrued before hoursCountFrom
+    // (hand-counted from the practitioner's calendars); from that date the
+    // dashboard's own session records are added automatically, 1 hour each.
     hoursTarget: 500,
-    hoursBaseline: 47,
-    hoursCountFrom: '2026-06-01',
+    hoursBaseline: 387,
+    hoursCountFrom: '2026-07-06',
   },
 
   // ── Contact / NAP (name, address, phone — local-SEO critical) ─────────

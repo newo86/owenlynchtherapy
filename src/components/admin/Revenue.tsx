@@ -402,8 +402,8 @@ export function Revenue({ clients }: Props) {
             }} />
           </div>
           <div className="admin-stat-foot" style={{ marginTop: 10 }}>
-            {accred.hoursBaseline} before{' '}
-            {new Date(accred.hoursCountFrom + 'T00:00:00').toLocaleDateString('en-IE', { month: 'long', year: 'numeric' })}
+            {accred.hoursBaseline} counted to{' '}
+            {new Date(accred.hoursCountFrom + 'T00:00:00').toLocaleDateString('en-IE', { day: 'numeric', month: 'short', year: 'numeric' })}
             {' '}+ {accredHours.sessionsSince} session{accredHours.sessionsSince === 1 ? '' : 's'} since · no-shows excluded · adjust in Settings
           </div>
         </div>
