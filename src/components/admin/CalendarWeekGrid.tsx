@@ -313,9 +313,9 @@ export function CalendarWeekGrid({
                         <span
                           title={dot.title}
                           style={{
-                            position: 'absolute', top: 7, right: 7, width: 9, height: 9,
+                            position: 'absolute', top: 7, right: 7, width: 7, height: 7,
                             borderRadius: '50%', background: dot.color,
-                            boxShadow: '0 0 0 2px rgba(255,255,255,0.9)',
+                            boxShadow: '0 0 0 1.5px rgba(255,255,255,0.9)',
                           }}
                         />
                       ) : null;
