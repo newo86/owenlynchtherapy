@@ -17,6 +17,38 @@ function accentForName(name: string): Accent {
   return ACCENTS[h % ACCENTS.length];
 }
 
+/** Most recent reminder timestamp for a session, or null if none logged. */
+function lastReminderAt(s: SessionRow): string | null {
+  const rows = s.session_reminders ?? [];
+  let latest: string | null = null;
+  for (const r of rows) if (!latest || r.sent_at > latest) latest = r.sent_at;
+  return latest;
+}
+
+/** Traffic-light reminder status shown as a small dot in the card corner.
+ *  green = a reminder was sent · orange = not sent yet, on a future day (the
+ *  6 a.m. cron will send it) · red = it's today and nothing went out (a miss —
+ *  send one by hand). No dot for past untracked sessions or opted-out clients. */
+function reminderDot(s: SessionRow, c: ClientRow): { color: string; title: string } | null {
+  if (c.reminders_opted_out) return null;
+  const sent = lastReminderAt(s);
+  if (sent) {
+    const when = new Date(sent).toLocaleString('en-IE', {
+      day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
+    });
+    return { color: '#4F8A68', title: `Reminder sent — ${when}` };
+  }
+  const d = new Date(s.session_date);
+  const now = new Date();
+  if (isSameDay(d, now)) {
+    return { color: '#D64545', title: "No reminder went out for today — send one with the ✉ button." };
+  }
+  if (d.getTime() > now.getTime()) {
+    return { color: '#E1922B', title: 'Reminder pending — it sends automatically the morning of the session.' };
+  }
+  return null; // past session with no reminder logged — nothing to action
+}
+
 function buildClickIso(day: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T17:00`;
@@ -275,6 +307,19 @@ export function CalendarWeekGrid({
                       : undefined}
                     title={isClickable && !isOpen ? `${e.label} — click for actions` : undefined}
                   >
+                    {isSession && !isOpen && (() => {
+                      const dot = reminderDot(e.session!, e.client!);
+                      return dot ? (
+                        <span
+                          title={dot.title}
+                          style={{
+                            position: 'absolute', top: 7, right: 7, width: 9, height: 9,
+                            borderRadius: '50%', background: dot.color,
+                            boxShadow: '0 0 0 2px rgba(255,255,255,0.9)',
+                          }}
+                        />
+                      ) : null;
+                    })()}
                     <div className="admin-event-time">{e.time}</div>
                     <div className="admin-event-name">{e.label}</div>
                     {e.format === 'online' && (
