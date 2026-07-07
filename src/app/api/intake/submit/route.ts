@@ -189,6 +189,35 @@ export async function POST(req: NextRequest) {
     .update({ is_used: true })
     .eq('token', token);
 
+  // Link the intake up with the client record: copy the contact details the
+  // client just provided onto their record, but only where the record is still
+  // blank so we never clobber anything the practitioner has edited. Runs only
+  // when the token was issued for a known client. Intake has no GP phone.
+  if (tokenRow.client_id) {
+    try {
+      const { data: existing } = await supabaseAdmin
+        .from('clients')
+        .select('phone, date_of_birth, emergency_contact_name, emergency_contact_phone, gp_name')
+        .eq('id', tokenRow.client_id)
+        .single();
+      if (existing) {
+        const fill: Record<string, string> = {};
+        if (!existing.date_of_birth && date_of_birth) fill.date_of_birth = date_of_birth;
+        if (!existing.phone && phone) fill.phone = phone;
+        if (!existing.emergency_contact_name && emergency_contact_name) fill.emergency_contact_name = emergency_contact_name;
+        if (!existing.emergency_contact_phone && emergency_contact_phone) fill.emergency_contact_phone = emergency_contact_phone;
+        if (!existing.gp_name && gp_name) fill.gp_name = gp_name;
+        if (Object.keys(fill).length > 0) {
+          await supabaseAdmin.from('clients').update(fill).eq('id', tokenRow.client_id);
+        }
+      }
+    } catch (linkErr) {
+      // Non-fatal: the submission is saved regardless; the record can still be
+      // filled from the dashboard's "Fill from intake" button.
+      console.error('[intake submit] client backfill error:', linkErr);
+    }
+  }
+
   // Send email notification with PDF attachment (non-blocking)
   try {
     const { data: savedRow } = await supabaseAdmin

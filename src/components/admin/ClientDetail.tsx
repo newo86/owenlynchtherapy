@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { X, Download, Trash2, Pencil, Check, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { adminFetch, displayFee, formatDateTime, formatTime, downloadAdminPdf, dedupeSessions } from './api';
+import { adminFetch, displayFee, formatDateTime, formatTime, downloadAdminPdf, dedupeSessions, ageFromDob, matchSubmissionForClient } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SessionRow, SubmissionRow } from './types';
 
@@ -13,23 +13,6 @@ interface Props {
   onClose: () => void;
   onReload: () => void;
   onEditSession?: (session: SessionRow, client: ClientRow) => void;
-}
-
-function legacySubmissionMatch(submissions: SubmissionRow[], client: ClientRow): SubmissionRow | undefined {
-  const created = new Date(client.created_at).getTime();
-  const candidates = submissions.filter(s =>
-    !s.client_id
-    && (s.email?.toLowerCase() === client.email.toLowerCase()
-      || s.full_name.toLowerCase() === client.full_name.toLowerCase())
-    && new Date(s.submitted_at).getTime() + 5 * 60_000 >= created
-  );
-  if (candidates.length === 0) return undefined;
-  return candidates
-    .slice()
-    .sort((a, b) =>
-      Math.abs(new Date(a.submitted_at).getTime() - created)
-      - Math.abs(new Date(b.submitted_at).getTime() - created)
-    )[0];
 }
 
 function statusTag(status: string) {
@@ -50,17 +33,6 @@ function payTag(status: string) {
 }
 function payLabel(status: string) {
   return status === 'paid' ? 'Paid' : status === 'refunded' ? 'Refunded' : 'Unpaid';
-}
-
-function ageFromDob(dob: string | null | undefined): number | null {
-  if (!dob) return null;
-  const d = new Date(dob);
-  if (isNaN(d.getTime())) return null;
-  const now = new Date();
-  let age = now.getFullYear() - d.getFullYear();
-  const m = now.getMonth() - d.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
-  return age >= 0 && age < 120 ? age : null;
 }
 
 /** Year-month (YYYY-MM) of a UTC instant in Europe/Dublin. */
@@ -116,6 +88,26 @@ interface ContactFields {
   gp_phone: string;
 }
 
+/**
+ * The contact fields present on an intake submission but still blank on the
+ * client record. Used to (a) decide whether to show "Fill from intake" and
+ * (b) build the exact patch to save. Only ever fills blanks — never overwrites
+ * a value the practitioner has already entered or edited. Intake collects a GP
+ * name but no GP phone, so gp_phone is never sourced here.
+ */
+function missingFromRecord(c: ClientRow, s: SubmissionRow): Partial<ContactFields> {
+  const fill: Partial<ContactFields> = {};
+  const take = (key: keyof ContactFields, recordVal: string | null, intakeVal: string | null | undefined) => {
+    if (!recordVal && intakeVal) fill[key] = intakeVal;
+  };
+  take('date_of_birth', c.date_of_birth, s.date_of_birth);
+  take('phone', c.phone, s.phone);
+  take('emergency_contact_name', c.emergency_contact_name, s.emergency_contact_name);
+  take('emergency_contact_phone', c.emergency_contact_phone, s.emergency_contact_phone);
+  take('gp_name', c.gp_name, s.gp_name);
+  return fill;
+}
+
 function toContactFields(c: ClientRow): ContactFields {
   return {
     email: c.email ?? '',
@@ -167,11 +159,15 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
 
   if (!client) return null;
 
-  const submission =
-    submissions.find(s => s.client_id && s.client_id === client.id)
-    ?? legacySubmissionMatch(submissions, client);
+  const submission = matchSubmissionForClient(submissions, client);
 
-  const age = ageFromDob(client.date_of_birth);
+  const age = ageFromDob(client.date_of_birth ?? submission?.date_of_birth);
+
+  // Contact fields the client filled in on their intake form but that aren't
+  // yet on the record itself. Offer a one-tap copy so the record "links up"
+  // with what they already provided (e.g. their date of birth).
+  const intakeFill = submission ? missingFromRecord(client, submission) : {};
+  const canFillFromIntake = Object.keys(intakeFill).length > 0;
 
   // Target month (Dublin), navigable with the chevrons; defaults to this month.
   const nowDub = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Dublin' });
@@ -228,6 +224,29 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
       }
     } catch {
       alert('Network error — contact details were not saved.');
+    } finally { setContactSaving(false); }
+  }
+
+  async function fillFromIntake() {
+    if (!client || !submission) return;
+    const patch = missingFromRecord(client, submission);
+    if (Object.keys(patch).length === 0) return;
+    setContactSaving(true);
+    try {
+      const res = await adminFetch('/api/admin/clients/update', {
+        method: 'POST',
+        body: JSON.stringify({ client_id: client.id, ...patch }),
+      });
+      if (res.ok) {
+        setContactSaved(true);
+        onReload();
+        setTimeout(() => setContactSaved(false), 2500);
+      } else {
+        const json = await res.json().catch(() => ({}));
+        alert(json.error ?? 'Could not copy the intake details — please try again.');
+      }
+    } catch {
+      alert('Network error — intake details were not copied.');
     } finally { setContactSaving(false); }
   }
 
@@ -523,9 +542,24 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                     <p className="admin-eyebrow" style={{ margin: 0 }}>Contact details</p>
                     {!editingContact ? (
-                      <button type="button" onClick={() => { setEditingContact(true); setContactSaved(false); }} className="admin-btn-secondary" style={{ padding: '6px 12px', fontSize: 11 }}>
-                        <Pencil size={11} strokeWidth={1.8} /> Edit
-                      </button>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        {contactSaved && <span style={{ fontSize: 11, color: 'var(--sage)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={11} /> Saved</span>}
+                        {canFillFromIntake && (
+                          <button
+                            type="button"
+                            onClick={fillFromIntake}
+                            disabled={contactSaving}
+                            className="admin-btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: 11 }}
+                            title="Copy the details this client filled in on their intake form (date of birth, phone, emergency contact, GP) into their record. Only fills blanks — it never overwrites what you've entered."
+                          >
+                            <Download size={11} strokeWidth={1.8} /> {contactSaving ? 'Copying…' : 'Fill from intake'}
+                          </button>
+                        )}
+                        <button type="button" onClick={() => { setEditingContact(true); setContactSaved(false); }} className="admin-btn-secondary" style={{ padding: '6px 12px', fontSize: 11 }}>
+                          <Pencil size={11} strokeWidth={1.8} /> Edit
+                        </button>
+                      </div>
                     ) : (
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         {contactSaved && <span style={{ fontSize: 11, color: 'var(--sage)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={11} /> Saved</span>}

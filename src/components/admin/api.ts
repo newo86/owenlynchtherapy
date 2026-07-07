@@ -1,5 +1,5 @@
 import { startOfWeek, utcToDublinLocal } from '@/lib/dateUtils';
-import type { SessionRow } from './types';
+import type { SessionRow, ClientRow, SubmissionRow } from './types';
 
 // Re-exported from the single source of truth in lib/dateUtils so admin
 // components can keep importing these from './api'. (gcalIsoToDublinLocal is
@@ -113,6 +113,53 @@ export async function downloadAdminPdf(url: string, filename: string): Promise<v
   } catch {
     window.alert('Could not download the PDF — please try again.');
   }
+}
+
+/** Age in whole years from a YYYY-MM-DD date of birth, or null if missing/implausible. */
+export function ageFromDob(dob: string | null | undefined): number | null {
+  if (!dob) return null;
+  const d = new Date(dob);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age >= 0 && age < 120 ? age : null;
+}
+
+/**
+ * Find the intake submission that belongs to a client. Prefers the explicit
+ * client_id link (set when the token was generated for that client); falls
+ * back to matching a self-serve submission by email/name submitted around the
+ * time the client record was created (older intakes predate the link column).
+ */
+export function matchSubmissionForClient(
+  submissions: SubmissionRow[],
+  client: ClientRow,
+): SubmissionRow | undefined {
+  const linked = submissions.find(s => s.client_id && s.client_id === client.id);
+  if (linked) return linked;
+
+  const created = new Date(client.created_at).getTime();
+  const candidates = submissions.filter(s =>
+    !s.client_id
+    && (s.email?.toLowerCase() === client.email.toLowerCase()
+      || s.full_name.toLowerCase() === client.full_name.toLowerCase())
+    && new Date(s.submitted_at).getTime() + 5 * 60_000 >= created
+  );
+  if (candidates.length === 0) return undefined;
+  return candidates
+    .slice()
+    .sort((a, b) =>
+      Math.abs(new Date(a.submitted_at).getTime() - created)
+      - Math.abs(new Date(b.submitted_at).getTime() - created)
+    )[0];
+}
+
+/** Client's date of birth, falling back to the matched intake form when the
+ *  record itself has none recorded yet. */
+export function clientDob(client: ClientRow, submissions: SubmissionRow[]): string | null {
+  return client.date_of_birth ?? matchSubmissionForClient(submissions, client)?.date_of_birth ?? null;
 }
 
 export function initials(name: string): string {

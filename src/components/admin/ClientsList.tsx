@@ -3,11 +3,12 @@
 import { useMemo, useState } from 'react';
 import { Search, UsersRound, CalendarDays } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { formatDate, formatTime } from './api';
-import type { ClientRow, SessionRow } from './types';
+import { formatDate, formatTime, ageFromDob, clientDob } from './api';
+import type { ClientRow, SessionRow, SubmissionRow } from './types';
 
 interface Props {
   clients: ClientRow[];
+  submissions: SubmissionRow[];
   onOpen: (c: ClientRow) => void;
   onNewClient: () => void;
   onScheduleSession?: () => void;
@@ -24,18 +25,7 @@ function upcomingSession(c: ClientRow): SessionRow | null {
   return up[0] ?? null;
 }
 
-function ageFromDob(dob: string | null | undefined): number | null {
-  if (!dob) return null;
-  const d = new Date(dob);
-  if (isNaN(d.getTime())) return null;
-  const now = new Date();
-  let age = now.getFullYear() - d.getFullYear();
-  const m = now.getMonth() - d.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
-  return age >= 0 && age < 120 ? age : null;
-}
-
-export function ClientsList({ clients, onOpen, onNewClient, onScheduleSession }: Props) {
+export function ClientsList({ clients, submissions, onOpen, onNewClient, onScheduleSession }: Props) {
   const [filter, setFilter] = useState<Filter>('all');
   const [q, setQ] = useState('');
 
@@ -108,7 +98,7 @@ export function ClientsList({ clients, onOpen, onNewClient, onScheduleSession }:
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(248px, 1fr))', gap: 12 }}>
           {filtered.map(c => {
             const up = upcomingSession(c);
-            const age = ageFromDob(c.date_of_birth);
+            const age = ageFromDob(clientDob(c, submissions));
             return (
               <button
                 key={c.id}

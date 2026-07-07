@@ -234,6 +234,7 @@ async function sendReceipt(
     subject: `Receipt — Psychotherapy Session with ${PRACTICE.practitionerName}`,
     html: buildReceiptHtml({
       firstName,
+      fullName: client.full_name,
       date: formattedDate,
       time: formattedTime,
       feeEuros,

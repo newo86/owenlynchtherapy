@@ -331,6 +331,7 @@ export function AdminShell() {
               {section === 'clients' && (
                 <ClientsList
                   clients={clients}
+                  submissions={submissions}
                   onOpen={setOpenClient}
                   onNewClient={() => setModalOpen(true)}
                   onScheduleSession={() => { setScheduleInitialIso(undefined); setScheduleOpen(true); }}

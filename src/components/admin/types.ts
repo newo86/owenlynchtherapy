@@ -54,6 +54,15 @@ export interface SubmissionRow {
   email: string | null;
   session_format: string;
   submitted_at: string;
+  // Personal/contact details captured on the intake form. Exposed so the
+  // client record can be populated from what the client already filled in
+  // (age on the cards, "Fill from intake" on the record). Intake collects a
+  // GP name but not a GP phone, so there is no gp_phone here.
+  date_of_birth?: string | null;
+  phone?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  gp_name?: string | null;
 }
 
 export interface CalendarEvent {

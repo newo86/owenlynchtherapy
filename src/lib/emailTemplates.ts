@@ -153,6 +153,8 @@ export function buildReminderHtml(input: ReminderEmailInput): string {
 
 export interface ReceiptEmailInput {
   firstName: string;
+  /** Client's full name — printed on the receipt ("Issued to"). */
+  fullName: string;
   /** e.g. "Thursday, 12 June 2026" */
   date: string;
   /** e.g. "5:00 pm" */
@@ -162,7 +164,7 @@ export interface ReceiptEmailInput {
 }
 
 export function buildReceiptHtml(input: ReceiptEmailInput): string {
-  const { firstName, date, time, feeEuros, sessionFormat } = input;
+  const { firstName, fullName, date, time, feeEuros, sessionFormat } = input;
   const isOnline = sessionFormat === 'online';
   const formatCell = isOnline
     ? `Online &mdash; <a href="${DOXY_URL}" style="color:#4F8A68;text-decoration:none;font-weight:500;">${DOXY_URL.replace("https://", "")}</a>`
@@ -174,6 +176,10 @@ export function buildReceiptHtml(input: ReceiptEmailInput): string {
     <div style="border:1px solid #E0D8CE;border-radius:8px;padding:24px;background:#FAF7F2;margin:0 0 28px;">
       <p style="font-size:11px;color:#2A4D3C;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin:0 0 16px;">Receipt</p>
       <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;">
+        <tr>
+          <td style="padding:7px 0;color:#777;border-bottom:1px solid #F0EAE0;">Issued to</td>
+          <td style="padding:7px 0;text-align:right;border-bottom:1px solid #F0EAE0;font-weight:500;color:#2A4D3C;">${fullName}</td>
+        </tr>
         <tr>
           <td style="padding:7px 0;color:#777;border-bottom:1px solid #F0EAE0;">Date</td>
           <td style="padding:7px 0;text-align:right;border-bottom:1px solid #F0EAE0;">${date} at ${time}</td>
