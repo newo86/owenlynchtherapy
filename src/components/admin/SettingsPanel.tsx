@@ -59,6 +59,9 @@ export function SettingsPanel() {
   const [feedback, setFeedback] = useState<{ kind: 'ok' | 'error'; msg: string } | null>(null);
   const [backupBusy, setBackupBusy] = useState(false);
   const [backupNote, setBackupNote] = useState<{ kind: 'ok' | 'error'; msg: string } | null>(null);
+  const [testEmail, setTestEmail] = useState('');
+  const [testBusy, setTestBusy] = useState(false);
+  const [testNote, setTestNote] = useState<{ kind: 'ok' | 'error'; msg: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -105,6 +108,27 @@ export function SettingsPanel() {
       setFeedback({ kind: 'error', msg: 'Network error — nothing was saved.' });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function sendTestReceipt() {
+    setTestBusy(true);
+    setTestNote(null);
+    try {
+      const res = await adminFetch('/api/admin/receipts/test', {
+        method: 'POST',
+        body: JSON.stringify({ email: testEmail }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setTestNote({ kind: 'error', msg: json.error ?? 'Could not send the test receipt.' });
+        return;
+      }
+      setTestNote({ kind: 'ok', msg: `Test receipt sent to ${testEmail}. Check your inbox (and spam) in a moment.` });
+    } catch {
+      setTestNote({ kind: 'error', msg: 'Network error — no test receipt was sent.' });
+    } finally {
+      setTestBusy(false);
     }
   }
 
@@ -369,6 +393,40 @@ export function SettingsPanel() {
               color: backupNote.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)',
             }}>
               {backupNote.msg}
+            </span>
+          )}
+        </div>
+      </section>
+
+      <section className="admin-card" style={{ padding: 24, marginTop: 8 }}>
+        <h2 className="admin-h2" style={{ marginBottom: 4 }}>Test receipt email</h2>
+        <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '0 0 16px', maxWidth: 560 }}>
+          Sends a sample receipt to any address so you can see exactly what clients get,
+          and confirm receipt emails are working. It uses made-up “Sample Client” details —
+          no real client is involved and nothing is recorded.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <input
+            type="email"
+            value={testEmail}
+            onChange={e => setTestEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="admin-input"
+            style={{ maxWidth: 280 }}
+          />
+          <button
+            className="admin-btn-secondary"
+            onClick={() => void sendTestReceipt()}
+            disabled={testBusy || !testEmail.trim()}
+          >
+            {testBusy ? 'Sending…' : 'Send test receipt'}
+          </button>
+          {testNote && (
+            <span role="status" style={{
+              fontSize: 13,
+              color: testNote.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)',
+            }}>
+              {testNote.msg}
             </span>
           )}
         </div>
