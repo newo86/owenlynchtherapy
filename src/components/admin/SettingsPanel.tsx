@@ -293,10 +293,43 @@ export function SettingsPanel() {
       </section>
 
       <section className="admin-card" style={{ padding: 24 }}>
+        <h2 className="admin-h2" style={{ marginBottom: 4 }}>Taking new clients</h2>
+        <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '0 0 16px', maxWidth: 560 }}>
+          Turn this off when your books are full. The contact page then hides your open
+          slots (they&apos;re kept, not deleted) and leads with the waiting list. Turn it
+          back on to show your slots again.
+        </p>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14, color: 'var(--forest-deep)' }}>
+          <input
+            type="checkbox"
+            checked={s.acceptingNewClients}
+            onChange={e => set('acceptingNewClients', e.target.checked)}
+            style={{ width: 18, height: 18 }}
+          />
+          {s.acceptingNewClients
+            ? 'Currently accepting new clients — slots are shown on the contact page'
+            : 'Not taking new clients — the contact page shows the waiting list'}
+        </label>
+        {!s.acceptingNewClients && (
+          <div style={{ marginTop: 16 }}>
+            <label className="admin-label">Waiting-list message (shown on the contact page)</label>
+            <textarea
+              className="admin-input"
+              rows={3}
+              maxLength={500}
+              value={s.waitlistNotice}
+              onChange={e => set('waitlistNotice', e.target.value)}
+              placeholder="e.g. I'm not taking new clients right now — join the waiting list and I'll be in touch when a space opens up."
+            />
+          </div>
+        )}
+      </section>
+
+      <section className="admin-card" style={{ padding: 24 }}>
         <h2 className="admin-h2" style={{ marginBottom: 4 }}>Available slots</h2>
         <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '0 0 16px', maxWidth: 560 }}>
-          The open slots shown to new clients on the contact page. Remove them all when
-          you&apos;re full — the page then leads with the waiting list instead.
+          The open slots shown to new clients on the contact page (when you&apos;re taking
+          new clients, above). List the times you have free.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {s.availability.map((a, i) => (

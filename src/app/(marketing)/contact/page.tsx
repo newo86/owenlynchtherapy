@@ -12,7 +12,7 @@ import { SITE_URL } from '@/practice.config';
 export const metadata: Metadata = {
   title: { absolute: 'Contact Owen Lynch | Psychotherapist Dublin' },
   description:
-    'Get in touch with Owen Lynch, IAHIP and ICP accredited psychotherapist in Dublin. Currently accepting new clients — limited in-person and online slots.',
+    'Get in touch with Owen Lynch, IAHIP and ICP accredited psychotherapist in Dublin. In-person and online sessions; enquiries and waiting-list sign-ups welcome.',
   alternates: {
     canonical: `${SITE_URL}/contact`,
     languages: {
@@ -67,6 +67,9 @@ export default async function ContactPage() {
     hours: s.note ? `${s.time} · ${s.note}` : s.time,
     format: s.format === 'online' ? 'Online' : 'In Person',
   }));
+  // Only advertise open slots when the practice is actually taking new clients.
+  // Otherwise lead with the waiting list (slots are kept in settings, just hidden).
+  const open = practice.acceptingNewClients && availability.length > 0;
   return (
     <>
       <script
@@ -107,21 +110,21 @@ export default async function ContactPage() {
         <FloatingCircles />
         <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
           <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-            {availability.length > 0 ? 'Accepting new clients' : 'Waiting list open'}
+            {open ? 'Accepting new clients' : 'Waiting list open'}
           </p>
           <h2
             id="availability-heading"
             className="font-heading font-light text-3xl sm:text-4xl text-forest mb-12"
           >
-            Current Availability
+            {open ? 'Current Availability' : 'Not currently taking new clients'}
           </h2>
 
           {/* Two-column: stacked cards left, image right */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
 
-            {/* Left — stacked cards + note */}
+            {/* Left — stacked cards (only when open) + note */}
             <div className="flex flex-col gap-6">
-              {availability.map(({ day, hours, format }, i) => (
+              {open && availability.map(({ day, hours, format }, i) => (
                 <div key={`${day}-${i}`} className="service-card-border rounded-lg">
                   <div
                     className="relative z-[1] bg-white rounded-lg shadow-md p-6"
@@ -139,9 +142,9 @@ export default async function ContactPage() {
                 In-person sessions take place at Insight Matters, 106 Capel Street,
                 Dublin 1. Online sessions are available to clients across Ireland and
                 the UK.{' '}
-                {availability.length > 0
+                {open
                   ? "If none of these times suit, join the waiting list below and I'll be in touch when another space opens up."
-                  : "All of my current times are full — join the waiting list below and I'll be in touch as soon as a space opens up."}
+                  : practice.waitlistNotice}
               </p>
               <WaitlistForm />
             </div>
