@@ -53,6 +53,11 @@ export interface PracticeSettings {
   openingHours: Array<{ dayOfWeek: string; opens: string; closes: string }>;
   /** Open slots shown on /contact. Empty = fully booked (waitlist leads). */
   availability: Array<{ day: string; time: string; format: 'in_person' | 'online'; note: string }>;
+  /** Whether the practice is taking new clients. False → /contact leads with
+   *  the waiting list and hides the open-slot cards. */
+  acceptingNewClients: boolean;
+  /** Message shown on /contact when acceptingNewClients is false. */
+  waitlistNotice: string;
   telehealthUrl: string;
   stripeLinks: { online: string; inPerson: string };
   gtmId: string;
@@ -90,6 +95,8 @@ export const PRACTICE_DEFAULTS: PracticeSettings = {
   priceRange: PRACTICE.priceRange,
   openingHours: PRACTICE.openingHours.map(h => ({ ...h })),
   availability: PRACTICE.availability.map(s => ({ ...s })),
+  acceptingNewClients: PRACTICE.acceptingNewClients,
+  waitlistNotice: PRACTICE.waitlistNotice,
   telehealthUrl: PRACTICE.telehealthUrl,
   stripeLinks: { ...PRACTICE.stripeLinks },
   gtmId: PRACTICE.gtmId,

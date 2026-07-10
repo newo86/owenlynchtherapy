@@ -79,6 +79,8 @@ function validate(s: PracticeSettings): string | null {
     || (a.format !== 'in_person' && a.format !== 'online'))) {
     return 'Each available slot needs a day, a time, and a format.';
   }
+  if (typeof s.acceptingNewClients !== 'boolean') return 'Accepting-new-clients must be on or off.';
+  if (!isStr(s.waitlistNotice) || s.waitlistNotice.length > 500) return 'Waiting-list message must be text under 500 characters.';
   for (const url of [s.telehealthUrl, s.stripeLinks?.online, s.stripeLinks?.inPerson]) {
     if (url && !/^https:\/\//.test(url)) return 'Links must start with https://';
   }
