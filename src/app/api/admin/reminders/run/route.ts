@@ -37,6 +37,12 @@ export const maxDuration = 60;
 // a mass-email physically impossible.
 const MAX_PER_RUN = 25;
 
+// TEMPORARY MANUAL PAUSE — set true to make the daily run send NOTHING.
+// Turned on 13 Jul 2026 while ghost "scheduled" sessions were being cleaned up
+// (they were emailing clients for sessions that weren't happening). Set back to
+// false to resume automatic reminders once the database is tidy.
+const REMINDERS_PAUSED = true;
+
 // Persist the outcome of EVERY run — aborts included — so the dashboard
 // health strip can show "reminders went out this morning" (or that they
 // didn't) without anyone reading server logs. Best-effort: a logging failure
@@ -90,6 +96,18 @@ export async function GET(req: NextRequest) {
   const valid = bearerMatches(req, process.env.CRON_SECRET) || requireAdmin(req) === null;
   if (!valid) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // MANUAL PAUSE — checked first, before anything can select or claim a
+  // reminder. While paused the run does nothing and records why, so the
+  // dashboard shows reminders were deliberately held rather than failing.
+  if (REMINDERS_PAUSED) {
+    console.warn('[reminders-cron] PAUSED: REMINDERS_PAUSED is true — selecting and sending nothing.');
+    await recordRun({
+      outcome: 'aborted:paused',
+      detail: { message: 'Reminders are manually paused in code (REMINDERS_PAUSED).' },
+    });
+    return NextResponse.json({ ok: false, aborted: 'paused', sent: 0 }, { status: 200 });
   }
 
   const now = new Date();
