@@ -3,7 +3,7 @@ import { bearerMatches, requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { sendSessionReminder } from '@/lib/sendSessionReminder';
 import { getAuthorizedClient } from '@/lib/googleOAuth';
-import { reconcileCalendar, buildCalendarPresence, type MappedEvent } from '@/lib/calendarSync';
+import { reconcileCalendar, buildCalendarPresence, partitionByCalendarPresence, type MappedEvent } from '@/lib/calendarSync';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
@@ -204,8 +204,7 @@ export async function GET(req: NextRequest) {
     .select('id, full_name')
     .eq('status', 'active');
   const presence = buildCalendarPresence(calEvents, activeClients ?? []);
-  const confirmed = unique.filter(s => presence.has(s));
-  const notOnCalendar = unique.filter(s => !presence.has(s));
+  const { onCalendar: confirmed, ghosts: notOnCalendar } = partitionByCalendarPresence(unique, presence);
   if (notOnCalendar.length > 0) {
     console.warn(`[reminders-cron] skipped ${notOnCalendar.length} scheduled session(s) with no matching calendar event (ghosts): ${notOnCalendar.map(s => s.id).join(', ')}`);
   }

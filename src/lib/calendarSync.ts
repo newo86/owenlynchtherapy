@@ -82,6 +82,21 @@ export function buildCalendarPresence(events: MappedEvent[], clients: ActiveClie
 }
 
 /**
+ * Split sessions into those confirmed on the calendar and "ghosts" (scheduled
+ * rows with no matching calendar event). The reminder run emails only the
+ * former, so a ghost can never reach a client. Pure and exported so this exact
+ * decision is unit-tested.
+ */
+export function partitionByCalendarPresence<
+  T extends { gcal_event_id?: string | null; client_id: string; session_date: string },
+>(sessions: T[], presence: CalendarPresence): { onCalendar: T[]; ghosts: T[] } {
+  const onCalendar: T[] = [];
+  const ghosts: T[] = [];
+  for (const s of sessions) (presence.has(s) ? onCalendar : ghosts).push(s);
+  return { onCalendar, ghosts };
+}
+
+/**
  * Two-way reconciliation between the practice's Google Calendar and the
  * Supabase `sessions` table, over an arbitrary [timeMin, timeMax] window.
  *
