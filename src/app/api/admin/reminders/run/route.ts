@@ -3,7 +3,7 @@ import { bearerMatches, requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { sendSessionReminder } from '@/lib/sendSessionReminder';
 import { getAuthorizedClient } from '@/lib/googleOAuth';
-import { reconcileCalendar } from '@/lib/calendarSync';
+import { reconcileCalendar, buildCalendarPresence, type MappedEvent } from '@/lib/calendarSync';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
@@ -37,11 +37,11 @@ export const maxDuration = 60;
 // a mass-email physically impossible.
 const MAX_PER_RUN = 25;
 
-// TEMPORARY MANUAL PAUSE — set true to make the daily run send NOTHING.
-// Turned on 13 Jul 2026 while ghost "scheduled" sessions were being cleaned up
-// (they were emailing clients for sessions that weren't happening). Set back to
-// false to resume automatic reminders once the database is tidy.
-const REMINDERS_PAUSED = true;
+// MANUAL PAUSE — set true to make the daily run send NOTHING. Left in place as
+// a one-line kill switch for reminders specifically. Reminders now also refuse
+// to send for any session that isn't on the calendar that day (see below), so
+// the ghost-session emails that prompted the 13 Jul 2026 pause can't recur.
+const REMINDERS_PAUSED = false;
 
 // Persist the outcome of EVERY run — aborts included — so the dashboard
 // health strip can show "reminders went out this morning" (or that they
@@ -144,8 +144,10 @@ export async function GET(req: NextRequest) {
       { status: 200 },
     );
   }
+  let calEvents: MappedEvent[] = [];
   try {
     const outcome = await reconcileCalendar(gcal, startOfToday, endOfToday);
+    calEvents = outcome.events;
     console.log(`[reminders-cron] calendar synced: imported ${outcome.imported}, cancelled ${outcome.cancelled}, conflictsFixed ${outcome.conflictsFixed}`);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -164,7 +166,7 @@ export async function GET(req: NextRequest) {
   // 2. Select TODAY's still-scheduled sessions from now onward (post-sync).
   const { data: sessions, error } = await supabaseAdmin
     .from('sessions')
-    .select('id, session_date, client_id, status')
+    .select('id, session_date, client_id, status, gcal_event_id')
     .eq('status', 'scheduled')
     .gt('session_date', now.toISOString())
     .lte('session_date', endOfToday)
@@ -179,33 +181,55 @@ export async function GET(req: NextRequest) {
   // Collapse duplicate rows (recurring-sync artefact) so a slot with a twin
   // row gets exactly one reminder.
   const seen = new Set<string>();
-  const unique: Array<{ id: string; session_date: string; client_id: string }> = [];
+  const unique: Array<{ id: string; session_date: string; client_id: string; gcal_event_id: string | null }> = [];
   for (const s of sessions ?? []) {
     const key = `${s.client_id}@${s.session_date}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    unique.push({ id: s.id as string, session_date: s.session_date as string, client_id: s.client_id as string });
+    unique.push({
+      id: s.id as string,
+      session_date: s.session_date as string,
+      client_id: s.client_id as string,
+      gcal_event_id: (s.gcal_event_id as string | null) ?? null,
+    });
   }
 
-  // 3. CIRCUIT BREAKER — never blast. If the candidate count is implausibly
+  // 2b. CONFIRM AGAINST THE CALENDAR — never remind for a session that isn't on
+  //     the calendar today. Real sessions always have a calendar event; a row
+  //     with none is a ghost (the cause of the 13 Jul false reminders). We skip
+  //     those, never claim them, and record why. Uses the same presence match
+  //     the sync uses to cancel orphans, so the two can't disagree.
+  const { data: activeClients } = await supabaseAdmin
+    .from('clients')
+    .select('id, full_name')
+    .eq('status', 'active');
+  const presence = buildCalendarPresence(calEvents, activeClients ?? []);
+  const confirmed = unique.filter(s => presence.has(s));
+  const notOnCalendar = unique.filter(s => !presence.has(s));
+  if (notOnCalendar.length > 0) {
+    console.warn(`[reminders-cron] skipped ${notOnCalendar.length} scheduled session(s) with no matching calendar event (ghosts): ${notOnCalendar.map(s => s.id).join(', ')}`);
+  }
+
+  // 3. CIRCUIT BREAKER — never blast. If the confirmed count is implausibly
   //    high, something is wrong; abort and send nothing.
-  if (unique.length > MAX_PER_RUN) {
-    console.error(`[reminders-cron] ABORT: ${unique.length} candidates exceeds cap ${MAX_PER_RUN} — sending nothing.`);
+  if (confirmed.length > MAX_PER_RUN) {
+    console.error(`[reminders-cron] ABORT: ${confirmed.length} candidates exceeds cap ${MAX_PER_RUN} — sending nothing.`);
     await sendAbortAlert(
       'Unusually high number of reminders',
-      `The run found ${unique.length} sessions to remind today, which is above the safety limit of ${MAX_PER_RUN}. That's unexpected, so nothing was sent. Please check today's sessions in the dashboard.`,
+      `The run found ${confirmed.length} sessions to remind today, which is above the safety limit of ${MAX_PER_RUN}. That's unexpected, so nothing was sent. Please check today's sessions in the dashboard.`,
     );
-    await recordRun({ outcome: 'aborted:exceeds-cap', candidates: unique.length });
+    await recordRun({ outcome: 'aborted:exceeds-cap', candidates: confirmed.length });
     return NextResponse.json(
-      { ok: false, aborted: 'exceeds-cap', candidates: unique.length, cap: MAX_PER_RUN, sent: 0 },
+      { ok: false, aborted: 'exceeds-cap', candidates: confirmed.length, cap: MAX_PER_RUN, sent: 0 },
       { status: 200 },
     );
   }
 
-  const results = { sent: 0, skipped: 0, failed: 0 };
-  const details: Array<{ session_id: string; outcome: string }> = [];
+  const results = { sent: 0, skipped: notOnCalendar.length, failed: 0 };
+  const details: Array<{ session_id: string; outcome: string }> =
+    notOnCalendar.map(s => ({ session_id: s.id, outcome: 'skipped: no matching calendar event' }));
 
-  for (const s of unique) {
+  for (const s of confirmed) {
     // A thrown exception (misconfigured Resend key, network fault) must not
     // kill the run for the remaining candidates — and sendSessionReminder
     // releases its claim on failure so the session stays remindable.
@@ -240,7 +264,7 @@ export async function GET(req: NextRequest) {
   // because of exactly that gap.
   if (results.failed > 0) {
     await sendAbortAlert(
-      `${results.failed} of today's ${unique.length} reminder${unique.length === 1 ? '' : 's'} failed to send`,
+      `${results.failed} of today's ${confirmed.length} reminder${confirmed.length === 1 ? '' : 's'} failed to send`,
       `Sent ${results.sent}, skipped ${results.skipped}, failed ${results.failed}. The failed clients did NOT get a reminder — please send those by hand from the dashboard and check the reminder health banner for details.`,
     );
   }
