@@ -27,6 +27,60 @@ export interface ReconcileOutcome {
   conflictsFixed: number;
 }
 
+type ActiveClient = { id: string; full_name: string };
+
+/**
+ * The single active client whose name appears in a calendar event title, or
+ * null when zero or more than one match (ambiguous — never guess). This is the
+ * name-matching used everywhere a free-text calendar event ("Chris client")
+ * has to be tied back to a client record.
+ */
+export function matchOneActiveClient(title: string, clients: ActiveClient[]): string | null {
+  const words = new Set((title ?? '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+  const hits = clients.filter(c => {
+    const parts = c.full_name.trim().split(/\s+/).filter(p => p.length > 2);
+    return parts.some(p => words.has(p.toLowerCase()));
+  });
+  return hits.length === 1 ? hits[0].id : null;
+}
+
+export interface CalendarPresence {
+  /** True when the session corresponds to an event on the calendar in this
+   *  window — by exact/series Google id at the same slot, or (for events not
+   *  linked by id yet) by matched client name at the same wall-clock slot. */
+  has(session: { gcal_event_id?: string | null; client_id: string; session_date: string }): boolean;
+}
+
+/**
+ * Index a window of calendar events so any session can be checked for "is this
+ * actually on the calendar", slot-aware for recurring series. Shared by the
+ * sync (to auto-cancel orphaned rows) and the reminder run (to never email a
+ * client about a session that has no calendar event) so the two can't disagree.
+ */
+export function buildCalendarPresence(events: MappedEvent[], clients: ActiveClient[]): CalendarPresence {
+  const presentIds = new Set(events.map(e => e.id));
+  const presentSeriesSlots = new Set<string>();   // `${seriesId}@${wallclock}`
+  const presentClientSlots = new Set<string>();   // `${clientId}@${wallclock}` (name-matched)
+  for (const e of events) {
+    const slot = utcToDublinLocal(new Date(e.start).toISOString());
+    const seriesId = e.recurringEventId ?? e.id;
+    presentSeriesSlots.add(`${seriesId}@${slot}`);
+    presentSeriesSlots.add(`${e.id}@${slot}`);
+    const cid = matchOneActiveClient(e.title ?? '', clients);
+    if (cid) presentClientSlots.add(`${cid}@${slot}`);
+  }
+  return {
+    has(session) {
+      const gid = session.gcal_event_id ?? null;
+      const slot = utcToDublinLocal(session.session_date);
+      if (gid && presentIds.has(gid)) return true;                  // exact instance
+      if (gid && presentSeriesSlots.has(`${gid}@${slot}`)) return true; // series occurrence
+      if (presentClientSlots.has(`${session.client_id}@${slot}`)) return true; // same client+time
+      return false;
+    },
+  };
+}
+
 /**
  * Two-way reconciliation between the practice's Google Calendar and the
  * Supabase `sessions` table, over an arbitrary [timeMin, timeMax] window.
@@ -187,33 +241,14 @@ export async function reconcileCalendar(
   }
 
   // 3. Auto-cancel calendar-linked sessions whose Google event is gone.
-  //    Slot-aware so a single deleted occurrence of a recurring series cancels
-  //    only that session, and a series-id-tracked session isn't wrongly nuked.
-  const presentIds = new Set(events.map(e => e.id));
-  const presentSeriesSlots = new Set<string>();   // `${seriesId}@${wallclock}`
-  const presentClientSlots = new Set<string>();   // `${clientId}@${wallclock}` (name-matched)
-
+  //    Slot-aware (via buildCalendarPresence) so a single deleted occurrence of
+  //    a recurring series cancels only that session, and a series-id-tracked
+  //    session isn't wrongly nuked.
   const { data: activeClientsForCancel } = await supabaseAdmin
     .from('clients')
     .select('id, full_name')
     .eq('status', 'active');
-  const matchOne = (title: string): string | null => {
-    const words = new Set((title ?? '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
-    const hits = (activeClientsForCancel ?? []).filter(c => {
-      const parts = c.full_name.trim().split(/\s+/).filter((p: string) => p.length > 2);
-      return parts.some((p: string) => words.has(p.toLowerCase()));
-    });
-    return hits.length === 1 ? hits[0].id : null;
-  };
-
-  for (const e of events) {
-    const slot = utcToDublinLocal(new Date(e.start).toISOString());
-    const seriesId = e.recurringEventId ?? e.id;
-    presentSeriesSlots.add(`${seriesId}@${slot}`);
-    presentSeriesSlots.add(`${e.id}@${slot}`);
-    const cid = matchOne(e.title ?? '');
-    if (cid) presentClientSlots.add(`${cid}@${slot}`);
-  }
+  const presence = buildCalendarPresence(events, activeClientsForCancel ?? []);
 
   // Only ever auto-cancel still-SCHEDULED sessions. Attended / no-show rows are
   // historical records — deleting their old Google event must never retro-flip
@@ -227,14 +262,11 @@ export async function reconcileCalendar(
     .eq('status', 'scheduled');
 
   const orphaned = (trackedSessions ?? [])
-    .filter(s => {
-      const gid = s.gcal_event_id as string;
-      const slot = utcToDublinLocal(s.session_date as string);
-      if (presentIds.has(gid)) return false;                       // exact instance still there
-      if (presentSeriesSlots.has(`${gid}@${slot}`)) return false;  // series occurrence still there
-      if (presentClientSlots.has(`${s.client_id}@${slot}`)) return false; // same client+time still there
-      return true;                                                 // genuinely gone from Google
-    })
+    .filter(s => !presence.has({
+      gcal_event_id: s.gcal_event_id as string,
+      client_id: s.client_id as string,
+      session_date: s.session_date as string,
+    }))
     .map(s => s.id);
 
   if (orphaned.length > 0) {
