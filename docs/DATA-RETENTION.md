@@ -52,7 +52,10 @@ what is retained, what is purged automatically, and the items still open.
 ## Waiting list (public signup)
 
 - The contact page offers a waiting-list form (for when no open slot suits).
-  Stored: **name, email, optional phone only** — no health data. Explicit
+  Stored: **name, email, optional phone, and an optional free-text note**
+  ("what brings you to therapy"). The note is optional and may contain
+  health / special-category data; the consent wording covers it explicitly
+  ("anything I choose to share about what brings me to therapy"). Explicit
   consent is required (the API refuses without it) and the exact consent
   wording is stored verbatim with each entry (`waitlist.consent_text`,
   `consent_at`). One entry per email (DB unique).
@@ -63,7 +66,7 @@ what is retained, what is purged automatically, and the items still open.
   asks to be removed, or the entry goes stale.
 - **Retention:** review the list periodically and remove entries older
   than ~12 months (a future maintenance cron can automate this).
-- Migration: `supabase/migrations/waitlist.sql`.
+- Migration: `supabase/migrations/waitlist.sql` (+ `waitlist_reason.sql` adds the optional note).
 
 ## Right to erasure (Art 17)
 

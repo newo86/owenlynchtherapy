@@ -3,16 +3,18 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 import { rateLimit } from '@/lib/rateLimit';
 import { rateLimitDurable } from '@/lib/rateLimitDurable';
-import { escapeHtml } from '@/lib/sanitise';
+import { escapeHtml, sanitiseInput } from '@/lib/sanitise';
 import { WAITLIST_CONSENT_TEXT } from '@/lib/waitlistConsent';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 import { SITE_URL } from '@/practice.config';
 
 // Public waiting-list signup (in-person sessions currently full).
 //
-// GDPR: minimal data (name, email, optional phone), explicit consent required
-// (the form's checkbox — its exact wording is stored alongside the entry),
-// and entries are erasable from the dashboard. No health data is collected.
+// GDPR: name, email, optional phone, and an OPTIONAL free-text note ("what
+// brings you to therapy") which can include health / special-category data.
+// Explicit consent is required (the form's checkbox — its exact wording, which
+// now covers the note, is stored alongside the entry) and entries are erasable
+// from the dashboard.
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Too many requests — please try again later.' }, { status: 429 });
   }
 
-  let body: { full_name?: string; email?: string; phone?: string; consent?: boolean; website?: string };
+  let body: { full_name?: string; email?: string; phone?: string; reason?: string; consent?: boolean; website?: string };
   try {
     body = await req.json();
   } catch {
@@ -38,6 +40,8 @@ export async function POST(req: NextRequest) {
   const fullName = (body.full_name ?? '').trim().slice(0, 120);
   const email = (body.email ?? '').trim().slice(0, 254);
   const phone = (body.phone ?? '').trim().slice(0, 40);
+  // Optional free text — sanitise and cap. Empty stays null.
+  const reason = sanitiseInput((body.reason ?? '').trim()).slice(0, 1000);
 
   if (!fullName || !email) {
     return NextResponse.json({ error: 'Please fill in your name and email.' }, { status: 400 });
@@ -55,6 +59,7 @@ export async function POST(req: NextRequest) {
     full_name: fullName,
     email,
     phone: phone || null,
+    reason: reason || null,
     consent_text: WAITLIST_CONSENT_TEXT,
   });
 
@@ -76,6 +81,7 @@ export async function POST(req: NextRequest) {
       html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
         <p><strong>${escapeHtml(fullName)}</strong> joined the waiting list.</p>
         <p>Email: ${escapeHtml(email)}${phone ? `<br/>Phone: ${escapeHtml(phone)}` : ''}</p>
+        ${reason ? `<p style="margin-top:12px"><strong>What brings them to therapy:</strong><br/>${escapeHtml(reason).replace(/\n/g, '<br/>')}</p>` : ''}
         <p>View the list in the <a href="${SITE_URL}/admin/intake">dashboard</a> → Waitlist.</p>
       </div>`,
     });

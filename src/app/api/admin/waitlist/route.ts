@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('waitlist')
-    .select('id, full_name, email, phone, status, created_at, contacted_at')
+    .select('id, full_name, email, phone, reason, status, created_at, contacted_at')
     .order('created_at', { ascending: true });
 
   if (error) {
