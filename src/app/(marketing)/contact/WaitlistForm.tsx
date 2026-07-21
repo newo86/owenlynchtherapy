@@ -107,11 +107,11 @@ export default function WaitlistForm() {
           name="reason"
           rows={4}
           maxLength={1000}
-          placeholder="A sentence or two about what you'd like to work on — only if you'd like to share. You can always tell me more when we speak."
+          placeholder="A sentence or two about what you'd like to work on, only if you'd like to share. You can always tell me more when we speak."
           className={`${inputClass} resize-y`}
         />
         <p className="mt-1.5 text-xs text-gray-400 leading-[1.6]">
-          Entirely optional. Share only what you&apos;re comfortable with — you can leave this blank.
+          Entirely optional. Share only what you&apos;re comfortable with, and feel free to leave this blank.
         </p>
       </div>
 
