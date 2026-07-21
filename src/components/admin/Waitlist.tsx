@@ -77,6 +77,18 @@ export function Waitlist({ waitlist, onReload }: Props) {
                     <Avatar name={w.full_name} size={32} />
                     <div className="pii" style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{w.full_name}</div>
                   </div>
+                  {w.reason && (
+                    <div
+                      className="pii"
+                      style={{
+                        fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 6,
+                        whiteSpace: 'pre-wrap', maxWidth: 340, lineHeight: 1.5,
+                        paddingLeft: 42,
+                      }}
+                    >
+                      &ldquo;{w.reason}&rdquo;
+                    </div>
+                  )}
                 </td>
                 <td>
                   <div className="pii" style={{ fontSize: 12 }}>{w.email}</div>

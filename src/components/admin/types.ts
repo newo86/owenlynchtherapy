@@ -107,6 +107,8 @@ export interface WaitlistRow {
   full_name: string;
   email: string;
   phone: string | null;
+  /** Optional free text: what the person is looking to work on. May be empty. */
+  reason: string | null;
   status: 'waiting' | 'contacted' | string;
   created_at: string;
   contacted_at: string | null;

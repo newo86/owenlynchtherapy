@@ -4,4 +4,4 @@ import { PRACTICE } from '@/practice.config';
 // If this wording changes, entries keep the text that was live when they
 // consented.
 export const WAITLIST_CONSENT_TEXT =
-  `I consent to ${PRACTICE.businessName} storing my name and contact details so I can be contacted when a session space becomes available. I can ask for my details to be removed at any time by emailing ${PRACTICE.email}.`;
+  `I consent to ${PRACTICE.businessName} storing my name, contact details, and anything I choose to share about what brings me to therapy, so I can be contacted when a session space becomes available. I can ask for my details to be removed at any time by emailing ${PRACTICE.email}.`;
