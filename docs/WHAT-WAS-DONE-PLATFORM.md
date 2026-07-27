@@ -13,7 +13,7 @@ today.
 
 **1. One "fill in the blanks" file.**
 Everything that makes the site *yours* — your name, IAHIP number, phone,
-address, fees, hours, doxy.me link, Stripe links — used to be scattered
+address, fees, hours, video-platform settings, Stripe links — used to be scattered
 through dozens of files. It now lives in one place
 (`src/practice.config.ts`). Receipts, emails, the footer and Google's
 business listing all read from it. For a new therapist, most of the

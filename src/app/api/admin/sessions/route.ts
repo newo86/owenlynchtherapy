@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { createCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
-import { DOXY_URL, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
+import { ONLINE_LOCATION, ONLINE_JOIN_LINE, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
   const location = session_format === 'in_person'
     ? INSIGHT_MATTERS_ADDRESS
-    : DOXY_URL;
+    : ONLINE_LOCATION;
 
   // isoDates = wall-clock Dublin strings (used as-is for Google Calendar).
   // utcDates  = UTC ISO strings for Supabase timestamptz storage.
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         description: [
           clientRow?.full_name ? `Client: ${clientRow.full_name}` : '',
           `Format: ${session_format === 'in_person' ? 'In Person' : 'Online'}`,
-          session_format === 'online' ? `Join: ${DOXY_URL}` : '',
+          session_format === 'online' ? ONLINE_JOIN_LINE : '',
           `Fee: €${Math.round(Number(fee) / 100)}`,
           cadenceLabel,
         ].filter(Boolean).join('\n'),

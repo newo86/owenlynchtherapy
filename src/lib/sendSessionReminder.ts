@@ -22,7 +22,7 @@ export interface ReminderOptions {
 /**
  * Send a session reminder email to the client. The content adapts to the
  * session's billing category:
- *  - online     → doxy.me join link + Stripe payment link
+ *  - online     → video link note (calendar invite) + Stripe payment link
  *  - in person  → Insight Matters address + Stripe payment link
  *  - low cost   → Insight Matters address only, payment is cash on the day
  *

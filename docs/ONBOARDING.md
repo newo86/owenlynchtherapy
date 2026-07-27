@@ -21,7 +21,7 @@ facts are edited on the dashboard's **Settings** page, no developer needed.
 - Accrediting body + registration number (prints on legal receipts — verify it)
 - Contact email, phone, venue/address (or online-only), service area
 - Fees (online / in person / low cost / room cost), session length, hours
-- Telehealth room link (e.g. doxy.me), Instagram / directory profiles
+- Video platform name + optional fixed room link (e.g. Google Meet, or a doxy.me/Whereby room), Instagram / directory profiles
 
 **Assets & content** (bespoke per practice, not config):
 

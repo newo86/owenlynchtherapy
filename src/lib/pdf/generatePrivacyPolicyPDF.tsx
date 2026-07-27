@@ -91,8 +91,8 @@ export async function generatePrivacyPolicyPDF(): Promise<Buffer> {
         to Google&rsquo;s privacy policy
       </Bullet>
       <Bullet>
-        Online sessions are conducted via doxy.me, a HIPAA-compliant healthcare
-        video platform
+        Online sessions are conducted via {PRACTICE.telehealthPlatform}, an
+        encrypted video service, subject to the provider&rsquo;s privacy terms
       </Bullet>
       <Bullet>
         Payment processing is handled by Stripe, which is PCI DSS compliant.

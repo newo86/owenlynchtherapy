@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { updateCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso, utcToDublinLocal } from '@/lib/dateUtils';
-import { sessionKind, DOXY_URL, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
+import { sessionKind, ONLINE_LOCATION, ONLINE_JOIN_LINE, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     sessionPatch.session_format = body.session_format;
     sessionPatch.location = body.session_format === 'in_person'
       ? INSIGHT_MATTERS_ADDRESS
-      : DOXY_URL;
+      : ONLINE_LOCATION;
   }
   // Payment changes go through the same bookkeeping as the mark-paid route —
   // this path used to bypass the payments ledger entirely, so payments
@@ -182,13 +182,13 @@ export async function POST(req: NextRequest) {
     const format = (sessionPatch.session_format ?? existing.session_format) as string;
     const location = format === 'in_person'
       ? INSIGHT_MATTERS_ADDRESS
-      : DOXY_URL;
+      : ONLINE_LOCATION;
     const clientName = (clientPatch.full_name ?? body.client_name ?? 'Client') as string;
     const startIso = newWallClock ?? utcToDublinLocal(existing.session_date);
     try {
       await updateCalendarEvent(existing.gcal_event_id, {
         summary: `Session — ${clientName}`,
-        description: format === 'online' ? `Join: ${DOXY_URL}` : undefined,
+        description: format === 'online' ? ONLINE_JOIN_LINE : undefined,
         location,
         startIso,
         durationMinutes: 50,

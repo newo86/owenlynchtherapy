@@ -366,8 +366,8 @@ export function SettingsPanel() {
       </section>
 
       <Card title="Links & integrations" sub="Public links only — API keys and secrets stay in Vercel, never here.">
-        <Field label="Video session link" value={s.telehealthUrl} onChange={v => set('telehealthUrl', v)}
-          placeholder="https://doxy.me/…" hint="Included in online-session reminder emails." />
+        <Field label="Fixed video room link (optional)" value={s.telehealthUrl} onChange={v => set('telehealthUrl', v)}
+          placeholder="https://… (leave blank for Google Meet)" hint="Only if you use one permanent room link. Leave blank when each session gets its own link (e.g. Google Meet via the calendar invite)." />
         <Field label="Stripe payment link — online" value={s.stripeLinks.online}
           onChange={v => setIn('stripeLinks', 'online', v)} placeholder="https://buy.stripe.com/…" />
         <Field label="Stripe payment link — in person" value={s.stripeLinks.inPerson}

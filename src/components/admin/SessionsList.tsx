@@ -301,13 +301,13 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                 <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date)}</td>
                 <td>
                   {FORMAT_LABELS[s.session_format] ?? s.session_format}
-                  {s.session_format === 'online' && (
+                  {s.session_format === 'online' && PRACTICE.telehealthUrl && (
                     <a
                       href={PRACTICE.telehealthUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ display: 'block', fontSize: 11, color: 'var(--sage)', textDecoration: 'underline', textUnderlineOffset: 2, marginTop: 2 }}
-                    >doxy.me ↗</a>
+                    >Open video room ↗</a>
                   )}
                 </td>
                 <td>{displayFee(s.fee)}</td>

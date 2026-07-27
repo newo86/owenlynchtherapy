@@ -19,7 +19,7 @@ export function SendReminderModal({ session, client, onClose }: Props) {
   const contents = client.is_low_cost
     ? 'Includes the Insight Matters address and a note that payment is cash on the day — no payment link.'
     : session.session_format === 'online'
-      ? 'Includes the doxy.me room link and the Stripe payment link for online sessions.'
+      ? 'Reminds them the video link is in their calendar invite, plus the Stripe payment link for online sessions.'
       : 'Includes the Insight Matters address and the Stripe payment link for in-person sessions.';
   const canSend = session.status === 'scheduled';
   const [sending, setSending] = useState(false);

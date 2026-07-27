@@ -747,14 +747,14 @@ function SessionRow({
             <div className="admin-session-name" style={onEdit ? { textDecoration: 'underline', textDecorationColor: 'rgba(42,77,60,0.3)', textUnderlineOffset: 3 } : undefined}>{client.full_name}</div>
           </button>
           <div className="admin-session-meta">{displayFee(session.fee)} · {PRACTICE.sessionMinutes} min</div>
-          {session.session_format === 'online' && (
+          {session.session_format === 'online' && PRACTICE.telehealthUrl && (
             <a
               href={PRACTICE.telehealthUrl}
               target="_blank"
               rel="noopener noreferrer"
               style={{ fontSize: 11, color: 'var(--sage)', textDecoration: 'underline', textUnderlineOffset: 2, display: 'inline-block', marginTop: 2 }}
             >
-              doxy.me room ↗
+              Open video room ↗
             </a>
           )}
         </div>
