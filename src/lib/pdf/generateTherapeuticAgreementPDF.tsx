@@ -2,7 +2,7 @@ import { renderToBuffer, View, Text } from '@react-pdf/renderer';
 import { BrandedDoc, H1, P, Bullet, HighlightBox, HighlightP, pdfStyles } from './PdfLayout';
 import { loadHorizontalLogoPng } from './loadLogo';
 import { INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
-import { SITE_URL } from '@/practice.config';
+import { PRACTICE, SITE_URL } from '@/practice.config';
 
 const SITE_HOST = SITE_URL.replace('https://', '');
 
@@ -55,8 +55,8 @@ export async function generateTherapeuticAgreementPDF(): Promise<Buffer> {
       <P>Sessions are 50 minutes in duration. They take place:</P>
       <Bullet>In person at: {INSIGHT_MATTERS_ADDRESS}</Bullet>
       <Bullet>
-        Online via doxy.me, a secure and confidential video platform designed
-        for healthcare professionals
+        Online via {PRACTICE.telehealthPlatform}, a secure, encrypted video
+        service
       </Bullet>
       <View style={{ height: 6 }} />
       <P>

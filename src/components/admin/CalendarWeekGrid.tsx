@@ -322,14 +322,14 @@ export function CalendarWeekGrid({
                     })()}
                     <div className="admin-event-time">{e.time}</div>
                     <div className="admin-event-name">{e.label}</div>
-                    {e.format === 'online' && (
+                    {e.format === 'online' && PRACTICE.telehealthUrl && (
                       <a
                         href={PRACTICE.telehealthUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={ev => ev.stopPropagation()}
                         style={{ fontSize: 9, opacity: 0.9, display: 'block', marginTop: 2, color: 'inherit', textDecoration: 'underline', textUnderlineOffset: 1 }}
-                      >↗ doxy.me</a>
+                      >↗ room</a>
                     )}
 
                     {flash && flash.id === cardId && (

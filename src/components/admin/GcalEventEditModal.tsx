@@ -13,7 +13,8 @@ interface Props {
 }
 
 function extractInitialFormat(location?: string): 'in_person' | 'online' {
-  return location?.toLowerCase().includes('doxy') ? 'online' : 'in_person';
+  // 'doxy' kept for legacy events; 'meet'/'online' cover Google Meet events.
+  return /doxy|meet|online/.test(location?.toLowerCase() ?? '') ? 'online' : 'in_person';
 }
 
 export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: Props) {

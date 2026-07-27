@@ -113,8 +113,14 @@ export const PRACTICE = {
   // ── Integrations (public, non-secret URLs/IDs) ───────────────────────
   /** Canonical site origin — MUST match the primary domain set in Vercel. */
   siteUrl: 'https://owenlynchtherapy.com',
-  /** Telehealth room link included in online-session emails. */
-  telehealthUrl: 'https://doxy.me/owenlynchtherapy',
+  /** Name of the video platform used for online sessions. Shown in emails,
+   *  receipts and the therapeutic-agreement / privacy PDFs. */
+  telehealthPlatform: 'Google Meet',
+  /** Optional FIXED video-room link (e.g. a personal doxy.me / Whereby room).
+   *  Leave EMPTY when each session gets its own link — e.g. a Google Meet link
+   *  created on the calendar event and shared by inviting the client. When
+   *  empty, emails reference the calendar invite instead of a fixed link. */
+  telehealthUrl: '',
   /** Stripe payment links (Stripe → Payment links). Per session type. */
   stripeLinks: {
     online: 'https://buy.stripe.com/8x27sN4Yx3y70ha1A17g40p',

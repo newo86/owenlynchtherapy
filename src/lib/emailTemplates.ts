@@ -7,7 +7,19 @@
 // emails and calendar events use ITS details, never Owen's.
 import { PRACTICE } from '@/practice.config';
 
-export const DOXY_URL = PRACTICE.telehealthUrl;
+/** Video platform name (e.g. "Google Meet") and optional fixed room URL.
+ *  TELEHEALTH_URL is '' when each session gets its own link (shared via the
+ *  calendar invite) rather than a single fixed room. */
+export const TELEHEALTH_PLATFORM: string = PRACTICE.telehealthPlatform;
+export const TELEHEALTH_URL: string = PRACTICE.telehealthUrl;
+/** What to put in an online session's calendar "location" field. */
+export const ONLINE_LOCATION = PRACTICE.telehealthUrl || `Online (${PRACTICE.telehealthPlatform})`;
+/** The online line for a calendar event's description: a fixed join link when
+ *  there is one, otherwise just names the platform (the per-session link is
+ *  shared by inviting the client to the event). */
+export const ONLINE_JOIN_LINE = PRACTICE.telehealthUrl
+  ? `Join: ${PRACTICE.telehealthUrl}`
+  : `Online session (${PRACTICE.telehealthPlatform})`;
 export const INSIGHT_MATTERS_ADDRESS =
   `${PRACTICE.address.venue}, ${PRACTICE.address.streetAddress}, ${PRACTICE.address.addressLocality}, ${PRACTICE.address.postalCode}`;
 /** From-address for all outgoing mail (Resend-verified domain). */
@@ -92,14 +104,16 @@ export interface ReminderEmailInput {
 export function buildReminderHtml(input: ReminderEmailInput): string {
   const { firstName, time, dayPhrase, kind, sessionFormat, paymentUrl, alreadyPaid, optOutUrl } = input;
 
+  const onlineJoin = TELEHEALTH_URL
+    ? `<p style="margin:0 0 8px;font-size:14px;color:#555;line-height:1.7;">Here is the link to join your online session:</p>
+      <a href="${TELEHEALTH_URL}" style="color:#4F8A68;font-weight:600;font-size:14px;text-decoration:none;">${TELEHEALTH_URL}</a>
+      <p style="margin:10px 0 0;font-size:13px;color:#777;">Please join a few minutes early so we can start on time.</p>`
+    : `<p style="margin:0;font-size:14px;color:#555;line-height:1.7;">This is an online session on ${TELEHEALTH_PLATFORM}. You&rsquo;ll find the video link in your Google Calendar invitation, sent to your email. Please join a few minutes early so we can start on time.</p>`;
+
   const joinBlock = sessionFormat === 'online' ? `
     <div style="background:#EEF6F0;border:1px solid #C3DDD0;border-radius:8px;padding:18px 20px;margin:0 0 24px;">
       <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#2A4D3C;letter-spacing:1px;text-transform:uppercase;">Join your online session</p>
-      <p style="margin:0 0 8px;font-size:14px;color:#555;line-height:1.7;">
-        Here is the link to join your online session:
-      </p>
-      <a href="${DOXY_URL}" style="color:#4F8A68;font-weight:600;font-size:14px;text-decoration:none;">${DOXY_URL}</a>
-      <p style="margin:10px 0 0;font-size:13px;color:#777;">Please join a few minutes early so we can start on time.</p>
+      ${onlineJoin}
     </div>` : `
     <div style="background:#EEF6F0;border:1px solid #C3DDD0;border-radius:8px;padding:18px 20px;margin:0 0 24px;">
       <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#2A4D3C;letter-spacing:1px;text-transform:uppercase;">Where to find me</p>
@@ -167,7 +181,9 @@ export function buildReceiptHtml(input: ReceiptEmailInput): string {
   const { firstName, fullName, date, time, feeEuros, sessionFormat } = input;
   const isOnline = sessionFormat === 'online';
   const formatCell = isOnline
-    ? `Online &mdash; <a href="${DOXY_URL}" style="color:#4F8A68;text-decoration:none;font-weight:500;">${DOXY_URL.replace("https://", "")}</a>`
+    ? (TELEHEALTH_URL
+        ? `Online &mdash; <a href="${TELEHEALTH_URL}" style="color:#4F8A68;text-decoration:none;font-weight:500;">${TELEHEALTH_URL.replace("https://", "")}</a>`
+        : `Online (${TELEHEALTH_PLATFORM})`)
     : `In Person &mdash; ${PRACTICE.address.streetAddress}, ${PRACTICE.address.addressLocality}`;
 
   return emailShell(`
@@ -202,10 +218,10 @@ export function buildReceiptHtml(input: ReceiptEmailInput): string {
         </tr>
       </table>
     </div>
-    ${isOnline ? `<div style="background:#EEF6F0;border:1px solid #C3DDD0;border-radius:8px;padding:18px 20px;margin:0 0 24px;">
+    ${isOnline && TELEHEALTH_URL ? `<div style="background:#EEF6F0;border:1px solid #C3DDD0;border-radius:8px;padding:18px 20px;margin:0 0 24px;">
       <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#2A4D3C;letter-spacing:1px;text-transform:uppercase;">Your online waiting room</p>
       <p style="margin:0;font-size:13px;color:#555;line-height:1.6;">For future online sessions, join via your dedicated waiting room:<br>
-      <a href="${DOXY_URL}" style="color:#4F8A68;font-weight:600;text-decoration:none;">${DOXY_URL}</a></p>
+      <a href="${TELEHEALTH_URL}" style="color:#4F8A68;font-weight:600;text-decoration:none;">${TELEHEALTH_URL}</a></p>
     </div>` : ''}
     <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 12px;">
       If you have any questions, please email
