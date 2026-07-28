@@ -102,7 +102,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/book-online{/}?',
-        destination: '/services', // Change to /contact if you prefer them to go straight to the form
+        destination: '/contact', // Lands on the contact page (waiting-list form lives there)
         permanent: true,
       },
       {
