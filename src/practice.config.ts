@@ -130,6 +130,11 @@ export const PRACTICE = {
   gtmId: 'GTM-PT5KPMD3',
   /** Google Search Console verification token, or '' if none. */
   googleSiteVerification: 'INmCeOlMzKRQuiKu2-9w4Vq6-JypCzLXvOb0Mjfj2xY',
+  /** Cloudflare Turnstile SITE key (public — safe to commit; it appears in the
+   *  page HTML). Its matching SECRET key must be set as TURNSTILE_SECRET_KEY in
+   *  the Vercel env — never commit the secret. Both come from the SAME widget in
+   *  the Cloudflare dashboard and must be a matching pair. Empty = no CAPTCHA. */
+  turnstileSiteKey: '0x4AAAAAADXKAoLVtg90PRAC',
 
   /** Public profile / social links (schema.org sameAs + footer). */
   socials: {

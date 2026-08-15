@@ -7,7 +7,7 @@ import WaitlistForm from './WaitlistForm';
 import PageHeroCircles from '@/components/sections/PageHeroCircles';
 import FloatingCircles from '@/components/ui/floating-circles';
 import { getPractice } from '@/lib/practiceSettings';
-import { SITE_URL } from '@/practice.config';
+import { PRACTICE, SITE_URL } from '@/practice.config';
 
 export const metadata: Metadata = {
   title: { absolute: 'Contact Owen Lynch | Psychotherapist Dublin' },
@@ -224,7 +224,7 @@ export default async function ContactPage() {
 
           {/* Form column — client island so the page itself stays static */}
           <Suspense fallback={null}>
-            <ContactForm turnstileSiteKey={process.env.TURNSTILE_SITE_KEY} />
+            <ContactForm turnstileSiteKey={process.env.TURNSTILE_SITE_KEY || PRACTICE.turnstileSiteKey} />
           </Suspense>
         </div>
       </section>
