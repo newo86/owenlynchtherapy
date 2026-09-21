@@ -52,9 +52,12 @@ docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
 - **Ship flow:** `/check` → (`/preview` if UI is visible) → `/ship`. Never
   `sleep` blindly for CI — poll. After every squash merge, restart the working
   branch from origin/main before committing again.
-- **UI changes:** show the user a `/preview` screenshot BEFORE shipping.
-  History: 6 commits of hero-typography thrash in one day, 3 rounds on one
-  dashboard banner — all avoidable with one screenshot first.
+- **UI changes:** ALWAYS run the `impeccable` skill on any visible UI work
+  (new pages, redesigns, component tweaks, empty/error states, forms, layout
+  changes) BEFORE `/preview` — no exceptions, no need to be asked. Then show
+  the user a `/preview` screenshot before `/ship`. History: 6 commits of
+  hero-typography thrash in one day, 3 rounds on one dashboard banner — all
+  avoidable with impeccable + one screenshot first.
 - **Database:** merging a PR never touches Supabase. Every schema change goes
   through `/db-migrate`; SQL must be idempotent and existence-guarded (a
   single 42P01 aborts the whole SQL-editor batch). Production can lag the
