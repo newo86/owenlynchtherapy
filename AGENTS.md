@@ -85,9 +85,19 @@ Full detail in **docs/OPERATIONS.md**. The must-knows:
 - **Stripe webhook** points at the apex `https://owenlynchtherapy.com/api/webhooks/stripe`
   (apex is the primary domain since 2 Jul 2026; www 308-redirects to it; Stripe
   won't follow redirects, so never point it at a redirecting host).
-- **Known latent bugs (unfixed):** (1) recurring-session time changes in Google
-  don't reliably sync to the dashboard (conflict-resolver in calendarSync.ts is
-  instance-id only); (2) deleting a client can leave ghost GCal events
+- **Calendar → client matching is strict (Sep 2026):** an event is only tied to
+  a client if its title has their FULL name ("Session — Jane Durnin") or a name
+  part plus "session"/"client" ("Philip client"). A bare first name ("Walk
+  Kate") never matches, and all-day events are never sessions — loose matching
+  once turned personal events into sessions that emailed clients. One matcher
+  (`matchOneActiveClient`) serves import, auto-cancel and reminder confirmation.
+- **Moved recurring occurrences** now move the session (matched on Google's
+  `originalStartTime`), keeping its format/fee/payment, instead of cancel +
+  blank re-import.
+- **Signing keys:** admin cookies and opt-out links are signed with keys derived
+  from a server-only secret (`src/lib/signingKeys.ts`), never the admin
+  password — so the password alone can't forge a session past 2FA.
+- **Known latent bug (unfixed):** deleting a client can leave ghost GCal events
   (deleteCalendarEvent 400 on recurring series).
 - The build has no network dependencies and must pass fully everywhere
   (the old "fails at /articles page-data" sandbox quirk died with Sanity).

@@ -50,6 +50,32 @@ describe('matchOneActiveClient', () => {
     ];
     expect(matchOneActiveClient('John', twoJohns)).toBeNull();
   });
+  it('NEVER treats a personal event naming a client as their session', () => {
+    // The wrong-person bug: a bare first name used to be enough, so these
+    // became scheduled sessions and the client was emailed a reminder.
+    const people = [
+      { id: 'c-kate', full_name: 'Kate Byrne' },
+      { id: 'c-claire', full_name: 'Claire Walsh' },
+      { id: 'c-ann', full_name: 'Ann Day' },
+    ];
+    expect(matchOneActiveClient('Walk Kate', people)).toBeNull();
+    expect(matchOneActiveClient('Claire coffee', people)).toBeNull();
+    expect(matchOneActiveClient('Day off', people)).toBeNull();
+    expect(matchOneActiveClient('Kate', people)).toBeNull();
+  });
+  it('still matches first name + "session"/"client"', () => {
+    const people = [{ id: 'c-kate', full_name: 'Kate Byrne' }];
+    expect(matchOneActiveClient('Kate session', people)).toBe('c-kate');
+    expect(matchOneActiveClient('Client - Kate', people)).toBe('c-kate');
+  });
+  it('prefers a full-name hit when two clients share a first name', () => {
+    const twoJohns = [
+      { id: 'j1', full_name: 'John Smith' },
+      { id: 'j2', full_name: 'John Murphy' },
+    ];
+    expect(matchOneActiveClient('Session — John Murphy', twoJohns)).toBe('j2');
+    expect(matchOneActiveClient('John session', twoJohns)).toBeNull(); // still ambiguous
+  });
   it('ignores name fragments of 2 characters or fewer', () => {
     // "Ed Li" has no part longer than 2 chars, so a title can never match it —
     // guarding against spurious matches on tiny tokens.
@@ -98,6 +124,14 @@ describe('buildCalendarPresence.has', () => {
     );
     expect(winter.has({ gcal_event_id: null, client_id: 'c-kieran', session_date: '2026-01-15T17:00:00Z' })).toBe(true);
     expect(winter.has({ gcal_event_id: null, client_id: 'c-kieran', session_date: '2026-01-15T16:00:00Z' })).toBe(false);
+  });
+
+  it('never confirms a session from an all-day event', () => {
+    const allDay = buildCalendarPresence(
+      [{ id: 'ad1', start: '2026-07-20', end: '2026-07-21', title: 'Session — Jane Durnin', allDay: true }],
+      clients,
+    );
+    expect(allDay.has({ gcal_event_id: null, client_id: 'c-jane', session_date: '2026-07-19T23:00:00Z' })).toBe(false);
   });
 
   it('never confirms anything against an empty calendar', () => {

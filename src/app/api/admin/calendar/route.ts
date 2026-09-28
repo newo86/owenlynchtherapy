@@ -36,7 +36,10 @@ export async function GET(req: NextRequest) {
   const timeMax = (viewEnd > reconEnd ? viewEnd : reconEnd).toISOString();
 
   try {
-    const { events } = await reconcileCalendar(client, timeMin, timeMax);
+    const { events, imported, cancelled, conflictsFixed } = await reconcileCalendar(client, timeMin, timeMax);
+    // Tells the dashboard the session list just changed, so it reloads it on
+    // this refresh instead of showing pre-sync data until the next poll.
+    const changed = imported + cancelled + conflictsFixed;
 
     // Return only the viewed window for display.
     const viewMinMs = viewStart.getTime();
@@ -46,7 +49,7 @@ export async function GET(req: NextRequest) {
       return t >= viewMinMs && t < viewMaxMs;
     });
 
-    return NextResponse.json({ connected: true, events: display }, { headers: noCache });
+    return NextResponse.json({ connected: true, events: display, changed }, { headers: noCache });
   } catch (err: unknown) {
     console.error('[admin/calendar] error:', err);
     const msg = err instanceof Error ? err.message : 'Unknown error';

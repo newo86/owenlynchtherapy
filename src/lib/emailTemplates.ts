@@ -6,6 +6,7 @@
 // address) are re-exported from the master config so a cloned practice's
 // emails and calendar events use ITS details, never Owen's.
 import { PRACTICE } from '@/practice.config';
+import { escapeHtml } from '@/lib/sanitise';
 
 /** Video platform name (e.g. "Google Meet") and optional fixed room URL.
  *  TELEHEALTH_URL is '' when each session gets its own link (shared via the
@@ -102,7 +103,8 @@ export interface ReminderEmailInput {
 }
 
 export function buildReminderHtml(input: ReminderEmailInput): string {
-  const { firstName, time, dayPhrase, kind, sessionFormat, paymentUrl, alreadyPaid, optOutUrl } = input;
+  const { time, dayPhrase, kind, sessionFormat, paymentUrl, alreadyPaid, optOutUrl } = input;
+  const firstName = escapeHtml(input.firstName);
 
   const onlineJoin = TELEHEALTH_URL
     ? `<p style="margin:0 0 8px;font-size:14px;color:#555;line-height:1.7;">Here is the link to join your online session:</p>
@@ -178,7 +180,9 @@ export interface ReceiptEmailInput {
 }
 
 export function buildReceiptHtml(input: ReceiptEmailInput): string {
-  const { firstName, fullName, date, time, feeEuros, sessionFormat } = input;
+  const { date, time, feeEuros, sessionFormat } = input;
+  const firstName = escapeHtml(input.firstName);
+  const fullName = escapeHtml(input.fullName);
   const isOnline = sessionFormat === 'online';
   const formatCell = isOnline
     ? (TELEHEALTH_URL

@@ -28,6 +28,8 @@ Anything else (unset/false) silently blocks every send.
   3. **Hard cap** `MAX_PER_RUN = 25` — if a run has more candidates it aborts entirely.
   4. **Abort alerts** — any abort emails `info@owenlynchtherapy.com`. So silence each morning = reminders went out fine.
 - **Client opt-out:** reminder emails carry a signed unsubscribe link → `/unsubscribe` → sets `clients.reminders_opted_out`. Togglable per client in the record modal. Honoured by both the cron and manual sends.
+- **Manual Remind button** refuses a repeat: if a reminder already went out for that session the route returns 409 and the modal asks before resending (`force`).
+- **Which calendar events count as a client's session** (import, auto-cancel and the reminder check all use `matchOneActiveClient`): the title must contain the client's full name, or a name part plus "session"/"client". "Walk Kate" or "Day off" never becomes a session; all-day events never do. Events that don't match show in the dashboard's unlinked-events queue to link by hand.
 
 ## Receipts & statements
 

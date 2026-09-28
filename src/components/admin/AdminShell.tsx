@@ -149,6 +149,14 @@ export function AdminShell() {
         if (evRes.ok) {
           const evJson = await evRes.json();
           setEvents(evJson.events ?? []);
+          // The calendar call reconciles Google → sessions. The client list
+          // above was fetched in parallel (before that sync), so if the sync
+          // changed anything, reload it now — otherwise a Google-side delete or
+          // move only showed up a poll (~30 s) later.
+          if (evJson.changed > 0) {
+            const fresh = await adminFetch('/api/admin/clients');
+            if (fresh.ok) setClients((await fresh.json()).clients ?? []);
+          }
         }
       }
 

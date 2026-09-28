@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const denied = requireAdmin(req);
   if (denied) return denied;
 
-  let body: { session_id: string };
+  let body: { session_id: string; force?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -20,10 +20,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
   }
 
-  const result = await sendSessionReminder(session_id);
+  const result = await sendSessionReminder(session_id, { force: body.force === true });
 
   if (!result.success) {
-    return NextResponse.json({ error: result.error ?? 'Failed to send reminder' }, { status: result.error === 'Session not found' ? 404 : 500 });
+    // 409 = a reminder already went out; the UI confirms before resending
+    // with force (same pattern as send-receipt).
+    if (result.error === 'Reminder already sent') {
+      return NextResponse.json(
+        { error: result.error, already_sent_at: result.alreadySentAt ?? null },
+        { status: 409, headers: noCache },
+      );
+    }
+    const status = result.error === 'Session not found' ? 404 : result.skipped ? 400 : 500;
+    return NextResponse.json({ error: result.error ?? 'Failed to send reminder' }, { status });
   }
 
   return NextResponse.json({ success: true, email: result.email }, { headers: noCache });

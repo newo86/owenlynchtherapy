@@ -34,17 +34,29 @@ export function SendReminderModal({ session, client, onClose }: Props) {
     return () => clearTimeout(t);
   }, [feedback, onClose]);
 
-  async function send() {
-    if (channel !== 'email' || sending) return;
+  async function send(force = false) {
+    if (channel !== 'email' || (sending && !force)) return;
     setSending(true);
     setFeedback(null);
     try {
       const res = await adminFetch('/api/admin/send-reminder', {
         method: 'POST',
-        body: JSON.stringify({ session_id: session.id }),
+        body: JSON.stringify({ session_id: session.id, force }),
       });
-      const json = await res.json();
-      if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        const when = json.already_sent_at
+          ? new Date(json.already_sent_at).toLocaleString('en-IE', {
+              day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true,
+              timeZone: 'Europe/Dublin',
+            })
+          : 'earlier';
+        if (confirm(`A reminder for this session was already emailed (${when}). Send it again?`)) {
+          await send(true);
+          return;
+        }
+        setFeedback({ kind: 'error', msg: 'Not sent — a reminder already went out for this session.' });
+      } else if (!res.ok) {
         setFeedback({ kind: 'error', msg: json.error ?? 'Failed to send reminder.' });
       } else {
         setFeedback({ kind: 'success', msg: `Reminder sent to ${json.email ?? client.email}` });
@@ -203,7 +215,7 @@ export function SendReminderModal({ session, client, onClose }: Props) {
                 : <><Receipt size={13} /> {receiptStatus === 'sending' ? 'Sending…' : 'Send Receipt'}</>}
             </button>
             <button
-              onClick={send}
+              onClick={() => void send()}
               disabled={channel !== 'email' || sending || !canSend}
               className="admin-btn-primary"
               style={channel !== 'email' || !canSend ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}

@@ -80,7 +80,10 @@ export default function RootLayout({
     <html lang="en" className={`${poppins.variable} ${montserrat.variable}`}>
       <head>
         {gtm && (
-          <script dangerouslySetInnerHTML={{ __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtm}');` }} />
+          // Never load Tag Manager on the dashboard, the intake form or the
+          // unsubscribe page: their URLs carry live tokens / client ids and
+          // the pages hold clinical data, none of which should reach Google.
+          <script dangerouslySetInnerHTML={{ __html: `(function(w,d,s,l,i){if(/^\\/(admin|intake|unsubscribe)(\\/|$)/.test(w.location.pathname))return;w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtm}');` }} />
         )}
       </head>
       <body className="min-h-screen flex flex-col antialiased bg-cream text-gray-900">

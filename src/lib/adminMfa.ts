@@ -2,9 +2,12 @@ import { supabaseAdmin } from './supabase';
 import { verifyTotp } from './totp';
 
 // Storage + state for admin two-factor (TOTP). The secret lives in the
-// admin_mfa table (see supabase/migrations/admin_mfa.sql). All helpers fail
-// safe: if the table is missing or a query errors, MFA reads as disabled so a
-// missing migration can never lock the admin out.
+// admin_mfa table (see supabase/migrations/admin_mfa.sql).
+//
+// isMfaEnabled fails CLOSED on a transient error (a database blip must not
+// quietly turn login into password-only). The one exception is a missing
+// table (42P01) — a fresh install that hasn't run the migration has no MFA
+// to enforce, and must not lock its admin out.
 
 const OWNER = 'admin';
 
@@ -16,10 +19,10 @@ export async function isMfaEnabled(): Promise<boolean> {
       .select('enabled')
       .eq('owner', OWNER)
       .maybeSingle();
-    if (error) return false;
+    if (error) return error.code !== '42P01';
     return Boolean(data?.enabled);
   } catch {
-    return false;
+    return true;
   }
 }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { sessionSigningKey } from './signingKeys';
 
 /** Name of the admin session cookie. */
 export const ADMIN_COOKIE = 'ol_admin_session';
@@ -36,9 +37,11 @@ export function bearerMatches(req: NextRequest, expected: string | undefined): b
 // ── Stateless signed session token ──────────────────────────────────────────
 // The browser never holds the admin secret. On login we validate the secret
 // once and hand back an httpOnly cookie carrying a token of the form
-// "<expiryMs>.<HMAC-SHA256(expiryMs)>", keyed by INTAKE_ADMIN_SECRET. Each
+// "<expiryMs>.<HMAC-SHA256(expiryMs)>", keyed by sessionSigningKey() — a key
+// derived from a server-only secret plus the password (see signingKeys.ts), so
+// knowing the password alone can't forge a cookie and skip two-factor. Each
 // request re-verifies the HMAC (constant time) and the expiry. No server-side
-// session store is needed, and rotating the secret invalidates all sessions.
+// session store is needed, and rotating the password invalidates all sessions.
 
 function sign(data: string, key: string): string {
   return createHmac('sha256', key).update(data).digest('base64url');
@@ -53,14 +56,14 @@ export function adminSecretValid(provided: string): boolean {
 
 /** Mints a fresh signed session token, or null if the secret isn't configured. */
 export function createSessionToken(): string | null {
-  const key = process.env.INTAKE_ADMIN_SECRET;
+  const key = sessionSigningKey();
   if (!key) return null;
   const exp = String(Date.now() + SESSION_TTL_MS);
   return `${exp}.${sign(exp, key)}`;
 }
 
 function sessionTokenValid(token: string | undefined): boolean {
-  const key = process.env.INTAKE_ADMIN_SECRET;
+  const key = sessionSigningKey();
   if (!key || !token) return false;
   const dot = token.indexOf('.');
   if (dot < 0) return false;
