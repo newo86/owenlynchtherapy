@@ -13,7 +13,7 @@ import { reconcileCalendar } from '@/lib/calendarSync';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const valid = bearerMatches(req, process.env.CRON_SECRET) || requireAdmin(req) === null;
+  const valid = bearerMatches(req, process.env.CRON_SECRET) || (await requireAdmin(req)) === null;
   if (!valid) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

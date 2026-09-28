@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 const KINDS: SessionKind[] = ['online', 'in_person', 'low_cost'];
 
 export async function GET(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   const email = req.nextUrl.searchParams.get('email')?.trim();

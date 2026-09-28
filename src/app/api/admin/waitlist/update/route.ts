@@ -7,7 +7,7 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 // Waitlist actions: mark contacted / back to waiting, or delete (GDPR
 // erasure — a hard delete, nothing is kept).
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   let body: { id?: string; action?: 'contacted' | 'waiting' | 'delete' };

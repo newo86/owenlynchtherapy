@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { clearTokens } from '@/lib/googleOAuth';
 
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   await clearTokens();

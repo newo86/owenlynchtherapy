@@ -38,7 +38,7 @@ async function fetchAll(table: string): Promise<unknown[]> {
 }
 
 export async function GET(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   const tables: Record<string, unknown[]> = {};

@@ -6,8 +6,9 @@ import { verifyTotp } from './totp';
 //
 // isMfaEnabled fails CLOSED on a transient error (a database blip must not
 // quietly turn login into password-only). The one exception is a missing
-// table (42P01) — a fresh install that hasn't run the migration has no MFA
-// to enforce, and must not lock its admin out.
+// table — a fresh install that hasn't run the migration has no MFA to
+// enforce, and must not lock its admin out. Supabase's REST API reports that
+// as PGRST205; raw Postgres as 42P01.
 
 const OWNER = 'admin';
 
@@ -19,7 +20,7 @@ export async function isMfaEnabled(): Promise<boolean> {
       .select('enabled')
       .eq('owner', OWNER)
       .maybeSingle();
-    if (error) return error.code !== '42P01';
+    if (error) return !(error.code === 'PGRST205' || error.code === '42P01');
     return Boolean(data?.enabled);
   } catch {
     return true;

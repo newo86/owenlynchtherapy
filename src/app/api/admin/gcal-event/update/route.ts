@@ -9,7 +9,7 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
 
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   let body: {

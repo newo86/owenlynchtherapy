@@ -17,7 +17,7 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   try {
@@ -90,7 +90,7 @@ function validate(s: PracticeSettings): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   let body: { settings?: Partial<PracticeSettings> };

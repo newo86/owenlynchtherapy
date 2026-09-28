@@ -7,7 +7,7 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 /** Turn two-factor off. Requires a current valid code so a hijacked session
  *  alone can't disable MFA. */
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   let body: { code?: string };

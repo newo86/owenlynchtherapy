@@ -8,7 +8,7 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 // admin-editable fields. We whitelist the columns so a malicious body
 // can't touch other columns (id, created_at, …) directly.
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   let body: {

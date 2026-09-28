@@ -1,6 +1,9 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { rateLimit } from '@/lib/rateLimit';
+import { rateLimitDurable } from '@/lib/rateLimitDurable';
 import { getResend } from '@/lib/resend';
 import { escapeHtml } from '@/lib/sanitise';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
@@ -10,6 +13,15 @@ export async function submitContactForm(formData: FormData) {
   const honeypot = ((formData.get('website') as string) ?? '').trim();
   if (honeypot) {
     redirect('/contact?sent=1');
+  }
+
+  // Rate limit per IP (same limits as the waitlist). Without it the form could
+  // be scripted to flood the practice inbox — especially where Turnstile isn't
+  // configured. Per-instance check first (cheap), then the durable one.
+  const ip = ((await headers()).get('x-forwarded-for') ?? '').split(',')[0].trim() || 'unknown';
+  if (!rateLimit('contact', ip, 5, 15 * 60 * 1000)
+      || !(await rateLimitDurable('contact', ip, 5, 15 * 60 * 1000))) {
+    redirect('/contact?error=1');
   }
 
   // Turnstile verification — skip if secret key not configured (e.g. local dev)

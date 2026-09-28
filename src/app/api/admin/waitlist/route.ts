@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 export async function GET(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   const { data, error } = await supabaseAdmin
