@@ -21,3 +21,6 @@ on conflict (id) do nothing;
 
 alter table public.admin_session_state enable row level security;
 grant all on public.admin_session_state to service_role;
+
+-- Verify: expect one row, id = 1, valid_after = 1970-01-01 (nothing revoked yet).
+select id, valid_after, updated_at from public.admin_session_state;
