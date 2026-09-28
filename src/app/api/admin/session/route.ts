@@ -4,6 +4,7 @@ import {
   adminSecretValid,
   createSessionToken,
   requireAdmin,
+  revokeAllAdminSessions,
   sessionCookieOptions,
   SESSION_TTL_SECONDS,
 } from '@/lib/adminAuth';
@@ -68,11 +69,17 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   return NextResponse.json({ authed: denied === null }, { headers: noCache });
 }
 
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
+  // Sign out everywhere: void every session issued up to now, so a copied
+  // cookie stops working too. Only a signed-in request may do this —
+  // otherwise anyone could repeatedly sign the practitioner out.
+  if ((await requireAdmin(req)) === null) {
+    await revokeAllAdminSessions();
+  }
   const res = NextResponse.json({ ok: true }, { headers: noCache });
   res.cookies.set(ADMIN_COOKIE, '', sessionCookieOptions(0));
   return res;

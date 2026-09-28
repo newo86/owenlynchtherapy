@@ -11,7 +11,7 @@ const VALID_PAYMENT = ['paid', 'unpaid', 'refunded'];
 const VALID_STATUS = ['scheduled', 'attended', 'cancelled', 'no_show'];
 
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   let body: {

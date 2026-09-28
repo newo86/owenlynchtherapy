@@ -30,7 +30,7 @@ function getWeekBounds(now: Date): { monday: Date; sunday: Date } {
 export async function GET(req: NextRequest) {
   // Cron authenticates with CRON_SECRET (bearer); a manual trigger from the
   // admin dashboard authenticates with the admin session cookie.
-  const valid = bearerMatches(req, process.env.CRON_SECRET) || requireAdmin(req) === null;
+  const valid = bearerMatches(req, process.env.CRON_SECRET) || (await requireAdmin(req)) === null;
   if (!valid) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

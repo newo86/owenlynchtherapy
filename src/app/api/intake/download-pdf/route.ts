@@ -5,7 +5,7 @@ import { generateIntakePDF } from '@/lib/generateIntakePDF';
 import { rateLimit } from '@/lib/rateLimit';
 
 export async function GET(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';

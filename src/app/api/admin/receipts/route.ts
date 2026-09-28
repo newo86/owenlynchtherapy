@@ -5,7 +5,7 @@ import { generateReceiptPDF } from '@/lib/generateReceiptPDF';
 
 // GET /api/admin/receipts?session_id=...  → single-session receipt PDF.
 export async function GET(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   const sessionId = req.nextUrl.searchParams.get('session_id');

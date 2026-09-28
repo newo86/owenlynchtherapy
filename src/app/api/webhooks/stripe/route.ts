@@ -8,7 +8,8 @@ import {
   buildReceiptHtml,
   sessionKind,
   STRIPE_LINK_IN_PERSON,
-  STRIPE_LINK_ONLINE, EMAIL_FROM } from '@/lib/emailTemplates';
+  STRIPE_LINK_ONLINE, EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
+import { escapeHtml } from '@/lib/sanitise';
 
 // Must be force-dynamic so Next.js never pre-renders or caches this route.
 // A cached response would consume request.body before Stripe's raw-body
@@ -95,8 +96,19 @@ export async function POST(request: NextRequest) {
 
   const alreadyPaid = session.payment_status === 'paid';
 
+  // Short payment: less money than this session's fee — e.g. an in-person
+  // session paid through the cheaper online link, or a session id reused on
+  // the wrong link. The money is still recorded in the ledger below, but the
+  // session is NOT auto-marked paid and no receipt goes out; the practitioner
+  // is emailed to review and can mark it paid by hand. Overpayments (a client
+  // on a reduced fee paying the standard link) are fine and flow as normal.
+  const amountPaid = checkout.amount_total;
+  const shortPaid = amountPaid != null && (session.fee ?? 0) > 0 && amountPaid < session.fee;
+
   // 1. Mark the session paid in Supabase.
-  if (!alreadyPaid) {
+  if (shortPaid) {
+    console.warn(`[stripe-webhook] Short payment for session ${session.id}: paid ${amountPaid}, fee ${session.fee} — not auto-marking paid`);
+  } else if (!alreadyPaid) {
     const { error: updateErr } = await supabaseAdmin
       .from('sessions')
       .update({
@@ -136,6 +148,11 @@ export async function POST(request: NextRequest) {
     } else {
       console.warn('[stripe-webhook] Could not log payment (run the payments migration):', ledgerErr.message);
     }
+  }
+
+  if (shortPaid) {
+    await alertShortPayment(session, amountPaid as number);
+    return new Response('OK', { status: 200 });
   }
 
   // 3. Send the receipt — only once.
@@ -227,6 +244,33 @@ async function matchSession(checkout: Stripe.Checkout.Session): Promise<SessionR
 
   const { data: candidates } = await query;
   return (candidates?.[0] as SessionRecord | undefined) ?? null;
+}
+
+/** Email the practitioner about a payment below the session fee. Best-effort:
+ *  a failed alert must never fail the webhook (Stripe would retry forever). */
+async function alertShortPayment(session: SessionRecord, amountPaid: number): Promise<void> {
+  const euros = (cents: number) => `€${(cents / 100).toFixed(2)}`;
+  const when = new Date(session.session_date).toLocaleString('en-IE', {
+    weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit', hour12: true,
+    timeZone: 'Europe/Dublin',
+  });
+  const name = escapeHtml(session.clients?.full_name ?? 'A client');
+  try {
+    await getResend().emails.send({
+      from: EMAIL_FROM,
+      to: CONTACT_EMAIL,
+      subject: 'Payment below the session fee — please review',
+      html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
+        <p>A Stripe payment came in for less than the session fee, so the session was <strong>not</strong> marked paid and no receipt was sent.</p>
+        <p><strong>Client:</strong> ${name}<br>
+        <strong>Session:</strong> ${when} (${session.session_format === 'online' ? 'online' : 'in person'})<br>
+        <strong>Paid:</strong> ${euros(amountPaid)} &nbsp;·&nbsp; <strong>Fee:</strong> ${euros(session.fee)}</p>
+        <p>The payment is recorded in your ledger. If it's fine, mark the session paid in the dashboard and send the receipt from there.</p>
+      </div>`,
+    });
+  } catch (err) {
+    console.error('[stripe-webhook] short-payment alert failed:', err instanceof Error ? err.message : String(err));
+  }
 }
 
 async function sendReceipt(

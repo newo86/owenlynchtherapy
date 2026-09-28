@@ -13,7 +13,7 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
  * confirms a code via /api/admin/mfa/enable. Requires an existing admin session.
  */
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   // Starting setup overwrites the stored secret and sets enabled=false. If

@@ -11,7 +11,7 @@ const VALID_RECURRENCE = ['once', 'weekly', 'biweekly', 'monthly'] as const;
 type Recurrence = typeof VALID_RECURRENCE[number];
 
 export async function GET(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   const clientId = req.nextUrl.searchParams.get('client_id');
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   let body: {

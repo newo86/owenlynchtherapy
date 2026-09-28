@@ -6,7 +6,7 @@ import { deleteCalendarEvent } from '@/lib/googleOAuth';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   let body: { session_id?: string; gcal_event_id?: string };

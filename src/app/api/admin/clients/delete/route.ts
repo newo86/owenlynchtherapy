@@ -7,7 +7,7 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 // POST /api/admin/clients/delete  body: { client_id: string }
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   let body: { client_id?: string };

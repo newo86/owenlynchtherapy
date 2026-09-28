@@ -14,7 +14,7 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 //
 // dryRun by default — pass ?apply=true to actually delete.
 export async function GET(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   const apply = req.nextUrl.searchParams.get('apply') === 'true';

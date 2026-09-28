@@ -75,7 +75,7 @@ function buildOccurrences(firstIsoLocal: string, recurrence: Recurrence, count: 
 export async function POST(req: NextRequest) {
   console.log('[generate-token] request received');
 
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';

@@ -6,7 +6,7 @@ import { generateStatementPDF } from '@/lib/generateReceiptPDF';
 // GET /api/admin/receipts/statement?client_id=...  → full statement PDF for a
 // client (all non-cancelled sessions).
 export async function GET(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   const clientId = req.nextUrl.searchParams.get('client_id');

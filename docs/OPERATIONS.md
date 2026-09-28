@@ -51,7 +51,8 @@ Anything else (unset/false) silently blocks every send.
 
 ## Stripe payments
 
-- Webhook `src/app/api/webhooks/stripe/route.ts` handles `checkout.session.completed` → marks the session paid, logs to the `payments` ledger, and emails the receipt (once). Needs `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`.
+- Webhook `src/app/api/webhooks/stripe/route.ts` handles `checkout.session.completed` → marks the session paid, logs to the `payments` ledger, and emails the receipt (once — claimed atomically, so a duplicate delivery can't send two). Needs `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`.
+- **Short payments:** if the amount paid is below the session's fee (e.g. an in-person session paid through the €70 online link), the payment is still logged in the ledger but the session is **not** marked paid and no receipt is sent; info@ gets a "Payment below the session fee" email to review. Overpayments flow as normal.
 - **GOTCHA:** the Stripe webhook endpoint URL must point at the host that answers **200 without a redirect** — Stripe does not follow redirects. Since 2 Jul 2026 that host is the apex: `https://owenlynchtherapy.com/api/webhooks/stripe` (www 308-redirects to it). If the primary domain ever changes again, move the webhook in the same sitting and confirm the next delivery is 200.
 
 ## Domains / SEO
@@ -72,7 +73,10 @@ Anything else (unset/false) silently blocks every send.
 ## Environment variables (Vercel)
 
 `EMAILS_ENABLED`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
-`INTAKE_ADMIN_SECRET` (admin login + signs unsubscribe tokens), `CRON_SECRET`,
+`INTAKE_ADMIN_SECRET` (admin login password only — never used as a signing
+key), optional `SESSION_SIGNING_KEY` (server-only secret for signing admin
+cookies/opt-out links; falls back to the Supabase service-role key — rotating
+either signs everyone out), `CRON_SECRET`,
 `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY`, Google OAuth creds, Supabase
 service-role key. (The `NEXT_PUBLIC_SANITY_*` vars and the Sanity integration
 are obsolete since Jul 2026 and can be removed from Vercel.)
@@ -83,8 +87,10 @@ Applied in the Supabase SQL editor. Notably: `session_reminders.sql` +
 `session_reminders_unique.sql` (the one-per-session UNIQUE constraint),
 `clients_reminders_opt_out.sql` (`reminders_opted_out` column), `payments.sql`,
 `rate_limits.sql`, `admin_mfa.sql`, `practice_settings.sql` (dashboard Settings
-page storage). If a feature "doesn't save", check its migration was run in
-production.
+page storage), `admin_session_state.sql` (server-side sign-out: "Sign out"
+voids every admin session issued before it, on all devices — until this table
+exists, signing out only clears the current browser's cookie). If a feature
+"doesn't save", check its migration was run in production.
 
 ## Practice settings (dashboard Settings page)
 
@@ -107,7 +113,7 @@ excluded; a missing table is reported in the file, never fatal.
 
 ## Known latent bugs (not yet fixed)
 
-1. **Recurring-session time changes** made in Google Calendar don't reliably reflect in the dashboard. The conflict-resolver in `src/lib/calendarSync.ts` only matches sessions tracked by their exact instance id; in-app recurring sessions are stamped with the SERIES id, so a moved occurrence is missed (and can even be wrongly auto-cancelled). Fix: make conflict resolution slot- and series-aware (match a series-tracked session to the one instance of that series in the window; update its `session_date`).
+1. ~~Recurring-session time changes~~ — fixed Sep 2026: moved occurrences are matched on Google's `originalStartTime` and moved in place.
 2. **Deleting a client can leave "ghost" Google Calendar events.** `deleteCalendarEvent` returns 400 "Bad Request" for recurring series ids (`src/app/api/admin/clients/delete/route.ts` → `deleteCalendarEvent`). Fix: handle series vs instance deletion and tolerate 400/410.
 
 ## Build / deploy notes

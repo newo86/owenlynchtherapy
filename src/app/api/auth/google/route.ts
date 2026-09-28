@@ -7,7 +7,7 @@ import { buildAuthUrl } from '@/lib/googleOAuth';
 // POST /api/auth/google — initiates OAuth. Requires admin Bearer auth.
 // Returns { url } for the client to redirect the user's browser to.
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REDIRECT_URI) {

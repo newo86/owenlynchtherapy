@@ -13,7 +13,7 @@ const VALID_FORMATS = ['in_person', 'online'];
 // counterpart to /api/intake/generate-token for clients who already exist
 // in Owen's practice from before this admin existed.
 export async function POST(req: NextRequest) {
-  const denied = requireAdmin(req);
+  const denied = await requireAdmin(req);
   if (denied) return denied;
 
   let body: {
