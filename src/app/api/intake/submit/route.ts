@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { generateIntakePDF } from '@/lib/generateIntakePDF';
-import { sanitiseInput } from '@/lib/sanitise';
+import { sanitiseInput, escapeHtml } from '@/lib/sanitise';
 import { rateLimit } from '@/lib/rateLimit';
 import { rateLimitDurable } from '@/lib/rateLimitDurable';
 import { getResend } from '@/lib/resend';
@@ -146,6 +146,20 @@ export async function POST(req: NextRequest) {
   if (additional_info.length > 2000) return NextResponse.json({ error: 'Additional info text is too long (max 2000 characters)' }, { status: 400 });
 
   // Insert submission
+  // Claim the token ATOMICALLY now that every field has validated (claiming
+  // earlier would burn the link on a simple typo). The is_used check above and
+  // a later update weren't atomic, so two simultaneous submits could both get
+  // through. Only the request that flips false→true proceeds.
+  const { data: claimed } = await supabaseAdmin
+    .from('intake_tokens')
+    .update({ is_used: true })
+    .eq('id', tokenRow.id)
+    .eq('is_used', false)
+    .select('id');
+  if (!claimed || claimed.length === 0) {
+    return NextResponse.json({ error: 'Token already used' }, { status: 400, headers: noCache });
+  }
+
   const { error: insertErr } = await supabaseAdmin.from('intake_submissions').insert({
     token_id: tokenRow.id,
     client_id: tokenRow.client_id ?? null,
@@ -180,14 +194,10 @@ export async function POST(req: NextRequest) {
 
   if (insertErr) {
     console.error('[intake submit] insert error:', JSON.stringify(insertErr, null, 2));
+    // Release the claim so the client can retry with the same link.
+    await supabaseAdmin.from('intake_tokens').update({ is_used: false }).eq('id', tokenRow.id);
     return NextResponse.json({ error: 'Failed to save submission' }, { status: 500 });
   }
-
-  // Mark token as used
-  await supabaseAdmin
-    .from('intake_tokens')
-    .update({ is_used: true })
-    .eq('token', token);
 
   // Link the intake up with the client record: copy the contact details the
   // client just provided onto their record, but only where the record is still
@@ -266,7 +276,10 @@ export async function POST(req: NextRequest) {
 
 function row(label: string, value: unknown): string {
   if (value === null || value === undefined || value === '') return '';
-  const display = typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value);
+  // Escaped: these are the client's own free-text answers. sanitiseInput only
+  // strips complete tags, so a half-open "<a href=…" could otherwise become a
+  // live link or tracking pixel in the practitioner's inbox.
+  const display = escapeHtml(typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value));
   return `<tr>
     <td style="padding:5px 16px 5px 0;font-size:13px;color:#777;white-space:nowrap;vertical-align:top">${label}</td>
     <td style="padding:5px 0;font-size:13px;color:#333;line-height:1.7">${display}</td>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 import { requireAdmin } from '@/lib/adminAuth';
 import { generateTotpSecret, otpauthUrl } from '@/lib/totp';
-import { savePendingSecret } from '@/lib/adminMfa';
+import { isMfaEnabled, savePendingSecret } from '@/lib/adminMfa';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -15,6 +15,17 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 export async function POST(req: NextRequest) {
   const denied = requireAdmin(req);
   if (denied) return denied;
+
+  // Starting setup overwrites the stored secret and sets enabled=false. If
+  // two-factor is already on, that would silently switch it off and let a
+  // stolen session enrol its own authenticator — bypassing the "current code
+  // required" rule on /mfa/disable. Turn it off properly first.
+  if (await isMfaEnabled()) {
+    return NextResponse.json(
+      { error: 'Two-factor is already on. Turn it off with a current code before setting it up again.' },
+      { status: 409, headers: noCache },
+    );
+  }
 
   const secret = generateTotpSecret();
   const url = otpauthUrl(secret);

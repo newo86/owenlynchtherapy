@@ -235,7 +235,9 @@ export function Revenue({ clients }: Props) {
   function exportCsv() {
     const rows = [...byCategory.online, ...byCategory.in_person]
       .sort((a, b) => new Date(a.s.session_date).getTime() - new Date(b.s.session_date).getTime());
-    const esc = (v: string) => '"' + v.replace(/"/g, '""') + '"';
+    // Quote, and neutralise a leading = + - @ so a name can't run as a
+    // spreadsheet formula when the accountant opens the file.
+    const esc = (v: string) => '"' + (/^[=+\-@\t\r]/.test(v) ? "'" + v : v).replace(/"/g, '""') + '"';
     const totalCents = rows.reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
     const lines = [
       `Income report — ${basisLabel} — ${scopeLabel} — excludes low-cost sessions — generated ${dublinDay(now)}`,

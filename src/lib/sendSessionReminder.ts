@@ -11,12 +11,18 @@ export interface ReminderResult {
   /** True when the reminder was deliberately not sent (already reminded /
    *  not a scheduled session) rather than failing. */
   skipped?: boolean;
+  /** Manual path: set when a reminder was already sent and `force` wasn't
+   *  given — the caller should confirm with the practitioner before resending. */
+  alreadySentAt?: string;
 }
 
 export interface ReminderOptions {
   /** When true (the cron path), silently skip sessions that already have a
    *  reminder logged in session_reminders instead of sending a duplicate. */
   skipIfAlreadySent?: boolean;
+  /** Manual path only: send even though a reminder already went out (the
+   *  practitioner explicitly confirmed a resend). */
+  force?: boolean;
 }
 
 /**
@@ -76,6 +82,26 @@ export async function sendSessionReminder(
   // The cron path claims a reminder row BEFORE sending (see below); manual
   // sends just log afterwards. `auto` distinguishes the two.
   const auto = options.skipIfAlreadySent === true;
+
+  // Manual path: refuse a repeat unless explicitly forced. Previously every
+  // click of Remind emailed again, so a double-click or re-opened modal sent
+  // the client duplicates.
+  if (!auto && !options.force) {
+    const { data: prior } = await supabaseAdmin
+      .from('session_reminders')
+      .select('sent_at')
+      .eq('session_id', sessionId)
+      .eq('reminder_type', 'email')
+      .limit(1);
+    if (prior && prior.length > 0) {
+      return {
+        success: false,
+        skipped: true,
+        error: 'Reminder already sent',
+        alreadySentAt: (prior[0].sent_at as string | null) ?? undefined,
+      };
+    }
+  }
 
   const kind = sessionKind(session.session_format as string, Boolean(client.is_low_cost));
   const firstName = client.full_name.split(' ')[0];

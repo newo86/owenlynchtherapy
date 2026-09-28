@@ -18,6 +18,13 @@ export interface MappedEvent {
   htmlLink?: string;
   /** Series id when this is an instance of a recurring event. */
   recurringEventId?: string;
+  /** For a recurring instance: where the recurrence rule originally placed it.
+   *  Differs from `start` when that one occurrence was moved in Google. */
+  originalStart?: string;
+  /** All-day event (birthdays, reminders, days off) — never a session. */
+  allDay?: boolean;
+  /** Has a Google Meet / video conference attached. */
+  hasVideo?: boolean;
 }
 
 export interface ReconcileOutcome {
@@ -29,19 +36,38 @@ export interface ReconcileOutcome {
 
 type ActiveClient = { id: string; full_name: string };
 
+// Words that mark a calendar event as a client session. A bare first name is
+// NOT enough: "Walk Kate", "Claire coffee" or "Day off" must never be read as
+// a session for a client called Kate / Claire / Ann Day — that is how a
+// personal event became a scheduled session and emailed a client a reminder.
+const SESSION_WORDS = new Set(['session', 'sessions', 'client']);
+
 /**
- * The single active client whose name appears in a calendar event title, or
- * null when zero or more than one match (ambiguous — never guess). This is the
- * name-matching used everywhere a free-text calendar event ("Chris client")
- * has to be tied back to a client record.
+ * The single active client a calendar event title refers to, or null when
+ * zero or more than one match (ambiguous — never guess). This is the one
+ * name-matcher used everywhere a free-text calendar event has to be tied back
+ * to a client record (auto-import, auto-cancel, reminder confirmation).
+ *
+ * A title counts as a client's session when it contains EITHER
+ *   - the client's full name ("Session — Jane Durnin", what the app writes), or
+ *   - any part of their name plus "session"/"client" ("Philip client").
+ * Full-name hits win over part+keyword hits, so two clients sharing a first
+ * name don't make an app-created title ambiguous.
  */
 export function matchOneActiveClient(title: string, clients: ActiveClient[]): string | null {
   const words = new Set((title ?? '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
-  const hits = clients.filter(c => {
-    const parts = c.full_name.trim().split(/\s+/).filter(p => p.length > 2);
-    return parts.some(p => words.has(p.toLowerCase()));
-  });
-  return hits.length === 1 ? hits[0].id : null;
+  const hasSessionWord = [...SESSION_WORDS].some(w => words.has(w));
+  const fullHits: string[] = [];
+  const partHits: string[] = [];
+  for (const c of clients) {
+    const parts = c.full_name.trim().toLowerCase().split(/\s+/).filter(p => p.length > 2);
+    if (parts.length === 0) continue;
+    if (parts.length >= 2 && parts.every(p => words.has(p))) fullHits.push(c.id);
+    else if (hasSessionWord && parts.some(p => words.has(p))) partHits.push(c.id);
+  }
+  if (fullHits.length === 1) return fullHits[0];
+  if (fullHits.length > 1) return null;
+  return partHits.length === 1 ? partHits[0] : null;
 }
 
 export interface CalendarPresence {
@@ -66,6 +92,7 @@ export function buildCalendarPresence(events: MappedEvent[], clients: ActiveClie
     const seriesId = e.recurringEventId ?? e.id;
     presentSeriesSlots.add(`${seriesId}@${slot}`);
     presentSeriesSlots.add(`${e.id}@${slot}`);
+    if (e.allDay) continue; // an all-day item is never a client's session
     const cid = matchOneActiveClient(e.title ?? '', clients);
     if (cid) presentClientSlots.add(`${cid}@${slot}`);
   }
@@ -158,6 +185,9 @@ export async function reconcileCalendar(
       location: e.location ?? undefined,
       htmlLink: e.htmlLink ?? undefined,
       recurringEventId: e.recurringEventId ?? undefined,
+      originalStart: e.originalStartTime?.dateTime ?? undefined,
+      allDay: !e.start?.dateTime,
+      hasVideo: Boolean(e.hangoutLink || e.conferenceData?.entryPoints?.length),
     }));
 
   const outcome: ReconcileOutcome = { events, imported: 0, cancelled: 0, conflictsFixed: 0 };
@@ -188,21 +218,45 @@ export async function reconcileCalendar(
         })());
       }
     }
-    if (conflictFixes.length > 0) { await Promise.all(conflictFixes); outcome.conflictsFixed = conflictFixes.length; }
+    // 1b. Moved occurrences of a recurring series. Sessions created in-app are
+    //     stamped with the SERIES id, so the instance-id pass above never sees
+    //     them. When one occurrence is dragged to a new time in Google, the
+    //     instance keeps `originalStartTime` = where the series put it. Match on
+    //     that and MOVE the session (keeping its format, fee, payment and notes)
+    //     instead of letting step 3 cancel it and step 2 re-import a blank,
+    //     in-person, unpaid copy.
+    const movedInstances = events.filter(e =>
+      e.recurringEventId && e.originalStart
+      && utcToDublinLocal(new Date(e.originalStart).toISOString()) !== utcToDublinLocal(new Date(e.start).toISOString()),
+    );
+    if (movedInstances.length > 0) {
+      const seriesIds = [...new Set(movedInstances.map(e => e.recurringEventId as string))];
+      const { data: seriesRows } = await supabaseAdmin
+        .from('sessions')
+        .select('id, gcal_event_id, session_date')
+        .in('gcal_event_id', seriesIds)
+        .eq('status', 'scheduled');
+      const moves: Promise<void>[] = [];
+      for (const e of movedInstances) {
+        const originalSlot = utcToDublinLocal(new Date(e.originalStart as string).toISOString());
+        const row = (seriesRows ?? []).find(r =>
+          r.gcal_event_id === e.recurringEventId && utcToDublinLocal(r.session_date as string) === originalSlot);
+        if (!row) continue;
+        const newIso = new Date(e.start).toISOString();
+        moves.push((async () => {
+          await supabaseAdmin.from('sessions').update({ session_date: newIso }).eq('id', row.id);
+          console.log('[calendarSync] moved recurring occurrence:', row.id, '→', e.start);
+        })());
+      }
+      if (moves.length > 0) { await Promise.all(moves); outcome.conflictsFixed += moves.length; }
+    }
 
     // 2. Auto-import name-matched events we don't track yet.
     const { data: activeClients } = await supabaseAdmin
       .from('clients')
       .select('id, full_name, session_fee')
       .eq('status', 'active');
-
-    const matchClients = (title: string) => {
-      const words = new Set((title ?? '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
-      return (activeClients ?? []).filter(c => {
-        const parts = c.full_name.trim().split(/\s+/).filter((p: string) => p.length > 2);
-        return parts.some((p: string) => words.has(p.toLowerCase()));
-      });
-    };
+    const clientById = new Map((activeClients ?? []).map(c => [c.id as string, c]));
 
     // Existing slots (incl. cancelled tombstones, on purpose) so we never
     // double-import or resurrect a deliberately-removed session.
@@ -225,22 +279,39 @@ export async function reconcileCalendar(
       if (trackedByGcalId.has(event.id)) continue;
       if (cancelledGcalIds.has(event.id)) continue;
       if (event.recurringEventId && cancelledGcalIds.has(event.recurringEventId)) continue;
+      if (event.allDay) continue; // birthdays, days off, payment reminders — never sessions
 
-      const matches = matchClients(event.title ?? '');
-      if (matches.length !== 1) continue;
-      const mc = matches[0];
+      const matchedId = matchOneActiveClient(event.title ?? '', (activeClients ?? []) as ActiveClient[]);
+      const mc = matchedId ? clientById.get(matchedId) : undefined;
+      if (!mc) continue;
       const key = `${mc.id}@${utcToDublinLocal(new Date(event.start).toISOString())}`;
       if (existingKeys.has(key)) continue;
       existingKeys.add(key);
       const ev = event;
       imports.push((async () => {
+        // Format: a video link on the event means online; otherwise follow the
+        // client's most recent session; default in person. (Always defaulting
+        // to in-person sent online clients the in-person address.)
+        let format: 'online' | 'in_person' = 'in_person';
+        if (ev.hasVideo) {
+          format = 'online';
+        } else {
+          const { data: last } = await supabaseAdmin
+            .from('sessions')
+            .select('session_format')
+            .eq('client_id', mc.id)
+            .neq('status', 'cancelled')
+            .order('session_date', { ascending: false })
+            .limit(1);
+          if (last?.[0]?.session_format === 'online') format = 'online';
+        }
         const { data: newSession } = await supabaseAdmin
           .from('sessions')
           .insert({
             client_id: mc.id,
             session_date: new Date(ev.start).toISOString(),
-            session_format: 'in_person',
-            location: INSIGHT_MATTERS,
+            session_format: format,
+            location: format === 'online' ? null : INSIGHT_MATTERS,
             fee: mc.session_fee ?? 0,
             status: 'scheduled',
             payment_status: 'unpaid',

@@ -144,11 +144,25 @@ export async function POST(request: NextRequest) {
   } else if (session.receipt_sent_at) {
     console.log(`[stripe-webhook] Receipt already sent for session ${session.id} — skipping (idempotency guard)`);
   } else {
-    await sendReceipt(session.clients, session, checkout.amount_total);
-    await supabaseAdmin
+    // Claim the receipt ATOMICALLY before sending: Stripe can deliver the same
+    // event twice at once, and check-then-send let both copies email. Only the
+    // delivery that stamps receipt_sent_at from null sends.
+    const { data: claimed } = await supabaseAdmin
       .from('sessions')
       .update({ receipt_sent_at: new Date().toISOString() })
-      .eq('id', session.id);
+      .eq('id', session.id)
+      .is('receipt_sent_at', null)
+      .select('id');
+    if (claimed && claimed.length > 0) {
+      const ok = await sendReceipt(session.clients, session, checkout.amount_total);
+      if (!ok) {
+        // Release so the receipt can be sent by hand — a failed send used to
+        // be stamped as sent anyway.
+        await supabaseAdmin.from('sessions').update({ receipt_sent_at: null }).eq('id', session.id);
+      }
+    } else {
+      console.log(`[stripe-webhook] Receipt for session ${session.id} claimed by a concurrent delivery — skipping`);
+    }
   }
 
   return new Response('OK', { status: 200 });
@@ -195,7 +209,9 @@ async function matchSession(checkout: Stripe.Checkout.Session): Promise<SessionR
   const { data: client } = await supabaseAdmin
     .from('clients')
     .select('id')
-    .ilike('email', email)
+    // Case-insensitive, but with LIKE wildcards escaped: an "_" or "%" in the
+    // payer's email must not match someone else's address.
+    .ilike('email', email.replace(/[\\%_]/g, '\\$&'))
     .maybeSingle();
   if (!client) return null;
 
@@ -217,7 +233,7 @@ async function sendReceipt(
   client: { full_name: string; email: string },
   session: { session_date: string; fee: number; session_format: string },
   amountTotal: number | null,
-) {
+): Promise<boolean> {
   const firstName = client.full_name.split(' ')[0];
   const feeEuros = Math.round((amountTotal ?? session.fee) / 100);
   const sessionDate = new Date(session.session_date);
@@ -228,7 +244,16 @@ async function sendReceipt(
     hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
   });
 
-  const emailResult = await getResend().emails.send({
+  // Kill switch: the disabled-send stub returns no error, which would look like
+  // a successful send and leave receipt_sent_at stamped for an unsent receipt.
+  if (process.env.EMAILS_ENABLED !== 'true') {
+    console.warn('[stripe-webhook] Emails disabled — receipt not sent');
+    return false;
+  }
+
+  let emailResult;
+  try {
+    emailResult = await getResend().emails.send({
     from: EMAIL_FROM,
     to: client.email,
     subject: `Receipt — Psychotherapy Session with ${PRACTICE.practitionerName}`,
@@ -241,11 +266,15 @@ async function sendReceipt(
       sessionFormat: session.session_format,
     }),
   });
+  } catch (err) {
+    emailResult = { error: { message: err instanceof Error ? err.message : String(err) } };
+  }
 
   if (emailResult.error) {
     console.error('[stripe-webhook] Receipt email failed:', JSON.stringify(emailResult.error, null, 2));
-  } else {
-    // No client email in logs (docs/DATA-RETENTION.md).
-    console.log('[stripe-webhook] Receipt sent');
+    return false;
   }
+  // No client email in logs (docs/DATA-RETENTION.md).
+  console.log('[stripe-webhook] Receipt sent');
+  return true;
 }
