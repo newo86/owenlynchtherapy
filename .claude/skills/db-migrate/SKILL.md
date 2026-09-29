@@ -5,36 +5,40 @@ description: Apply a supabase/migrations/*.sql file to production, or produce pa
 
 # Apply a Supabase migration
 
-Argument: path of the migration file (e.g. `supabase/migrations/foo.sql`).
+Goal: production's schema matches the repo, confirmed by a query rather than
+assumed. Done when the verification `select` has run (by you or the user)
+and shows the expected result.
 
-## Writing rules (always, regardless of how it's applied)
+Argument: path of the migration file (e.g. `supabase/migrations/foo.sql`).
+For the current schema, see `supabase/migrations/` and `docs/DB-REVIEW.md`.
+
+## Writing the SQL
 
 - **Idempotent**: `create table/index if not exists`, `drop ... if exists`.
-- **Existence-guarded**: never reference a table that may not exist in prod —
-  the SQL editor runs a batch as ONE transaction, so a single 42P01 aborts
-  everything. Wrap conditional parts in a `DO $$ ... to_regclass(...) $$` block
-  that RAISEs NOTICEs for skipped parts.
-- Every new table: `enable row level security` + `grant all ... to service_role`
-  (default privileges now cover new tables, but be explicit).
-- End with a small verification `select` the user/agent can run to confirm.
+  *Why: production can lag or run ahead of the repo, so the same file may
+  meet different states.*
+- **Existence-guarded**: never reference a table that may not exist in prod.
+  Wrap conditional parts in a `DO $$ ... to_regclass(...) $$` block that
+  raises NOTICEs for skipped parts. *Why: the SQL editor runs a batch as one
+  transaction, so a single 42P01 aborts everything.*
+- Every new table gets `enable row level security` and
+  `grant all ... to service_role`. Default privileges cover new tables now,
+  but being explicit survives a changed default.
+- End with a small verification `select` that confirms the change.
 
 ## Applying
 
-If `SUPABASE_DB_URL` is set in the environment (add it in claude.ai/code
-environment settings; value = Vercel's `POSTGRES_URL_NON_POOLING`):
+If `SUPABASE_DB_URL` is set in the environment (value = Vercel's
+`POSTGRES_URL_NON_POOLING`, added in the claude.ai/code environment settings),
+show the user the file and get a one-line confirmation, then:
 
 ```bash
-psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f <file>   # after showing the user what will run
+psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f <file>
 ```
 
-Show the file and get a one-line confirmation before executing; then run the
-verification select and report.
+Then run the verification select and report. *Why confirm first: this writes
+to the live database that holds client records.*
 
-If it is NOT set (or the network policy blocks port 5432): print the SQL in a
-single fenced block for the user to paste into the Supabase SQL editor, tell
-them what NOTICEs/result to expect, and ask them to report what it said.
-
-## Never forget
-
-Merging a PR does not touch the database. A feature that "doesn't save" in
-prod almost always means its migration was never run.
+If it isn't set, or the network policy blocks port 5432, print the SQL in a
+single fenced block for the user to paste into the Supabase SQL editor, say
+what NOTICEs and result to expect, and ask them to report what it said.
