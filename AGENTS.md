@@ -46,22 +46,18 @@ docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
   Exception: the reconcileCalendar sync job (src/lib/calendarSync.ts) is
   deliberately read-only toward Google — it only updates Supabase — to avoid
   sync loops; keep it that way.
-- Run npm run build locally before pushing to catch TypeScript errors
 
 ## Working practices (learned from past sessions — follow these)
-- **Ship flow:** `/check` → (`/preview` if UI is visible) → `/ship`. Never
-  `sleep` blindly for CI — poll. After every squash merge, restart the working
-  branch from origin/main before committing again.
-- **UI changes:** show the user a `/preview` screenshot BEFORE shipping.
-  History: 6 commits of hero-typography thrash in one day, 3 rounds on one
-  dashboard banner — all avoidable with one screenshot first.
-- **Database:** merging a PR never touches Supabase. Every schema change goes
-  through `/db-migrate`; SQL must be idempotent and existence-guarded (a
-  single 42P01 aborts the whole SQL-editor batch). Production can lag the
-  repo — a missing migration caused a silent week-long reminder outage.
+- **Ship flow:** `/check` → (`/preview` if UI is visible) → `/ship`. The
+  skills carry the details and the reasons.
+- **Database:** merging a PR never touches Supabase — every schema change goes
+  through `/db-migrate`. Production can lag the repo; a missing migration once
+  caused a silent week-long reminder outage.
 - **Practice facts** (availability, hours, fees, formats) live in
-  `src/lib/siteConfig.ts`. Never infer them from page copy or old docs — they
+  `src/practice.config.ts`, overridden at runtime by the dashboard Settings
+  page (`getPractice()`). Don't infer them from page copy or old docs — they
   changed three times in one day once. If unknown, ask Owen.
+- **Skills:** creating or changing one follows the `writing-skills` skill.
 - **Dates:** trust the environment's date (the SessionStart primer prints it
   in Europe/Dublin). Owen sees clients Mon/Tue/Fri — don't assume from
   marketing copy.
@@ -99,8 +95,6 @@ Full detail in **docs/OPERATIONS.md**. The must-knows:
   password — so the password alone can't forge a session past 2FA.
 - **Known latent bug (unfixed):** deleting a client can leave ghost GCal events
   (deleteCalendarEvent 400 on recurring series).
-- The build has no network dependencies and must pass fully everywhere
-  (the old "fails at /articles page-data" sandbox quirk died with Sanity).
 
 ## Branding
 - Colours: forest green #2A4D3C (primary bg), sage #4F8A68, terracotta #C85A1A
