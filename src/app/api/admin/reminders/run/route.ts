@@ -116,6 +116,25 @@ export async function GET(req: NextRequest) {
   const startOfToday = localDublinToUtcIso(`${dublinDate}T00:00`);
   const endOfToday = localDublinToUtcIso(`${dublinDate}T23:59`);
 
+  // BACKUP RUN (?backup=1, 30 min after the main one). It only does anything
+  // if the main run didn't finish today — e.g. 20 Oct 2026, when it was killed
+  // mid-run and logged nothing. Even when it does run it can't email anyone
+  // twice: every send claims the session's one session_reminders row first.
+  // When the main run completed, exit without recording so the dashboard
+  // health strip keeps showing the main run's result.
+  if (req.nextUrl.searchParams.get('backup') === '1') {
+    const { data: doneToday, error: doneErr } = await supabaseAdmin
+      .from('reminder_runs')
+      .select('id')
+      .like('outcome', 'completed%')
+      .gte('ran_at', startOfToday)
+      .limit(1);
+    if (!doneErr && doneToday && doneToday.length > 0) {
+      return NextResponse.json({ ok: true, backup: 'main-run-completed', sent: 0 });
+    }
+    console.warn('[reminders-cron] BACKUP: no completed run recorded today — running now.');
+  }
+
   // 0. KILL SWITCH — check up front, before anything can claim a reminder row.
   //    Previously a blocked send looked like a success (the resend stub returns
   //    no error), so runs during a switched-off window kept their claims and

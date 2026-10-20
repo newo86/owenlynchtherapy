@@ -20,8 +20,20 @@ function build(): SupabaseClient {
       'Supabase env vars missing — set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.'
     );
   }
-  return createClient(url, key);
+  return createClient(url, key, { global: { fetch: fetchWithTimeout } });
 }
+
+// A Supabase request that never answers used to hang until Vercel killed the
+// whole function (20 Oct 2026: the reminder run died at 60s and logged
+// nothing). Give up after 15s instead, so the caller gets an error it can
+// record and alert on.
+const REQUEST_TIMEOUT_MS = 15_000;
+
+const fetchWithTimeout: typeof fetch = (input, init) => {
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+  return fetch(input, { ...init, signal });
+};
 
 export const supabaseAdmin: SupabaseClient = new Proxy({} as SupabaseClient, {
   get(_target, prop) {

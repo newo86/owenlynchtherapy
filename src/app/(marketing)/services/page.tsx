@@ -175,8 +175,9 @@ export default function ServicesPage() {
           </h2>
 
           <p className="font-normal text-base text-gray-600 leading-[1.8] mb-5">
-            Sessions are 50 minutes and take place in person at Insight Matters, 106 Capel
-            Street, Dublin 1, or online via a secure video call. I work with adults only.
+            A session is one therapeutic hour, which is 50 minutes, and sessions run between 50
+            minutes and an hour. They take place in person at Insight Matters, 106 Capel Street,
+            Dublin 1, or online via a secure video call. I work with adults only.
           </p>
           <p className="font-normal text-base text-gray-600 leading-[1.8] mb-5">
             I don&apos;t follow a fixed model or programme. We work at a pace that feels right for

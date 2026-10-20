@@ -32,6 +32,8 @@ export const CONTACT_EMAIL = PRACTICE.email;
 // appending ?client_reference_id=<session_id> when the link is emailed.
 export const STRIPE_LINK_ONLINE    = PRACTICE.stripeLinks.online;
 export const STRIPE_LINK_IN_PERSON = PRACTICE.stripeLinks.inPerson;
+/** Revolut checkout link — main pay button in reminders when set. */
+export const REVOLUT_LINK: string = PRACTICE.revolutLink;
 
 /** The three billing categories a session can fall into. Low cost is a
  *  property of the client (clients.is_low_cost), not the session format. */
@@ -134,13 +136,20 @@ export function buildReminderHtml(input: ReminderEmailInput): string {
         Payment for this session is <strong style="color:#2A4D3C;">cash on the day</strong> — no need to pay anything in advance.
       </p>
     </div>`;
-    } else if (paymentUrl) {
+    } else if (REVOLUT_LINK || paymentUrl) {
+      // Revolut is the main button when configured; the Stripe link (which
+      // auto-marks the session paid) stays as a card fallback.
+      const primaryUrl = REVOLUT_LINK || paymentUrl;
+      const cardFallback = REVOLUT_LINK && paymentUrl ? `
+      <p style="margin:12px 0 0;font-size:12px;color:#777;line-height:1.6;">
+        Prefer to pay by card? <a href="${paymentUrl}" style="color:#4F8A68;text-decoration:underline;">Pay by card here</a>.
+      </p>` : '';
       paymentBlock = `
     <div style="border:1px solid #E0D8CE;border-radius:8px;padding:20px 24px;background:#FAF7F2;margin:0 0 24px;">
       <p style="margin:0 0 10px;font-size:13px;color:#555;line-height:1.7;">
         If you haven&rsquo;t already, you can pay for your session here:
       </p>
-      <a href="${paymentUrl}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:12px 28px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;">Pay for your session</a>
+      <a href="${primaryUrl}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:12px 28px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;">Pay for your session</a>${cardFallback}
     </div>`;
     }
   }

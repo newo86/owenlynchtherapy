@@ -19,7 +19,8 @@ export default function ServiceHowSessionsWork() {
             How sessions work
           </h2>
           <p className={p}>
-            Sessions are 50 minutes and take place in person at Insight Matters, 106 Capel Street,
+            A session is one therapeutic hour, which is 50 minutes, and sessions run between 50
+            minutes and an hour. They take place in person at Insight Matters, 106 Capel Street,
             Dublin 1, or online via secure video for clients across Ireland and the UK. Fees are €80
             in person and €70 online. I work with adults only.
           </p>

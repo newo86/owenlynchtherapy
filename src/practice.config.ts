@@ -126,6 +126,11 @@ export const PRACTICE = {
     online: 'https://buy.stripe.com/8x27sN4Yx3y70ha1A17g40p',
     inPerson: 'https://buy.stripe.com/5kQ8wR8aJc4D9RK2E57g40q',
   },
+  /** Revolut checkout link, shown as the main pay button in reminder emails
+   *  (Stripe stays as a "pay by card" fallback). '' to show Stripe only.
+   *  Revolut payments aren't auto-matched — mark them paid by hand or via
+   *  the Revolut statement import. */
+  revolutLink: 'https://checkout.revolut.com/pay/ffdf3049-df23-42d6-8e29-27fef9a14e69',
   /** Google Tag Manager container id, or '' to disable analytics. */
   gtmId: 'GTM-PT5KPMD3',
   /** Google Search Console verification token, or '' if none. */
