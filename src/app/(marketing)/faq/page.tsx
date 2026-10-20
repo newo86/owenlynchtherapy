@@ -111,7 +111,7 @@ const faqCategories: FaqCategory[] = [
     items: [
       {
         q: 'How much does therapy cost?',
-        a: 'Sessions are €80 in person and €70 online for 50 minutes. I keep my fees transparent and there are no hidden charges.',
+        a: 'Sessions are €80 in person and €70 online. A session is one therapeutic hour, which is 50 minutes, and sessions run between 50 minutes and an hour. I keep my fees transparent and there are no hidden charges.',
       },
       {
         q: 'Am I covered by health insurance?',
@@ -120,7 +120,7 @@ const faqCategories: FaqCategory[] = [
       },
       {
         q: 'What is your cancellation policy?',
-        a: 'I ask for at least 48 hours notice to cancel or reschedule a session. Sessions cancelled with less than 48 hours notice may be charged in full. I understand that emergencies happen and I try to be reasonable. If something unexpected comes up, just get in touch as soon as you can.',
+        a: 'I ask for at least 48 hours notice to cancel or reschedule a session. The full session fee is charged for sessions cancelled within 48 hours. I understand that emergencies happen and I try to be reasonable. If something unexpected comes up, just get in touch as soon as you can.',
       },
       {
         q: 'Do you offer reduced fees?',

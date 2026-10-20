@@ -9,6 +9,10 @@
       "schedule": "0 6 * * *"
     },
     {
+      "path": "/api/admin/reminders/run?backup=1",
+      "schedule": "30 6 * * *"
+    },
+    {
       "path": "/api/admin/maintenance/purge-tokens",
       "schedule": "0 3 * * *"
     },

@@ -52,7 +52,10 @@ export async function generateTherapeuticAgreementPDF(): Promise<Buffer> {
 
       {/* 2 */}
       <H1>2. Sessions</H1>
-      <P>Sessions are 50 minutes in duration. They take place:</P>
+      <P>
+        A session is one therapeutic hour, which is 50 minutes. Sessions run
+        between 50 minutes and one hour. They take place:
+      </P>
       <Bullet>In person at: {INSIGHT_MATTERS_ADDRESS}</Bullet>
       <Bullet>
         Online via {PRACTICE.telehealthPlatform}, a secure, encrypted video
@@ -72,11 +75,10 @@ export async function generateTherapeuticAgreementPDF(): Promise<Buffer> {
       </P>
       <P>Cancellation policy:</P>
       <Bullet>More than 48 hours&rsquo; notice: no charge</Bullet>
-      <Bullet>Between 48 and 24 hours&rsquo; notice: the room hire cost will be charged</Bullet>
-      <Bullet>Less than 24 hours&rsquo; notice: the full session fee is charged</Bullet>
+      <Bullet>Within 48 hours of the session: the full session fee is charged</Bullet>
       <View style={{ height: 6 }} />
       <P>
-        These charges exist because late cancellations leave time that cannot
+        This charge exists because late cancellations leave time that cannot
         usually be filled, and I have already committed to holding that time for you.
       </P>
 
