@@ -35,7 +35,12 @@ but 3". Use AskUserQuestion when there are four or fewer clear choices.
 - Web, mobile app, or both? For mobile: native feel (Expo / React Native)
   or a responsive web app / PWA?
 - Payments, email, calendars, logins, analytics?
-- Hosting and budget constraints?
+- Hosting and budget constraints? Choose the platform after the
+  requirements above, not before.
+- For a site built for someone else: who owns the domain, hosting account,
+  code and content afterwards? Who keeps the content accurate after
+  launch, and is maintenance budgeted? Which legal pages and cookie
+  controls are needed?
 
 ## Accessibility and reach
 - Any specific users to design for (older users, low vision, people in

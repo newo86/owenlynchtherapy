@@ -53,6 +53,44 @@ no session spends effort re-deriving a colour or a gap.
   logical properties (`margin-inline`, `padding-block`). Use container
   queries for components that live in different widths.
 
+## Native CSS that keeps the system small
+
+Reach for the platform before JavaScript or a library. Check each feature's
+Baseline status first (see [research.md](research.md)): several of these do
+nothing silently when unsupported, so the page has to read correctly
+without them.
+
+- **Cascade layers.** Declare the order once (`@layer reset, base,
+  components, utilities;`) so later layers win whatever the specificity, and
+  `!important` is never needed. Tailwind v4 already declares its own layers.
+  Put custom CSS inside them. *Why: unlayered styles beat every layer, so a
+  stray unlayered rule quietly overrides the system.*
+- **Derived colours.** Generate hover, tint and border shades from the base
+  token with `color-mix(in oklch, var(--accent) 80%, white)` or relative
+  colour (`oklch(from var(--accent) calc(l + 0.1) c h)`). Don't hand-pick
+  each shade. Changing one brand value then updates every derivative.
+- **Subgrid** (`grid-template-columns: subgrid`) lines up titles, bodies and
+  footers across a row of cards without fixed heights.
+- **`:has()`** styles a parent from its contents or state (a field group
+  holding an invalid input, a card with or without an image). This replaces
+  JS-toggled classes.
+- **Native nesting** and **`@scope`** keep component styles local without a
+  preprocessor.
+- **Motion:** View Transitions for page or state changes, and scroll-driven
+  animations (`animation-timeline: view()`) for reveals instead of scroll
+  listeners. Gate both behind `@supports` and `prefers-reduced-motion`.
+  For a therapy audience, keep motion slow, small and optional.
+
+## Navigation
+
+Pick the lightest pattern the content needs. A static or sticky bar suits
+a handful of pages. Use dropdowns only when there is a real hierarchy. A
+mega menu is only for large link sets. Breadcrumbs are for deep
+structures. An announcement strip carries one message at a time, not a
+permanent banner. Full-screen menus suit visually led brand sites, and on
+phones they are often just the mobile menu. Keep the primary action visible
+in the bar at every width.
+
 ## Project structure (Next.js example)
 
 ```
