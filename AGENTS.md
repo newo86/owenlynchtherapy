@@ -58,6 +58,8 @@ docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
   page (`getPractice()`). Don't infer them from page copy or old docs — they
   changed three times in one day once. If unknown, ask Owen.
 - **Skills:** creating or changing one follows the `writing-skills` skill.
+- **Design work** (any site, app or page design) goes through the
+  `design-partner` skill. Owen's taste is recorded in docs/design/TASTE.md.
 - **Dates:** trust the environment's date (the SessionStart primer prints it
   in Europe/Dublin). Owen sees clients Mon/Tue/Fri — don't assume from
   marketing copy.
