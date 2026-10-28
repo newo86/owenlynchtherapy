@@ -229,8 +229,13 @@ images, redirects, sitemap, analytics, and cookie controls.
 - **Likes:** being asked for his ideas, and seeing original directions
   proposed. Modern typographic sizing and generous, considered spacing.
   Composition that guides the eye and reads easily. Foundations first.
+  Flowing, hand-drawn lines with no corners (a gliding dotted thread,
+  tapering pen-stroke dividers). Small natural motifs that vary rather
+  than repeat. Comparing colour options as complete side-by-side
+  versions, not swatches.
 - **Dislikes:** anything that looks AI-made, especially common AI fonts
-  and an eyebrow label over every heading.
+  and an eyebrow label over every heading. Heavy 3D or tinted cards: he
+  prefers flat or nearly flat cards with square corners.
 
 ## Where to look
 

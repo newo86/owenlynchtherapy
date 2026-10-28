@@ -23,11 +23,20 @@ and record the ones he keeps.*
 - Composition that guides the eye and reads easily (Oct 2026)
 - Foundations first: tokens, components and a style guide before pages
   (Oct 2026)
+- Flowing, hand-drawn lines with no corners or straight runs: a dotted
+  thread that glides between sections, pen-stroke dividers that taper at
+  both ends (Oct 2026, Robbie Semple's site)
+- Small natural motifs (leaves, stones, a lotus) that vary rather than
+  repeat in a row (Oct 2026, Robbie's "Things I work with" icons)
+- Comparing colour options as complete side-by-side versions of the site,
+  not as swatches (Oct 2026, amber/green/cream versions for Robbie)
 
 ## Dislikes
 - Anything that looks AI-made, including common AI fonts and an eyebrow
   label over every heading (Oct 2026). See the skill's
   `reference/not-ai.md`.
+- Heavy 3D cards and tinted card backgrounds: prefers flat or nearly flat
+  cards with square corners (Oct 2026, Robbie's site)
 
 ## Decisions
 - Owen's therapy site brand is fixed by CLAUDE.md and docs/STYLE-GUIDE.md.
