@@ -54,6 +54,8 @@ must be the account owner so they own their data):
    `site.webmanifest` names.
 4. Rewrite the bespoke content: About bio, home/services/FAQ copy, condition
    pages, articles (delete Owen's articles in `src/content/articles/`).
+   Empty `docs/design/TASTE.md` (Owen's design preferences) or replace it
+   with your own, as the `design-partner` skill reads it.
 5. Sweep for leftovers: `grep -ri "owen" src/ public/ --include="*.ts*"` and
    fix anything that isn't generic. (Known spots not yet on config: the TOTP
    issuer in `src/lib/totp.ts`, `{greeting}, Owen` in
