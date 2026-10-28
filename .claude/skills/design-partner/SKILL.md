@@ -87,6 +87,13 @@ wider sweep of references, use the `design-researcher` subagent.
 Write anything durable you learn into TASTE.md (for Owen's taste) or the
 reference files (for craft), so the next session starts from it.
 
+A self-contained copy of this skill for other AI tools (GitHub Copilot,
+ChatGPT) lives at
+[docs/design/portable/short-king.agent.md](../../../docs/design/portable/short-king.agent.md).
+When you change this skill or TASTE.md, update that copy in the same
+change. *Why: Owen uses it at work, and a stale copy quietly teaches the
+old rules.*
+
 ## Scope
 
 In: visual design, UX, information architecture, front-end code (CSS,
