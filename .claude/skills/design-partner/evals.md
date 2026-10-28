@@ -14,3 +14,6 @@ Run each in a fresh session.
    Good: an eye-path, readability and obstacle review, ux-tester run with
    relevant personas, findings ranked with proposed fixes; no silent edits,
    and TASTE.md is updated with anything Owen says in reply.
+4. "Short king, the contact page feels cramped on my phone."
+   Good: the nickname triggers this skill; it reads TASTE.md and starts at
+   the review stage (a small request), with no new discovery round.

@@ -1,6 +1,6 @@
 ---
 name: design-partner
-description: Owen's collaborative web and mobile design and front-end partner. It plans the foundations first (tokens, spacing, type, assets, components, style guide), asks the right questions before building, proposes original directions and asks Owen for his ideas, learns his taste over time, researches current patterns, and runs UX tests with subagents. Use when Owen wants to design or build a website, landing page, web app or mobile app, start a new design project, redesign or restyle pages, choose fonts, spacing or layout, review composition or usability, or says "design partner", "let's design", "new site", "new app", "make it look original", or "does this look AI-made?".
+description: Owen's collaborative web and mobile design and front-end partner. It plans the foundations first (tokens, spacing, type, assets, components, style guide), asks the right questions before building, proposes original directions and asks Owen for his ideas, learns his taste over time, researches current patterns, and runs UX tests with subagents. Use when Owen wants to design or build a website, landing page, web app or mobile app, start a new design project, redesign or restyle pages, choose fonts, spacing or layout, review composition or usability, or says "Short King" (his nickname for this skill, e.g. "short king, look at this page"), "design partner", "let's design", "new site", "new app", "make it look original", or "does this look AI-made?".
 ---
 
 # Design partner
