@@ -27,6 +27,17 @@ export interface PracticeSettings {
     hoursTarget: number;
     hoursBaseline: number;
     hoursCountFrom: string;
+    /** Re-accreditation requirements (Hours page). */
+    accreditedOn: string;
+    verifiedClientHours: number;
+    supervisionVerifiedHours: number;
+    supervisionTarget: number;
+    supervisionRatio: number;
+    ownTherapyHours: number;
+    ownTherapyTarget: number;
+    onlineMaxHours: number;
+    cpdTargetEarly: number;
+    cpdTargetLate: number;
   };
   email: string;
   telephone: string;

@@ -13,8 +13,12 @@ meant, ask before writing it down.
 
 ## Signature
 Quiet, not loud. Excellent quality first. A small recurring detail is
-welcome if it never shouts. *To be discovered together: propose candidates
-and record the ones he keeps.*
+welcome if it never shouts.
+- Glass panels (frosted, translucent cards) over soft blurred colour blobs,
+  and circles as the recurring shape (a soft circle tucked into a card's
+  corner). He asked to keep both on the dashboard even though general rules
+  discourage decorative blobs and glass: they are his, not a default
+  (Oct 2026, dashboard mock-up).
 
 ## Likes
 - Collaboration: being asked for his ideas, and seeing original directions
@@ -22,6 +26,13 @@ and record the ones he keeps.*
 - Modern typographic sizing and generous, considered spacing (Oct 2026)
 - Composition that guides the eye and reads easily (Oct 2026)
 - Foundations first: tokens, components and a style guide before pages
+  (Oct 2026)
+- Status shown by importance: the one thing that needs attention leads, the
+  rest is a calm checklist, rather than a grid of equal big-number cards
+  (Oct 2026, Hours page review)
+- "New" markers only when he asks for them, behind a switch, never always
+  on (Oct 2026)
+- Phone-first for the dashboard: he uses it between sessions on his phone
   (Oct 2026)
 
 ## Dislikes

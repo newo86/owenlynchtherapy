@@ -460,7 +460,7 @@ export function Dashboard({
           accred={accred}
           total={accredHours.total}
           sessionsSince={accredHours.sessionsSince}
-          onOpen={() => onNavigateSection('revenue')}
+          onOpen={() => onNavigateSection('hours')}
         />
       </div>
 

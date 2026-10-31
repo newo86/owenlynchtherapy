@@ -114,7 +114,7 @@ export interface WaitlistRow {
   contacted_at: string | null;
 }
 
-export type AdminSection = 'dashboard' | 'clients' | 'sessions' | 'revenue' | 'forms' | 'waitlist' | 'settings' | 'new-client';
+export type AdminSection = 'dashboard' | 'clients' | 'sessions' | 'revenue' | 'hours' | 'forms' | 'waitlist' | 'settings' | 'new-client';
 
 export type SessionFilter = 'all' | 'unpaid' | 'needs_receipt' | 'this_week' | 'unpaid_this_week';
 export type FormsTab = 'submitted' | 'pending';

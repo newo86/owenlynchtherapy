@@ -7,7 +7,9 @@ import { ClientsList } from './ClientsList';
 import { ClientDetail } from './ClientDetail';
 import { SessionsList } from './SessionsList';
 import { FormsTable } from './FormsTable';
+import { FormLibrary } from './FormLibrary';
 import { Revenue } from './Revenue';
+import { HoursPage } from './HoursPage';
 import { Waitlist } from './Waitlist';
 import { SettingsPanel } from './SettingsPanel';
 import { StatementImport } from './StatementImport';
@@ -32,6 +34,7 @@ const SECTION_TITLES: Record<AdminSection, string> = {
   forms: 'Forms',
   waitlist: 'Waiting List',
   settings: 'Settings',
+  hours: 'Accreditation hours',
   'new-client': 'Onboarding',
 };
 
@@ -361,6 +364,8 @@ export function AdminShell() {
                 />
               )}
 
+              {section === 'hours' && <HoursPage clients={clients} />}
+
               {section === 'revenue' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                   <Revenue clients={clients} />
@@ -369,7 +374,10 @@ export function AdminShell() {
               )}
 
               {section === 'forms' && (
-                <FormsTable submissions={submissions} tokens={tokens} initialTab={formsTab} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  <FormLibrary />
+                  <FormsTable submissions={submissions} tokens={tokens} initialTab={formsTab} />
+                </div>
               )}
 
               {section === 'waitlist' && (
