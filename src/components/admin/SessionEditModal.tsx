@@ -336,7 +336,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                     onChange={() => setFormat(v)}
                     style={{ accentColor: 'var(--terracotta)' }}
                   />
-                  {v === 'in_person' ? 'In Person' : 'Online'}
+                  {v === 'in_person' ? 'In person' : 'Online'}
                 </label>
               ))}
             </div>
@@ -364,7 +364,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                 { id: 'scheduled',  label: 'Scheduled' },
                 { id: 'attended',   label: 'Attended' },
                 { id: 'cancelled',  label: 'Cancelled' },
-                { id: 'no_show',    label: 'No Show' },
+                { id: 'no_show',    label: 'No show' },
               ] as const).map(opt => (
                 <button
                   key={opt.id}

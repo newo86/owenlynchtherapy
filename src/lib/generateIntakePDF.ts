@@ -155,7 +155,7 @@ export async function generateIntakePDF(data: SubmissionData): Promise<Buffer> {
 
     const submitted = new Date(data.submitted_at).toLocaleDateString('en-IE', { dateStyle: 'long' });
     doc.font('Helvetica').fontSize(9).fillColor(MUTED)
-      .text(`Submitted: ${submitted}`, L, doc.y, { align: 'right', width: W });
+      .text(data.id === 'blank' ? 'Blank form' : `Submitted: ${submitted}`, L, doc.y, { align: 'right', width: W });
     doc.moveDown(1.2);
 
     // ── Sections ───────────────────────────────────────────────────────────────

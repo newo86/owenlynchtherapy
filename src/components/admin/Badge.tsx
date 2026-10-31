@@ -12,7 +12,7 @@ const STYLES: Record<BadgeKind, { bg: string; fg: string; border: string; label:
   paid:       { bg: `${colors.sage}20`, fg: colors.sageDark, border: colors.sage, label: 'Paid' },
   unpaid:     { bg: `${colors.terracotta}20`, fg: colors.terracottaDark, border: colors.terracotta, label: 'Unpaid' },
   refunded:   { bg: '#9999991A', fg: '#666', border: '#999', label: 'Refunded' },
-  in_person:  { bg: `${colors.forest}15`, fg: colors.forest, border: 'transparent', label: 'In Person' },
+  in_person:  { bg: `${colors.forest}15`, fg: colors.forest, border: 'transparent', label: 'In person' },
   online:     { bg: `${colors.sage}15`, fg: colors.sageDark, border: 'transparent', label: 'Online' },
   new:        { bg: `${colors.gold}20`, fg: colors.goldDark, border: colors.gold, label: 'New' },
   attended:   { bg: `${colors.sage}20`, fg: colors.sageDark, border: colors.sage, label: 'Attended' },

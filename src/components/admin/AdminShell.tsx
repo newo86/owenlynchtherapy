@@ -7,7 +7,9 @@ import { ClientsList } from './ClientsList';
 import { ClientDetail } from './ClientDetail';
 import { SessionsList } from './SessionsList';
 import { FormsTable } from './FormsTable';
+import { FormLibrary } from './FormLibrary';
 import { Revenue } from './Revenue';
+import { HoursPage } from './HoursPage';
 import { Waitlist } from './Waitlist';
 import { SettingsPanel } from './SettingsPanel';
 import { StatementImport } from './StatementImport';
@@ -30,8 +32,9 @@ const SECTION_TITLES: Record<AdminSection, string> = {
   sessions: 'Calendar',
   revenue: 'Revenue',
   forms: 'Forms',
-  waitlist: 'Waiting List',
+  waitlist: 'Waiting list',
   settings: 'Settings',
+  hours: 'Accreditation hours',
   'new-client': 'Onboarding',
 };
 
@@ -275,20 +278,15 @@ export function AdminShell() {
               tokens={tokens}
               events={events}
               calendarStatus={calStatus}
-              weekOffset={weekOffset}
-              onWeekOffsetChange={setWeekOffset}
               onReload={reload}
               onConnectCalendar={connectCalendar}
               onDisconnectCalendar={disconnectCalendar}
               onNewClient={() => setModalOpen(true)}
-              onScheduleDay={iso => { setScheduleInitialIso(iso); setScheduleOpen(true); }}
               onClickSession={(session, client) => setEditSession({ session, client })}
               onNavigateSection={navigateSection}
               greeting={greet()}
               dateLine={dateLine()}
               flash={flash}
-              sectionTitle={SECTION_TITLES[section]}
-              onEditGcalEvent={setEditGcalData}
               reminderHealth={reminderHealth}
               waitlist={waitlist}
             />
@@ -311,12 +309,12 @@ export function AdminShell() {
                       title={calStatus.email ? `Connected as ${calStatus.email}` : 'Connected'}
                     >
                       <span className="admin-status-dot" />
-                      Calendar Connected
+                      Calendar connected
                     </button>
                   )}
                   {section !== 'clients' && section !== 'sessions' && section !== 'settings' && (
                     <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
-                      + Add Client
+                      + Add client
                     </button>
                   )}
                 </div>
@@ -361,6 +359,8 @@ export function AdminShell() {
                 />
               )}
 
+              {section === 'hours' && <HoursPage clients={clients} />}
+
               {section === 'revenue' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                   <Revenue clients={clients} />
@@ -369,7 +369,10 @@ export function AdminShell() {
               )}
 
               {section === 'forms' && (
-                <FormsTable submissions={submissions} tokens={tokens} initialTab={formsTab} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  <FormLibrary />
+                  <FormsTable submissions={submissions} tokens={tokens} initialTab={formsTab} />
+                </div>
               )}
 
               {section === 'waitlist' && (
