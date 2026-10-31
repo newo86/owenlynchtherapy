@@ -120,7 +120,7 @@ export type SessionFilter = 'all' | 'unpaid' | 'needs_receipt' | 'this_week' | '
 export type FormsTab = 'submitted' | 'pending';
 
 export const FORMAT_LABELS: Record<string, string> = {
-  in_person: 'In Person',
+  in_person: 'In person',
   online: 'Online',
-  no_preference: 'No Preference',
+  no_preference: 'No preference',
 };

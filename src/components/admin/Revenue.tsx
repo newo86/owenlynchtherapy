@@ -422,7 +422,7 @@ function payLabel(status: string) {
 }
 function categoryLabel(s: SessionRow, c: ClientRow): string {
   const cat = categoryOf(s, c);
-  return cat === 'online' ? 'Online' : cat === 'in_person' ? 'In Person' : 'Low Cost';
+  return cat === 'online' ? 'Online' : cat === 'in_person' ? 'In person' : 'Low cost';
 }
 
 function DrillDownModal({ title, rows, onClose }: { title: string; rows: DrillRow[]; onClose: () => void }) {

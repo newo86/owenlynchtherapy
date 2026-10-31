@@ -204,7 +204,7 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
                     onChange={() => setSessionFormat(v)}
                     style={{ accentColor: 'var(--terracotta)' }}
                   />
-                  {v === 'in_person' ? 'In Person' : 'Online'}
+                  {v === 'in_person' ? 'In person' : 'Online'}
                 </label>
               ))}
             </div>

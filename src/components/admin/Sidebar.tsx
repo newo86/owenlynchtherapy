@@ -137,7 +137,8 @@ function DesktopSidebar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onT
             title={label}
             aria-label={label}
           >
-            <Icon size={22} strokeWidth={1.6} aria-hidden />
+            <Icon size={21} strokeWidth={1.6} aria-hidden />
+            <span className="admin-nav-label" aria-hidden>{label}</span>
           </button>
         ))}
       </nav>
@@ -154,8 +155,9 @@ function DesktopSidebar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onT
           : { marginBottom: 10 }}
       >
         {privacy
-          ? <EyeOff size={22} strokeWidth={1.6} aria-hidden />
-          : <Eye size={22} strokeWidth={1.6} aria-hidden />}
+          ? <EyeOff size={21} strokeWidth={1.6} aria-hidden />
+          : <Eye size={21} strokeWidth={1.6} aria-hidden />}
+        <span className="admin-nav-label" aria-hidden>Privacy</span>
       </button>
 
       <button
@@ -166,7 +168,8 @@ function DesktopSidebar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onT
         aria-label="Two-factor authentication"
         style={{ marginBottom: 10 }}
       >
-        <ShieldCheck size={22} strokeWidth={1.6} aria-hidden />
+        <ShieldCheck size={21} strokeWidth={1.6} aria-hidden />
+        <span className="admin-nav-label" aria-hidden>2FA</span>
       </button>
 
       <button

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Pencil, Trash2, Mail, CircleCheck } from 'lucide-react';
 import { adminFetch, formatTime, isSameDay, startOfWeek, dedupeSessions } from './api';
 import type { ClientRow, SessionRow, CalendarEvent, GcalRef } from './types';
@@ -72,8 +72,11 @@ function reminderDot(s: SessionRow, c: ClientRow): { color: string; title: strin
 }
 
 function buildClickIso(day: Date): string {
+  return buildClickIsoAt(day, 17);
+}
+function buildClickIsoAt(day: Date, hour: number): string {
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T17:00`;
+  return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T${pad(hour)}:00`;
 }
 
 interface MergedEvent {
@@ -81,6 +84,8 @@ interface MergedEvent {
   label: string;
   accent: Accent;
   start: string;
+  /** End time, for calendar events (sessions use the practice session length). */
+  end?: string;
   format?: string;
   session?: SessionRow;
   client?: ClientRow;
@@ -125,6 +130,12 @@ export function CalendarWeekGrid({
     setPeek({ id, ev, left, top: below ? r.bottom - w.top + 8 : r.top - w.top });
   }
   const canHover = () => typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
+  // Timed diary layout on wide screens; the day list on phones.
+  const isWide = useSyncExternalStore(
+    cb => { const m = window.matchMedia('(min-width: 769px)'); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb); },
+    () => window.matchMedia('(min-width: 769px)').matches,
+    () => true,
+  );
 
   const days = useMemo(() => {
     const monday = startOfWeek(new Date());
@@ -290,6 +301,7 @@ export function CalendarWeekGrid({
         label: e.title || '(no title)',
         accent: 'e-lilac',
         start: e.start,
+        end: e.end,
         gcalId: e.id,
         gcalLocation: e.location,
       });
@@ -332,32 +344,7 @@ export function CalendarWeekGrid({
     );
   })();
 
-  return (
-    <div className="admin-week-wrap" ref={wrapRef} onMouseLeave={() => { if (canHover()) setPeek(null); }}>
-    <CalendarLegend />
-    <div className="admin-week-grid">
-      {days.map((day, i) => {
-        const dayEvents = eventsForDay(day);
-        const isToday = isSameDay(day, new Date());
-        const handleDayClick = clickable ? () => onScheduleDay!(buildClickIso(day)) : undefined;
-        return (
-          <div
-            key={i}
-            className={`admin-day${isToday ? ' is-today' : ''}${clickable ? ' admin-day-clickable' : ''}`}
-            onClick={handleDayClick}
-            role={clickable ? 'button' : undefined}
-            tabIndex={clickable ? 0 : undefined}
-            onKeyDown={clickable ? e => { if (e.key === 'Enter' || e.key === ' ') handleDayClick!(); } : undefined}
-            title={clickable ? `Schedule a session on ${day.toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'short' })}` : undefined}
-          >
-            <div className="admin-day-head">
-              <div className="admin-day-name">{DAY_NAMES[i]}</div>
-              <div className="admin-day-num">{day.getDate()}</div>
-            </div>
-            {dayEvents.length === 0 ? (
-              <div className="admin-event-empty">{clickable ? '+ Add session' : 'No sessions'}</div>
-            ) : (
-              dayEvents.map((e, idx) => {
+  function renderCard(e: MergedEvent, key: string | number, style?: React.CSSProperties) {
                 const isSession = !!e.session && !!e.client;
                 const isGcalOnly = !isSession && !!e.gcalId;
                 const cardId = isSession ? e.session!.id : e.gcalId;
@@ -365,8 +352,9 @@ export function CalendarWeekGrid({
                 const isClickable = isSession || (isGcalOnly && gcalEditable);
                 return (
                   <div
-                    key={idx}
+                    key={key}
                     data-card-id={cardId}
+                    style={style}
                     className={`admin-event ${e.accent}${isClickable ? ' admin-event-clickable' : ''}${isOpen ? ' is-reveal-open' : ''}`}
                     onClick={isClickable
                       ? ev => {
@@ -475,12 +463,121 @@ export function CalendarWeekGrid({
                     )}
                   </div>
                 );
-              })
+  }
+
+  // ── Timed week (computers): sessions placed by the hour, like a diary.
+  function renderTimed() {
+    const PX = 64; // pixels per hour
+    const perDay = days.map(d => eventsForDay(d));
+    const endOf = (e: MergedEvent) => e.end ? new Date(e.end) : new Date(new Date(e.start).getTime() + PRACTICE.sessionMinutes * 60000);
+    let minH = 15, maxH = 21;
+    for (const evs of perDay) for (const e of evs) {
+      const st = new Date(e.start), en = endOf(e);
+      minH = Math.min(minH, st.getHours());
+      maxH = Math.max(maxH, en.getHours() + (en.getMinutes() > 0 ? 1 : 0));
+    }
+    minH = Math.max(0, minH); maxH = Math.min(24, Math.max(maxH, minH + 1));
+    const height = (maxH - minH) * PX;
+    const hours = Array.from({ length: maxH - minH }, (_, k) => minH + k);
+    const hourLabel = (h: number) => `${h % 12 === 0 ? 12 : h % 12}${h < 12 ? 'am' : 'pm'}`;
+
+    // Side-by-side lanes for overlapping events within a day.
+    function place(evs: MergedEvent[]) {
+      const items = evs.map(e => ({ e, s: new Date(e.start).getTime(), en: endOf(e).getTime(), lane: 0, lanes: 1 }));
+      let cluster: typeof items = []; let clusterEnd = -1;
+      const flush = () => { const n = Math.max(1, ...cluster.map(c => c.lane + 1)); cluster.forEach(c => { c.lanes = n; }); cluster = []; };
+      for (const it of items) {
+        if (it.s >= clusterEnd && cluster.length) flush();
+        const used = new Set(cluster.filter(c => c.en > it.s).map(c => c.lane));
+        let lane = 0; while (used.has(lane)) lane++;
+        it.lane = lane; cluster.push(it); clusterEnd = Math.max(clusterEnd, it.en);
+      }
+      if (cluster.length) flush();
+      return items;
+    }
+
+    return (
+      <div className="admin-tgrid">
+        <div className="admin-tgrid-head">
+          <span />
+          {days.map((day, i) => (
+            <div key={i} className={`admin-tgrid-day${isSameDay(day, new Date()) ? ' is-today' : ''}`}>
+              <span className="name">{DAY_NAMES[i]}</span>
+              <span className="num">{day.getDate()}</span>
+            </div>
+          ))}
+        </div>
+        <div className="admin-tgrid-body" style={{ height }}>
+          <div className="admin-tgrid-axis">
+            {hours.map(h => <span key={h} style={{ top: (h - minH) * PX }}>{hourLabel(h)}</span>)}
+          </div>
+          {days.map((day, i) => {
+            const isToday = isSameDay(day, new Date());
+            return (
+              <div
+                key={i}
+                className={`admin-tgrid-col${isToday ? ' is-today' : ''}${clickable ? ' is-clickable' : ''}`}
+                style={{ backgroundSize: `100% ${PX}px` }}
+                onClick={clickable ? ev => {
+                  const y = ev.clientY - ev.currentTarget.getBoundingClientRect().top;
+                  const h = Math.min(maxH - 1, minH + Math.floor(y / PX));
+                  onScheduleDay!(buildClickIsoAt(day, h));
+                } : undefined}
+                role={clickable ? 'button' : undefined}
+                tabIndex={clickable ? 0 : undefined}
+                onKeyDown={clickable ? e => { if (e.key === 'Enter' || e.key === ' ') onScheduleDay!(buildClickIso(day)); } : undefined}
+                aria-label={clickable ? `Schedule a session on ${day.toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'short' })}` : undefined}
+              >
+                {place(perDay[i]).map((p, k) => {
+                  const top = ((p.s - new Date(day).setHours(minH, 0, 0, 0)) / 3600000) * PX;
+                  const h = Math.max(40, ((p.en - p.s) / 3600000) * PX - 4);
+                  const w = 100 / p.lanes;
+                  return renderCard(p.e, k, {
+                    position: 'absolute', top: top + 2, height: h, margin: 0,
+                    left: `calc(${p.lane * w}% + 4px)`, width: `calc(${w}% - 8px)`,
+                  });
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-week-wrap" ref={wrapRef} onMouseLeave={() => { if (canHover()) setPeek(null); }}>
+    <CalendarLegend />
+    {isWide ? renderTimed() : (
+    <div className="admin-week-grid">
+      {days.map((day, i) => {
+        const dayEvents = eventsForDay(day);
+        const isToday = isSameDay(day, new Date());
+        const handleDayClick = clickable ? () => onScheduleDay!(buildClickIso(day)) : undefined;
+        return (
+          <div
+            key={i}
+            className={`admin-day${isToday ? ' is-today' : ''}${dayEvents.length === 0 ? ' is-empty' : ''}${clickable ? ' admin-day-clickable' : ''}`}
+            onClick={handleDayClick}
+            role={clickable ? 'button' : undefined}
+            tabIndex={clickable ? 0 : undefined}
+            onKeyDown={clickable ? e => { if (e.key === 'Enter' || e.key === ' ') handleDayClick!(); } : undefined}
+            title={clickable ? `Schedule a session on ${day.toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'short' })}` : undefined}
+          >
+            <div className="admin-day-head">
+              <div className="admin-day-name">{DAY_NAMES[i]}</div>
+              <div className="admin-day-num">{day.getDate()}</div>
+            </div>
+            {dayEvents.length === 0 ? (
+              <div className="admin-event-empty">{clickable ? '+ Add session' : 'No sessions'}</div>
+            ) : (
+              dayEvents.map((e, idx) => renderCard(e, idx))
             )}
           </div>
         );
       })}
     </div>
+    )}
     {peekCard}
     </div>
   );
