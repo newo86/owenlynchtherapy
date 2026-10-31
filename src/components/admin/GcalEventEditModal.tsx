@@ -211,7 +211,7 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
                       onChange={() => setFormat(v)}
                       style={{ accentColor: 'var(--terracotta)' }}
                     />
-                    {v === 'in_person' ? 'In Person' : 'Online'}
+                    {v === 'in_person' ? 'In person' : 'Online'}
                   </label>
                 ))}
               </div>

@@ -34,6 +34,20 @@ Anything else (unset/false) silently blocks every send.
 - **Manual Remind button** refuses a repeat: if a reminder already went out for that session the route returns 409 and the modal asks before resending (`force`).
 - **Which calendar events count as a client's session** (import, auto-cancel and the reminder check all use `matchOneActiveClient`): the title must contain the client's full name, or a name part plus "session"/"client". "Walk Kate" or "Day off" never becomes a session; all-day events never do. Events that don't match show in the dashboard's unlinked-events queue to link by hand.
 
+## Accreditation hours (Hours page)
+
+- Client hours count automatically from sessions (baseline + sessions since
+  `hoursCountFrom`, shared helper `src/components/admin/accreditation.ts`).
+- Supervision, CPD and own-therapy hours are logged by hand in table
+  `accreditation_log` (migration `accreditation_log.sql`, applied 31 Oct 2026
+  and seeded with the 15 supervision sessions from Anne's receipts since
+  12 Mar 2026). No client data is stored there.
+- IAHIP Bye Law 2B figures (303 verified client hours, 135.5 supervision,
+  262 own therapy, 1:8 ratio, 175 online max, CPD 15/20) live in
+  `practice.config.ts` → `accreditation`, overridable via Settings.
+- Form library (Forms section): blank intake form, therapeutic agreement and
+  privacy policy via `/api/admin/forms/blank?form=…`. Never sends anything.
+
 ## Receipts & statements
 
 - **No receipt is ever emailed implicitly.** Marking a session paid never

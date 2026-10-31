@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus, TrendingUp, ShieldCheck, Eye, EyeOff, Hourglass, Settings, MoreHorizontal, LogOut } from 'lucide-react';
+import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus, TrendingUp, ShieldCheck, Eye, EyeOff, Hourglass, Settings, MoreHorizontal, LogOut, GraduationCap } from 'lucide-react';
 import type { AdminSection } from './types';
 
 interface Props {
@@ -18,6 +18,7 @@ const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> =
   { id: 'clients',    label: 'Clients',    Icon: UserRound },
   { id: 'sessions',   label: 'Calendar',   Icon: CalendarDays },
   { id: 'revenue',    label: 'Revenue',    Icon: TrendingUp },
+  { id: 'hours',      label: 'Hours',      Icon: GraduationCap },
   { id: 'forms',      label: 'Forms',      Icon: FileText },
   { id: 'waitlist',   label: 'Waitlist',   Icon: Hourglass },
   { id: 'new-client', label: 'Onboarding', Icon: UserRoundPlus },
@@ -136,7 +137,8 @@ function DesktopSidebar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onT
             title={label}
             aria-label={label}
           >
-            <Icon size={22} strokeWidth={1.6} aria-hidden />
+            <Icon size={21} strokeWidth={1.6} aria-hidden />
+            <span className="admin-nav-label" aria-hidden>{label}</span>
           </button>
         ))}
       </nav>
@@ -153,8 +155,9 @@ function DesktopSidebar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onT
           : { marginBottom: 10 }}
       >
         {privacy
-          ? <EyeOff size={22} strokeWidth={1.6} aria-hidden />
-          : <Eye size={22} strokeWidth={1.6} aria-hidden />}
+          ? <EyeOff size={21} strokeWidth={1.6} aria-hidden />
+          : <Eye size={21} strokeWidth={1.6} aria-hidden />}
+        <span className="admin-nav-label" aria-hidden>Privacy</span>
       </button>
 
       <button
@@ -165,7 +168,8 @@ function DesktopSidebar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onT
         aria-label="Two-factor authentication"
         style={{ marginBottom: 10 }}
       >
-        <ShieldCheck size={22} strokeWidth={1.6} aria-hidden />
+        <ShieldCheck size={21} strokeWidth={1.6} aria-hidden />
+        <span className="admin-nav-label" aria-hidden>2FA</span>
       </button>
 
       <button

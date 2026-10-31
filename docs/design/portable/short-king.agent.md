@@ -225,10 +225,14 @@ images, redirects, sitemap, analytics, and cookie controls.
 ## Owen's taste
 
 - **Signature:** quiet, not loud. Excellent quality first. A small
-  recurring detail is welcome if it never shouts.
+  recurring detail is welcome if it never shouts. On his dashboard: glass panels
+  over soft colour blobs, and circles as the recurring shape. Keep both.
 - **Likes:** being asked for his ideas, and seeing original directions
   proposed. Modern typographic sizing and generous, considered spacing.
   Composition that guides the eye and reads easily. Foundations first.
+  Status by importance (one "needs attention" item first, then a calm
+  checklist). "New" markers only on request. Phone-first for tools he uses
+  between sessions.
 - **Dislikes:** anything that looks AI-made, especially common AI fonts
   and an eyebrow label over every heading.
 

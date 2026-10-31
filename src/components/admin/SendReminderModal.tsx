@@ -130,7 +130,7 @@ export function SendReminderModal({ session, client, onClose }: Props) {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>
             <p className="admin-eyebrow">Reminder</p>
-            <h2 className="admin-h3" style={{ margin: '4px 0 6px' }}>Send Reminder</h2>
+            <h2 className="admin-h3" style={{ margin: '4px 0 6px' }}>Send reminder</h2>
             <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: 0 }}>
               {client.full_name} · {formatDateTime(session.session_date)}
             </p>
@@ -212,7 +212,7 @@ export function SendReminderModal({ session, client, onClose }: Props) {
             >
               {receiptStatus === 'sent'
                 ? <><Check size={13} /> Receipt sent</>
-                : <><Receipt size={13} /> {receiptStatus === 'sending' ? 'Sending…' : 'Send Receipt'}</>}
+                : <><Receipt size={13} /> {receiptStatus === 'sending' ? 'Sending…' : 'Send receipt'}</>}
             </button>
             <button
               onClick={() => void send()}
@@ -220,7 +220,7 @@ export function SendReminderModal({ session, client, onClose }: Props) {
               className="admin-btn-primary"
               style={channel !== 'email' || !canSend ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}
             >
-              {sending ? 'Sending…' : 'Send Reminder'}
+              {sending ? 'Sending…' : 'Send reminder'}
             </button>
           </div>
         </div>

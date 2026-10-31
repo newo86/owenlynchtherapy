@@ -43,6 +43,19 @@ export const PRACTICE = {
     hoursTarget: 500,
     hoursBaseline: 387,
     hoursCountFrom: '2026-07-06',
+    // Re-accreditation (IAHIP Bye Law 2B) requirements for the Hours page.
+    // Figures from IAHIP's record-of-hours letter (11 Jun 2026); set the
+    // verified ones to 0 for a practice without such a letter.
+    accreditedOn: '2026-03-24',
+    verifiedClientHours: 303,
+    supervisionVerifiedHours: 135.5,
+    supervisionTarget: 150,
+    supervisionRatio: 8,
+    ownTherapyHours: 262,
+    ownTherapyTarget: 250,
+    onlineMaxHours: 175,
+    cpdTargetEarly: 15,
+    cpdTargetLate: 20,
   },
 
   // ── Contact / NAP (name, address, phone — local-SEO critical) ─────────
