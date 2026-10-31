@@ -245,7 +245,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
         <form onSubmit={save} style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 18 }}>
 
           {/* Client details */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="admin-form-2col" style={{ gap: 16 }}>
             <div>
               <label className="admin-label">Client name</label>
               <input
@@ -294,7 +294,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
           </div>
 
           {/* Date / fee */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="admin-form-2col" style={{ gap: 16 }}>
             <div>
               <label className="admin-label">Date &amp; time (Dublin)</label>
               <input

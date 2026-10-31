@@ -155,7 +155,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="admin-form-2col" style={{ gap: 16 }}>
         <div>
           <label className="admin-label">Client name *</label>
           <input type="text" required placeholder="e.g. Jane Smith"
@@ -169,7 +169,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
             value={clientEmail} onChange={e => setClientEmail(e.target.value)} className="admin-input" />
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="admin-form-2col" style={{ gap: 16 }}>
         <div>
           <label className="admin-label">
             Session date &amp; time {sendIntake ? '*' : <span style={{ color: 'var(--ink-muted)' }}>(optional)</span>}
@@ -230,7 +230,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
       <div style={{ borderTop: '1px solid var(--line)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <p className="admin-eyebrow" style={{ margin: 0 }}>Personal details <span style={{ fontStyle: 'italic', textTransform: 'none', letterSpacing: 0, color: 'var(--ink-muted)', fontSize: 11 }}>— all optional</span></p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="admin-form-2col" style={{ gap: 14 }}>
           <div>
             <label className="admin-label">Date of birth</label>
             <input type="date" value={dob} onChange={e => setDob(e.target.value)} className="admin-input" />
@@ -241,7 +241,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="admin-form-2col" style={{ gap: 14 }}>
           <div>
             <label className="admin-label">Emergency contact name</label>
             <input type="text" placeholder="e.g. Mary Smith" value={emergencyName} onChange={e => setEmergencyName(e.target.value)} className="admin-input" />
@@ -252,7 +252,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="admin-form-2col" style={{ gap: 14 }}>
           <div>
             <label className="admin-label">GP name</label>
             <input type="text" placeholder="e.g. Dr. O'Brien" value={gpName} onChange={e => setGpName(e.target.value)} className="admin-input" />

@@ -571,7 +571,7 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
                     )}
                   </div>
 
-                  <div className="pii" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="pii admin-form-2col" style={{ gap: 12 }}>
                     <ContactField label="Email" value={contactFields.email} editing={editingContact} type="email"
                       onChange={v => setContactFields(f => ({ ...f, email: v }))} />
                     <ContactField label="Phone" value={contactFields.phone} editing={editingContact} type="tel"

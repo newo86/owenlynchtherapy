@@ -13,6 +13,8 @@ import { adminFetch, displayFee, formatDateTime, isSameDay, startOfWeek, dedupeS
 import { SendReminderModal } from './SendReminderModal';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
 import { SessionDoneOptions, type SessionDoneChoice } from './SessionDoneOptions';
+import { NextUpCard, AccreditationMiniCard, findNextUp } from './TodayCards';
+import { useAccreditationSettings, useAccreditationHours } from './accreditation';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow,
   CalendarEvent, CalendarStatus, SessionFilter, FormsTab, GcalRef, ReminderHealth, WaitlistRow,
@@ -319,6 +321,14 @@ export function Dashboard({
   // ── Revenue
   const revenue = useMemo(() => computeRevenue(allSessions), [allSessions]);
 
+  // ── Today: next session + accreditation progress
+  // Re-read the clock whenever the data reloads (every 30 s), not every render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableNow = useMemo(() => new Date(), [clients]);
+  const nextUp = findNextUp(allSessions, stableNow);
+  const accred = useAccreditationSettings();
+  const accredHours = useAccreditationHours(clients, accred, stableNow);
+
   return (
     <>
       {/* Topbar */}
@@ -429,6 +439,30 @@ export function Dashboard({
           ))}
         </div>
       )}
+
+      {/* Next up + accreditation */}
+      <div className={`admin-row-today${nextUp ? '' : ' is-single'}`}>
+        {nextUp && (
+          <NextUpCard
+            session={nextUp.s}
+            client={nextUp.c}
+            now={stableNow}
+            busy={busyId === nextUp.s.id}
+            showDoneOptions={confirmId === nextUp.s.id}
+            feedback={feedback?.id === nextUp.s.id ? feedback.msg : null}
+            onSessionDone={() => sessionDone(nextUp.s)}
+            onDoneChoice={choice => void doDone(nextUp.s.id, choice)}
+            onCancelConfirm={() => setConfirmId(null)}
+            onOpen={() => onClickSession(nextUp.s, nextUp.c)}
+          />
+        )}
+        <AccreditationMiniCard
+          accred={accred}
+          total={accredHours.total}
+          sessionsSince={accredHours.sessionsSince}
+          onOpen={() => onNavigateSection('revenue')}
+        />
+      </div>
 
       {/* Stats */}
       <div className="admin-stats">
@@ -608,7 +642,7 @@ export function Dashboard({
             <p className="admin-eyebrow">Schedule</p>
             <h2 className="admin-h2">{weekLabel(weekOffset)}</h2>
           </div>
-          <div style={{ display: 'inline-flex', gap: 6 }}>
+          <div className="admin-week-nav">
             <button onClick={() => onWeekOffsetChange(weekOffset - 1)} className="admin-btn-secondary" aria-label="Previous week">
               <ChevronLeft size={13} /> Prev
             </button>
@@ -760,22 +794,22 @@ function SessionRow({
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+      <div className="admin-session-side">
+        <div className="admin-session-tags">
           <span className={`admin-tag ${formatTag}`}>{formatLabel}</span>
           {isLowCost && <span className="admin-tag admin-tag-new">Low cost · cash</span>}
           <span className={`admin-tag ${paymentTag}`}>{paymentLabel}</span>
         </div>
         {(session.receipt_sent_at || (session.session_reminders?.length ?? 0) > 0) && (
-          <div style={{ fontSize: 10, color: 'var(--sage)', fontWeight: 500, textAlign: 'right' }}>
+          <div className="admin-session-sent">
             {(session.session_reminders?.length ?? 0) > 0 && <span>✓ Reminder sent</span>}
             {session.receipt_sent_at && (session.session_reminders?.length ?? 0) > 0 && <span> · </span>}
             {session.receipt_sent_at && <span>✓ Receipt sent</span>}
           </div>
         )}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div className="admin-session-btns">
           {session.status === 'scheduled' && onSessionDone && (
-            <button onClick={onSessionDone} disabled={busy} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
+            <button onClick={onSessionDone} disabled={busy} className="admin-btn-primary admin-btn-compact">
               Session Done
             </button>
           )}

@@ -164,7 +164,7 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
             </select>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="admin-form-2col" style={{ gap: 16 }}>
             <div>
               <label className="admin-label">Date &amp; time *</label>
               <input

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { TrendingUp, Video, MapPin, Wallet, X, Send, Download, AlertCircle, GraduationCap } from 'lucide-react';
 import { startOfWeek, formatDateTime, adminFetch, dedupeSessions } from './api';
+import { useAccreditationSettings, useAccreditationHours } from './accreditation';
 import type { ClientRow, SessionRow } from './types';
 import { PRACTICE } from '@/practice.config';
 
@@ -174,44 +175,9 @@ export function Revenue({ clients }: Props) {
     };
   }, [clients, now]);
 
-  // Accreditation client-hours tracker: a stored baseline (hours accrued
-  // before the dashboard's records begin) + an automatic count of every
-  // non-cancelled, non-no-show session on/after the count-from date.
-  // Settings can adjust all three numbers; config defaults apply meanwhile.
-  const [accred, setAccred] = useState({
-    hoursTarget: PRACTICE.accreditation.hoursTarget,
-    hoursBaseline: PRACTICE.accreditation.hoursBaseline,
-    hoursCountFrom: PRACTICE.accreditation.hoursCountFrom as string,
-  });
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await adminFetch('/api/admin/settings');
-        if (!res.ok) return;
-        const a = (await res.json())?.settings?.accreditation;
-        if (a && typeof a.hoursTarget === 'number') {
-          setAccred({
-            hoursTarget: a.hoursTarget,
-            hoursBaseline: typeof a.hoursBaseline === 'number' ? a.hoursBaseline : 0,
-            hoursCountFrom: typeof a.hoursCountFrom === 'string' ? a.hoursCountFrom : accred.hoursCountFrom,
-          });
-        }
-      } catch { /* keep config defaults */ }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const accredHours = useMemo(() => {
-    const from = new Date(accred.hoursCountFrom + 'T00:00:00');
-    let count = 0;
-    for (const c of clients) {
-      for (const s of dedupeSessions(c.sessions)) {
-        if (s.status === 'cancelled' || s.status === 'no_show') continue;
-        const d = new Date(s.session_date);
-        if (d >= from && d <= now) count++;
-      }
-    }
-    return { sessionsSince: count, total: accred.hoursBaseline + count };
-  }, [clients, accred, now]);
+  // Accreditation client-hours tracker (shared with the Today page).
+  const accred = useAccreditationSettings();
+  const accredHours = useAccreditationHours(clients, accred, now);
 
   // Outstanding = unpaid money for sessions that have ALREADY HAPPENED.
   // Future scheduled sessions are always "unpaid" — they are not debt.

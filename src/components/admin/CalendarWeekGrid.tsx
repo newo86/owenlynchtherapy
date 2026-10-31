@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pencil, Trash2, Mail, CircleCheck } from 'lucide-react';
 import { adminFetch, formatTime, isSameDay, startOfWeek, dedupeSessions } from './api';
 import type { ClientRow, SessionRow, CalendarEvent, GcalRef } from './types';
@@ -8,13 +8,35 @@ import { PRACTICE } from '@/practice.config';
 
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-const ACCENTS = ['e-sage', 'e-terra', 'e-gold', 'e-lilac'] as const;
+const ACCENTS = ['e-sage', 'e-terra', 'e-gold', 'e-lilac', 'e-online'] as const;
 type Accent = typeof ACCENTS[number];
 
-function accentForName(name: string): Accent {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  return ACCENTS[h % ACCENTS.length];
+/** Colour = what kind of appointment it is, so the week reads at a glance:
+ *  in person sage, online blue, low cost gold, other calendar events lilac. */
+function accentForSession(s: SessionRow, c: ClientRow): Accent {
+  if (c.is_low_cost) return 'e-gold';
+  return s.session_format === 'online' ? 'e-online' : 'e-sage';
+}
+
+const TYPE_LABEL: Record<string, string> = { 'e-sage': 'In person', 'e-online': 'Online', 'e-gold': 'Low cost', 'e-lilac': 'Calendar event' };
+
+/** Unpaid only once the session has started: future sessions are always
+ *  "unpaid" in the data and that isn't money owed yet. */
+function isOwed(s: SessionRow): boolean {
+  return s.payment_status !== 'paid' && s.payment_status !== 'refunded' && new Date(s.session_date) <= new Date();
+}
+
+export function CalendarLegend() {
+  return (
+    <div className="admin-cal-legend" aria-label="Calendar key">
+      <span><i className="sw e-sage" />In person</span>
+      <span><i className="sw e-online" />Online</span>
+      <span><i className="sw e-gold" />Low cost</span>
+      <span><i className="sw e-lilac" />Other calendar events</span>
+      <span><i className="dot" style={{ background: '#4F8A68' }} />Reminder sent</span>
+      <span><i className="dot" style={{ background: 'var(--terracotta)' }} />Not paid</span>
+    </div>
+  );
 }
 
 /** Most recent reminder timestamp for a session, or null if none logged. */
@@ -87,6 +109,22 @@ export function CalendarWeekGrid({
   const [paidOverride, setPaidOverride] = useState<Record<string, 'paid' | 'unpaid'>>({});
   const [busyPaidId, setBusyPaidId] = useState<string | null>(null);
   const [flash, setFlash] = useState<{ id: string; text: string } | null>(null);
+  // Preview card: follows the pointer on desktop, the tapped card on touch.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [peek, setPeek] = useState<{ id: string; ev: MergedEvent; top: number; left: number } | null>(null);
+  function showPeek(id: string, ev: MergedEvent, el: HTMLElement) {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const w = wrap.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const width = 260;
+    let left = r.right - w.left + 10;
+    if (left + width > w.width) left = r.left - w.left - width - 10;
+    if (left < 0) left = Math.max(0, Math.min(r.left - w.left, w.width - width));
+    const below = left === Math.max(0, Math.min(r.left - w.left, w.width - width));
+    setPeek({ id, ev, left, top: below ? r.bottom - w.top + 8 : r.top - w.top });
+  }
+  const canHover = () => typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches;
 
   const days = useMemo(() => {
     const monday = startOfWeek(new Date());
@@ -235,7 +273,7 @@ export function CalendarWeekGrid({
         out.push({
           time: formatTime(s.session_date),
           label: c.full_name,
-          accent: accentForName(c.full_name),
+          accent: accentForSession(s, c),
           start: s.session_date,
           format: s.session_format,
           session: s,
@@ -250,7 +288,7 @@ export function CalendarWeekGrid({
       out.push({
         time: formatTime(e.start),
         label: e.title || '(no title)',
-        accent: 'e-gold',
+        accent: 'e-lilac',
         start: e.start,
         gcalId: e.id,
         gcalLocation: e.location,
@@ -263,7 +301,40 @@ export function CalendarWeekGrid({
   const clickable = !!onScheduleDay;
   const gcalEditable = !!onEditGcalEvent;
 
+  // On touch, the preview belongs to the open card: closing the card (tap
+  // elsewhere, Escape) hides it too.
+  const peekShown = peek && (canHover() || openCardId === peek.id) ? peek : null;
+  const peekCard = peekShown && (() => {
+    const { ev } = peekShown;
+    if (ev.session && ev.client) {
+      const s = ev.session, c = ev.client;
+      const n = dedupeSessions(c.sessions).filter(x => x.status !== 'cancelled' && new Date(x.session_date) < new Date(s.session_date)).length + 1;
+      const dot = reminderDot(s, c);
+      const paid = isPaid(s);
+      return (
+        <div className="admin-event-peek" role="dialog" aria-label={`Preview: ${c.full_name}`} style={{ top: peekShown.top, left: peekShown.left }}>
+          <p className="admin-event-peek-name pii">{c.full_name}</p>
+          <dl>
+            <dt>Time</dt><dd>{ev.time} · {PRACTICE.sessionMinutes} min</dd>
+            <dt>Type</dt><dd>{TYPE_LABEL[ev.accent]}</dd>
+            <dt>Session</dt><dd>Number {n}</dd>
+            <dt>Fee</dt><dd>€{Math.round(s.fee / 100)} · <span style={{ color: paid ? 'var(--sage)' : isOwed(s) ? 'var(--terracotta)' : 'var(--ink-muted)' }}>{paid ? 'paid' : isOwed(s) ? 'not paid' : 'not due yet'}</span></dd>
+            <dt>Reminder</dt><dd>{c.reminders_opted_out ? 'Client opted out' : dot ? dot.title.split(' — ')[0] : 'None'}</dd>
+          </dl>
+        </div>
+      );
+    }
+    return (
+      <div className="admin-event-peek" role="dialog" aria-label={`Preview: ${ev.label}`} style={{ top: peekShown.top, left: peekShown.left }}>
+        <p className="admin-event-peek-name">{ev.label}</p>
+        <dl><dt>Time</dt><dd>{ev.time}</dd><dt>Type</dt><dd>Calendar event, not a client session</dd></dl>
+      </div>
+    );
+  })();
+
   return (
+    <div className="admin-week-wrap" ref={wrapRef} onMouseLeave={() => { if (canHover()) setPeek(null); }}>
+    <CalendarLegend />
     <div className="admin-week-grid">
       {days.map((day, i) => {
         const dayEvents = eventsForDay(day);
@@ -298,8 +369,15 @@ export function CalendarWeekGrid({
                     data-card-id={cardId}
                     className={`admin-event ${e.accent}${isClickable ? ' admin-event-clickable' : ''}${isOpen ? ' is-reveal-open' : ''}`}
                     onClick={isClickable
-                      ? ev => { ev.stopPropagation(); setOpenCardId(prev => prev === cardId ? null : cardId!); }
+                      ? ev => {
+                          ev.stopPropagation();
+                          const opening = openCardId !== cardId;
+                          setOpenCardId(opening ? cardId! : null);
+                          if (!canHover()) { if (opening) showPeek(cardId!, e, ev.currentTarget); else setPeek(null); }
+                        }
                       : undefined}
+                    onMouseEnter={cardId ? ev => { if (canHover()) showPeek(cardId, e, ev.currentTarget); } : undefined}
+                    onMouseLeave={cardId ? () => { if (canHover()) setPeek(null); } : undefined}
                     role={isClickable ? 'button' : undefined}
                     tabIndex={isClickable ? 0 : undefined}
                     onKeyDown={isClickable
@@ -309,15 +387,12 @@ export function CalendarWeekGrid({
                   >
                     {isSession && !isOpen && (() => {
                       const dot = reminderDot(e.session!, e.client!);
-                      return dot ? (
-                        <span
-                          title={dot.title}
-                          style={{
-                            position: 'absolute', top: 7, right: 7, width: 7, height: 7,
-                            borderRadius: '50%', background: dot.color,
-                            boxShadow: '0 0 0 1.5px rgba(255,255,255,0.9)',
-                          }}
-                        />
+                      const owed = isOwed(e.session!) && !isPaid(e.session!);
+                      return (dot || owed) ? (
+                        <span className="admin-event-dots">
+                          {owed && <span title="Not paid" style={{ background: 'var(--terracotta)' }} />}
+                          {dot && <span title={dot.title} style={{ background: dot.color }} />}
+                        </span>
                       ) : null;
                     })()}
                     <div className="admin-event-time">{e.time}</div>
@@ -405,6 +480,8 @@ export function CalendarWeekGrid({
           </div>
         );
       })}
+    </div>
+    {peekCard}
     </div>
   );
 }
