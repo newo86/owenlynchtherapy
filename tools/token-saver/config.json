@@ -1,0 +1,10 @@
+{
+  "statusLine": true,
+  "contextNudges": true,
+  "compactAtPercent": 60,
+  "freshSessionAtPercent": 85,
+  "topicShiftNudges": true,
+  "topicShiftMinPercent": 30,
+  "renudgeAfterCompact": true,
+  "defaultContextWindow": 200000
+}

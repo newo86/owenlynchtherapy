@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Standalone Claude Code helper (plain Node), not part of the website.
+    "tools/**",
   ]),
 ]);
 
