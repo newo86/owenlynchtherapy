@@ -73,6 +73,8 @@ export interface CalendarEvent {
   description?: string;
   location?: string;
   htmlLink?: string;
+  /** Google all-day item (birthday, day off): start/end are dates, end exclusive. */
+  allDay?: boolean;
 }
 
 export interface CalendarStatus {

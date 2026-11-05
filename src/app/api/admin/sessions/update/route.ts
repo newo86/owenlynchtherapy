@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     client_email?: string;
     phone?: string;
     apply_format_to_all?: boolean; // propagate format+location change to all client sessions
+    apply_fee_to_future?: boolean; // new fee for later unpaid sessions + the client's default fee
   };
   try {
     body = await req.json();
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const { session_id, client_id, apply_format_to_all } = body;
+  const { session_id, client_id, apply_format_to_all, apply_fee_to_future } = body;
   if (!session_id) return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
   if (!client_id)  return NextResponse.json({ error: 'client_id is required' }, { status: 400 });
 
@@ -176,6 +177,31 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Carry a fee change forward: later sessions that are still scheduled and
+  // unpaid, plus the client's default fee (used when the calendar sync imports
+  // new occurrences). Paid, refunded and past sessions keep their fee so
+  // receipts and the books never change. Fee isn't on the Google event, so
+  // nothing is written to Google and no email is sent.
+  let futureFeeUpdated = 0;
+  if (apply_fee_to_future && typeof sessionPatch.fee === 'number') {
+    const { data: bumped, error: futErr } = await supabaseAdmin
+      .from('sessions')
+      .update({ fee: sessionPatch.fee })
+      .eq('client_id', client_id)
+      .neq('id', session_id)
+      .gt('session_date', existing.session_date)
+      .eq('status', 'scheduled')
+      .eq('payment_status', 'unpaid')
+      .select('id');
+    if (futErr) console.error('[sessions/update] future fee update error:', futErr);
+    futureFeeUpdated = bumped?.length ?? 0;
+    const { error: feeErr } = await supabaseAdmin
+      .from('clients')
+      .update({ session_fee: sessionPatch.fee })
+      .eq('id', client_id);
+    if (feeErr) console.error('[sessions/update] client default fee update error:', feeErr);
+  }
+
   // Sync to Google Calendar if the event is linked and any GCal-relevant field changed.
   const gcalNeedsUpdate = !!(existing.gcal_event_id && (newWallClock || sessionPatch.session_format || clientPatch.full_name));
   if (gcalNeedsUpdate) {
@@ -198,5 +224,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true }, { headers: noCache });
+  return NextResponse.json({ ok: true, futureFeeUpdated }, { headers: noCache });
 }

@@ -56,6 +56,12 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
     session.session_format === 'online' ? 'online' : 'in_person'
   );
   const [applyFormatToAll, setApplyFormatToAll] = useState(false);
+  const [applyFeeToFuture, setApplyFeeToFuture] = useState(false);
+  const feeChanged = Number(fee) > 0 && Math.round(Number(fee) * 100) !== session.fee;
+  // Later sessions a new fee would reach: still scheduled and not yet paid.
+  const futureUnpaid = client.sessions.filter(s => s.id !== session.id
+    && new Date(s.session_date) > new Date(session.session_date)
+    && s.status === 'scheduled' && s.payment_status === 'unpaid').length;
   const [isLowCost, setIsLowCost]               = useState(client.is_low_cost ?? false);
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'unpaid' | 'refunded'>(
     session.payment_status === 'paid' ? 'paid'
@@ -104,6 +110,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
           status,
           notes,
           apply_format_to_all: applyFormatToAll,
+          apply_fee_to_future: feeChanged && applyFeeToFuture,
         }),
       });
       const json = await res.json();
@@ -318,6 +325,27 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
               />
             </div>
           </div>
+
+          {feeChanged && (
+            <label style={{
+              display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: -6,
+              cursor: 'pointer', fontSize: 13, color: 'var(--forest-deep)', lineHeight: 1.45,
+            }}>
+              <input
+                type="checkbox"
+                checked={applyFeeToFuture}
+                onChange={e => setApplyFeeToFuture(e.target.checked)}
+                style={{ accentColor: 'var(--terracotta)', width: 15, height: 15, marginTop: 2, flexShrink: 0 }}
+              />
+              <span>
+                Use €{Number(fee)} for {clientName.split(' ')[0]}&apos;s future sessions too
+                <span style={{ display: 'block', color: 'var(--ink-muted)', fontSize: 12 }}>
+                  {futureUnpaid === 0 ? 'No upcoming unpaid sessions yet' : `${futureUnpaid} upcoming unpaid session${futureUnpaid === 1 ? '' : 's'}`}
+                  {' '}plus any new ones from your calendar. Paid and past sessions keep their fee.
+                </span>
+              </span>
+            </label>
+          )}
 
           {/* Format */}
           <div>

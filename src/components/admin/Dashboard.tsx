@@ -136,6 +136,7 @@ export function Dashboard({
       }
     }
     return events.filter(e => {
+      if (e.allDay) return false; // birthdays, days off: never a client's session
       if (linkedIds.has(e.id)) return false;
       const eStart = new Date(e.start);
       const looksLinked = sessions.some(s =>
@@ -170,8 +171,9 @@ export function Dashboard({
     .slice(0, 6);
 
 
-  const upcomingWhen = (iso: string) =>
-    new Date(iso).toLocaleString('en-IE', {
+  const upcomingWhen = (iso: string) => /^\d{4}-\d{2}-\d{2}$/.test(iso)
+    ? new Date(iso + 'T00:00:00').toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short' })
+    : new Date(iso).toLocaleString('en-IE', {
       weekday: 'short', day: 'numeric', month: 'short',
       hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
     });

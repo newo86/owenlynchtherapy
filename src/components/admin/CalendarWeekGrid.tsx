@@ -71,6 +71,16 @@ function reminderDot(s: SessionRow, c: ClientRow): { color: string; title: strin
   return null; // past session with no reminder logged — nothing to action
 }
 
+/** Local midnight for a Google all-day date ("2026-11-09"). */
+function dateOnly(d: string): Date {
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(d + 'T00:00:00') : new Date(d);
+}
+/** Whether an all-day item covers `day` (Google's end date is exclusive). */
+function coversDay(e: { start: string; end: string }, day: Date): boolean {
+  const d = new Date(day); d.setHours(0, 0, 0, 0);
+  return dateOnly(e.start) <= d && d < dateOnly(e.end);
+}
+
 function buildClickIso(day: Date): string {
   return buildClickIsoAt(day, 17);
 }
@@ -91,6 +101,7 @@ interface MergedEvent {
   client?: ClientRow;
   gcalId?: string;
   gcalLocation?: string;
+  allDay?: boolean;
 }
 
 export interface CalendarWeekGridProps {
@@ -273,6 +284,7 @@ export function CalendarWeekGrid({
         const d = new Date(s.session_date);
         if (!isSameDay(d, day) || s.status === 'cancelled') continue;
         const ev = events.find(e => {
+          if (e.allDay) return false;
           if (s.gcal_event_id && s.gcal_event_id === e.id) return true;
           const eStart = new Date(e.start);
           if (!isSameDay(eStart, d)) return false;
@@ -295,6 +307,13 @@ export function CalendarWeekGrid({
 
     for (const e of events) {
       if (matched.has(e.id)) continue;
+      if (e.allDay) {
+        if (coversDay(e, day)) out.push({
+          time: 'All day', label: e.title || '(no title)', accent: 'e-lilac',
+          start: e.start, end: e.end, gcalId: e.id, gcalLocation: e.location, allDay: true,
+        });
+        continue;
+      }
       if (!isSameDay(new Date(e.start), day)) continue;
       out.push({
         time: formatTime(e.start),
@@ -307,7 +326,9 @@ export function CalendarWeekGrid({
       });
     }
 
-    return out.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    // All-day items first, then by time.
+    return out.sort((a, b) => Number(!!b.allDay) - Number(!!a.allDay)
+      || new Date(a.start).getTime() - new Date(b.start).getTime());
   }
 
   const clickable = !!onScheduleDay;
@@ -346,7 +367,7 @@ export function CalendarWeekGrid({
 
   function renderCard(e: MergedEvent, key: string | number, style?: React.CSSProperties) {
                 const isSession = !!e.session && !!e.client;
-                const isGcalOnly = !isSession && !!e.gcalId;
+                const isGcalOnly = !isSession && !!e.gcalId && !e.allDay; // all-day items are view-only (edit them in Google)
                 const cardId = isSession ? e.session!.id : e.gcalId;
                 const isOpen = !!cardId && openCardId === cardId;
                 const isClickable = isSession || (isGcalOnly && gcalEditable);
@@ -468,7 +489,10 @@ export function CalendarWeekGrid({
   // ── Timed week (computers): sessions placed by the hour, like a diary.
   function renderTimed() {
     const PX = 64; // pixels per hour
-    const perDay = days.map(d => eventsForDay(d));
+    const all = days.map(d => eventsForDay(d));
+    const perDay = all.map(evs => evs.filter(e => !e.allDay));
+    const allDayPerDay = all.map(evs => evs.filter(e => e.allDay));
+    const hasAllDay = allDayPerDay.some(evs => evs.length > 0);
     const endOf = (e: MergedEvent) => e.end ? new Date(e.end) : new Date(new Date(e.start).getTime() + PRACTICE.sessionMinutes * 60000);
     let minH = 15, maxH = 21;
     for (const evs of perDay) for (const e of evs) {
@@ -507,6 +531,16 @@ export function CalendarWeekGrid({
             </div>
           ))}
         </div>
+        {hasAllDay && (
+          <div className="admin-tgrid-allday">
+            <span className="admin-tgrid-allday-label">All day</span>
+            {allDayPerDay.map((evs, i) => (
+              <div key={i} className="admin-tgrid-allday-col">
+                {evs.map((e, k) => renderCard(e, `ad-${k}`))}
+              </div>
+            ))}
+          </div>
+        )}
         <div className="admin-tgrid-body" style={{ height }}>
           <div className="admin-tgrid-axis">
             {hours.map(h => <span key={h} style={{ top: (h - minH) * PX }}>{hourLabel(h)}</span>)}

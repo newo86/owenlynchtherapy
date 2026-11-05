@@ -1899,3 +1899,11 @@
 .admin-stat { container-type: inline-size; }
 .admin-stat-value { font-size: min(64px, 21cqi); }
 .admin-stat-value-prefix { font-size: min(32px, 11cqi); }
+
+/* All-day strip (birthdays, days off) above the timed grid, like Google's. */
+.admin-tgrid-allday { display: grid; grid-template-columns: 52px repeat(7, minmax(0, 1fr)); align-items: start; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.admin-tgrid-allday-label { font-size: 11px; color: var(--ink-muted); padding: 6px 8px 0 0; text-align: right; }
+.admin-tgrid-allday-col { display: flex; flex-direction: column; gap: 4px; padding: 0 4px; min-width: 0; }
+.admin-tgrid-allday-col .admin-event { margin: 0; padding: 4px 8px; min-height: 0; }
+.admin-tgrid-allday-col .admin-event-time { display: none; }
+.admin-tgrid-allday-col .admin-event-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
