@@ -80,6 +80,36 @@ Every rule here comes from a change Owen asked for at least once. The section "W
 - CSS only: transform and opacity, scroll-driven animations (`animation-timeline: view()`) behind `@supports`, each in its own composited layer so nothing flickers or repaints the page. No scroll listeners, no animation library.
 - Everything sits still under `prefers-reduced-motion: reduce`, and the page reads completely before anything moves.
 
+## UX laws and motion principles
+
+Owen asked for these 20 to be applied by default. The animation principles come from Disney's twelve; on a therapy site they are used gently, so each one is translated into what it means here.
+
+**Motion (use sparingly, always behind `prefers-reduced-motion`)**
+
+1. **Squash and stretch:** a pressed button or tab gives a tiny scale (0.97 to 1), never a bounce or elastic. Shapes keep their volume.
+2. **Anticipation:** hint before a change: a hover state, a chevron that turns before a panel opens, a pen loop that thickens before the link is followed.
+3. **Staging:** one thing in focus at a time. Motion, colour and size point at the single next step (the face, then the headline, then Book).
+4. **Pose to pose:** design the start and end states first (closed and open menu, before and after a save); motion only joins two good still frames.
+5. **Follow through:** related parts settle slightly after the lead (a card's text after the card, ripple rings one after another) and then come to rest.
+6. **Slow in and slow out:** ease every motion. Entrances ease out (`cubic-bezier(0.22, 1, 0.36, 1)`), exits ease in; never linear except continuous ambient loops.
+7. **Arcs:** things that travel move on a gentle curve or not at all; the dotted thread and drawn loops are the house arcs.
+8. **Secondary action:** small supporting motion (a leaf sway, a sun breathing) may accompany the main content but never competes with reading or the CTA.
+9. **Snappy timing:** feedback within `duration-ui` (about 200ms); reveals at `duration-reveal`; ambient motifs slow (`duration-ambient`). Nothing that blocks the user animates for more than 300ms.
+10. **Clear feedback, not exaggerated:** every tap, save and send shows a visible result (pressed state, "Message sent", a tick), stated in words. Calm beats loud on a therapy site.
+11. **Solid drawing:** consistent light and depth: one light source (soft shadow below), the same stroke weight for every icon and drawn line, shapes that look like they have weight.
+12. **Appeal:** real photos, hand-drawn details and generous space make the page feel human; one memorable detail per page.
+
+**UX laws**
+
+13. **Fitts's law:** the bigger and closer a target, the faster it is to hit. The main action is large and within thumb reach (tab bar, header Book now, hero links); destructive actions are small and far from it.
+14. **Bigger hit areas:** at least `tap-target` (44px) on touch, with `space-xs` between targets; extend the hit area with padding even when the visible element is smaller.
+15. **Hick's law:** decision time grows with the number of choices. One primary action per section, five tabs at most, short menus; secondary options go one tap deeper.
+16. **Miller's law:** people hold only a handful of things at once. Chunk content into small groups (topics in groups, forms in short steps, phone numbers spaced), and show progress in multi-step forms.
+17. **Doherty threshold:** keep responses under about 400ms. Show an instant state change and a loading state for anything slower; static pages, AVIF photos and no heavy scripts keep it fast.
+18. **Postel's law:** accept what people type in any reasonable format (phone numbers with or without spaces or +353, dates in several forms, emails with stray spaces) and tidy it quietly; be strict and clear in what the site sends back.
+19. **Jakob's law:** people expect a site to work like the others they use. Keep conventions: logo top left goes home, tab bar at the bottom, links look like links, forms behave like forms. Be original in look, not in how things work.
+20. **Frequency of use:** the most used actions are the most reachable (Book, Today in the dashboard, Session done); rare settings sit deeper. Check real use before moving anything.
+
 ## Images
 
 - Real photography of the therapist, never stock (no hands on mugs, no stacked stones on beaches). Bespoke line drawings and motifs from the brand (leaves, ripples, a dotted thread) are welcome.
@@ -166,6 +196,7 @@ Each rule in this system is a change Owen asked for, often more than once and ac
 | No hidden photo descriptions, fast photos | Home photo readable by screen readers; AVIF and WebP at phone sizes | Robbie, Nov 2026 |
 | Status by importance | The one thing that needs attention leads; the rest is a calm checklist | Owen's dashboard, Oct 2026 |
 | Glass and circles: dashboard only | Kept glass panels and soft circles on his dashboard as his own signature; removed floating circles from the public site | Owen, May and Oct 2026 |
+| UX laws and motion principles | Asked for the 20 principles of UX and animation (Disney's twelve plus Fitts, Hick, Miller, Doherty, Postel, Jakob and frequency of use) to be learned and applied | All projects, Nov 2026 |
 | Show first, then merge | Every change previewed with screenshots; mock-ups for open choices | All projects |
 | Reasoning from research | Asked for eye-tracking and design research to back layout choices | Robbie, Nov 2026 |
 
