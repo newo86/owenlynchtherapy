@@ -51,6 +51,9 @@ welcome if it never shouts.
   robbiesemple.com, picked option A of four)
 
 ## Dislikes
+- Heavy, dark drop shadows under cards: he wants cards lifted, not
+  floating (a hairline edge plus a short soft shadow), site-wide (Nov 2026,
+  robbiesemple.com)
 - Anything that looks AI-made, including common AI fonts and an eyebrow
   label over every heading (Oct 2026). See the skill's
   `reference/not-ai.md`.
