@@ -44,6 +44,11 @@ welcome if it never shouts.
   to Robbie's (Nov 2026)
 - Short phone heroes: drop secondary lines on phones rather than stack
   them, and keep paired buttons side by side (Nov 2026, robbiesemple.com)
+- One alignment axis on phones: under a centred photo he chose a centred
+  headline and centred buttons, and moved the intro paragraph further down
+  the page. Asked to declutter, he kept both actions (Book + About) over a
+  single-CTA version, so offer "calmer" before "fewer choices" (Nov 2026,
+  robbiesemple.com, picked option A of four)
 
 ## Dislikes
 - Anything that looks AI-made, including common AI fonts and an eyebrow
