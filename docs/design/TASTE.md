@@ -34,6 +34,16 @@ welcome if it never shouts.
   on (Oct 2026)
 - Phone-first for the dashboard: he uses it between sessions on his phone
   (Oct 2026)
+- On a therapist's phone home page, the therapist's photo leads: large,
+  centred, with clear space under the header and the headline close beneath
+  it, so face then headline read as one introduction. He asked for the
+  reasoning to come from how the eye actually reads a page (research), not
+  taste alone (Nov 2026, robbiesemple.com hero)
+- Phone navigation as a bottom tab bar (icon + short label, current page in
+  a filled pill) rather than a Menu button; he carried it from his own site
+  to Robbie's (Nov 2026)
+- Short phone heroes: drop secondary lines on phones rather than stack
+  them, and keep paired buttons side by side (Nov 2026, robbiesemple.com)
 
 ## Dislikes
 - Anything that looks AI-made, including common AI fonts and an eyebrow
