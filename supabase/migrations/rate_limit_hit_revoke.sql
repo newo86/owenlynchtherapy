@@ -9,6 +9,9 @@
 -- Found by the security-guardian's first audit (docs/SECURITY.md,
 -- "Database functions").
 --
+-- For databases that already ran rate_limits.sql. New installs get the same
+-- revoke from rate_limits.sql itself, because this file sorts BEFORE it
+-- alphabetically and so finds no function to revoke on a fresh database.
 -- Safe to re-run; skips cleanly if rate_limits.sql was never applied.
 
 do $$
@@ -23,7 +26,10 @@ begin
 end $$;
 
 -- Verify: expect anon=false, authenticated=false, service_role=true.
+-- (Returns no row if the function doesn't exist.)
 select
-  has_function_privilege('anon', 'public.rate_limit_hit(text, integer, bigint)', 'execute') as anon,
-  has_function_privilege('authenticated', 'public.rate_limit_hit(text, integer, bigint)', 'execute') as authenticated,
-  has_function_privilege('service_role', 'public.rate_limit_hit(text, integer, bigint)', 'execute') as service_role;
+  has_function_privilege('anon', p.oid, 'execute') as anon,
+  has_function_privilege('authenticated', p.oid, 'execute') as authenticated,
+  has_function_privilege('service_role', p.oid, 'execute') as service_role
+from (select to_regprocedure('public.rate_limit_hit(text, integer, bigint)') as oid) p
+where p.oid is not null;

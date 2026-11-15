@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { updateCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso, utcToDublinLocal } from '@/lib/dateUtils';
 import { sessionKind, ONLINE_LOCATION, ONLINE_JOIN_LINE, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       .update(sessionPatch)
       .eq('id', session_id);
     if (sessionErr) {
-      console.error('[sessions/update] session update error:', sessionErr);
+      console.error('[sessions/update] session update error:', dbError(sessionErr));
       return NextResponse.json({ error: sessionErr.message }, { status: 500 });
     }
   }
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
       .update(clientPatch)
       .eq('id', client_id);
     if (clientErr) {
-      console.error('[sessions/update] client update error:', clientErr);
+      console.error('[sessions/update] client update error:', dbError(clientErr));
       return NextResponse.json({ error: clientErr.message }, { status: 500 });
     }
   }
@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
       .eq('client_id', client_id)
       .neq('id', session_id);
     if (bulkErr) {
-      console.error('[sessions/update] bulk format update error:', bulkErr);
+      console.error('[sessions/update] bulk format update error:', dbError(bulkErr));
       // Non-fatal — current session was already updated.
     }
   }

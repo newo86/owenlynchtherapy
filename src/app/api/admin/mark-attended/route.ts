@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
       .eq('id', session_id);
 
     if (payErr) {
-      console.error('[mark-attended] payment update error:', payErr);
+      console.error('[mark-attended] payment update error:', dbError(payErr));
       return NextResponse.json(
         { error: 'Marked attended, but recording the payment failed — mark it paid separately.' },
         { status: 500 },

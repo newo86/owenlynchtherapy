@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { updateCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { ONLINE_LOCATION, ONLINE_JOIN_LINE, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (inserted.error) {
-      console.error('[gcal-event/update] session insert error:', inserted.error);
+      console.error('[gcal-event/update] session insert error:', dbError(inserted.error));
       return NextResponse.json({ error: inserted.error.message ?? 'Failed to create session' }, { status: 500 });
     }
     newSession = inserted.data as { id: string };

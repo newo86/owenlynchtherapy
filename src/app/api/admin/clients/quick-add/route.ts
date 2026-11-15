@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { createCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { ONLINE_LOCATION, ONLINE_JOIN_LINE, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (clientErr || !clientRow) {
-    console.error('[clients/quick-add] client insert error:', clientErr);
+    console.error('[clients/quick-add] client insert error:', dbError(clientErr));
     return NextResponse.json({ error: clientErr?.message ?? 'Failed to create client' }, { status: 500 });
   }
 
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (sessionErr) {
-      console.error('[clients/quick-add] session insert error:', sessionErr);
+      console.error('[clients/quick-add] session insert error:', dbError(sessionErr));
       // Continue — the client row exists, that's the main thing.
     } else if (sessionRow) {
       // Push to Google Calendar (silent failure ok).

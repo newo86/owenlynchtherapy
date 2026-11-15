@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
     } catch (linkErr) {
       // Non-fatal: the submission is saved regardless; the record can still be
       // filled from the dashboard's "Fill from intake" button.
-      console.error('[intake submit] client backfill error:', linkErr);
+      console.error('[intake submit] client backfill error:', dbError(linkErr));
     }
   }
 

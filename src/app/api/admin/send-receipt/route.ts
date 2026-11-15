@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { sendReceiptEmail } from '@/lib/sendReceiptEmail';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (sessionErr || !session) {
-    console.error('[send-receipt] session not found:', sessionErr);
+    console.error('[send-receipt] session not found:', dbError(sessionErr));
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
 
