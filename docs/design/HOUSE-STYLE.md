@@ -112,16 +112,16 @@ Owen's practice dashboard (theme `dashboard`) is a tool he uses between sessions
 - Category colours (`category-lilac`, `category-gold`, sage, terracotta) always pair with a word or icon.
 - Money and counts use `font-variant-numeric: tabular-nums`, and large figures scale to their card instead of overflowing.
 
-## Owen's own site: where it differs today
+## Owen's own site
 
-Owen's site (theme `owen`) keeps its fixed brand (forest, sage, terracotta, gold, linen; Avenir/Montserrat headings, Poppins body). Applied to it, the house rules would change these, each only when Owen asks:
+Owen's site (theme `owen`) keeps its fixed brand (forest, sage, terracotta, gold, linen; Avenir/Montserrat headings, Poppins body) and follows the house rules since Nov 2026: no eyebrow labels, no letter-spacing, no em dashes, soft flat cards (`.card-soft`), warm `ink-soft` secondary text.
 
-- Small-caps eyebrow labels on About, Services, Articles, Contact and FAQ; tracked capitals in the footer headings and the pill nav labels.
-- Service cards lift on hover and have an animated conic-gradient border.
-- Em dashes in About page copy and some labels.
-- `ink-soft` text in places uses Tailwind grey (`text-gray-400`/`500`) rather than a warm brand tone.
+Deliberate differences, kept by choice:
 
-Keep the "Psychotherapy" wordmark's tracking: it is part of the logo.
+- The "Psychotherapy" wordmark keeps its tracking: it is part of the logo.
+- Cards keep rounded corners (12-16px) rather than the square cards on Robbie's site.
+- Buttons are small uppercase labels (12px, no tracking) in terracotta.
+- Availability cards on Contact carry a 3px terracotta top edge.
 
 ## Never
 
