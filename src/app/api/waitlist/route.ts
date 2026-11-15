@@ -65,8 +65,10 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     if (error.code === '23505') {
-      // Already on the list — that's fine, tell them so.
-      return NextResponse.json({ ok: true, already: true });
+      // Already on the list. Reply exactly as for a new signup: a distinct
+      // answer would let anyone check whether a given email is on a
+      // therapist's waiting list (user enumeration, docs/SECURITY.md #20).
+      return NextResponse.json({ ok: true });
     }
     console.error('[waitlist] insert failed:', error.message);
     return NextResponse.json({ error: 'Something went wrong — please try again.' }, { status: 500 });

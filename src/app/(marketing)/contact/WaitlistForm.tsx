@@ -11,7 +11,7 @@ const inputClass =
   'focus:outline-none focus:ring-2 focus:ring-[#C85A1A]/40 focus:border-[#C85A1A]';
 
 export default function WaitlistForm() {
-  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'already' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -40,7 +40,7 @@ export default function WaitlistForm() {
         setError(json.error ?? 'Something went wrong — please try again.');
         return;
       }
-      setStatus(json.already ? 'already' : 'done');
+      setStatus('done');
       form.reset();
     } catch {
       setStatus('error');
@@ -48,7 +48,7 @@ export default function WaitlistForm() {
     }
   }
 
-  if (status === 'done' || status === 'already') {
+  if (status === 'done') {
     return (
       <div
         className="rounded-lg bg-white p-6 shadow-md"
@@ -56,7 +56,7 @@ export default function WaitlistForm() {
         role="status"
       >
         <p className="font-heading font-light text-lg text-forest mb-2">
-          {status === 'already' ? "You're already on the list" : "You're on the list"}
+          You&apos;re on the list
         </p>
         <p className="font-normal text-base text-gray-600 leading-[1.8]">
           I&apos;ll be in touch as soon as a space opens up. If anything changes in the

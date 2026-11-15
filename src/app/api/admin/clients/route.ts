@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('[clients] Supabase error:', JSON.stringify(error, null, 2));
+    console.error('[clients] Supabase error:', dbError(error));
     return NextResponse.json({ error: error.message ?? 'Failed to fetch clients' }, { status: 500 });
   }
 

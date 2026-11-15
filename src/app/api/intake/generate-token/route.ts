@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { randomUUID, randomBytes } from 'node:crypto';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { rateLimit } from '@/lib/rateLimit';
 import { generateTherapeuticAgreementPDF } from '@/lib/pdf/generateTherapeuticAgreementPDF';
 import { generatePrivacyPolicyPDF } from '@/lib/pdf/generatePrivacyPolicyPDF';
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
     expires_at,
   });
   if (tokenErr) {
-    console.error('[generate-token] token insert error:', JSON.stringify(tokenErr, null, 2));
+    console.error('[generate-token] token insert error:', dbError(tokenErr));
     return NextResponse.json({ error: tokenErr.message ?? 'Failed to create token' }, { status: 500 });
   }
   console.log('[generate-token] step 1: done');

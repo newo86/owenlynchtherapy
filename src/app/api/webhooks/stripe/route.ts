@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 import { PRACTICE } from '@/practice.config';
 import {
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       .eq('id', session.id);
 
     if (updateErr) {
-      console.error('[stripe-webhook] Supabase update failed for session', session.id, JSON.stringify(updateErr, null, 2));
+      console.error('[stripe-webhook] Supabase update failed for session', session.id, dbError(updateErr));
       // Return 200 so Stripe does not endlessly retry a data error.
       return new Response('OK', { status: 200 });
     }

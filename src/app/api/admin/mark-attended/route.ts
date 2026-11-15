@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { sessionKind } from '@/lib/emailTemplates';
 import { sendReceiptEmail } from '@/lib/sendReceiptEmail';
 
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     .eq('id', session_id);
 
   if (updateErr) {
-    console.error('[mark-attended] update error:', JSON.stringify(updateErr, null, 2));
+    console.error('[mark-attended] update error:', dbError(updateErr));
     return NextResponse.json({ error: 'Failed to update session status' }, { status: 500 });
   }
 
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
   // 3. Email the receipt, if asked — guarded exactly like send-receipt.
   let receipt_sent = false;
   if (body.send_receipt && paid && !session.receipt_sent_at && client?.email) {
-    receipt_sent = await sendReceiptEmail(
+    receipt_sent = 'sent' === await sendReceiptEmail(
       {
         id: session_id,
         fee: session.fee as number,

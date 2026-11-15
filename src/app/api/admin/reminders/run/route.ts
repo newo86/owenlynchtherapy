@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bearerMatches, requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { sendSessionReminder } from '@/lib/sendSessionReminder';
 import { getAuthorizedClient } from '@/lib/googleOAuth';
 import { reconcileCalendar, buildCalendarPresence, partitionByCalendarPresence, type MappedEvent } from '@/lib/calendarSync';
@@ -192,7 +192,7 @@ export async function GET(req: NextRequest) {
     .order('session_date', { ascending: true });
 
   if (error) {
-    console.error('[reminders-cron] Supabase error:', error);
+    console.error('[reminders-cron] Supabase error:', dbError(error));
     await recordRun({ outcome: 'error:candidates-query', detail: { message: error.message } });
     return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
   }

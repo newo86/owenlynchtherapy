@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { generateIntakePDF } from '@/lib/generateIntakePDF';
 import { sanitiseInput, escapeHtml } from '@/lib/sanitise';
 import { rateLimit } from '@/lib/rateLimit';
@@ -193,7 +193,7 @@ export async function POST(req: NextRequest) {
   });
 
   if (insertErr) {
-    console.error('[intake submit] insert error:', JSON.stringify(insertErr, null, 2));
+    console.error('[intake submit] insert error:', dbError(insertErr));
     // Release the claim so the client can retry with the same link.
     await supabaseAdmin.from('intake_tokens').update({ is_used: false }).eq('id', tokenRow.id);
     return NextResponse.json({ error: 'Failed to save submission' }, { status: 500 });

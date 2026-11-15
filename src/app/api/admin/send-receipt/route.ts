@@ -62,9 +62,14 @@ export async function POST(req: NextRequest) {
       session_format: session.session_format as string,
     },
     client,
+    { force: body.force === true },
   );
 
-  if (!sent) {
+  if (sent === 'already_sent') {
+    // Lost the race to a concurrent click: the other request is sending it.
+    return NextResponse.json({ error: 'Receipt already sent' }, { status: 409 });
+  }
+  if (sent === 'failed') {
     return NextResponse.json({ error: 'Failed to send receipt email' }, { status: 500 });
   }
 

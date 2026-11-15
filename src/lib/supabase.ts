@@ -41,3 +41,14 @@ export const supabaseAdmin: SupabaseClient = new Proxy({} as SupabaseClient, {
     return Reflect.get(client, prop, client);
   },
 });
+
+// What to log when a Supabase/Postgres call fails. Postgres puts the offending
+// row in the error's `details` ("Failing row contains (...)"), which for this
+// app can be intake answers or clinical notes, and server logs must not hold
+// health data (docs/SECURITY.md, "Data minimisation and logs"). Keep only the
+// code, message and hint, which identify the problem without the data.
+export function dbError(err: unknown): { code?: string; message?: string; hint?: string } {
+  if (!err || typeof err !== 'object') return { message: String(err) };
+  const e = err as { code?: string; message?: string; hint?: string };
+  return { code: e.code, message: e.message, hint: e.hint };
+}

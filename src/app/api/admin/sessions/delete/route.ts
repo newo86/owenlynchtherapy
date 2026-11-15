@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { deleteCalendarEvent } from '@/lib/googleOAuth';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       .neq('status', 'cancelled')
       .select('id');
     if (slotErr) {
-      console.error('[sessions/delete] Supabase error:', JSON.stringify(slotErr, null, 2));
+      console.error('[sessions/delete] Supabase error:', dbError(slotErr));
       return NextResponse.json({ error: slotErr.message ?? 'Failed to delete session' }, { status: 500 });
     }
     cancelled = cancelledRows?.length ?? 0;
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     // Fallback: no slot info (shouldn't happen) — cancel just this id.
     const { error } = await supabaseAdmin.from('sessions').update(cancel).eq('id', session_id!);
     if (error) {
-      console.error('[sessions/delete] Supabase error:', JSON.stringify(error, null, 2));
+      console.error('[sessions/delete] Supabase error:', dbError(error));
       return NextResponse.json({ error: error.message ?? 'Failed to delete session' }, { status: 500 });
     }
     cancelled = 1;
