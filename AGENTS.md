@@ -57,6 +57,10 @@ docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
   `src/practice.config.ts`, overridden at runtime by the dashboard Settings
   page (`getPractice()`). Don't infer them from page copy or old docs — they
   changed three times in one day once. If unknown, ask Owen.
+- **Security:** docs/SECURITY.md is the checklist. A hook
+  (.claude/hooks/security-gate.sh) makes every session run the
+  `security-guardian` agent on security-sensitive changes before pushing or
+  finishing; act on what it reports, then run the script's `mark` step.
 - **Skills:** creating or changing one follows the `writing-skills` skill.
 - **Design work** (any site, app or page design) goes through the
   `design-partner` skill. Owen's taste is recorded in docs/design/TASTE.md.
