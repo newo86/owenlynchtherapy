@@ -4,7 +4,7 @@
 
 # Owen's house style
 
-Owen's house style for every website and app he designs: his own practice site, Robbie Semple's, Shannon Egan's and anything new. The rules are shared; each project brings its own palette and fonts as a theme (`robbie`, `owen`, `shannon`). Start a new project by adding a theme with the same token names, then follow everything below without being asked.
+Owen's house style for every website and app he designs: his own practice site, Robbie Semple's, Shannon Egan's and anything new. The rules are shared; each project brings its own palette and fonts as a theme (`robbie`, `owen`, `shannon`, and `dashboard` for Owen's practice dashboard). Start a new project by adding a theme with the same token names, then follow everything below without being asked.
 
 Every rule here comes from a change Owen asked for at least once. The section "Where the rules came from" lists them.
 
@@ -98,9 +98,34 @@ Every rule here comes from a change Owen asked for at least once. The section "W
 - Native elements first: a `<button>` with `popover` for menus, `<details>` only for FAQ accordions.
 - Check with axe at 390px and 1440px before shipping; zero violations is the bar.
 
+## Dashboards and tools
+
+Owen's practice dashboard (theme `dashboard`) is a tool he uses between sessions, mostly on his phone. It keeps his signature and follows these rules:
+
+- **His signature lives here:** frosted glass cards (`surface-raised` with a 16px backdrop blur, `shadow-glass`) over a few soft colour blobs, each card with a `circle-tint` circle tucked into its bottom-right corner. Paint the circle in the card's background so nothing inside is ever clipped. Not on public sites.
+- **Status by importance.** The one thing that needs attention leads; the rest is a calm checklist. No grid of equal big-number cards.
+- **Today first:** next session, today's list, needs attention, this week. A timed week calendar on desktop, a vertical day agenda on phones.
+- **Sentence-case labels.** No orange capitals over headings, no wide letter-spacing anywhere.
+- **Phone-first:** 44px targets, a thumb-reachable floating action for the main task, modals centred and scrollable.
+- **"New" markers** only when Owen asks for them, behind a switch, never always on.
+- **Privacy mode** blurs client names and identifying details for screen-sharing; every new client-facing field gets the `.pii` class.
+- Category colours (`category-lilac`, `category-gold`, sage, terracotta) always pair with a word or icon.
+- Money and counts use `font-variant-numeric: tabular-nums`, and large figures scale to their card instead of overflowing.
+
+## Owen's own site: where it differs today
+
+Owen's site (theme `owen`) keeps its fixed brand (forest, sage, terracotta, gold, linen; Avenir/Montserrat headings, Poppins body). Applied to it, the house rules would change these, each only when Owen asks:
+
+- Small-caps eyebrow labels on About, Services, Articles, Contact and FAQ; tracked capitals in the footer headings and the pill nav labels.
+- Service cards lift on hover and have an animated conic-gradient border.
+- Em dashes in About page copy and some labels.
+- `ink-soft` text in places uses Tailwind grey (`text-gray-400`/`500`) rather than a warm brand tone.
+
+Keep the "Psychotherapy" wordmark's tracking: it is part of the logo.
+
 ## Never
 
-- Heavy or dark drop shadows; hover lift on cards; glass or blur on public sites (Owen's dashboard is the one place glass panels and circles are his choice).
+- Heavy or dark drop shadows; hover lift on cards; glass or blur on public sites (glass panels and corner circles belong to Owen's dashboard only).
 - Tracked-out caps, eyebrow labels, em dashes, breadcrumbs.
 - A centred photo over left-aligned text; buttons stacked on phones when they fit side by side.
 - Hard edges between sections; decorative gradient blobs; floating circles behind content.
