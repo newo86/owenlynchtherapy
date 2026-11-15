@@ -29,7 +29,12 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
    bypasses): a forged `x-middleware-subrequest` header skipped middleware
    auth. Never rely on `proxy.ts`/`middleware.ts` alone for auth; every admin
    route handler must call the admin auth check itself. Keep `next` on a
-   patched version (`npm audit`).
+   patched version. Next.js/React Server Components advisories can take
+   weeks to reach `npm audit`, so also check the nextjs.org/blog security
+   posts and the vercel/next.js and facebook/react GitHub advisories.
+- **Cache Components / `use cache`**: if adopted, never cache per-user or
+  admin data. Cache-poisoning advisories have leaked one user's page to
+  another.
 2. **Exposed `.git` folder / repo files**: nothing under `public/` that
    shouldn't be served; no `.env*`, backups, dumps or `.git` in deployable
    output.
@@ -42,10 +47,15 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
     point at deprovisioned Vercel projects, GitHub Pages, S3 buckets etc.
 - **Dependencies**: no high/critical `npm audit` findings in production
   dependencies; lockfile committed; no new packages with install scripts or
-  tiny download counts added without a reason (typosquatting).
+  tiny download counts added without a reason (typosquatting). Dependabot
+  waits a few days (cooldown) before proposing new releases, because npm
+  worms publish poisoned versions that are usually pulled within days.
 - **GitHub Actions**: no `pull_request_target` with checkout of PR code;
-  third-party actions from trusted publishers; workflow `permissions:` kept
-  minimal; secrets never echoed.
+  actions pinned by commit SHA (Dependabot keeps them current); workflow
+  `permissions:` kept minimal; secrets never echoed.
+- **Agent tooling**: any change to `.claude/` (hooks, settings, agents) is
+  security-sensitive. A 2026 npm worm planted a Claude Code SessionStart
+  hook to run its payload in every session.
 
 ### Secrets and keys
 - **No secrets in the repo or git history** (gitleaks in CI).
@@ -81,6 +91,10 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
    permissive policies for `anon`; the anon key alone can read nothing
    sensitive. Check with the Supabase MCP `get_advisors` (security) and
    `list_tables`.
+- **Database functions**: every `SECURITY DEFINER` function sets
+  `search_path` and REVOKEs EXECUTE from `public`, `anon` and
+  `authenticated` (Supabase grants anon EXECUTE by default, making the
+  function callable through the public REST API).
 - **IDOR**: every route taking an id (client, session, token, receipt)
   checks the caller is allowed that record. Intake tokens are random,
   single-use and expire.
