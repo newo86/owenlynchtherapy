@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { createCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { ONLINE_LOCATION, ONLINE_JOIN_LINE, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     .order('session_date', { ascending: false });
 
   if (error) {
-    console.error('[sessions GET] Supabase error:', JSON.stringify(error, null, 2));
+    console.error('[sessions GET] Supabase error:', dbError(error));
     return NextResponse.json({ error: error.message ?? 'Failed to fetch sessions' }, { status: 500 });
   }
 
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     .select();
 
   if (error || !sessions) {
-    console.error('[sessions POST] Supabase error:', JSON.stringify(error, null, 2));
+    console.error('[sessions POST] Supabase error:', dbError(error));
     return NextResponse.json({ error: error?.message ?? 'Failed to create session(s)' }, { status: 500 });
   }
 

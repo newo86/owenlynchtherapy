@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { deleteCalendarEvent } from '@/lib/googleOAuth';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
@@ -53,25 +53,25 @@ export async function POST(req: NextRequest) {
   // 3. Delete child rows to satisfy FK constraints.
   const sessionsDel = await supabaseAdmin.from('sessions').delete().eq('client_id', client_id);
   if (sessionsDel.error) {
-    console.error('[clients/delete] sessions error:', sessionsDel.error);
+    console.error('[clients/delete] sessions error:', dbError(sessionsDel.error));
     return NextResponse.json({ error: sessionsDel.error.message }, { status: 500 });
   }
 
   const submissionsDel = await supabaseAdmin.from('intake_submissions').delete().eq('client_id', client_id);
   if (submissionsDel.error) {
-    console.error('[clients/delete] submissions error:', submissionsDel.error);
+    console.error('[clients/delete] submissions error:', dbError(submissionsDel.error));
     // Fall through — orphan row is acceptable.
   }
 
   const tokensDel = await supabaseAdmin.from('intake_tokens').delete().eq('client_id', client_id);
   if (tokensDel.error) {
-    console.error('[clients/delete] tokens error:', tokensDel.error);
+    console.error('[clients/delete] tokens error:', dbError(tokensDel.error));
   }
 
   // 4. Delete the client.
   const { error } = await supabaseAdmin.from('clients').delete().eq('id', client_id);
   if (error) {
-    console.error('[clients/delete] client error:', error);
+    console.error('[clients/delete] client error:', dbError(error));
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

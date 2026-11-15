@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bearerMatches, requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 import { SITE_URL } from '@/practice.config';
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     .order('full_name', { ascending: true });
 
   if (error || !clients) {
-    console.error('[weekly-report] Supabase error:', error);
+    console.error('[weekly-report] Supabase error:', dbError(error));
     return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
   }
 

@@ -45,3 +45,8 @@ end;
 $$;
 
 grant execute on function public.rate_limit_hit(text, int, bigint) to service_role;
+
+-- SECURITY DEFINER functions are EXECUTE-able by PUBLIC (and, in Supabase,
+-- anon/authenticated) by default, which would expose this one through the
+-- public REST API. Only the server needs it (docs/SECURITY.md).
+revoke execute on function public.rate_limit_hit(text, int, bigint) from public, anon, authenticated;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     .eq('id', body.client_id);
 
   if (error) {
-    console.error('[clients/update] error:', error);
+    console.error('[clients/update] error:', dbError(error));
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

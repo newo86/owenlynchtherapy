@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { sendReceiptEmail } from '@/lib/sendReceiptEmail';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (sessionErr || !session) {
-    console.error('[send-receipt] session not found:', sessionErr);
+    console.error('[send-receipt] session not found:', dbError(sessionErr));
     return NextResponse.json({ error: 'Session not found' }, { status: 404 });
   }
 
@@ -62,9 +62,14 @@ export async function POST(req: NextRequest) {
       session_format: session.session_format as string,
     },
     client,
+    { force: body.force === true },
   );
 
-  if (!sent) {
+  if (sent === 'already_sent') {
+    // Lost the race to a concurrent click: the other request is sending it.
+    return NextResponse.json({ error: 'Receipt already sent' }, { status: 409 });
+  }
+  if (sent === 'failed') {
     return NextResponse.json({ error: 'Failed to send receipt email' }, { status: 500 });
   }
 

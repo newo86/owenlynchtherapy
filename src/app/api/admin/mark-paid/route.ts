@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { sessionKind } from '@/lib/emailTemplates';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       .update({ payment_status: 'unpaid', paid_at: null })
       .eq('id', session_id);
     if (updateErr) {
-      console.error('[mark-paid] unmark error:', updateErr);
+      console.error('[mark-paid] unmark error:', dbError(updateErr));
       return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
     }
     // Remove the manual/cash ledger rows this route created; graceful if the
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     .eq('id', session_id);
 
   if (updateErr) {
-    console.error('[mark-paid] update error:', updateErr);
+    console.error('[mark-paid] update error:', dbError(updateErr));
     return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
   }
 

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { setEnabled, verifyStored } from '@/lib/adminMfa';
+import { rateLimit } from '@/lib/rateLimit';
+import { rateLimitDurable } from '@/lib/rateLimitDurable';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -9,6 +11,15 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 export async function POST(req: NextRequest) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
+
+  // Six-digit codes can be guessed by brute force, so cap attempts. Keyed to
+  // the single admin account, not the IP: someone holding a stolen session can
+  // rotate IPs, but not accounts (docs/SECURITY.md #5).
+  const allowed = rateLimit('admin-mfa', 'admin', 5, 15 * 60 * 1000)
+    && await rateLimitDurable('admin-mfa', 'admin', 5, 15 * 60 * 1000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many attempts. Please wait 15 minutes and try again.' }, { status: 429, headers: noCache });
+  }
 
   let body: { code?: string };
   try {
