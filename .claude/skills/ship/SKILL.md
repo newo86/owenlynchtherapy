@@ -20,14 +20,18 @@ any new migration (step 7).
    run the `preview` skill first and ship only once the user has approved the
    screenshot. *Why: one day produced six commits of hero-typography rework
    and three rounds on one dashboard banner — a screenshot first avoids that.*
+   If the change touches security-sensitive files, the security gate hook
+   blocks the push until the `security-guardian` agent has reviewed the diff
+   (docs/SECURITY.md); tell the user about Critical/High findings before
+   shipping. *Why: the site holds clinical data; a leak is a GDPR breach.*
 3. Commit with a descriptive message, then
    `git push --force-with-lease -u origin <branch>` (safe here: the remote
    branch only ever holds already-merged history).
 4. Open the PR with the github MCP `create_pull_request`, base `main`.
 5. **Poll the checks** with `pull_request_read` → `get_check_runs` until they
    finish (a few minutes at most); don't guess with a long sleep. Green means
-   `verify` (GitHub Actions: typecheck + tests) and "Vercel Preview Comments"
-   are `success`; "Supabase Preview" is normally `skipped`.
+   `verify` (GitHub Actions: typecheck + tests), `scan` (Security workflow)
+   and "Vercel Preview Comments" are `success`; "Supabase Preview" is normally `skipped`.
 6. Merge with `merge_pull_request`, `merge_method: "squash"`, then confirm
    with the Vercel MCP `list_deployments` that the newest
    `target: "production"` deployment for the merge commit is `READY`.

@@ -1,0 +1,43 @@
+name: Security
+
+# The automated, no-AI layer of docs/SECURITY.md: known-vulnerable
+# dependencies, committed secrets, and the mechanical checks in
+# scripts/security-scan.mjs. Runs on every PR, on main, and weekly so a
+# newly published advisory against an unchanged dependency still surfaces.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '17 5 * * 1' # Mondays 05:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # full history, so secret scanning sees old commits
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      - name: Mechanical security checks
+        run: node scripts/security-scan.mjs
+
+      # Fails only on CRITICAL so an unrelated moderate advisory can't block
+      # an urgent content fix; high and below are listed in the log for the
+      # security-guardian and Dependabot to pick up.
+      - name: Dependency audit (production deps)
+        run: |
+          npm audit --package-lock-only --omit=dev || true
+          npm audit --package-lock-only --omit=dev --audit-level=critical
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
