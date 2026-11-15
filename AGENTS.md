@@ -63,7 +63,7 @@ docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
   finishing; act on what it reports, then run the script's `mark` step.
 - **Skills:** creating or changing one follows the `writing-skills` skill.
 - **Design work** (any site, app or page design) goes through the
-  `design-partner` skill. Owen's taste is recorded in docs/design/TASTE.md.
+  `design-partner` skill. Owen's house style (his design system for every project) is docs/design/HOUSE-STYLE.md; his taste log is docs/design/TASTE.md.
 - **Dates:** trust the environment's date (the SessionStart primer prints it
   in Europe/Dublin). Owen sees clients Mon/Tue/Fri — don't assume from
   marketing copy.

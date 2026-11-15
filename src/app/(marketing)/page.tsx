@@ -29,7 +29,7 @@ export const metadata: Metadata = {
         url: `${SITE_URL}/og-image.jpg`,
         width: 1200,
         height: 630,
-        alt: 'Owen Lynch Psychotherapy — Psychotherapy in Dublin & Online',
+        alt: 'Owen Lynch Psychotherapy: Psychotherapy in Dublin & Online',
       },
     ],
   },

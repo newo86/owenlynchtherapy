@@ -25,7 +25,7 @@ export default function ServiceHowSessionsWork() {
             in person and €70 online. I work with adults only.
           </p>
           <p className={p}>
-            There&apos;s no fixed programme — we work at a pace that feels right for you. Some
+            There&apos;s no fixed programme: we work at a pace that feels right for you. Some
             people come for a few sessions with something specific in mind. Others work longer term.
             It&apos;s your call.
           </p>
@@ -35,7 +35,7 @@ export default function ServiceHowSessionsWork() {
             <Link href="/contact" className={inlineLink}>
               get in touch
             </Link>
-            . There&apos;s no pressure — it&apos;s just a conversation.
+            . There&apos;s no pressure: it&apos;s just a conversation.
           </p>
         </div>
       </div>

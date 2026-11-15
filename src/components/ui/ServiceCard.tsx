@@ -42,21 +42,19 @@ export default function ServiceCard({ name, url, description, index }: Props) {
   return (
     <div
       ref={ref}
-      className="service-card-border rounded-xl h-full"
+      className="rounded-xl h-full"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
         opacity: inView ? 1 : 0,
-        transform: hovered ? 'translateY(-4px)' : inView ? 'none' : 'translateY(24px)',
+        transform: inView ? 'none' : 'translateY(24px)',
         transition: 'opacity 0.55s cubic-bezier(0.22,1,0.36,1), transform 0.45s cubic-bezier(0.22,1,0.36,1)',
         transitionDelay: entered ? '0s' : `${index * 0.1}s`,
       }}
     >
       <Link
         href={url}
-        className={`relative z-[1] flex flex-col gap-4 bg-white rounded-xl p-6 h-full transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest ${
-          hovered ? 'shadow-md' : 'shadow-sm'
-        }`}
+        className={`relative z-[1] flex flex-col gap-4 card-soft bg-white rounded-xl p-6 h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest `}
       >
         {/* Gold accent line — draws in on scroll, widens on hover */}
         <span
@@ -72,7 +70,7 @@ export default function ServiceCard({ name, url, description, index }: Props) {
 
         <h3 className="font-heading font-light text-2xl text-forest">{name}</h3>
 
-        <p className="font-normal text-gray-500 text-base leading-relaxed flex-1">{description}</p>
+        <p className="font-normal text-ink-soft text-base leading-relaxed flex-1">{description}</p>
 
         <span className="inline-flex items-center gap-2 text-orange text-xs font-normal uppercase tracking-normal">
           Learn more{' '}

@@ -39,7 +39,7 @@ export default function MobileBottomNav() {
                 }`}
               >
                 {item.icon}
-                <span className="text-[10px] font-medium uppercase tracking-wide">
+                <span className="text-[10px] font-medium uppercase">
                   {item.label}
                 </span>
               </Link>

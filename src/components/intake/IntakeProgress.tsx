@@ -12,7 +12,7 @@ export default function IntakeProgress({ currentStep }: { currentStep: number })
     <div className="mb-8">
       <p
         className="text-xs font-normal uppercase mb-2"
-        style={{ color: '#C85A1A', letterSpacing: '2px' }}
+        style={{ color: '#C85A1A', letterSpacing: '0' }}
       >
         Step {currentStep} of {STEPS.length}
       </p>

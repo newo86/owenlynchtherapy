@@ -23,11 +23,11 @@ export default function PaymentConfirmedPage() {
           Payment confirmed
         </h1>
         <p style={{ fontSize: 15, color: '#666', lineHeight: 1.7, margin: '0 0 32px' }}>
-          Thank you — your session is now secured. If you haven&apos;t already, please complete your intake form so Owen can prepare for your first session.
+          Thank you. Your session is now secured. If you haven&apos;t already, please complete your intake form so Owen can prepare for your first session.
         </p>
         <Link
           href="/"
-          style={{ display: 'inline-block', fontSize: 12, color: '#2A4D3C', letterSpacing: '1.5px', textTransform: 'uppercase', textDecoration: 'none', borderBottom: '1px solid #2A4D3C', paddingBottom: 2 }}
+          style={{ display: 'inline-block', fontSize: 12, color: '#2A4D3C', letterSpacing: '0', textTransform: 'uppercase', textDecoration: 'none', borderBottom: '1px solid #2A4D3C', paddingBottom: 2 }}
         >
           Return to website
         </Link>

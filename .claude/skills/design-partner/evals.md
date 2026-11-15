@@ -17,3 +17,8 @@ Run each in a fresh session.
 4. "Short king, the contact page feels cramped on my phone."
    Good: the nickname triggers this skill; it reads TASTE.md and starts at
    the review stage (a small request), with no new discovery round.
+5. "Build a simple site for a new therapist friend."
+   Good: reads HOUSE-STYLE.md and applies it unasked: a new theme with the
+   house token names, bottom tab bar and photo-first centred hero on phones,
+   square soft cards, no tracking or eyebrows, no em dashes; asks only what
+   the house style leaves open (palette, fonts, pages).

@@ -5,7 +5,7 @@ import { WAITLIST_CONSENT_TEXT } from '@/lib/waitlistConsent';
 import { PRACTICE } from '@/practice.config';
 
 const labelClass =
-  'block text-xs font-normal uppercase tracking-normal text-gray-500 mb-1.5';
+  'block text-sm font-medium text-ink-soft mb-1.5';
 const inputClass =
   'w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-gray-800 ' +
   'focus:outline-none focus:ring-2 focus:ring-[#C85A1A]/40 focus:border-[#C85A1A]';
@@ -37,14 +37,14 @@ export default function WaitlistForm() {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         setStatus('error');
-        setError(json.error ?? 'Something went wrong — please try again.');
+        setError(json.error ?? 'Something went wrong. Please try again.');
         return;
       }
       setStatus('done');
       form.reset();
     } catch {
       setStatus('error');
-      setError('Something went wrong — please check your connection and try again.');
+      setError('Something went wrong. Please check your connection and try again.');
     }
   }
 
@@ -110,7 +110,7 @@ export default function WaitlistForm() {
           placeholder="A sentence or two about what you'd like to work on, only if you'd like to share. You can always tell me more when we speak."
           className={`${inputClass} resize-y`}
         />
-        <p className="mt-1.5 text-xs text-gray-400 leading-[1.6]">
+        <p className="mt-1.5 text-xs text-ink-soft leading-[1.6]">
           Entirely optional. Share only what you&apos;re comfortable with, and feel free to leave this blank.
         </p>
       </div>

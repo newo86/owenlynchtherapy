@@ -28,6 +28,11 @@ learned about his taste is written down.
 - If the repository already has a brand, design system, style guide or
   tokens, they are fixed. Work within them, and don't restyle existing
   pages unless Owen asks.
+- Read Owen's house style first: `docs/design/HOUSE-STYLE.md` in the
+  owenlynchtherapy repository, mirrored at
+  https://claude.ai/artifact/TgXhFUSxm3PWgrLAgEM7zU. Apply it as the
+  default on any project without being asked; he built it so he stops
+  repeating the same requests.
 - If the repository has a `docs/design/TASTE.md`, read it. It outranks
   your own defaults and any trend. If there isn't one, start from "Owen's
   taste" below.

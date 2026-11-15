@@ -24,7 +24,7 @@ export const metadata: Metadata = {
       'Articles on OCD, anxiety, ADHD, autism, and mental health by Owen Lynch, psychotherapist in Dublin. Evidence-based insights and practical guidance.',
     type: 'website',
     url: `${SITE_URL}/articles`,
-    images: [{ url: `${SITE_URL}/images/blog-hero-ocd-therapy.png`, width: 3200, height: 1800, alt: 'Abstract illustration representing OCD therapy — concentric circles in forest green and terracotta' }],
+    images: [{ url: `${SITE_URL}/images/blog-hero-ocd-therapy.png`, width: 3200, height: 1800, alt: 'Abstract illustration representing OCD therapy: concentric circles in forest green and terracotta' }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -77,9 +77,6 @@ export default function ArticlesPage() {
         <PageHeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-white text-sm font-semibold uppercase tracking-normal mb-5">
-            Articles &amp; Insights
-          </p>
           <h1
             id="articles-heading"
             className="font-heading font-light text-4xl sm:text-5xl lg:text-[3.25rem] leading-tight text-cream mb-4"
@@ -101,16 +98,15 @@ export default function ArticlesPage() {
         <FloatingCircles />
         <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
           {visiblePosts.length === 0 ? (
-            <p className="font-normal text-base text-gray-500 py-16">
-              No articles yet — check back soon.
+            <p className="font-normal text-base text-ink-soft py-16">
+              No articles yet. Check back soon.
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
               {visiblePosts.map((post, i) => (
-                <AnimatedCard key={post.slug} index={i} className="service-card-border rounded-2xl">
+                <AnimatedCard key={post.slug} index={i} className="rounded-2xl">
                   <article
-                    className="relative z-[1] group flex flex-col flex-1 rounded-2xl bg-white h-hover:-translate-y-1 h-can:transition-all h-can:duration-300"
-                    style={{ boxShadow: '0 2px 16px rgba(42,77,60,0.07)' }}
+                    className="card-soft relative z-[1] group flex flex-col flex-1 rounded-2xl bg-white"
                   >
                     <Link
                       href={`/articles/${post.slug}`}
@@ -133,7 +129,7 @@ export default function ArticlesPage() {
 
                       {/* Category pill — pulls up slightly into the image zone */}
                       <div className="relative z-10 px-5 -mt-[14px] mb-4">
-                        <span className="inline-flex items-center bg-forest text-white text-[9px] font-semibold uppercase tracking-[2px] px-3 py-1.5 rounded-full shadow-sm">
+                        <span className="inline-flex items-center bg-forest text-white text-xs font-medium px-3 py-1.5 rounded-full shadow-sm">
                           {post.category ?? 'Article'}
                         </span>
                       </div>
@@ -156,7 +152,7 @@ export default function ArticlesPage() {
 
                         <time
                           dateTime={post.publishedAt}
-                          className="block text-xs text-gray-400 tracking-wide mb-4"
+                          className="block text-xs text-ink-soft mb-4"
                         >
                           {formatDate(post.publishedAt)}
                         </time>
@@ -198,9 +194,6 @@ export default function ArticlesPage() {
         aria-labelledby="articles-cta-heading"
       >
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-            Get in touch
-          </p>
           <h2
             id="articles-cta-heading"
             className="font-heading font-light text-3xl sm:text-4xl text-cream mb-6"
@@ -208,7 +201,7 @@ export default function ArticlesPage() {
             Thinking about starting therapy?
           </h2>
           <p className="font-normal text-base text-cream/70 leading-[1.8] mb-12">
-            {`Reading about therapy is one thing. Taking the first step is another — and it doesn't have to feel daunting. Send me a message and I'll get back to you within one working day.`}
+            {`Reading about therapy is one thing. Taking the first step is another, and it doesn't have to feel daunting. Send me a message and I'll get back to you within one working day.`}
           </p>
           <span
             className="block w-12 h-px mx-auto mb-8"

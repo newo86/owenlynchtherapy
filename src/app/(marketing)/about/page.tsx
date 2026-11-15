@@ -99,11 +99,11 @@ const jsonLd = {
 const approaches = [
   {
     heading: 'Integrative',
-    body: "I don't follow a single fixed model. I draw on ACT, CBT, ERP, psychodynamic, and person-centred approaches — adapting how I work to fit you, not the other way around.",
+    body: "I don't follow a single fixed model. I draw on ACT, CBT, ERP, psychodynamic, and person-centred approaches, adapting how I work to fit you, not the other way around.",
   },
   {
     heading: 'Honest & Direct',
-    body: "I'll engage genuinely with what you bring — offering perspective, naming what I notice, and challenging you when that's useful. Always with care, never with judgment.",
+    body: "I'll engage genuinely with what you bring: offering perspective, naming what I notice, and challenging you when that's useful. Always with care, never with judgment.",
   },
   {
     heading: 'Specialist Focus',
@@ -161,11 +161,11 @@ export default function AboutPage() {
         <PageHeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="relative z-10 text-white text-sm font-semibold uppercase tracking-normal mb-5">
+          <p className="relative z-10 text-white/90 text-base font-normal mb-5">
             <a href="https://psychotherapistdirectory.iahip.org/therapist/owen-lynch" target="_blank" rel="noopener noreferrer" className="h-hover:underline">IAHIP</a>
             {' & '}
             <a href="https://psychotherapycouncil.ie/therapist/owen-lynch/" target="_blank" rel="noopener noreferrer" className="h-hover:underline">ICP</a>
-            {' Accredited Psychotherapist'}
+            {' accredited psychotherapist'}
           </p>
           <h1
             id="about-hero-heading"
@@ -200,9 +200,6 @@ export default function AboutPage() {
 
           {/* Text */}
           <div className="flex-1">
-            <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-              About me
-            </p>
             <h2
               id="about-intro-heading"
               className="font-heading font-light text-3xl sm:text-4xl text-forest mb-8"
@@ -224,8 +221,8 @@ export default function AboutPage() {
               ERP, psychodynamic, and person-centred therapy.
             </p>
             <p className="font-normal text-base text-gray-600 leading-[1.8] mb-10">
-              I&apos;ll be engaged in the process with you. I work with curiosity and honesty —
-              that means I&apos;ll support you fully, and I&apos;ll also challenge you when
+              I&apos;ll be engaged in the process with you. I work with curiosity and honesty.
+              That means I&apos;ll support you fully, and I&apos;ll also challenge you when
               it&apos;s needed.
             </p>
 
@@ -243,7 +240,7 @@ export default function AboutPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
                 style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
-                aria-label="IAHIP accredited psychotherapist — view directory listing"
+                aria-label="IAHIP accredited psychotherapist: view directory listing"
               >
                 <Image
                   src="/images/IAHIPLogo.jpg"
@@ -259,7 +256,7 @@ export default function AboutPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
                 style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
-                aria-label="Irish Council for Psychotherapy member — view directory listing"
+                aria-label="Irish Council for Psychotherapy member: view directory listing"
               >
                 <Image
                   src="/images/ICP.png"
@@ -282,9 +279,6 @@ export default function AboutPage() {
         aria-labelledby="approach-heading"
       >
         <div className="max-w-6xl mx-auto">
-          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-            My approach
-          </p>
           <h2
             id="approach-heading"
             className="font-heading font-light text-3xl sm:text-4xl text-forest mb-14"
@@ -320,9 +314,6 @@ export default function AboutPage() {
       >
         <FloatingCircles />
         <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
-          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-            Credentials
-          </p>
           <h2
             id="credentials-heading"
             className="font-heading font-light text-3xl sm:text-4xl text-forest mb-12"
@@ -364,7 +355,7 @@ export default function AboutPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
               style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
-              aria-label="IAHIP accredited psychotherapist — view directory listing"
+              aria-label="IAHIP accredited psychotherapist: view directory listing"
             >
               <Image
                 src="/images/IAHIPLogo.jpg"
@@ -380,7 +371,7 @@ export default function AboutPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
               style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
-              aria-label="Irish Council for Psychotherapy member — view directory listing"
+              aria-label="Irish Council for Psychotherapy member: view directory listing"
             >
               <Image
                 src="/images/ICP.png"
@@ -416,9 +407,6 @@ export default function AboutPage() {
         aria-labelledby="about-cta-heading"
       >
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-            Get in touch
-          </p>
           <h2
             id="about-cta-heading"
             className="font-heading font-light text-3xl sm:text-4xl text-cream mb-6"

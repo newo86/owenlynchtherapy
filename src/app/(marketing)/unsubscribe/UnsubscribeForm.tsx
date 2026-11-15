@@ -27,7 +27,7 @@ export default function UnsubscribeForm({ token }: { token: string }) {
       }
     } catch {
       setStatus('error');
-      setMsg('Network error — please try again.');
+      setMsg('Network error. Please try again.');
     }
   }
 
@@ -50,7 +50,7 @@ export default function UnsubscribeForm({ token }: { token: string }) {
         <p className="font-normal text-base text-gray-600 leading-[1.8]">
           You won&apos;t receive any more automatic session reminders. You&apos;ll still get receipts and any direct messages from Owen.
         </p>
-        <p className="font-normal text-sm text-gray-500 leading-[1.8] mt-4">
+        <p className="font-normal text-sm text-ink-soft leading-[1.8] mt-4">
           Changed your mind? Just email <a href={`mailto:${PRACTICE.email}`} className="text-orange underline">{PRACTICE.email}</a> to turn reminders back on.
         </p>
       </>

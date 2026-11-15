@@ -177,7 +177,7 @@ const faqCategories: FaqCategory[] = [
       },
       {
         q: 'Do you work with OCD?',
-        a: 'Yes. I work with all presentations of OCD including intrusive thoughts, checking, contamination fears, and pure O. I use Cognitive Behavioural Therapy (CBT), Exposure and Response Prevention (ERP), and Inference-Based Therapy (IBT) — all evidence-based approaches for OCD.',
+        a: 'Yes. I work with all presentations of OCD including intrusive thoughts, checking, contamination fears, and pure O. I use Cognitive Behavioural Therapy (CBT), Exposure and Response Prevention (ERP), and Inference-Based Therapy (IBT), all evidence-based approaches for OCD.',
       },
       {
         q: 'Do you work with autistic adults?',
@@ -266,9 +266,6 @@ export default function FaqPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-white text-sm font-semibold uppercase tracking-normal mb-5">
-            Got a question
-          </p>
           <h1
             id="faq-hero-heading"
             className="font-heading font-light text-4xl sm:text-5xl lg:text-[3.25rem] leading-tight text-white mb-4"
@@ -300,9 +297,6 @@ export default function FaqPage() {
         aria-labelledby="faq-cta-heading"
       >
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-            Get in touch
-          </p>
           <h2
             id="faq-cta-heading"
             className="font-heading font-light text-3xl sm:text-4xl text-cream mb-6"

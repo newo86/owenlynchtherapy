@@ -72,7 +72,7 @@ export default function Hero() {
             fontFamily: "'Avenir','Avenir Next','Nunito',system-ui,sans-serif",
             fontWeight: 300,
             color: '#ffffff',
-            letterSpacing: '1px',
+            letterSpacing: '0',
             lineHeight: 1.15,
             margin: 0,
           }}
@@ -110,7 +110,7 @@ export default function Hero() {
         style={{ zIndex: 10 }}
         aria-hidden="true"
       >
-        <span className="text-white/40 text-[10px] uppercase tracking-[3px]">Scroll</span>
+        <span className="text-white/40 text-[10px] uppercase">Scroll</span>
         <svg
           className="w-4 h-4 text-white/40 animate-bounce"
           fill="none"

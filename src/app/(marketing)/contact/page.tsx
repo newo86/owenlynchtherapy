@@ -58,7 +58,7 @@ const reassurance = [
 ];
 
 const labelClass =
-  'block text-xs font-normal uppercase tracking-normal text-gray-500 mb-1.5';
+  'block text-sm font-medium text-ink-soft mb-1.5';
 
 export default async function ContactPage() {
   const practice = await getPractice();
@@ -86,9 +86,6 @@ export default async function ContactPage() {
         <PageHeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-white text-sm font-semibold uppercase tracking-normal mb-5">
-            Get in touch
-          </p>
           <h1
             id="contact-hero-heading"
             className="font-heading font-light text-4xl sm:text-5xl lg:text-[3.25rem] leading-tight text-cream mb-6"
@@ -109,7 +106,7 @@ export default async function ContactPage() {
       >
         <FloatingCircles />
         <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
-          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
+          <p className="text-orange text-base font-semibold mb-3">
             {open ? 'Accepting new clients' : 'Waiting list open'}
           </p>
           <h2
@@ -125,9 +122,9 @@ export default async function ContactPage() {
             {/* Left — stacked cards (only when open) + note */}
             <div className="flex flex-col gap-6">
               {open && availability.map(({ day, hours, format }, i) => (
-                <div key={`${day}-${i}`} className="service-card-border rounded-lg">
+                <div key={`${day}-${i}`} className="card-soft rounded-lg">
                   <div
-                    className="relative z-[1] bg-white rounded-lg shadow-md p-6"
+                    className="relative z-[1] bg-white rounded-lg p-6"
                     style={{ borderTop: '3px solid #c85a1a' }}
                   >
                     <p className="font-heading font-light text-lg text-forest mb-2">{day}</p>

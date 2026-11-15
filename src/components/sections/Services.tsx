@@ -55,9 +55,6 @@ export default function Services() {
       <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
         {/* Section header */}
         <div className="text-center mb-16">
-          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-            Areas of practice
-          </p>
           <h2
             id="services-heading"
             className="font-heading font-light text-3xl sm:text-4xl text-forest"

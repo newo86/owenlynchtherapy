@@ -4,6 +4,9 @@ The running record of what Owen likes, dislikes and has decided about
 design. The `design-partner` skill reads this before any design work, and
 it outranks trends and defaults.
 
+Lasting rules distilled from this log live in
+[HOUSE-STYLE.md](HOUSE-STYLE.md), Owen's design system for every project.
+
 **How to update it:** after Owen reacts to a design, add what the reaction
 *revealed*, not the reaction itself. Write "prefers type-led heroes over
 photo-led ones", not "liked v2". Put each point in the right section with
@@ -34,8 +37,26 @@ welcome if it never shouts.
   on (Oct 2026)
 - Phone-first for the dashboard: he uses it between sessions on his phone
   (Oct 2026)
+- On a therapist's phone home page, the therapist's photo leads: large,
+  centred, with clear space under the header and the headline close beneath
+  it, so face then headline read as one introduction. He asked for the
+  reasoning to come from how the eye actually reads a page (research), not
+  taste alone (Nov 2026, robbiesemple.com hero)
+- Phone navigation as a bottom tab bar (icon + short label, current page in
+  a filled pill) rather than a Menu button; he carried it from his own site
+  to Robbie's (Nov 2026)
+- Short phone heroes: drop secondary lines on phones rather than stack
+  them, and keep paired buttons side by side (Nov 2026, robbiesemple.com)
+- One alignment axis on phones: under a centred photo he chose a centred
+  headline and centred buttons, and moved the intro paragraph further down
+  the page. Asked to declutter, he kept both actions (Book + About) over a
+  single-CTA version, so offer "calmer" before "fewer choices" (Nov 2026,
+  robbiesemple.com, picked option A of four)
 
 ## Dislikes
+- Heavy, dark drop shadows under cards: he wants cards lifted, not
+  floating (a hairline edge plus a short soft shadow), site-wide (Nov 2026,
+  robbiesemple.com)
 - Anything that looks AI-made, including common AI fonts and an eyebrow
   label over every heading (Oct 2026). See the skill's
   `reference/not-ai.md`.
