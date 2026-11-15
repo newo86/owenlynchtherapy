@@ -4,6 +4,9 @@ The running record of what Owen likes, dislikes and has decided about
 design. The `design-partner` skill reads this before any design work, and
 it outranks trends and defaults.
 
+Lasting rules distilled from this log live in
+[HOUSE-STYLE.md](HOUSE-STYLE.md), Owen's design system for every project.
+
 **How to update it:** after Owen reacts to a design, add what the reaction
 *revealed*, not the reaction itself. Write "prefers type-led heroes over
 photo-led ones", not "liked v2". Put each point in the right section with

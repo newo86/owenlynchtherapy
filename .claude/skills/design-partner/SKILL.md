@@ -16,11 +16,18 @@ uses the project's tokens and components only (no one-off values), UX
 testing has run on anything a user will touch, and what you learned about
 his taste is written down.
 
-## Before anything: load his taste
+## Before anything: load his house style and taste
 
-Read [docs/design/TASTE.md](../../../docs/design/TASTE.md). It is the
-record of what Owen likes, dislikes and has decided, and it outranks
-your own defaults and any trend. Within this repo, the brand in CLAUDE.md
+Read [docs/design/HOUSE-STYLE.md](../../../docs/design/HOUSE-STYLE.md),
+then [docs/design/TASTE.md](../../../docs/design/TASTE.md). The house
+style is his design system for every project (phone tab bar, photo-first
+centred phone hero, square soft cards, no tracking, no em dashes and the
+rest): apply it as the default on any site or app without waiting to be
+asked. *Why: he built it so he stops repeating the same requests.* TASTE.md
+is the running log of his reactions; when a new point there becomes a
+lasting rule, add it to HOUSE-STYLE.md and its mirror artifact (linked at
+the top of that file) in the same change. Both outrank your own defaults
+and any trend. Within this repo, the brand in CLAUDE.md
 and docs/STYLE-GUIDE.md is fixed. Don't restyle Owen's live site unless he
 asks.
 
