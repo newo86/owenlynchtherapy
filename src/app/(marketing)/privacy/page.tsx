@@ -35,9 +35,6 @@ export default async function PrivacyPage() {
       >
         <PageHeroCircles />
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-white text-sm font-semibold uppercase tracking-normal mb-5">
-            Your information
-          </p>
           <h1 id="privacy-heading" className="font-heading font-light text-4xl sm:text-5xl text-cream mb-6">
             Privacy Policy
           </h1>
@@ -69,15 +66,15 @@ export default async function PrivacyPage() {
 
           <h2 className={h2}>What I collect, and why</h2>
           <ul className="list-disc pl-6 mb-4">
-            <li className={li}><strong>Contact and waiting-list enquiries</strong> — your name, email and phone number, so I can reply to you. Waiting-list entries are kept only until you become a client, ask to be removed, or the entry goes stale.</li>
-            <li className={li}><strong>Intake information</strong> — when you become a client you complete an intake form covering your contact details, relevant history and consent. This is clinical information and is treated with the highest level of care.</li>
-            <li className={li}><strong>Session and payment records</strong> — appointment dates, attendance, fees and receipts, kept because I am professionally and legally required to keep accurate records.</li>
-            <li className={li}><strong>Basic website analytics</strong> — anonymous usage statistics that help me understand how people find the site. Nothing here identifies you.</li>
+            <li className={li}><strong>Contact and waiting-list enquiries</strong>: your name, email and phone number, so I can reply to you. Waiting-list entries are kept only until you become a client, ask to be removed, or the entry goes stale.</li>
+            <li className={li}><strong>Intake information</strong>: when you become a client you complete an intake form covering your contact details, relevant history and consent. This is clinical information and is treated with the highest level of care.</li>
+            <li className={li}><strong>Session and payment records</strong>: appointment dates, attendance, fees and receipts, kept because I am professionally and legally required to keep accurate records.</li>
+            <li className={li}><strong>Basic website analytics</strong>: anonymous usage statistics that help me understand how people find the site. Nothing here identifies you.</li>
           </ul>
           <p className={p}>
             The lawful bases are: taking steps to enter and perform our therapy agreement
             (contract), legal obligations around records and accounts, and your consent for
-            the waiting list and reminder emails — which you can withdraw at any time (every
+            the waiting list and reminder emails, which you can withdraw at any time (every
             reminder includes an opt-out link).
           </p>
 
@@ -85,7 +82,7 @@ export default async function PrivacyPage() {
           <p className={p}>
             Records are stored in a private, access-controlled database hosted in the
             European Union (Supabase). Email is sent through Resend. Card payments are
-            processed by Stripe — your card details go directly to Stripe and are never
+            processed by Stripe: your card details go directly to Stripe and are never
             seen or stored by this practice. Appointments sync with Google Calendar. The
             website is hosted on Vercel. Each of these providers processes data under a GDPR
             data-processing agreement. Your information is never sold or shared for
@@ -94,16 +91,16 @@ export default async function PrivacyPage() {
 
           <h2 className={h2}>How long I keep it</h2>
           <ul className="list-disc pl-6 mb-4">
-            <li className={li}>Clinical records (intake, sessions) — <strong>7 years after our last contact</strong>, in line with professional record-keeping guidance, then deleted.</li>
-            <li className={li}>Unused intake links — deleted automatically 30 days after they expire.</li>
-            <li className={li}>Waiting-list entries — deleted once no longer needed, or immediately on request.</li>
-            <li className={li}>Financial records (receipts) — kept as required by Revenue rules.</li>
+            <li className={li}>Clinical records (intake, sessions): <strong>7 years after our last contact</strong>, in line with professional record-keeping guidance, then deleted.</li>
+            <li className={li}>Unused intake links: deleted automatically 30 days after they expire.</li>
+            <li className={li}>Waiting-list entries: deleted once no longer needed, or immediately on request.</li>
+            <li className={li}>Financial records (receipts): kept as required by Revenue rules.</li>
           </ul>
 
           <h2 className={h2}>Your rights</h2>
           <p className={p}>
             You can ask at any time to see the information I hold about you, have mistakes
-            corrected, receive a copy, or — subject to the record-keeping obligations above —
+            corrected, receive a copy, or (subject to the record-keeping obligations above)
             have it deleted. Just email{' '}
             <a href={`mailto:${email}`} className="text-orange h-hover:underline">{email}</a>.
             If you are unhappy with how your information has been handled you can complain to
@@ -114,7 +111,7 @@ export default async function PrivacyPage() {
           <p className={p}>
             Beyond data protection law, everything you share in therapy is held in
             professional confidence, with the narrow exceptions required by law or to
-            prevent serious harm — which I explain fully before we begin working together.
+            prevent serious harm, which I explain fully before we begin working together.
           </p>
         </div>
       </section>

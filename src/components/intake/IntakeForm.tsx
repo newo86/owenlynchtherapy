@@ -10,7 +10,7 @@ import { PRACTICE } from '@/practice.config';
 const inputCls =
   'w-full rounded-md px-4 py-3 text-sm bg-white text-gray-800 ' +
   'border border-[#E0D8CE] focus:outline-none focus:border-[#4F8A68] ' +
-  'focus:ring-1 focus:ring-[#4F8A68] transition-colors placeholder:text-gray-400';
+  'focus:ring-1 focus:ring-[#4F8A68] transition-colors placeholder:text-ink-soft';
 
 const textareaCls = inputCls + ' min-h-[120px] resize-none leading-relaxed';
 
@@ -262,7 +262,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
         <div className="mb-8">
           <p
             className="text-xs font-normal uppercase mb-2"
-            style={{ color: '#C85A1A', letterSpacing: '2px' }}
+            style={{ color: '#C85A1A', letterSpacing: '0' }}
           >
             {PRACTICE.businessName}
           </p>
@@ -296,7 +296,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                 <FormField
                   label="Preferred name"
                   htmlFor="preferred_name"
-                  helperText="If different from your full name — this is what I'll call you in sessions."
+                  helperText="If different from your full name, this is what I'll call you in sessions."
                 >
                   <input
                     id="preferred_name"
@@ -318,7 +318,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                     autoComplete="email"
                   />
                 </FormField>
-                <FormField label="Phone number" htmlFor="phone" required error={errors.phone} helperText="Irish numbers only — e.g. 087 000 0000 or +353 87 000 0000">
+                <FormField label="Phone number" htmlFor="phone" required error={errors.phone} helperText="Irish numbers only, e.g. 087 000 0000 or +353 87 000 0000">
                   <input
                     id="phone"
                     type="tel"
@@ -342,7 +342,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                 <FormField
                   label="Pronouns"
                   htmlFor="pronouns"
-                  helperText="Optional — e.g. he/him, she/her, they/them"
+                  helperText="Optional, e.g. he/him, she/her, they/them"
                 >
                   <input
                     id="pronouns"
@@ -422,7 +422,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                   htmlFor="reason_for_therapy"
                   required
                   error={errors.reason_for_therapy}
-                  helperText="You don't need to go into detail — just enough to give me a starting point before we meet."
+                  helperText="You don't need to go into detail, just enough to give me a starting point before we meet."
                 >
                   <textarea
                     id="reason_for_therapy"
@@ -457,7 +457,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                   <FormField
                     label="Roughly when, and was it helpful?"
                     htmlFor="previous_therapy_details"
-                    helperText="Optional — any detail you're happy to share."
+                    helperText="Optional: any detail you're happy to share."
                   >
                     <textarea
                       id="previous_therapy_details"
@@ -477,7 +477,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                     value={form.current_medication}
                     onChange={e => set('current_medication', e.target.value)}
                     className={textareaCls}
-                    placeholder="Optional — medication name(s) and dosage if comfortable sharing"
+                    placeholder="Optional: medication name(s) and dosage if comfortable sharing"
                   />
                 </FormField>
               </>
@@ -510,7 +510,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                   htmlFor="uses_ai_tools"
                   required
                   error={errors.uses_ai_tools}
-                  helperText="No judgment here — many people do. It's helpful for me to understand the full picture of the support you're drawing on."
+                  helperText="No judgment here: many people do. It's helpful for me to understand the full picture of the support you're drawing on."
                 >
                   <div className="space-y-3 mt-1">
                     {[
@@ -572,8 +572,8 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                   className="pt-4 mt-2"
                   style={{ borderTop: '1px solid #F0EAE0' }}
                 >
-                  <p className="text-xs font-normal uppercase mb-4" style={{ color: '#2D5A42', letterSpacing: '1.5px' }}>
-                    GP Details <span className="normal-case text-gray-400 tracking-normal">(optional)</span>
+                  <p className="text-xs font-normal uppercase mb-4" style={{ color: '#2D5A42', letterSpacing: '0' }}>
+                    GP Details <span className="normal-case text-ink-soft tracking-normal">(optional)</span>
                   </p>
                   <div className="space-y-6">
                     <FormField label="GP name" htmlFor="gp_name">
@@ -605,7 +605,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                 <FormField
                   label="Anything else you'd like me to know?"
                   htmlFor="additional_info"
-                  helperText="Optional — anything that might be helpful to know before we meet."
+                  helperText="Optional: anything that might be helpful to know before we meet."
                 >
                   <textarea
                     id="additional_info"
@@ -775,7 +775,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                 onClick={back}
                 className="px-8 py-3.5 rounded-md text-xs uppercase font-normal transition-colors"
                 style={{
-                  letterSpacing: '2px',
+                  letterSpacing: '0',
                   border: '1px solid #2A4D3C',
                   color: '#2A4D3C',
                   backgroundColor: 'transparent',
@@ -789,7 +789,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                 type="button"
                 onClick={next}
                 className="flex-1 sm:flex-none px-8 py-3.5 rounded-md text-xs uppercase font-normal text-white transition-colors"
-                style={{ letterSpacing: '2px', backgroundColor: '#C85A1A' }}
+                style={{ letterSpacing: '0', backgroundColor: '#C85A1A' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#A64810')}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#C85A1A')}
               >
@@ -801,7 +801,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                 onClick={submit}
                 disabled={submitting}
                 className="flex-1 sm:flex-none px-8 py-3.5 rounded-md text-xs uppercase font-normal text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                style={{ letterSpacing: '2px', backgroundColor: '#C85A1A' }}
+                style={{ letterSpacing: '0', backgroundColor: '#C85A1A' }}
                 onMouseEnter={e => { if (!submitting) e.currentTarget.style.backgroundColor = '#A64810'; }}
                 onMouseLeave={e => { if (!submitting) e.currentTarget.style.backgroundColor = '#C85A1A'; }}
               >

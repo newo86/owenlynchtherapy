@@ -116,9 +116,6 @@ export default function ServicesPage() {
         <PageHeroCircles />
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          <p className="text-white text-sm font-semibold uppercase tracking-normal mb-5">
-            What I work with
-          </p>
           <h1
             id="services-hero-heading"
             className="font-heading font-light text-4xl sm:text-5xl lg:text-[3.25rem] leading-tight text-cream mb-6"
@@ -126,7 +123,7 @@ export default function ServicesPage() {
             Therapy Services in Dublin &amp; Online
           </h1>
           <p className="font-normal text-base text-cream/75 leading-[1.8] max-w-2xl">
-            I work with adults across a range of areas. Each person is different — sessions are
+            I work with adults across a range of areas. Each person is different, so sessions are
             tailored to you, not to a fixed programme.
           </p>
         </div>
@@ -140,9 +137,6 @@ export default function ServicesPage() {
       >
         <FloatingCircles />
         <div className="relative max-w-6xl mx-auto" style={{ zIndex: 1 }}>
-          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-            Areas of practice
-          </p>
           <h2
             id="services-grid-heading"
             className="font-heading font-light text-3xl sm:text-4xl text-forest mb-14"
@@ -164,9 +158,6 @@ export default function ServicesPage() {
         aria-labelledby="process-heading"
       >
         <div className="max-w-[700px] mx-auto text-center">
-          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-            The process
-          </p>
           <h2
             id="process-heading"
             className="font-heading font-light text-3xl sm:text-4xl text-forest mb-10"
@@ -186,7 +177,7 @@ export default function ServicesPage() {
           </p>
           <p className="font-normal text-base text-gray-600 leading-[1.8] mb-10">
             If you&apos;re not sure whether therapy is right for you, or whether I&apos;m the right
-            fit, feel free to get in touch. There&apos;s no pressure — it&apos;s just a conversation.
+            fit, feel free to get in touch. There&apos;s no pressure: it&apos;s just a conversation.
           </p>
 
           <Link
@@ -209,9 +200,6 @@ export default function ServicesPage() {
 
           {/* Text */}
           <div>
-            <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-              Online therapy
-            </p>
             <h2
               id="online-heading"
               className="font-heading font-light text-3xl sm:text-4xl text-forest mb-8"
@@ -219,7 +207,7 @@ export default function ServicesPage() {
               Available Across Ireland &amp; the UK
             </h2>
             <p className="font-normal text-base text-gray-600 leading-[1.8]">
-              All sessions are available online via secure video call — no travel, no waiting
+              All sessions are available online via secure video call: no travel, no waiting
               rooms, no compromise on quality. Online therapy works just as well as in-person for
               most people and many clients prefer it.
             </p>
@@ -256,7 +244,7 @@ export default function ServicesPage() {
                 mapSamples={16000}
               />
             </div>
-            <p className="font-normal text-xs text-gray-400 leading-relaxed text-center max-w-[320px]">
+            <p className="font-normal text-xs text-ink-soft leading-relaxed text-center max-w-[320px]">
               Available in person in Dublin and online across Ireland &amp; the UK
             </p>
           </div>
@@ -271,9 +259,6 @@ export default function ServicesPage() {
         aria-labelledby="services-cta-heading"
       >
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-orange text-sm font-semibold uppercase tracking-normal mb-5">
-            Get in touch
-          </p>
           <h2
             id="services-cta-heading"
             className="font-heading font-light text-3xl sm:text-4xl text-cream mb-6"

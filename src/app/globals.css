@@ -8,6 +8,8 @@
   --color-gold: #d4a843;
   --color-cream: #f9f7f2;
   --color-linen: #f5f0e8;
+  /* Secondary text: warm, 4.97:1 on linen (house style; replaces Tailwind grey-400/500) */
+  --color-ink-soft: #5b6b62;
 
   /* Typography — CSS variables injected by next/font in layout.tsx */
   --font-body: var(--font-poppins), system-ui, sans-serif;
@@ -92,45 +94,13 @@ h6 {
   animation-delay: 0.8s;
 }
 
-/* ── Service card gradient border ── */
-@property --border-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
-@keyframes border-spin {
-  to { --border-angle: 360deg; }
-}
-
-.service-card-border {
-  position: relative;
-}
-
-.service-card-border::before {
-  content: '';
-  position: absolute;
-  inset: -1.5px;
-  border-radius: inherit;
-  background: conic-gradient(
-    from var(--border-angle),
-    transparent 15%,
-    #C85A1A 35%,
-    #D4A843 50%,
-    #F5F0E8 65%,
-    #C85A1A 80%,
-    transparent 90%
-  );
-  opacity: 0;
-  transition: opacity 350ms ease;
-  z-index: 0;
-}
-
-@media (hover: hover) {
-  .service-card-border:hover::before {
-    opacity: 1;
-    animation: border-spin 3s linear infinite;
-  }
+/* Cards: lifted, not floating (house style). A hairline edge plus one short,
+   soft shadow; no hover lift and no animated gradient border. */
+.card-soft {
+  box-shadow:
+    0 0 0 1px rgba(42, 77, 60, 0.06),
+    0 1px 2px rgba(42, 77, 60, 0.04),
+    0 8px 20px -12px rgba(42, 77, 60, 0.14);
 }
 
 /* ── Floating circles ambient background ── */

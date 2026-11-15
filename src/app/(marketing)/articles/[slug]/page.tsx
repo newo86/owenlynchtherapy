@@ -124,7 +124,7 @@ export default async function ArticlePage({ params }: Props) {
         <PageHeroCircles />
         <div className="relative z-10 max-w-4xl mx-auto">
           {post.category && (
-            <p className="text-white text-sm font-semibold uppercase tracking-normal mb-5">{post.category}</p>
+            <p className="text-white/80 text-base font-normal mb-4">{post.category}</p>
           )}
           <h1
             id="post-hero-heading"
@@ -209,7 +209,7 @@ export default async function ArticlePage({ params }: Props) {
             Could therapy help?
           </h2>
           <p className="font-normal text-base text-cream/75 leading-[1.8] mb-10">
-            {`If you're based in Ireland or the UK and think therapy might help, I offer sessions in Dublin and online. There's no pressure — the first step is simply a conversation.`}
+            {`If you're based in Ireland or the UK and think therapy might help, I offer sessions in Dublin and online. There's no pressure: the first step is simply a conversation.`}
           </p>
           <span className="block w-12 h-px mx-auto mb-8" style={{ backgroundColor: '#d4a843' }} aria-hidden="true" />
           <Link

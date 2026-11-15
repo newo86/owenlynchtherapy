@@ -13,7 +13,7 @@ export default function FormField({ label, htmlFor, required, error, helperText,
       <label
         htmlFor={htmlFor}
         className="block text-xs font-normal uppercase mb-1.5"
-        style={{ color: '#2D5A42', letterSpacing: '1.5px' }}
+        style={{ color: '#2D5A42', letterSpacing: '0' }}
       >
         {label}
         {required && <span className="text-orange ml-1" aria-hidden="true">*</span>}

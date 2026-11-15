@@ -69,7 +69,7 @@ export default async function Footer() {
 
           {/* Middle — pages, two columns to stay short */}
           <nav aria-label="Footer navigation" className="flex flex-col gap-4">
-            <p className="text-xs font-normal uppercase tracking-widest text-cream/40">
+            <p className="text-sm font-semibold text-cream/80">
               Pages
             </p>
             <ul className="grid grid-cols-2 gap-x-6 gap-y-2 list-none max-w-[200px]">
@@ -88,7 +88,7 @@ export default async function Footer() {
 
           {/* Right — contact */}
           <div className="flex flex-col gap-4">
-            <p className="text-xs font-normal uppercase tracking-widest text-cream/40">
+            <p className="text-sm font-semibold text-cream/80">
               Contact
             </p>
             <address className="text-sm text-cream/60 not-italic leading-relaxed">
@@ -134,7 +134,7 @@ export default async function Footer() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
                 style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
-                aria-label="IAHIP accredited psychotherapist — view directory listing"
+                aria-label="IAHIP accredited psychotherapist: view directory listing"
               >
                 <Image
                   src="/images/IAHIPLogo.jpg"
@@ -153,7 +153,7 @@ export default async function Footer() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center h-hover:opacity-80 h-can:transition-opacity"
                 style={{ background: '#fff', borderRadius: '6px', padding: '4px 10px' }}
-                aria-label="Irish Council for Psychotherapy member — view directory listing"
+                aria-label="Irish Council for Psychotherapy member: view directory listing"
               >
                 <Image
                   src="/images/ICP.png"

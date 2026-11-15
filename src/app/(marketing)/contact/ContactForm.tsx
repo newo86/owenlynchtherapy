@@ -12,10 +12,10 @@ import { PRACTICE } from '@/practice.config';
 const inputClass =
   'w-full rounded-md px-3 py-3 text-base font-normal bg-white text-gray-800 ' +
   'border border-[#D0C8BC] focus:outline-none focus:border-[#2a4d3c] ' +
-  'focus:ring-1 focus:ring-[#2a4d3c] h-can:transition-colors placeholder:text-gray-400';
+  'focus:ring-1 focus:ring-[#2a4d3c] h-can:transition-colors placeholder:text-ink-soft';
 
 const labelClass =
-  'block text-xs font-normal uppercase tracking-normal text-gray-500 mb-1.5';
+  'block text-sm font-medium text-ink-soft mb-1.5';
 
 export default function ContactForm({ turnstileSiteKey }: { turnstileSiteKey?: string }) {
   const sp = useSearchParams();

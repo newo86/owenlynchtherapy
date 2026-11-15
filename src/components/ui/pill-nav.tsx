@@ -70,7 +70,7 @@ export default function PillNav({ variant }: PillNavProps) {
           <Link
             href={item.href}
             aria-current={isActive(item.href, pathname) ? "page" : undefined}
-            className={`block px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide md:px-5 md:py-3 md:text-xs transition-colors duration-200 select-none ${
+            className={`block px-3 py-1.5 text-[11px] font-medium uppercase md:px-5 md:py-3 md:text-xs transition-colors duration-200 select-none ${
               isTransparent
                 ? "text-white"
                 : hoverIndex === index
