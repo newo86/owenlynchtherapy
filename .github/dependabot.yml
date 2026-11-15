@@ -2,6 +2,9 @@
 # Minor/patch npm updates are grouped into one weekly PR to keep noise down;
 # security updates arrive as their own PRs as soon as an advisory is published
 # (enable "Dependabot security updates" in the repo's Settings → Code security).
+# The cooldown waits a few days before proposing a brand-new release, so a
+# version published by a hijacked maintainer account (the 2026 npm worms) is
+# usually pulled before we'd install it. Security updates skip the cooldown.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -9,12 +12,16 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 5
     open-pull-requests-limit: 5
     groups:
       minor-and-patch:
         update-types: [minor, patch]
-  - package-ecosystem: github-actions
+  - package-ecosystem: github-actions # also keeps the pinned SHAs current
     directory: /
     schedule:
       interval: weekly
       day: monday
+    cooldown:
+      default-days: 5

@@ -22,8 +22,11 @@ git rev-parse --git-dir >/dev/null 2>&1 || exit 0
 gitdir="$(git rev-parse --git-dir)"
 marker="$gitdir/security-reviewed"
 
-# Files whose changes can open a security hole. Docs and styling don't.
-sensitive='(^|/)(api|auth|server|lib|middleware|proxy|webhooks?|supabase|migrations|prisma|db|actions)(/|\.|$)|next\.config|(^|/)package(-lock)?\.json$|pnpm-lock\.yaml$|yarn\.lock$|vercel\.json$|\.github/workflows/|(^|/)\.env|Dockerfile|\.claude/(settings|hooks)'
+# Files whose changes can open a security hole. Docs and styling don't,
+# except the security tooling itself (agent, hooks, checklist): a worm in 2026
+# planted a Claude Code hook, so changes there are always reviewed.
+sensitive='(^|/)(api|auth|server|lib|middleware|proxy|webhooks?|supabase|migrations|prisma|db|actions|admin|intake|scripts|public)(/|\.|$)|next\.config|layout\.tsx$|(^|/)[a-z]+\.config\.(ts|js|mjs)$|(^|/)package(-lock)?\.json$|pnpm-lock\.yaml$|yarn\.lock$|vercel\.json$|^\.github/|(^|/)\.env|Dockerfile'
+always='^\.claude/(agents|hooks)/|^\.claude/settings|^docs/SECURITY\.md$'
 
 base=""
 for ref in origin/HEAD origin/main origin/master; do
@@ -33,8 +36,9 @@ for ref in origin/HEAD origin/main origin/master; do
 done
 [ -n "$base" ] || base="HEAD"
 
-changed="$( { git diff --name-only "$base" 2>/dev/null; git ls-files --others --exclude-standard; } \
-  | grep -E "$sensitive" | grep -vE '\.(md|mdx|txt|png|jpe?g|svg|webp|avif|css)$' | sort -u )"
+all="$( { git diff --name-only "$base" 2>/dev/null; git ls-files --others --exclude-standard; } | sort -u )"
+changed="$( { echo "$all" | grep -E "$sensitive" | grep -vE '\.(md|mdx|txt|png|jpe?g|webp|avif|css)$'
+  echo "$all" | grep -E "$always"; } | grep -v '^$' | sort -u )"
 
 hash_cmd() { command -v sha256sum >/dev/null && sha256sum || shasum -a 256; }
 current=""
@@ -68,8 +72,14 @@ case "$mode" in
   push)
     tool="$(echo "$input" | grep -o '"tool_name"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1)"
     case "$tool" in
-      # Only a real `git push` (at the start or after && ; |), not text that mentions it.
-      *'"Bash"'*) echo "$input" | grep -qE '"command"[[:space:]]*:[[:space:]]*"([^"]*(&&|;|\|)[[:space:]]*)?git( -C [^ "]+)? push' || exit 0 ;;
+      *'"Bash"'*)
+        # Decode the real command (handles quotes and newlines), then look for
+        # `git ... push` as a command: at the start of a line or after && ; | (
+        if command -v jq >/dev/null; then cmd="$(echo "$input" | jq -r '.tool_input.command // empty')"
+        elif command -v node >/dev/null; then cmd="$(echo "$input" | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{try{process.stdout.write(JSON.parse(d).tool_input.command||"")}catch{process.stdout.write(d)}})')"
+        else cmd="$input"; fi
+        echo "$cmd" | grep -qE '(^|[;&|(])[[:space:]]*((command|env|sudo|time)[[:space:]]+)?git([[:space:]]+-[^[:space:];&|]+([[:space:]]+[^-[:space:];&|][^[:space:];&|]*)?)*[[:space:]]+push([[:space:];&|)]|$)' || exit 0
+        ;;
     esac
     printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}\n' \
       "$(json_escape "Push blocked by the security gate. $msg")"
