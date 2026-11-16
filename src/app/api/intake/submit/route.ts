@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
-import { generateIntakePDF } from '@/lib/generateIntakePDF';
 import { sanitiseInput, escapeHtml } from '@/lib/sanitise';
 import { rateLimit } from '@/lib/rateLimit';
 import { rateLimitDurable } from '@/lib/rateLimitDurable';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
-import { NAME_RE, isValidPhone, filenameSlug } from '@/lib/intakeValidation';
+import { NAME_RE, isValidPhone } from '@/lib/intakeValidation';
+import { SITE_URL } from '@/practice.config';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
@@ -223,39 +223,21 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Send email notification with PDF attachment (non-blocking)
+  // Tell the practitioner a form has arrived (best-effort). The email carries
+  // the client's name and a link only: the answers are special-category health
+  // data, and a copy in a mailbox and in the email provider's logs would sit
+  // outside the retention rules (docs/DATA-RETENTION.md). The answers and the
+  // PDF are read in the dashboard, behind the login.
   try {
-    const { data: savedRow } = await supabaseAdmin
-      .from('intake_submissions')
-      .select('*')
-      .eq('token_id', tokenRow.id)
-      .order('submitted_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    const pdfBuffer = savedRow ? await generateIntakePDF(savedRow) : null;
-    const filename = `intake-${filenameSlug(full_name)}-${new Date().toISOString().split('T')[0]}.pdf`;
-
-    const yn = (v: unknown) => v ? 'Yes' : 'No';
-    const sanitisedData = {
-      full_name, preferred_name, email, phone, date_of_birth, pronouns,
-      session_format, referral_source, referral_source_other, reason_for_therapy,
-      diagnosed_conditions, previous_therapy, previous_therapy_details,
-      current_medication, seeing_psychiatrist, psychiatrist_details, uses_ai_tools,
-      emergency_contact_name, emergency_contact_phone, emergency_contact_relationship,
-      gp_name, gp_practice, additional_info,
-      consent_therapeutic_agreement: yn(rawForm.consent_therapeutic_agreement),
-      consent_privacy_policy: yn(rawForm.consent_privacy_policy),
-      consent_data_storage: yn(rawForm.consent_data_storage),
-      consent_age_confirmation: yn(rawForm.consent_age_confirmation),
-    };
-
     const emailResult = await getResend().emails.send({
       from: EMAIL_FROM,
       to: CONTACT_EMAIL,
       subject: `New intake form: ${full_name}`,
-      html: buildEmailHtml(sanitisedData),
-      ...(pdfBuffer ? { attachments: [{ filename, content: pdfBuffer }] } : {}),
+      html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
+        <p><strong>${escapeHtml(full_name)}</strong> has completed their intake form.</p>
+        <p>Read it and download the PDF in the <a href="${SITE_URL}/admin/intake" style="color:#c85a1a">dashboard</a> → Forms.</p>
+        <p style="font-size:12px;color:#888">For privacy, the answers are not included in this email.</p>
+      </div>`,
     });
     if (emailResult.error) {
       console.error('[intake email] Resend error:', JSON.stringify(emailResult.error, null, 2));
@@ -263,79 +245,8 @@ export async function POST(req: NextRequest) {
       console.log('[intake email] sent, id:', emailResult.data?.id);
     }
   } catch (emailErr) {
-    console.error('[intake email] thrown error:', emailErr);
+    console.error('[intake email] thrown error:', emailErr instanceof Error ? emailErr.message : String(emailErr));
   }
 
   return NextResponse.json({ success: true }, { headers: noCache });
-}
-
-function row(label: string, value: unknown): string {
-  if (value === null || value === undefined || value === '') return '';
-  // Escaped: these are the client's own free-text answers. sanitiseInput only
-  // strips complete tags, so a half-open "<a href=…" could otherwise become a
-  // live link or tracking pixel in the practitioner's inbox.
-  const display = escapeHtml(typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value));
-  return `<tr>
-    <td style="padding:5px 16px 5px 0;font-size:13px;color:#777;white-space:nowrap;vertical-align:top">${label}</td>
-    <td style="padding:5px 0;font-size:13px;color:#333;line-height:1.7">${display}</td>
-  </tr>`;
-}
-
-function section(title: string, rows: string): string {
-  return `<tr><td colspan="2" style="padding:24px 0 6px">
-    <div style="font-size:11px;font-weight:600;color:#2a4d3c;text-transform:uppercase;letter-spacing:1.5px;border-bottom:1px solid #e5e5e5;padding-bottom:8px;margin-bottom:4px">${title}</div>
-  </td></tr>${rows}`;
-}
-
-function buildEmailHtml(d: Record<string, string>): string {
-  const fmt = (s: string) => s.replace(/_/g, ' ');
-  return `<table style="font-family:system-ui,sans-serif;max-width:620px;width:100%;color:#333;border-collapse:collapse">
-    <tr><td colspan="2" style="padding-bottom:24px">
-      <h2 style="margin:0 0 4px;font-size:20px;font-weight:400;color:#2a4d3c">New Intake Form</h2>
-      <p style="margin:0;font-size:12px;color:#aaa">Submitted ${new Date().toLocaleDateString('en-IE', { dateStyle: 'full' })}</p>
-    </td></tr>
-    ${section('Basic Details', [
-      row('Full name', d.full_name),
-      row('Preferred name', d.preferred_name),
-      row('Email', d.email),
-      row('Phone', d.phone),
-      row('Date of birth', d.date_of_birth),
-      row('Pronouns', d.pronouns),
-    ].join(''))}
-    ${section('Session Preferences', [
-      row('Format', fmt(d.session_format || '')),
-      row('Referral source', d.referral_source),
-      row('Referral detail', d.referral_source_other),
-    ].join(''))}
-    ${section('About You', [
-      row('Reason for therapy', d.reason_for_therapy),
-      row('Diagnosed conditions', d.diagnosed_conditions),
-      row('Previous therapy', d.previous_therapy === 'yes' ? 'Yes' : 'No'),
-      row('Previous therapy details', d.previous_therapy_details),
-      row('Current medication', d.current_medication),
-    ].join(''))}
-    ${section('Other Support', [
-      row('Seeing psychiatrist', d.seeing_psychiatrist === 'yes' ? 'Yes' : 'No'),
-      row('Psychiatrist details', d.psychiatrist_details),
-      row('Uses AI tools', d.uses_ai_tools),
-    ].join(''))}
-    ${section('Emergency Contact', [
-      row('Name', d.emergency_contact_name),
-      row('Phone', d.emergency_contact_phone),
-      row('Relationship', d.emergency_contact_relationship),
-    ].join(''))}
-    ${section('GP Details', [
-      row('GP name', d.gp_name),
-      row('GP practice', d.gp_practice),
-    ].join(''))}
-    ${section('Additional Info', [
-      row('Notes', d.additional_info),
-    ].join(''))}
-    ${section('Consent', [
-      row('Therapeutic Agreement', d.consent_therapeutic_agreement),
-      row('Privacy Policy', d.consent_privacy_policy),
-      row('Data Storage', d.consent_data_storage),
-      row('Age Confirmation (18+)', d.consent_age_confirmation),
-    ].join(''))}
-  </table>`;
 }

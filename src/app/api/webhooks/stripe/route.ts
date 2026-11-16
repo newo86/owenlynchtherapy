@@ -75,7 +75,16 @@ export async function POST(request: NextRequest) {
     return new Response('OK', { status: 200 });
   }
 
-  const session = await matchSession(checkout);
+  let session: SessionRecord | null;
+  try {
+    session = await matchSession(checkout);
+  } catch (err) {
+    // The ledger couldn't be read, so we can't tell whether this checkout was
+    // already pinned to a session. Guessing could mark the wrong session
+    // paid; ask Stripe to try again instead.
+    console.error('[stripe-webhook] session match failed on a database error:', err instanceof Error ? err.message : String(err));
+    return new Response('Ledger lookup failed', { status: 500 });
+  }
   if (!session) {
     console.warn(`[stripe-webhook] Could not match checkout ${checkout.id} to a session — review manually in the dashboard`);
     // 200 so Stripe doesn't retry forever; the warning is the audit trail.
@@ -124,9 +133,32 @@ export async function POST(request: NextRequest) {
   });
   if (ledgerErr) {
     if (ledgerErr.code === '23505') {
+      // Already logged. Make sure it was logged against THIS session: if the
+      // row points elsewhere (or can't be read), stop rather than mark a
+      // second session paid for one payment.
+      const { data: existing, error: readErr } = await supabaseAdmin
+        .from('payments')
+        .select('session_id')
+        .eq('stripe_checkout_session_id', checkout.id)
+        .maybeSingle();
+      if (readErr) {
+        console.error('[stripe-webhook] could not re-read ledger row:', readErr.message);
+        return new Response('Ledger lookup failed', { status: 500 });
+      }
+      if (existing?.session_id !== session.id) {
+        console.warn(`[stripe-webhook] Checkout ${checkout.id} is already logged against a different session — review manually`);
+        return new Response('OK', { status: 200 });
+      }
       console.log(`[stripe-webhook] Payment for checkout ${checkout.id} already logged — skipping (idempotency guard)`);
-    } else {
+    } else if (ledgerErr.code === '42P01' || ledgerErr.code === 'PGRST205') {
+      // No payments table (fresh install before its migration): carry on
+      // without the ledger, as before.
       console.warn('[stripe-webhook] Could not log payment (run the payments migration):', ledgerErr.message);
+    } else {
+      // Without the ledger row a retry can't be pinned to this session, so
+      // don't go further on a database fault. Stripe will retry.
+      console.error('[stripe-webhook] ledger insert failed:', dbError(ledgerErr));
+      return new Response('Ledger insert failed', { status: 500 });
     }
   }
 
@@ -191,7 +223,9 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Match a Stripe checkout session to a Supabase session row.
+ * Match a Stripe checkout session to a Supabase session row. Throws if the
+ * ledger can't be read (the caller turns that into a 500 for Stripe to retry).
+ *  0. A ledger row for this checkout — a retried delivery; same session again.
  *  1. client_reference_id — set when the payment link was emailed in a
  *     reminder (?client_reference_id=<session_id>). Exact match.
  *  2. metadata.session_id — legacy per-session payment links.
@@ -203,27 +237,37 @@ async function matchSession(checkout: Stripe.Checkout.Session): Promise<SessionR
   // A retried delivery: this checkout is already in the ledger, so it belongs
   // to the session recorded there. Never re-match a retry by email — the
   // "oldest unpaid session" may have changed since the first delivery.
-  const { data: logged } = await supabaseAdmin
+  const { data: logged, error: loggedErr } = await supabaseAdmin
     .from('payments')
     .select('session_id')
     .eq('stripe_checkout_session_id', checkout.id)
     .maybeSingle();
-  if (logged?.session_id) {
-    const { data } = await supabaseAdmin
+  // A failed read must not look like "not logged yet" (the caller answers
+  // 500 and Stripe retries). A missing table just means no ledger exists.
+  if (loggedErr && loggedErr.code !== '42P01' && loggedErr.code !== 'PGRST205') {
+    throw new Error(loggedErr.message);
+  }
+  if (logged) {
+    if (!logged.session_id) return null; // its session was deleted — manual review
+    const { data, error } = await supabaseAdmin
       .from('sessions')
       .select('*, clients(*)')
       .eq('id', logged.session_id)
-      .single();
-    if (data) return data as SessionRecord;
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return (data as SessionRecord | null) ?? null;
   }
 
   const directId = checkout.client_reference_id ?? checkout.metadata?.session_id ?? null;
   if (directId) {
-    const { data } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('sessions')
       .select('*, clients(*)')
       .eq('id', directId)
-      .single();
+      .maybeSingle();
+    // A failed read is not "no such session": retry rather than fall back to
+    // guessing by email. (22P02 = the id isn't a uuid, i.e. genuinely no match.)
+    if (error && error.code !== '22P02') throw new Error(error.message);
     if (data) return data as SessionRecord;
     console.warn(`[stripe-webhook] client_reference_id ${directId} did not match a session — falling back to email match`);
   }
@@ -245,13 +289,14 @@ async function matchSession(checkout: Stripe.Checkout.Session): Promise<SessionR
   const email = checkout.customer_details?.email ?? checkout.customer_email ?? null;
   if (!email) return null;
 
-  const { data: client } = await supabaseAdmin
+  const { data: client, error: clientErr } = await supabaseAdmin
     .from('clients')
     .select('id')
     // Case-insensitive, but with LIKE wildcards escaped: an "_" or "%" in the
     // payer's email must not match someone else's address.
     .ilike('email', email.replace(/[\\%_]/g, '\\$&'))
     .maybeSingle();
+  if (clientErr && clientErr.code !== 'PGRST116') throw new Error(clientErr.message);
   if (!client) return null;
 
   let query = supabaseAdmin
