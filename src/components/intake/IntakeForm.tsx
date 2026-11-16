@@ -5,6 +5,7 @@ import IntakeProgress from './IntakeProgress';
 import IntakeConfirmation from './IntakeConfirmation';
 import FormField from './FormField';
 import { PRACTICE } from '@/practice.config';
+import { NAME_RE, isValidPhone } from '@/lib/intakeValidation';
 
 // ── Shared styles ──────────────────────────────────────────────────────────
 const inputCls =
@@ -84,7 +85,7 @@ function validate(step: number, d: FormState): Record<string, string> {
   if (step === 1) {
     if (!d.full_name.trim()) {
       e.full_name = 'Full name is required';
-    } else if (!/^[a-zA-ZÀ-ÿ\s'\-]{2,100}$/.test(d.full_name.trim())) {
+    } else if (!NAME_RE.test(d.full_name.trim().replace(/\s+/g, ' '))) {
       e.full_name = 'Please enter your name using letters only';
     }
     if (!d.email.trim()) {
@@ -95,9 +96,8 @@ function validate(step: number, d: FormState): Record<string, string> {
     if (!d.phone.trim()) {
       e.phone = 'Phone number is required';
     } else {
-      const stripped = d.phone.replace(/[\s\-\(\)]/g, '');
-      if (!/^(\+353|0)(8[3-9]|1|2[1-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]|9[0-9])\d{6,7}$/.test(stripped)) {
-        e.phone = 'Please enter a valid Irish phone number';
+      if (!isValidPhone(d.phone)) {
+        e.phone = 'Please enter a valid phone number, including the country code if it is not Irish';
       }
     }
     if (!d.date_of_birth) {
@@ -129,7 +129,9 @@ function validate(step: number, d: FormState): Record<string, string> {
   }
   if (step === 5) {
     if (!d.emergency_contact_name.trim()) e.emergency_contact_name = 'Name is required';
+    else if (!NAME_RE.test(d.emergency_contact_name.trim().replace(/\s+/g, ' '))) e.emergency_contact_name = 'Please enter the name using letters only';
     if (!d.emergency_contact_phone.trim()) e.emergency_contact_phone = 'Phone number is required';
+    else if (!isValidPhone(d.emergency_contact_phone)) e.emergency_contact_phone = 'Please enter a valid phone number, including the country code if it is not Irish';
     if (!d.emergency_contact_relationship.trim()) e.emergency_contact_relationship = 'Relationship is required';
   }
   if (step === 6) {
@@ -318,7 +320,7 @@ export default function IntakeForm({ token, clientName, clientEmail }: Props) {
                     autoComplete="email"
                   />
                 </FormField>
-                <FormField label="Phone number" htmlFor="phone" required error={errors.phone} helperText="Irish numbers only, e.g. 087 000 0000 or +353 87 000 0000">
+                <FormField label="Phone number" htmlFor="phone" required error={errors.phone} helperText="e.g. 087 000 0000. Outside Ireland, include the country code, e.g. +44 7700 900000">
                   <input
                     id="phone"
                     type="tel"

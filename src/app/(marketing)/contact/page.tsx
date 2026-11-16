@@ -152,10 +152,10 @@ export default async function ContactPage() {
               style={{ borderRadius: '12px', boxShadow: '0 4px 24px rgba(0,0,0,0.10)' }}
             >
               <Image
-                src="/images/capel-street.png"
+                src="/images/capel-street.jpg"
                 alt="106 Capel Street, Dublin 1, where Owen Lynch sees clients in person at Insight Matters."
-                width={2554}
-                height={1664}
+                width={1600}
+                height={1042}
                 className="w-full h-auto block"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />

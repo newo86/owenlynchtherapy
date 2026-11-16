@@ -6,18 +6,13 @@ import { rateLimit } from '@/lib/rateLimit';
 import { rateLimitDurable } from '@/lib/rateLimitDurable';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
+import { NAME_RE, isValidPhone, filenameSlug } from '@/lib/intakeValidation';
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
-const NAME_RE = /^[a-zA-ZÀ-ÿ\s'\-]{2,100}$/;
 const VALID_FORMATS = ['in_person', 'online', 'no_preference'];
 const VALID_REFERRAL = ['Google search', 'Psychology Today', 'Word of mouth', 'Social media', 'GP referral', 'Counselling directory', 'Other'];
 const VALID_AI = ['yes', 'sometimes', 'no'];
-
-function isValidPhone(raw: string): boolean {
-  const stripped = raw.replace(/[\s\-\(\)]/g, '');
-  return /^(\+353|0)(8[3-9]|1|2[1-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]|9[0-9])\d{6,7}$/.test(stripped);
-}
 
 function validateDOB(raw: string): string | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return 'Date of birth must be in YYYY-MM-DD format';
@@ -105,7 +100,7 @@ export async function POST(req: NextRequest) {
   if (!EMAIL_RE.test(email) || email.length > 254) return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
 
   if (!phone) return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
-  if (!isValidPhone(phone)) return NextResponse.json({ error: 'Please enter a valid Irish phone number' }, { status: 400 });
+  if (!isValidPhone(phone)) return NextResponse.json({ error: 'Please enter a valid phone number, including the country code if it is not Irish' }, { status: 400 });
 
   if (!date_of_birth) return NextResponse.json({ error: 'Date of birth is required' }, { status: 400 });
   const dobError = validateDOB(date_of_birth);
@@ -239,7 +234,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     const pdfBuffer = savedRow ? await generateIntakePDF(savedRow) : null;
-    const filename = `intake-${full_name.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
+    const filename = `intake-${filenameSlug(full_name)}-${new Date().toISOString().split('T')[0]}.pdf`;
 
     const yn = (v: unknown) => v ? 'Yes' : 'No';
     const sanitisedData = {

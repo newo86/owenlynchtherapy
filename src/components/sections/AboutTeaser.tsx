@@ -17,8 +17,8 @@ export default function AboutTeaser() {
           <Image
             src="/images/Owen1.jpg"
             alt="Owen Lynch, IAHIP and ICP accredited psychotherapist based in Dublin"
-            width={4370}
-            height={6555}
+            width={1400}
+            height={2100}
             className="w-full h-auto rounded-xl object-cover"
             sizes="(max-width: 768px) 100vw, 360px"
             priority={false}

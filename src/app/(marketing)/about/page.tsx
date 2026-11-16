@@ -190,8 +190,8 @@ export default function AboutPage() {
             <Image
               src="/images/Owen2.jpg"
               alt="Owen Lynch, psychotherapist Dublin"
-              width={4352}
-              height={6528}
+              width={1400}
+              height={2100}
               className="w-full h-auto rounded-xl object-cover"
               sizes="(max-width: 768px) 100vw, 340px"
               priority

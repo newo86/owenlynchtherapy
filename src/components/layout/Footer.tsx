@@ -12,6 +12,19 @@ const navLinks = [
   { href: '/privacy', label: 'Privacy' },
 ];
 
+// The condition pages are the ones meant to rank. Listing them here links
+// them from every page of the site, not only Home and Services.
+const serviceLinks = [
+  { href: '/ocd-therapy-dublin', label: 'OCD' },
+  { href: '/anxiety-therapy-dublin', label: 'Anxiety' },
+  { href: '/adhd-therapy-dublin', label: 'ADHD' },
+  { href: '/autism-therapy-dublin', label: 'Autism' },
+  { href: '/depression-therapy-dublin', label: 'Depression' },
+  { href: '/relationship-therapy-dublin', label: 'Relationships' },
+  { href: '/trauma-therapy-dublin', label: 'Trauma' },
+  { href: '/lgbtqia-therapy-dublin', label: 'LGBTQIA+' },
+];
+
 export default async function Footer() {
   // Live practice settings (dashboard Settings page) merged over the code
   // defaults — the footer NAP block is the canonical public copy of them.
@@ -29,7 +42,7 @@ export default async function Footer() {
       <div className="max-w-6xl mx-auto px-6 lg:px-16 pt-12 pb-24 md:pb-8">
 
         {/* Three-column grid */}
-        <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1.2fr] gap-10 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1.3fr_1fr_1fr_1.2fr] gap-10 md:gap-8">
 
           {/* Left — brand */}
           <div className="flex flex-col gap-3">
@@ -74,6 +87,25 @@ export default async function Footer() {
             </p>
             <ul className="grid grid-cols-2 gap-x-6 gap-y-2 list-none max-w-[200px]">
               {navLinks.map(({ href, label }) => (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className="text-sm text-cream/70 h-hover:text-white h-can:transition-colors"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Therapy for — the condition pages */}
+          <nav aria-label="Therapy services" className="flex flex-col gap-4">
+            <p className="text-sm font-semibold text-cream/80">
+              Therapy for
+            </p>
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-2 list-none max-w-[220px]">
+              {serviceLinks.map(({ href, label }) => (
                 <li key={href}>
                   <Link
                     href={href}

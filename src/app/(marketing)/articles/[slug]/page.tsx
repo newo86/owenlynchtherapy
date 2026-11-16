@@ -94,6 +94,20 @@ export default async function ArticlePage({ params }: Props) {
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${BASE_URL}/articles/${slug}` },
   };
 
+  // Link each article to the condition page it supports, so readers (and
+  // search engines) can get from the article to the service.
+  const SERVICE_BY_CATEGORY: Record<string, { href: string; label: string }> = {
+    OCD: { href: '/ocd-therapy-dublin', label: 'More about OCD therapy with me.' },
+    Trauma: { href: '/trauma-therapy-dublin', label: 'More about trauma therapy with me.' },
+    Anxiety: { href: '/anxiety-therapy-dublin', label: 'More about anxiety therapy with me.' },
+    ADHD: { href: '/adhd-therapy-dublin', label: 'More about ADHD therapy with me.' },
+    Autism: { href: '/autism-therapy-dublin', label: 'More about therapy for autistic adults.' },
+    Depression: { href: '/depression-therapy-dublin', label: 'More about depression therapy with me.' },
+    Relationships: { href: '/relationship-therapy-dublin', label: 'More about therapy for relationship difficulties.' },
+    LGBTQIA: { href: '/lgbtqia-therapy-dublin', label: 'More about LGBTQIA+ affirming therapy.' },
+  };
+  const service = post.category ? SERVICE_BY_CATEGORY[post.category] : undefined;
+
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -210,6 +224,17 @@ export default async function ArticlePage({ params }: Props) {
           </h2>
           <p className="font-normal text-base text-cream/75 leading-[1.8] mb-10">
             {`If you're based in Ireland or the UK and think therapy might help, I offer sessions in Dublin and online. There's no pressure: the first step is simply a conversation.`}
+            {service && (
+              <>
+                {' '}
+                <Link
+                  href={service.href}
+                  className="text-cream underline underline-offset-2 h-hover:text-white h-can:transition-colors"
+                >
+                  {service.label}
+                </Link>
+              </>
+            )}
           </p>
           <span className="block w-12 h-px mx-auto mb-8" style={{ backgroundColor: '#d4a843' }} aria-hidden="true" />
           <Link

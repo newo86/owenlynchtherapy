@@ -121,7 +121,7 @@ export const PRACTICE = {
   /** Message shown on /contact while acceptingNewClients is false. Free text,
    *  editable from Settings. */
   waitlistNotice:
-    "I'm not taking on new clients at the moment. If you add your name to the waiting list below, more slots may open up in September and I'll be in touch.",
+    "I'm not taking on new clients at the moment. If you add your name to the waiting list below, I'll be in touch as soon as a slot opens up.",
 
   // ── Integrations (public, non-secret URLs/IDs) ───────────────────────
   /** Canonical site origin — MUST match the primary domain set in Vercel. */

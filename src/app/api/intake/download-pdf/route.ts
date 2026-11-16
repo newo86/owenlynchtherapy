@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { generateIntakePDF } from '@/lib/generateIntakePDF';
 import { rateLimit } from '@/lib/rateLimit';
+import { filenameSlug } from '@/lib/intakeValidation';
 
 export async function GET(req: NextRequest) {
   const denied = await requireAdmin(req);
@@ -43,7 +44,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const pdfBuffer = await generateIntakePDF(data);
-    const name = (data.full_name as string).replace(/\s+/g, '-').toLowerCase();
+    const name = filenameSlug(String(data.full_name ?? ''));
     const date = new Date(data.submitted_at as string).toISOString().split('T')[0];
     const filename = `intake-${name}-${date}.pdf`;
 

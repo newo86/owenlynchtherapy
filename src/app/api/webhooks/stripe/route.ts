@@ -105,31 +105,11 @@ export async function POST(request: NextRequest) {
   const amountPaid = checkout.amount_total;
   const shortPaid = amountPaid != null && (session.fee ?? 0) > 0 && amountPaid < session.fee;
 
-  // 1. Mark the session paid in Supabase.
-  if (shortPaid) {
-    console.warn(`[stripe-webhook] Short payment for session ${session.id}: paid ${amountPaid}, fee ${session.fee} — not auto-marking paid`);
-  } else if (!alreadyPaid) {
-    const { error: updateErr } = await supabaseAdmin
-      .from('sessions')
-      .update({
-        payment_status: 'paid',
-        paid_at: new Date().toISOString(),
-        ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),
-      })
-      .eq('id', session.id);
-
-    if (updateErr) {
-      console.error('[stripe-webhook] Supabase update failed for session', session.id, dbError(updateErr));
-      // Return 200 so Stripe does not endlessly retry a data error.
-      return new Response('OK', { status: 200 });
-    }
-    console.log(`[stripe-webhook] Session ${session.id} marked paid (payment_intent=${paymentIntentId ?? 'none'})`);
-  } else {
-    console.log(`[stripe-webhook] Session ${session.id} already marked paid — skipping update`);
-  }
-
-  // 2. Log the payment in the finance ledger. The unique constraint on
-  //    stripe_checkout_session_id makes retried webhooks idempotent.
+  // 1. Log the payment in the finance ledger FIRST. The unique constraint on
+  //    stripe_checkout_session_id makes retried webhooks idempotent, and the
+  //    row pins this checkout to this session: if the update below fails and
+  //    Stripe retries, matchSession finds the row and returns the same
+  //    session instead of re-guessing from the payer's email.
   const kind = sessionKind(session.session_format, false);
   const { error: ledgerErr } = await supabaseAdmin.from('payments').insert({
     session_id: session.id,
@@ -148,6 +128,31 @@ export async function POST(request: NextRequest) {
     } else {
       console.warn('[stripe-webhook] Could not log payment (run the payments migration):', ledgerErr.message);
     }
+  }
+
+  // 2. Mark the session paid in Supabase.
+  if (shortPaid) {
+    console.warn(`[stripe-webhook] Short payment for session ${session.id}: paid ${amountPaid}, fee ${session.fee} — not auto-marking paid`);
+  } else if (!alreadyPaid) {
+    const { error: updateErr } = await supabaseAdmin
+      .from('sessions')
+      .update({
+        payment_status: 'paid',
+        paid_at: new Date().toISOString(),
+        ...(paymentIntentId ? { stripe_payment_intent_id: paymentIntentId } : {}),
+      })
+      .eq('id', session.id);
+
+    if (updateErr) {
+      console.error('[stripe-webhook] Supabase update failed for session', session.id, dbError(updateErr));
+      // 500 so Stripe retries (with backoff, for up to three days): the money
+      // has been taken, so a database blip must not leave the session unpaid
+      // with nothing to pick it up. Every step below is idempotent.
+      return new Response('Database update failed', { status: 500 });
+    }
+    console.log(`[stripe-webhook] Session ${session.id} marked paid (payment_intent=${paymentIntentId ?? 'none'})`);
+  } else {
+    console.log(`[stripe-webhook] Session ${session.id} already marked paid — skipping update`);
   }
 
   if (shortPaid) {
@@ -195,6 +200,23 @@ export async function POST(request: NextRequest) {
  *     the matching type.
  */
 async function matchSession(checkout: Stripe.Checkout.Session): Promise<SessionRecord | null> {
+  // A retried delivery: this checkout is already in the ledger, so it belongs
+  // to the session recorded there. Never re-match a retry by email — the
+  // "oldest unpaid session" may have changed since the first delivery.
+  const { data: logged } = await supabaseAdmin
+    .from('payments')
+    .select('session_id')
+    .eq('stripe_checkout_session_id', checkout.id)
+    .maybeSingle();
+  if (logged?.session_id) {
+    const { data } = await supabaseAdmin
+      .from('sessions')
+      .select('*, clients(*)')
+      .eq('id', logged.session_id)
+      .single();
+    if (data) return data as SessionRecord;
+  }
+
   const directId = checkout.client_reference_id ?? checkout.metadata?.session_id ?? null;
   if (directId) {
     const { data } = await supabaseAdmin
