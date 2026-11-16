@@ -11,19 +11,19 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@react-pdf/renderer": "^4.5.1",
-    "@supabase/supabase-js": "^2.106.1",
+    "@react-pdf/renderer": "^4.9.0",
+    "@supabase/supabase-js": "^2.119.0",
     "@types/pdfkit": "^0.17.6",
     "@vercel/analytics": "^2.0.1",
     "cobe": "^2.0.1",
     "googleapis": "^172.0.0",
-    "lucide-react": "^1.16.0",
+    "lucide-react": "^1.71.0",
     "next": "16.4.6",
-    "pdfkit": "^0.18.0",
+    "pdfkit": "^0.20.2",
     "qrcode": "^1.5.4",
-    "react": "19.2.9",
-    "react-dom": "19.2.9",
-    "resend": "^6.12.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "resend": "^6.38.0",
     "stripe": "^22.1.1"
   },
   "devDependencies": {
