@@ -70,7 +70,11 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
 
 ### Authentication and accounts
 5. **Credential stuffing / brute force**: admin login and MFA are rate
-   limited (`src/lib/rateLimit*.ts`) and 2FA is enforced.
+   limited (`src/lib/rateLimit*.ts`): per IP for the password, and per account
+   for wrong 2FA codes at login. 2FA is enforced by the code only once it is
+   switched on in the dashboard — it stores a row in `admin_mfa`. Confirm
+   that row exists and is enabled in production (it was missing on
+   16 Nov 2026, leaving the dashboard password-only).
 12. **Account pre-hijacking**: n/a while there is a single admin and no
     public sign-up. If client accounts are ever added: verify email before
     the account is usable, and don't merge OAuth and password accounts

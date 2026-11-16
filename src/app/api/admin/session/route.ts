@@ -53,6 +53,15 @@ export async function POST(req: NextRequest) {
     if (!code) {
       return NextResponse.json({ error: 'Verification code required', mfaRequired: true }, { status: 401, headers: noCache });
     }
+    // The password was right, so this caller is past the first factor. The
+    // IP limit above doesn't stop someone rotating addresses to guess the
+    // six-digit code, so cap code attempts on the single admin account
+    // (same rule as /mfa/disable, docs/SECURITY.md #5).
+    const mfaAllowed = rateLimit('admin-login-mfa', 'admin', 5, 15 * 60 * 1000)
+      && await rateLimitDurable('admin-login-mfa', 'admin', 5, 15 * 60 * 1000);
+    if (!mfaAllowed) {
+      return NextResponse.json({ error: 'Too many codes tried. Please wait 15 minutes and try again.', mfaRequired: true }, { status: 429, headers: noCache });
+    }
     if (!(await verifyStored(code))) {
       return NextResponse.json({ error: 'Invalid verification code', mfaRequired: true }, { status: 401, headers: noCache });
     }

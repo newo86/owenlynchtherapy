@@ -6,15 +6,6 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
-        // Article images still served from the old Sanity CDN — keep until
-        // they are localised into /public/images/articles (needs an env with
-        // network access to cdn.sanity.io). Do NOT delete the Sanity project
-        // before that happens.
-        protocol: 'https',
-        hostname: 'cdn.sanity.io',
-        pathname: '/images/**',
-      },
-      {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },

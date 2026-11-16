@@ -24,14 +24,14 @@ export const metadata: Metadata = {
       'Articles on OCD, anxiety, ADHD, autism, and mental health by Owen Lynch, psychotherapist in Dublin. Evidence-based insights and practical guidance.',
     type: 'website',
     url: `${SITE_URL}/articles`,
-    images: [{ url: `${SITE_URL}/images/blog-hero-ocd-therapy.png`, width: 3200, height: 1800, alt: 'Abstract illustration representing OCD therapy: concentric circles in forest green and terracotta' }],
+    images: [{ url: `${SITE_URL}/images/blog-hero-ocd-therapy.jpg`, width: 1600, height: 900, alt: 'Abstract illustration representing OCD therapy: concentric circles in forest green and terracotta' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Articles | Owen Lynch Psychotherapy',
     description:
       'Articles on OCD, anxiety, ADHD, autism, and mental health by Owen Lynch, psychotherapist in Dublin.',
-    images: [`${SITE_URL}/images/blog-hero-ocd-therapy.png`],
+    images: [`${SITE_URL}/images/blog-hero-ocd-therapy.jpg`],
   },
 };
 
