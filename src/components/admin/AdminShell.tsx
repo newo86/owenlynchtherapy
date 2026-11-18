@@ -11,6 +11,7 @@ import { FormLibrary } from './FormLibrary';
 import { Revenue } from './Revenue';
 import { HoursPage } from './HoursPage';
 import { Waitlist } from './Waitlist';
+import { Analytics } from './Analytics';
 import { SettingsPanel } from './SettingsPanel';
 import { StatementImport } from './StatementImport';
 import { NewClientModal } from './NewClientModal';
@@ -33,6 +34,7 @@ const SECTION_TITLES: Record<AdminSection, string> = {
   revenue: 'Revenue',
   forms: 'Forms',
   waitlist: 'Waiting list',
+  analytics: 'Analytics',
   settings: 'Settings',
   hours: 'Accreditation hours',
   'new-client': 'Onboarding',
@@ -312,7 +314,7 @@ export function AdminShell() {
                       Calendar connected
                     </button>
                   )}
-                  {section !== 'clients' && section !== 'sessions' && section !== 'settings' && (
+                  {section !== 'clients' && section !== 'sessions' && section !== 'settings' && section !== 'analytics' && (
                     <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
                       + Add client
                     </button>
@@ -374,6 +376,8 @@ export function AdminShell() {
                   <FormsTable submissions={submissions} tokens={tokens} initialTab={formsTab} />
                 </div>
               )}
+
+              {section === 'analytics' && <Analytics clients={clients} />}
 
               {section === 'waitlist' && (
                 <Waitlist waitlist={waitlist} onReload={reload} />

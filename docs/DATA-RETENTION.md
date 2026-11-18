@@ -26,7 +26,8 @@ what is retained, what is purged automatically, and the items still open.
 
 ## Clinical-record retention (7 years)
 
-- **Clients, sessions, intake submissions** are retained for **7 years after
+- **Clients, sessions, intake submissions and questionnaire responses** (values
+  worksheet, C–NIP–2; they cascade-delete with the client) are retained for **7 years after
   last contact** (the most recent session), then purged — unless the client
   requested earlier erasure (handled via `/api/admin/clients/delete`).
 - Enforced by `GET /api/admin/maintenance/purge-clinical` (monthly Vercel cron).

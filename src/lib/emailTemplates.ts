@@ -243,3 +243,103 @@ export function buildReceiptHtml(input: ReceiptEmailInput): string {
     <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">See you at your next session.</p>
     <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">${PRACTICE.practitionerFirstName}</p>`);
 }
+
+// ── Questionnaire link ──────────────────────────────────────────────────────
+
+export interface QuestionnaireEmailInput {
+  firstName: string;
+  kind: 'values' | 'cnip';
+  url: string;
+  ttlDays: number;
+}
+
+export function buildQuestionnaireHtml(input: QuestionnaireEmailInput): string {
+  const firstName = escapeHtml(input.firstName);
+  const intro = input.kind === 'values'
+    ? `Here is the <strong style="color:#2A4D3C;">Finding your values</strong> worksheet we talked about. It takes around 15 minutes. There are no right or wrong answers, and at the end you&rsquo;ll see your top values, and I&rsquo;ll email you a copy to keep.`
+    : `I&rsquo;d like therapy to fit you as well as it can. This short questionnaire asks how you&rsquo;d like a therapist to work with you. It takes about five minutes, there are no right or wrong answers, and we can talk through it together in a session.`;
+  const button = input.kind === 'values' ? 'Open the worksheet' : 'Open the questionnaire';
+  return emailShell(`
+    <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${firstName},</p>
+    <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 24px;">${intro}</p>
+    <a href="${input.url}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">${button}</a>
+    <p style="color:#777;font-size:13px;line-height:1.7;margin:24px 0 0;">
+      The link is private to you and works for ${input.ttlDays} days. If it has expired, just let me know and I&rsquo;ll send a new one.
+    </p>
+    <p style="color:#555;font-size:14px;line-height:1.7;margin:24px 0 4px;">Thanks,</p>
+    <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">${PRACTICE.practitionerName}<br>
+      <span style="font-weight:400;font-size:13px;color:#666;">${PRACTICE.businessName}<br>
+      ${SITE_HOST}</span>
+    </p>`);
+}
+
+// ── Values worksheet: the client's own copy of their results ────────────────
+
+export interface ValuesResultsEmailInput {
+  firstName: string;
+  top: Array<{ name: string; desc: string | null; neglected: boolean }>;
+  areas: Array<{ name: string; importance: number | null; living: number | null }>;
+  step: { action: string; value: string; obstacles: string; worth: string };
+}
+
+export function buildValuesResultsHtml(input: ValuesResultsEmailInput): string {
+  const e = escapeHtml;
+  const nl = (s: string) => e(s).replace(/\n/g, '<br>');
+  const topRows = input.top.map((v, i) => `
+      <tr>
+        <td style="padding:10px 12px 10px 0;vertical-align:top;width:28px;">
+          <span style="display:inline-block;width:26px;height:26px;line-height:26px;border-radius:13px;background:#2A4D3C;color:#fff;text-align:center;font-size:13px;">${i + 1}</span>
+        </td>
+        <td style="padding:10px 0;border-bottom:1px solid #F0EAE0;">
+          <span style="font-size:15px;color:#2A4D3C;font-weight:600;">${e(v.name)}</span>
+          ${v.desc ? `<br><span style="font-size:13px;color:#777;">${e(v.desc)}</span>` : ''}
+          ${v.neglected ? `<br><span style="font-size:13px;color:#A04714;">Wanting more room right now</span>` : ''}
+        </td>
+      </tr>`).join('');
+
+  const scored = input.areas.filter(a => a.importance !== null || a.living !== null);
+  const areaRows = scored.map(a => `
+      <tr>
+        <td style="padding:8px 0;border-bottom:1px solid #F0EAE0;font-size:14px;color:#2A4D3C;">${e(a.name)}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #F0EAE0;font-size:14px;color:#555;text-align:center;">${a.importance ?? '–'}</td>
+        <td style="padding:8px 0;border-bottom:1px solid #F0EAE0;font-size:14px;color:#555;text-align:center;">${a.living ?? '–'}</td>
+      </tr>`).join('');
+
+  const stepItems = ([
+    ['Something I will do', input.step.action],
+    ['The value it moves me towards', input.step.value],
+    ['What might show up', input.step.obstacles],
+    ['Why it’s worth making room for them', input.step.worth],
+  ] as const).filter(([, v]) => v).map(([k, v]) => `
+      <p style="margin:0 0 4px;font-size:12px;color:#777;">${e(k)}</p>
+      <p style="margin:0 0 14px;font-size:14px;color:#2A4D3C;line-height:1.6;">${nl(v)}</p>`).join('');
+
+  const h = (t: string) => `<p style="font-size:17px;color:#2A4D3C;margin:28px 0 10px;font-weight:400;">${t}</p>`;
+
+  return emailShell(`
+    <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${e(input.firstName)},</p>
+    <p style="color:#555;font-size:14px;line-height:1.7;margin:0;">
+      Thank you for completing the values worksheet. Here&rsquo;s a copy of what you chose, to keep. We can look at it together in a session.
+    </p>
+    ${h('My top six values')}
+    <table style="width:100%;border-collapse:collapse;">${topRows}</table>
+    ${scored.length ? `${h('Values in my life')}
+    <table style="width:100%;border-collapse:collapse;">
+      <tr>
+        <td style="padding:0 0 6px;font-size:12px;color:#777;">Area</td>
+        <td style="padding:0 0 6px;font-size:12px;color:#777;text-align:center;">How important</td>
+        <td style="padding:0 0 6px;font-size:12px;color:#777;text-align:center;">Living by it now</td>
+      </tr>${areaRows}
+    </table>` : ''}
+    ${stepItems ? `<div style="background:#EEF6F0;border-radius:8px;padding:18px 20px;margin:28px 0 0;">
+      <p style="font-size:17px;color:#2A4D3C;margin:0 0 12px;font-weight:400;">One small step this week</p>${stepItems}
+    </div>` : ''}
+    <p style="color:#555;font-size:14px;line-height:1.7;margin:28px 0 4px;">Take care,</p>
+    <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">${PRACTICE.practitionerName}<br>
+      <span style="font-weight:400;font-size:13px;color:#666;">${PRACTICE.businessName}<br>
+      ${SITE_HOST}</span>
+    </p>
+    <p style="color:#999;font-size:12px;line-height:1.6;margin:24px 0 0;border-top:1px solid #EFE9DF;padding-top:14px;">
+      Based on acceptance and commitment therapy (ACT), drawing on the work of Steven Hayes and Russ Harris.
+    </p>`);
+}

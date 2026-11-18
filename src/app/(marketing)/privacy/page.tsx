@@ -68,6 +68,7 @@ export default async function PrivacyPage() {
           <ul className="list-disc pl-6 mb-4">
             <li className={li}><strong>Contact and waiting-list enquiries</strong>: your name, email and phone number, so I can reply to you. Waiting-list entries are kept only until you become a client, ask to be removed, or the entry goes stale.</li>
             <li className={li}><strong>Intake information</strong>: when you become a client you complete an intake form covering your contact details, relevant history and consent. This is clinical information and is treated with the highest level of care.</li>
+            <li className={li}><strong>Questionnaires</strong>: during therapy I may send you an optional questionnaire, such as a values worksheet or a short form about how you would like therapy to work. Your answers are stored with your clinical record so we can talk them through together, and for the values worksheet I email you a copy of your own results. You never have to complete one.</li>
             <li className={li}><strong>Session and payment records</strong>: appointment dates, attendance, fees and receipts, kept because I am professionally and legally required to keep accurate records.</li>
             <li className={li}><strong>Basic website analytics</strong>: anonymous usage statistics that help me understand how people find the site. Nothing here identifies you.</li>
           </ul>
@@ -91,7 +92,7 @@ export default async function PrivacyPage() {
 
           <h2 className={h2}>How long I keep it</h2>
           <ul className="list-disc pl-6 mb-4">
-            <li className={li}>Clinical records (intake, sessions): <strong>7 years after our last contact</strong>, in line with professional record-keeping guidance, then deleted.</li>
+            <li className={li}>Clinical records (intake, sessions, questionnaire answers): <strong>7 years after our last contact</strong>, in line with professional record-keeping guidance, then deleted.</li>
             <li className={li}>Unused intake links: deleted automatically 30 days after they expire.</li>
             <li className={li}>Waiting-list entries: deleted once no longer needed, or immediately on request.</li>
             <li className={li}>Financial records (receipts): kept as required by Revenue rules.</li>

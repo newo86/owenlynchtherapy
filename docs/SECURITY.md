@@ -107,6 +107,17 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
 - **Data minimisation and logs**: no health data, notes or full emails in
   `console.log`, error messages, analytics events or URLs. Retention follows
   docs/DATA-RETENTION.md.
+- **Tokenised public pages** (intake, unsubscribe, the `/values` and
+  `/preferences` questionnaires, and any future one): the path is on the GTM
+  exclusion regex in `src/app/layout.tsx` and on `PRIVATE_PATH` in
+  `src/components/ui/PrivateAnalytics.tsx` (Vercel Analytics), so neither the
+  token nor the fact of being a client reaches an analytics provider.
+- **Client-side drafts** of clinical answers use `sessionStorage` (gone when
+  the tab closes) and are cleared on submit and on a dead link; never persist
+  free text indefinitely in `localStorage`.
+- **New client-data tables** are added to `TABLES` in
+  `src/app/api/admin/backup/route.ts` and are removed by client delete and the
+  7-year purge (`on delete cascade` or an explicit delete).
 
 ### Input handling and injection
 15. **Path traversal**: no file path built from user input

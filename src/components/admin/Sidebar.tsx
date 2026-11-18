@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LayoutGrid, UserRound, CalendarDays, FileText, TrendingUp, ShieldCheck, Eye, EyeOff, Hourglass, Settings, MoreHorizontal, LogOut, GraduationCap } from 'lucide-react';
+import { LayoutGrid, UserRound, CalendarDays, FileText, TrendingUp, ShieldCheck, Eye, EyeOff, Hourglass, Settings, MoreHorizontal, LogOut, GraduationCap, ChartColumn } from 'lucide-react';
 import type { AdminSection } from './types';
 
 interface Props {
@@ -20,6 +20,7 @@ const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> =
   { id: 'revenue',    label: 'Revenue',    Icon: TrendingUp },
   { id: 'hours',      label: 'Hours',      Icon: GraduationCap },
   { id: 'forms',      label: 'Forms',      Icon: FileText },
+  { id: 'analytics',  label: 'Analytics',  Icon: ChartColumn },
   { id: 'waitlist',   label: 'Waitlist',   Icon: Hourglass },
 ];
 // Onboarding is no longer a nav item: "+ Add client" on the Dashboard and
