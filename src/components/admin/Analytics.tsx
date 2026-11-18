@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Copy, Mail, Link2, Check } from 'lucide-react';
 import { adminFetch, formatDate } from './api';
 import type { ClientRow } from './types';
+import { PRACTICE } from '@/practice.config';
 import {
   CNIP_SCALES, CNIP_ADDITIONAL, CNIP_ADDITIONAL_SHORT, scoreCnip,
   type CnipAnswers, type CnipScaleScore,
@@ -13,6 +14,8 @@ import {
 } from '@/lib/questionnaires/values';
 
 type Kind = 'values' | 'cnip';
+/** The practitioner's own test links: no client record behind them. */
+const TEST_ID = 'test';
 const KIND_LABEL: Record<Kind, string> = { values: 'Finding your values', cnip: 'Therapy preferences (C–NIP–2)' };
 
 interface ResponseRow {
@@ -52,11 +55,34 @@ export function Analytics({ clients }: { clients: ClientRow[] }) {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void load(); }, [load]);
 
-  const nameOf = useCallback((id: string) => clients.find(c => c.id === id)?.full_name ?? 'Former client', [clients]);
+  const nameOf = useCallback(
+    (id: string) => id === TEST_ID ? 'Test (you)' : clients.find(c => c.id === id)?.full_name ?? 'Former client',
+    [clients],
+  );
+  const hasTests = responses.some(r => r.client_id === TEST_ID) || pending.some(p => p.client_id === TEST_ID);
+  const [clearing, setClearing] = useState(false);
+  async function clearTests() {
+    if (!confirm('Delete all your test links and test results? Client results are not touched.')) return;
+    setClearing(true);
+    try {
+      const res = await adminFetch('/api/admin/questionnaires', { method: 'DELETE' });
+      if (!res.ok) alert('Could not clear the test results. Please try again.');
+      await load();
+    } finally { setClearing(false); }
+  }
 
   return (
     <div className="admin-qa">
       <SendPanel clients={clients} onSent={load} />
+
+      {hasTests && (
+        <p className="admin-qa-testbar">
+          You have test results from trying the forms yourself. They’re marked “Test (you)” and left out of the caseload figures.
+          <button type="button" className="admin-link" disabled={clearing} onClick={() => void clearTests()}>
+            {clearing ? 'Clearing…' : 'Clear test results'}
+          </button>
+        </p>
+      )}
 
       {loadState === 'missing' && (
         <p className="admin-qa-note" role="alert">The questionnaires table isn’t in the database yet. Run supabase/migrations/questionnaires.sql (via /db-migrate) and reload.</p>
@@ -113,11 +139,15 @@ function SendPanel({ clients, onSent }: { clients: ClientRow[]; onSent: () => vo
   const [result, setResult] = useState<{ url: string; emailed: boolean; emailError: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const isTest = clientId === TEST_ID;
   const client = clients.find(c => c.id === clientId);
+  const recipient = isTest ? PRACTICE.email : client?.email ?? '';
 
   async function send(email: boolean) {
     if (!clientId) return;
-    if (email && !confirm(`Email the ${KIND_LABEL[kind]} link to ${client?.full_name} (${client?.email})?`)) return;
+    if (email && !confirm(isTest
+      ? `Email a test ${KIND_LABEL[kind]} link to you (${recipient})?`
+      : `Email the ${KIND_LABEL[kind]} link to ${client?.full_name} (${recipient})?`)) return;
     setBusy(true); setError(null); setResult(null); setCopied(false);
     try {
       const res = await adminFetch('/api/admin/questionnaires/send', { method: 'POST', body: JSON.stringify({ client_id: clientId, kind, email }) });
@@ -144,6 +174,7 @@ function SendPanel({ clients, onSent }: { clients: ClientRow[]; onSent: () => vo
           <span>Client</span>
           <select className="admin-qa-select pii" value={clientId} onChange={e => { setClientId(e.target.value); setResult(null); }}>
             <option value="">Choose a client</option>
+            <option value={TEST_ID}>Test (sends to you)</option>
             {sorted.map(c => <option key={c.id} value={c.id}>{c.full_name}{c.status === 'completed' ? ' (ended)' : ''}</option>)}
           </select>
         </label>
@@ -161,7 +192,7 @@ function SendPanel({ clients, onSent }: { clients: ClientRow[]; onSent: () => vo
           <button type="button" className="admin-btn-secondary" disabled={!clientId || busy} onClick={() => send(false)}>
             <Link2 size={14} aria-hidden /> Make link
           </button>
-          <button type="button" className="admin-btn-primary" disabled={!clientId || busy || !client?.email} onClick={() => send(true)} title={client && !client.email ? 'No email on record' : undefined}>
+          <button type="button" className="admin-btn-primary" disabled={!clientId || busy || !recipient} onClick={() => send(true)} title={clientId && !recipient ? 'No email on record' : undefined}>
             <Mail size={14} aria-hidden /> Email it
           </button>
         </div>
@@ -170,7 +201,7 @@ function SendPanel({ clients, onSent }: { clients: ClientRow[]; onSent: () => vo
       {result && (
         <div className="admin-qa-result" role="status">
           <p>
-            {result.emailed ? <>Emailed to <span className="pii">{client?.email}</span>. </> : null}
+            {result.emailed ? <>Emailed to <span className="pii">{recipient}</span>. </> : null}
             {result.emailError ? <span className="admin-qa-warn">{result.emailError} </span> : null}
             {!result.emailed && 'Copy the link and send it however suits.'}
           </p>
@@ -455,7 +486,10 @@ function ValuesSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf
 /** Across clients (latest worksheet each): which values come up most. */
 function Caseload({ responses }: { responses: ResponseRow[] }) {
   const latest = new Map<string, ValuesAnswers>();
-  for (const r of responses) if (!latest.has(r.client_id)) latest.set(r.client_id, r.answers as ValuesAnswers); // newest first
+  for (const r of responses) {
+    if (r.client_id === TEST_ID) continue; // the practitioner's own tries
+    if (!latest.has(r.client_id)) latest.set(r.client_id, r.answers as ValuesAnswers); // newest first
+  }
   if (latest.size < 2) return null;
   const tally = (pick: (a: ValuesAnswers) => string[]) => {
     const m = new Map<string, number>();

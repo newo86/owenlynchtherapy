@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { error: insErr } = await supabaseAdmin.from('questionnaire_responses').insert({
-    token_id: tok.id, client_id: tok.clientId, kind, answers, scores,
+    token_id: tok.id, client_id: tok.clientId, is_test: tok.isTest, kind, answers, scores,
   });
   if (insErr) {
     console.error('[questionnaires/submit] insert error:', dbError(insErr));
@@ -93,16 +93,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Could not save your answers. Please try again.' }, { status: 500, headers: noCache });
   }
 
-  const { data: client } = await supabaseAdmin
-    .from('clients').select('full_name, email').eq('id', tok.clientId).maybeSingle();
+  // A test link (the practitioner trying a form) has no client: the
+  // practitioner is the "client" and every email goes to the practice address.
+  let client: { full_name: string; email: string } | null = null;
+  if (tok.isTest) {
+    client = { full_name: 'Test (you)', email: CONTACT_EMAIL };
+  } else if (tok.clientId) {
+    const { data } = await supabaseAdmin
+      .from('clients').select('full_name, email').eq('id', tok.clientId).maybeSingle();
+    if (data) client = { full_name: (data.full_name as string) ?? '', email: (data.email as string) ?? '' };
+  }
 
   // Let the practitioner know (name only: the answers stay behind the login).
   try {
-    const name = escapeHtml((client?.full_name as string | undefined) ?? 'A client');
+    const name = escapeHtml(client?.full_name || 'A client');
     await getResend().emails.send({
       from: EMAIL_FROM,
       to: CONTACT_EMAIL,
-      subject: `${KIND_LABELS[kind]} completed`,
+      subject: `${tok.isTest ? '[Test] ' : ''}${KIND_LABELS[kind]} completed`,
       html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
         <p><strong>${name}</strong> has completed <em>${escapeHtml(KIND_LABELS[kind])}</em>.</p>
         <p>See the results in the <a href="${SITE_URL}/admin/intake" style="color:#c85a1a">dashboard</a> → Analytics.</p>
@@ -117,7 +125,7 @@ export async function POST(req: NextRequest) {
   // to the address on their record (never one taken from the request). The
   // C–NIP–2 is never sent back: clients don't see those scores by design.
   let emailedCopy = false;
-  const clientEmail = (client?.email as string | undefined)?.trim();
+  const clientEmail = client?.email?.trim();
   if (valuesAnswers && clientEmail) {
     const v = valuesAnswers;
     try {
@@ -125,7 +133,7 @@ export async function POST(req: NextRequest) {
         from: EMAIL_FROM,
         to: clientEmail,
         replyTo: CONTACT_EMAIL,
-        subject: 'Your values: a copy to keep',
+        subject: `${tok.isTest ? '[Test] ' : ''}Your values: a copy to keep`,
         html: buildValuesResultsHtml({
           firstName: tok.firstName,
           top: v.top.map(id => ({ name: valueName(id, v.ownValues), desc: valueDesc(id), neglected: v.neglected.includes(id) })),

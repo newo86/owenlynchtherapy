@@ -132,6 +132,12 @@ therapy-preferences inventory (page `/preferences`).
   part of a commercial service (e.g. selling this template to other
   therapists with it built in) needs a licence from Mick Cooper.
 - On completion info@ gets a name-only email (answers stay behind the login).
+- **Test mode:** "Test (sends to you)" at the top of the client dropdown sends a
+  questionnaire to the practice address with no client record behind it
+  (`is_test`, `client_id` null; `questionnaires_test_mode.sql`). Test results
+  show as "Test (you)", are left out of "Across your clients", and stay until
+  "Clear test results" (they don't cascade with any client). Emails are
+  prefixed [Test].
 - Tables `questionnaire_tokens`, `questionnaire_responses`
   (`questionnaires.sql`); both cascade-delete with the client, so client
   deletion and the 7-year purge remove them.
