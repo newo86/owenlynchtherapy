@@ -132,3 +132,30 @@ describe('Values results email', () => {
     expect(html).toContain('Wanting more room right now');
   });
 });
+
+describe('C–NIP–2 written summary', () => {
+  const withBands = (bands: Record<string, 'strong_left' | 'strong_right' | 'none'>) =>
+    CNIP_SCALES.map(s => ({ id: s.id, score: 0, min: -9, max: 9, band: bands[s.id] ?? 'none' }));
+
+  it('names strong preferences, neutral scales and topics to discuss', async () => {
+    const { summariseCnip } = await import('./cnip');
+    const out = summariseCnip('Jane', withBands({ tl_ntl: 'strong_left', bw_nbw: 'strong_right' }), ['frequency', 'dislike']);
+    expect(out[0]).toBe('Jane would like a therapist who takes the lead and gives sessions structure and doesn’t set work between sessions.');
+    expect(out[1]).toMatch(/^No strong preference about focusing on the past or the present, /);
+    expect(out[2]).toBe('They would like to talk about how often to meet and something they would dislike or despise happening in therapy.');
+  });
+
+  it('says so gently when there are no strong preferences', async () => {
+    const { summariseCnip } = await import('./cnip');
+    expect(summariseCnip('Jane', withBands({}), [])[0]).toMatch(/^Jane has no strong preferences at the moment/);
+  });
+
+  it('reports band changes since the previous completion, with "you" grammar for tests', async () => {
+    const { summariseCnip } = await import('./cnip');
+    const prev = { scores: withBands({ ei_er: 'strong_left' }), label: '15 Sept 2026' };
+    const out = summariseCnip('You', withBands({ tc_ntc: 'strong_left' }), [], prev);
+    expect(out.at(-1)).toBe('Since 15 Sept 2026: now a strong preference for therapist to challenge; no longer a strong preference for emotional intensity.');
+    expect(summariseCnip('Jane', withBands({}), [], { scores: withBands({}), label: '1 Oct 2026' }).at(-1))
+      .toBe('No change in strong preferences since 1 Oct 2026.');
+  });
+});

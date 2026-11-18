@@ -256,7 +256,7 @@ export interface QuestionnaireEmailInput {
 export function buildQuestionnaireHtml(input: QuestionnaireEmailInput): string {
   const firstName = escapeHtml(input.firstName);
   const intro = input.kind === 'values'
-    ? `Here is the <strong style="color:#2A4D3C;">Finding your values</strong> worksheet we talked about. It takes around 15 minutes. There are no right or wrong answers, and at the end you&rsquo;ll see your top values, and I&rsquo;ll email you a copy to keep.`
+    ? `Here is the <strong style="color:#2A4D3C;">Finding your values</strong> worksheet we talked about. It takes around 10 minutes. There are no right or wrong answers, and at the end you&rsquo;ll see your top six values, and I&rsquo;ll email you a copy to keep.`
     : `I&rsquo;d like therapy to fit you as well as it can. This short questionnaire asks how you&rsquo;d like a therapist to work with you. It takes about five minutes, there are no right or wrong answers, and we can talk through it together in a session.`;
   const button = input.kind === 'values' ? 'Open the worksheet' : 'Open the questionnaire';
   return emailShell(`

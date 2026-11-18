@@ -1,18 +1,22 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   VALUES, LIFE_AREAS, OWN_VALUE_IDS, TOP_COUNT, NEGLECTED_MAX, RATING_LABELS, TEXT_LIMITS,
-  valueName, valueDesc, areaGaps,
+  valueName, valueDesc,
   type ValueRating, type ValuesAnswers, type OwnValueId,
 } from '@/lib/questionnaires/values';
 import {
-  QShell, QCard, QHeading, QProgress, PrimaryButton, SecondaryButton, NavRow, QInvalid,
+  QShell, QCard, QHeading, QProgress, PrimaryButton, NavRow, QInvalid,
   loadDraft, saveDraft, clearDraft,
 } from './ui';
 
-const STEPS = ['Rate each value', 'Your top six', 'Values wanting more room', 'Values in my life', 'One small step'];
+const STEPS = ['Rate each value', 'Your top six', 'Values wanting more room'];
+const RESULTS = STEPS.length + 1; // step index of the results screen
 
+// The life-area scores and "one small step" were removed from the online
+// worksheet (Nov 2026); their fields stay in the answer shape, empty, so older
+// results and the server's validation keep working.
 const emptyAnswers = (): ValuesAnswers => ({
   ratings: {},
   ownValues: {},
@@ -26,7 +30,7 @@ const inputCls = 'w-full rounded-md px-4 py-3 text-base bg-white text-forest bor
 
 export default function ValuesForm({ token, firstName }: { token: string; firstName: string }) {
   const draftKey = `ol_values_${token.slice(0, 12)}`;
-  const [step, setStep] = useState(0); // 0 = intro, 1..5 = steps, 6 = results
+  const [step, setStep] = useState(0); // 0 = intro, 1..3 = steps, 4 = results
   const [a, setA] = useState<ValuesAnswers>(emptyAnswers);
   const [submitting, setSubmitting] = useState(false);
   const [emailedCopy, setEmailedCopy] = useState(false);
@@ -35,10 +39,16 @@ export default function ValuesForm({ token, firstName }: { token: string; firstN
 
   useEffect(() => {
     const d = loadDraft<{ a: ValuesAnswers; step: number }>(draftKey);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- restore once on mount
-    if (d?.a) { setA({ ...emptyAnswers(), ...d.a }); setStep(Math.min(d.step ?? 0, 5)); }
+    if (d?.a) {
+      // Older drafts may hold life-area notes or a small step from the longer
+      // worksheet: drop them, as the client can no longer see them.
+      const empty = emptyAnswers();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restore once on mount
+      setA({ ...empty, ...d.a, areas: empty.areas, step: empty.step });
+      setStep(Math.min(d.step ?? 0, STEPS.length));
+    }
   }, [draftKey]);
-  useEffect(() => { if (step <= 5) saveDraft(draftKey, { a, step }); }, [a, step, draftKey]);
+  useEffect(() => { if (step <= STEPS.length) saveDraft(draftKey, { a, step }); }, [a, step, draftKey]);
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [step]);
 
   const ownNamed = OWN_VALUE_IDS.filter(id => a.ownValues[id]?.trim());
@@ -74,7 +84,7 @@ export default function ValuesForm({ token, firstName }: { token: string; firstN
       const res = await fetch('/api/questionnaires/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, kind: 'values', answers: { ...a, ratings } }),
+        body: JSON.stringify({ token, kind: 'values', answers: { ...a, ratings, areas: emptyAnswers().areas, step: emptyAnswers().step } }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -84,7 +94,7 @@ export default function ValuesForm({ token, firstName }: { token: string; firstN
       }
       clearDraft(draftKey);
       setEmailedCopy(Boolean(json.emailed_copy));
-      setStep(6);
+      setStep(RESULTS);
     } catch {
       setError('Couldn’t reach the server. Check your connection and try again.');
     } finally {
@@ -93,7 +103,7 @@ export default function ValuesForm({ token, firstName }: { token: string; firstN
   }
 
   if (linkProblem && linkProblem !== 'used') return <QInvalid reason={linkProblem} />;
-  if (step === 6) return <ValuesResults a={a} firstName={firstName} emailedCopy={emailedCopy} />;
+  if (step === RESULTS) return <ValuesResults a={a} firstName={firstName} emailedCopy={emailedCopy} />;
 
   return (
     <QShell>
@@ -128,13 +138,13 @@ export default function ValuesForm({ token, firstName }: { token: string; firstN
                 <li><b className="font-medium">Right or wrong.</b> There are no correct answers.</li>
               </ul>
             </div>
-            <p className="text-base text-ink-soft">It takes about 15 minutes. Your answers are kept if you refresh the page, until you close this tab.</p>
+            <p className="text-base text-ink-soft">It takes about 10 minutes. Your answers are kept if you refresh the page, until you close this tab.</p>
           </QCard>
           <div className="flex justify-end"><PrimaryButton onClick={() => setStep(1)}>Begin</PrimaryButton></div>
         </>
       )}
 
-      {step >= 1 && step <= 5 && <QProgress step={step} total={STEPS.length} label={STEPS[step - 1]} />}
+      {step >= 1 && step <= STEPS.length && <QProgress step={step} total={STEPS.length} label={STEPS[step - 1]} />}
 
       {step === 1 && (
         <>
@@ -202,69 +212,12 @@ export default function ValuesForm({ token, firstName }: { token: string; firstN
               );
             })}
           </div>
+          {error && <p role="alert" className="text-base text-[#A04714]">{error}</p>}
           <NavRow onBack={() => setStep(2)}>
             <div className="flex items-center gap-4">
               <span className="text-sm text-ink-soft">{a.neglected.length} of {NEGLECTED_MAX}</span>
-              <PrimaryButton onClick={() => setStep(4)}>{a.neglected.length ? 'Next' : 'Skip'}</PrimaryButton>
+              <PrimaryButton disabled={submitting} onClick={submit}>{submitting ? 'Sending…' : 'See my values'}</PrimaryButton>
             </div>
-          </NavRow>
-        </>
-      )}
-
-      {step === 4 && (
-        <>
-          <p className="text-base text-ink-soft -mt-4 [text-wrap:pretty]">What matters to you in each area, and how closely you’re living by it right now. All of this is optional.</p>
-          <div className="flex flex-col gap-5">
-            {LIFE_AREAS.map(area => {
-              const x = a.areas[area.id];
-              const set = (patch: Partial<typeof x>) => setA(prev => ({ ...prev, areas: { ...prev.areas, [area.id]: { ...prev.areas[area.id], ...patch } } }));
-              return (
-                <QCard key={area.id} className="flex flex-col gap-4">
-                  <div>
-                    <h3 className="font-heading font-light text-xl text-forest">{area.name}</h3>
-                    <p className="text-sm text-ink-soft">{area.hint}</p>
-                  </div>
-                  <label className="flex flex-col gap-2">
-                    <span className="text-base text-forest">How do I want to be here?</span>
-                    <textarea className={`${inputCls} min-h-24 resize-y`} maxLength={TEXT_LIMITS.areaNote} value={x.note} onChange={e => set({ note: e.target.value })} />
-                  </label>
-                  <Scale10 label="How important" value={x.importance} onChange={v => set({ importance: v })} />
-                  <Scale10 label="Living by it now" value={x.living} onChange={v => set({ living: v })} />
-                </QCard>
-              );
-            })}
-          </div>
-          <NavRow onBack={() => setStep(3)}><PrimaryButton onClick={() => setStep(5)}>Next</PrimaryButton></NavRow>
-        </>
-      )}
-
-      {step === 5 && (
-        <>
-          <p className="text-base text-ink-soft -mt-4">Choose one small step this week, guided by a value. Optional, but small steps count.</p>
-          <QCard className="flex flex-col gap-5">
-            <label className="flex flex-col gap-2">
-              <span className="text-base text-forest">Something I will do</span>
-              <textarea className={`${inputCls} min-h-20 resize-y`} maxLength={TEXT_LIMITS.step} value={a.step.action} onChange={e => setA(p => ({ ...p, step: { ...p.step, action: e.target.value } }))} />
-            </label>
-            <label className="flex flex-col gap-2">
-              <span className="text-base text-forest">The value it moves me towards</span>
-              <select className={inputCls} value={a.step.value} onChange={e => setA(p => ({ ...p, step: { ...p.step, value: e.target.value } }))}>
-                <option value="">Choose one of your top six</option>
-                {a.top.map(id => <option key={id} value={valueName(id, a.ownValues)}>{valueName(id, a.ownValues)}</option>)}
-              </select>
-            </label>
-            <label className="flex flex-col gap-2">
-              <span className="text-base text-forest">What might show up (thoughts, feelings, urges)</span>
-              <textarea className={`${inputCls} min-h-20 resize-y`} maxLength={TEXT_LIMITS.step} value={a.step.obstacles} onChange={e => setA(p => ({ ...p, step: { ...p.step, obstacles: e.target.value } }))} />
-            </label>
-            <label className="flex flex-col gap-2">
-              <span className="text-base text-forest">Why it’s worth making room for them</span>
-              <textarea className={`${inputCls} min-h-20 resize-y`} maxLength={TEXT_LIMITS.step} value={a.step.worth} onChange={e => setA(p => ({ ...p, step: { ...p.step, worth: e.target.value } }))} />
-            </label>
-          </QCard>
-          {error && <p role="alert" className="text-base text-[#A04714]">{error}</p>}
-          <NavRow onBack={() => setStep(4)}>
-            <PrimaryButton disabled={submitting} onClick={submit}>{submitting ? 'Sending…' : 'See my values'}</PrimaryButton>
           </NavRow>
         </>
       )}
@@ -397,33 +350,7 @@ function TopSix({ a, ownIds, onToggle, onBack, onNext }: { a: ValuesAnswers; own
   );
 }
 
-function Scale10({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) {
-  return (
-    <fieldset className="flex flex-col gap-2">
-      <legend className="text-base text-forest mb-2">{label} <span className="text-ink-soft text-sm">(0 to 10)</span></legend>
-      <div className="grid grid-cols-11 gap-1">
-        {Array.from({ length: 11 }, (_, n) => (
-          <button
-            key={n}
-            type="button"
-            aria-pressed={value === n}
-            aria-label={`${label}: ${n}`}
-            onClick={() => onChange(value === n ? null : n)}
-            className={`min-h-11 rounded-md border text-sm tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest ${value === n ? 'bg-forest text-white border-forest' : 'bg-white text-forest border-[#E0D8CE]'}`}
-          >
-            {n}
-          </button>
-        ))}
-      </div>
-    </fieldset>
-  );
-}
-
 function ValuesResults({ a, firstName, emailedCopy }: { a: ValuesAnswers; firstName: string; emailedCopy: boolean }) {
-  const gaps = useMemo(() => areaGaps(a.areas), [a.areas]);
-  const scored = LIFE_AREAS.filter(x => a.areas[x.id]?.importance !== null || a.areas[x.id]?.living !== null);
-  const hasStep = Object.values(a.step).some(Boolean);
-
   return (
     <QShell>
       <QHeading
@@ -450,66 +377,7 @@ function ValuesResults({ a, firstName, emailedCopy }: { a: ValuesAnswers; firstN
         </ol>
       </QCard>
 
-      {scored.length > 0 && (
-        <QCard className="flex flex-col gap-5">
-          <div>
-            <h2 className="font-heading font-light text-2xl text-forest">Values in my life</h2>
-            <p className="text-sm text-ink-soft mt-1">How important each area is, and how closely you’re living by it now.</p>
-          </div>
-          <div className="flex gap-5 text-sm text-ink-soft" aria-hidden>
-            <span className="inline-flex items-center gap-2"><span className="w-4 h-2 rounded-full bg-forest" />How important</span>
-            <span className="inline-flex items-center gap-2"><span className="w-4 h-2 rounded-full bg-gold" />Living by it now</span>
-          </div>
-          <ul className="flex flex-col gap-4">
-            {scored.map(area => {
-              const x = a.areas[area.id];
-              return (
-                <li key={area.id} className="flex flex-col gap-1.5">
-                  <div className="flex justify-between text-base text-forest"><span>{area.name}</span>
-                    <span className="text-sm text-ink-soft tabular-nums">{x.importance ?? '–'} · {x.living ?? '–'}</span>
-                  </div>
-                  <Bar value={x.importance} cls="bg-forest" label={`How important: ${x.importance ?? 'not answered'} of 10`} />
-                  <Bar value={x.living} cls="bg-gold" label={`Living by it now: ${x.living ?? 'not answered'} of 10`} />
-                </li>
-              );
-            })}
-          </ul>
-          {gaps[0] && gaps[0].gap >= 3 && (
-            <p className="text-base text-forest/90 [text-wrap:pretty]">
-              The biggest gap is in <b className="font-medium">{LIFE_AREAS.find(x => x.id === gaps[0].id)?.name.toLowerCase()}</b>. That’s often a good place to look for a small step.
-            </p>
-          )}
-        </QCard>
-      )}
-
-      {hasStep && (
-        <QCard className="flex flex-col gap-4 !bg-[#E4EDE6] !border-[#D3E2D7]">
-          <h2 className="font-heading font-light text-2xl text-forest">One small step this week</h2>
-          <dl className="grid gap-4 sm:grid-cols-2">
-            {([
-              ['Something I will do', a.step.action],
-              ['The value it moves me towards', a.step.value],
-              ['What might show up', a.step.obstacles],
-              ['Why it’s worth making room for them', a.step.worth],
-            ] as const).filter(([, v]) => v).map(([k, v]) => (
-              <div key={k}><dt className="text-sm text-ink-soft">{k}</dt><dd className="text-base text-forest whitespace-pre-line">{v}</dd></div>
-            ))}
-          </dl>
-        </QCard>
-      )}
-
-      <div className="flex flex-wrap gap-3 print:hidden">
-        <SecondaryButton onClick={() => window.print()}>Print or save as PDF</SecondaryButton>
-      </div>
       <p className="text-sm text-ink-soft">Based on acceptance and commitment therapy (ACT), drawing on the work of Steven Hayes and Russ Harris.</p>
     </QShell>
-  );
-}
-
-function Bar({ value, cls, label }: { value: number | null; cls: string; label: string }) {
-  return (
-    <div className="h-2.5 rounded-full bg-[#EFE9DF] overflow-hidden" role="img" aria-label={label}>
-      {value !== null && <div className={`h-full rounded-full ${cls}`} style={{ width: `${Math.max(value * 10, 2)}%` }} />}
-    </div>
   );
 }

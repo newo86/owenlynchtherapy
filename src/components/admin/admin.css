@@ -1999,8 +1999,10 @@
 }
 .admin-qa-chips button.is-on { background: var(--forest-deep); border-color: var(--forest-deep); color: #fff; }
 
-.admin-qa-summary { padding: 16px 18px; border-radius: 14px; background: var(--cream); font-size: 15px; }
-.admin-qa-summary p { margin: 0; text-wrap: pretty; }
+.admin-qa-summary { padding: 18px 20px; border-radius: 14px; background: var(--cream); font-size: 15px; line-height: 1.6; display: flex; flex-direction: column; gap: 8px; }
+.admin-qa-summary .admin-h3 { margin: 0 0 2px; }
+.admin-qa-summary p { margin: 0; text-wrap: pretty; color: var(--forest-deep); }
+.admin-qa-resultshead { margin: 4px 0 -8px; }
 .admin-qa-summary b { font-weight: 500; color: var(--forest-deep); }
 .admin-qa-summary ul { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
 
