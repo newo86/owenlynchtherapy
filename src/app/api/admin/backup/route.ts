@@ -16,6 +16,8 @@ const TABLES = [
   'payments',
   'intake_submissions',
   'intake_tokens',
+  'questionnaire_responses',
+  'questionnaire_tokens',
   'session_reminders',
   'reminder_runs',
   'waitlist',

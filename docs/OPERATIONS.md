@@ -106,8 +106,33 @@ Applied in the Supabase SQL editor. Notably: `session_reminders.sql` +
 `rate_limits.sql`, `admin_mfa.sql`, `practice_settings.sql` (dashboard Settings
 page storage), `admin_session_state.sql` (server-side sign-out: "Sign out"
 voids every admin session issued before it, on all devices — until this table
-exists, signing out only clears the current browser's cookie). If a feature
+exists, signing out only clears the current browser's cookie), `questionnaires.sql`
+(Analytics page: values worksheet and C–NIP–2 links and results). If a feature
 "doesn't save", check its migration was run in production.
+
+## Client questionnaires (Analytics page)
+
+Two questionnaires clients fill in online from a private link:
+**Finding your values** (ACT worksheet, page `/values`) and the **C–NIP–2**
+therapy-preferences inventory (page `/preferences`).
+
+- Sent from dashboard → **Analytics → Send a questionnaire**. "Make link" only
+  creates a link to copy; "Email it" (with a confirm) emails it via
+  `getResend()`, so the kill switch applies. Links are single-use and last 14
+  days. A client can be sent the same questionnaire any number of times; every
+  completion is kept and the C–NIP–2 view overlays earlier completions.
+- Values: the client sees their top six, any (up to 3) they feel they're
+  neglecting, life-area scores and their small step at the end. C–NIP–2: the
+  client sees **no** scores, only a thank-you.
+- Scoring is server-side in `src/lib/questionnaires/` (UK cut-offs from the
+  form, unit-tested). The C–NIP–2 is CC BY-NC-ND 4.0: **never reword items or
+  the 3 to −3 scale**. Use in your own practice is free; using it as an integral
+  part of a commercial service (e.g. selling this template to other
+  therapists with it built in) needs a licence from Mick Cooper.
+- On completion info@ gets a name-only email (answers stay behind the login).
+- Tables `questionnaire_tokens`, `questionnaire_responses`
+  (`questionnaires.sql`); both cascade-delete with the client, so client
+  deletion and the 7-year purge remove them.
 
 ## Practice settings (dashboard Settings page)
 

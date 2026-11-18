@@ -243,3 +243,32 @@ export function buildReceiptHtml(input: ReceiptEmailInput): string {
     <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">See you at your next session.</p>
     <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">${PRACTICE.practitionerFirstName}</p>`);
 }
+
+// ── Questionnaire link ──────────────────────────────────────────────────────
+
+export interface QuestionnaireEmailInput {
+  firstName: string;
+  kind: 'values' | 'cnip';
+  url: string;
+  ttlDays: number;
+}
+
+export function buildQuestionnaireHtml(input: QuestionnaireEmailInput): string {
+  const firstName = escapeHtml(input.firstName);
+  const intro = input.kind === 'values'
+    ? `Here is the <strong style="color:#2A4D3C;">Finding your values</strong> worksheet we talked about. It takes around 15 minutes. There are no right or wrong answers, and at the end you&rsquo;ll see your top values to keep and bring along if you like.`
+    : `I&rsquo;d like therapy to fit you as well as it can. This short questionnaire asks how you&rsquo;d like a therapist to work with you. It takes about five minutes, there are no right or wrong answers, and we can talk through it together in a session.`;
+  const button = input.kind === 'values' ? 'Open the worksheet' : 'Open the questionnaire';
+  return emailShell(`
+    <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${firstName},</p>
+    <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 24px;">${intro}</p>
+    <a href="${input.url}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">${button}</a>
+    <p style="color:#777;font-size:13px;line-height:1.7;margin:24px 0 0;">
+      The link is private to you and works for ${input.ttlDays} days. If it has expired, just let me know and I&rsquo;ll send a new one.
+    </p>
+    <p style="color:#555;font-size:14px;line-height:1.7;margin:24px 0 4px;">Thanks,</p>
+    <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">${PRACTICE.practitionerName}<br>
+      <span style="font-weight:400;font-size:13px;color:#666;">${PRACTICE.businessName}<br>
+      ${SITE_HOST}</span>
+    </p>`);
+}
