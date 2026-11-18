@@ -70,13 +70,20 @@ change both. Fonts are set in `src/app/layout.tsx`.
 
 1. Create a project in an **EU region**. Save the database password.
 2. Run everything in `supabase/migrations/` in the new project's SQL editor
-   (all files are idempotent). Order only matters twice:
-   `000_base_schema.sql` FIRST (the four original tables — reconstructed from
-   code; docs/DB-REVIEW.md has a query to double-check it against the source
-   project), `service_role_grants.sql` and `supabase/supabase-rls-policy.sql`
-   last.
-4. Confirm RLS is enabled (deny-all) on every table — the app only ever
-   connects with the service-role key from the server.
+   (all files are idempotent). Order only matters at the ends:
+   - `000_base_schema.sql` FIRST (the four original tables — reconstructed
+     from code; docs/DB-REVIEW.md has a query to double-check it against the
+     source project).
+   - `000_rls_auto_enable.sql` SECOND: the safety net, an event trigger that
+     switches on RLS for every table created after it, so a migration that
+     forgets to can't leave client data open to the public key. Its final
+     `select` should show `trigger_enabled = O` and `anon_can_execute = false`.
+   - `service_role_grants.sql` and `supabase/supabase-rls-policy.sql` LAST.
+3. Confirm RLS is enabled (deny-all) on every table — the app only ever
+   connects with the service-role key from the server. Supabase → Advisors →
+   Security should show no warnings about RLS, function `search_path` or
+   function EXECUTE (the "RLS enabled, no policy" notes are expected:
+   deny-all is the design).
 
 ## 3 · Resend (email)
 

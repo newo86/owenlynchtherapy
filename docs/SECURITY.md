@@ -95,6 +95,11 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
    permissive policies for `anon`; the anon key alone can read nothing
    sensitive. Check with the Supabase MCP `get_advisors` (security) and
    `list_tables`.
+- **RLS safety net**: every Supabase project has the `ensure_rls` event
+  trigger (`supabase/migrations/000_rls_auto_enable.sql`), which enables RLS
+  on any new `public` table. Check
+  `select evtenabled from pg_event_trigger where evtname = 'ensure_rls'`
+  returns `O`.
 - **Database functions**: every `SECURITY DEFINER` function sets
   `search_path` and REVOKEs EXECUTE from `public`, `anon` and
   `authenticated` (Supabase grants anon EXECUTE by default, making the
