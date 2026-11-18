@@ -12,6 +12,10 @@
 -- Revoking EXECUTE does not stop the event trigger: event triggers fire their
 -- function without an EXECUTE check on the caller.
 --
+-- For new practices 000_rls_auto_enable.sql now creates the function and
+-- trigger with this revoke already in place, so this file is a no-op there;
+-- it stays for the original practice's history.
+--
 -- Existence-guarded and safe to re-run.
 
 do $$
