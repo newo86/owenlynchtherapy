@@ -42,3 +42,9 @@ alter table public.questionnaire_tokens enable row level security;
 alter table public.questionnaire_responses enable row level security;
 grant all on table public.questionnaire_tokens to service_role;
 grant all on table public.questionnaire_responses to service_role;
+
+-- Verify: expect two rows, both with rls = true.
+select c.relname as table, c.relrowsecurity as rls
+from pg_class c join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'public' and c.relname in ('questionnaire_tokens', 'questionnaire_responses')
+order by 1;
