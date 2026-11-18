@@ -7,6 +7,8 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Client Intake Form',
   robots: 'noindex, nofollow',
+  // The URL carries a private token: never pass it on as a referrer.
+  referrer: 'no-referrer' as const,
 };
 
 export default async function IntakePage({

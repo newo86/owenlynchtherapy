@@ -7,6 +7,8 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'Therapy preferences',
   robots: { index: false, follow: false },
+  // The URL carries a private token: never pass it on as a referrer.
+  referrer: 'no-referrer' as const,
 };
 
 export default async function PreferencesPage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
