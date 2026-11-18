@@ -4,11 +4,11 @@ import { rateLimit, trackTokenFailure, isTokenBlocked } from '@/lib/rateLimit';
 import { rateLimitDurable } from '@/lib/rateLimitDurable';
 import { escapeHtml } from '@/lib/sanitise';
 import { getResend } from '@/lib/resend';
-import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
+import { EMAIL_FROM, CONTACT_EMAIL, buildValuesResultsHtml } from '@/lib/emailTemplates';
 import { SITE_URL } from '@/practice.config';
 import { checkQuestionnaireToken, QUESTIONNAIRE_KINDS, KIND_LABELS, type QuestionnaireKind } from '@/lib/questionnaires/tokens';
 import { parseCnipAnswers, scoreCnip } from '@/lib/questionnaires/cnip';
-import { parseValuesAnswers, areaGaps } from '@/lib/questionnaires/values';
+import { parseValuesAnswers, areaGaps, valueName, valueDesc, LIFE_AREAS, type ValuesAnswers } from '@/lib/questionnaires/values';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const MAX_BODY_BYTES = 32_000;
@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
 
   let answers: unknown;
   let scores: unknown = null;
+  let valuesAnswers: ValuesAnswers | null = null;
   if (kind === 'cnip') {
     const parsed = parseCnipAnswers(body.answers);
     if (!parsed) return NextResponse.json({ error: 'Please answer every row.' }, { status: 400, headers: noCache });
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
     const parsed = parseValuesAnswers(body.answers, keepText);
     if (typeof parsed === 'string') return NextResponse.json({ error: parsed }, { status: 400, headers: noCache });
     answers = parsed;
+    valuesAnswers = parsed;
     scores = { gaps: areaGaps(parsed.areas) };
   }
 
@@ -91,9 +93,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Could not save your answers. Please try again.' }, { status: 500, headers: noCache });
   }
 
+  const { data: client } = await supabaseAdmin
+    .from('clients').select('full_name, email').eq('id', tok.clientId).maybeSingle();
+
   // Let the practitioner know (name only: the answers stay behind the login).
   try {
-    const { data: client } = await supabaseAdmin.from('clients').select('full_name').eq('id', tok.clientId).maybeSingle();
     const name = escapeHtml((client?.full_name as string | undefined) ?? 'A client');
     await getResend().emails.send({
       from: EMAIL_FROM,
@@ -109,5 +113,32 @@ export async function POST(req: NextRequest) {
     console.error('[questionnaires/submit] notify error:', e instanceof Error ? e.message : String(e));
   }
 
-  return NextResponse.json({ success: true }, { headers: noCache });
+  // Values worksheet only: email the client their own copy of the results,
+  // to the address on their record (never one taken from the request). The
+  // C–NIP–2 is never sent back: clients don't see those scores by design.
+  let emailedCopy = false;
+  const clientEmail = (client?.email as string | undefined)?.trim();
+  if (valuesAnswers && clientEmail) {
+    const v = valuesAnswers;
+    try {
+      const result = await getResend().emails.send({
+        from: EMAIL_FROM,
+        to: clientEmail,
+        replyTo: CONTACT_EMAIL,
+        subject: 'Your values: a copy to keep',
+        html: buildValuesResultsHtml({
+          firstName: tok.firstName,
+          top: v.top.map(id => ({ name: valueName(id, v.ownValues), desc: valueDesc(id), neglected: v.neglected.includes(id) })),
+          areas: LIFE_AREAS.map(a => ({ name: a.name, importance: v.areas[a.id]?.importance ?? null, living: v.areas[a.id]?.living ?? null })),
+          step: v.step,
+        }),
+      });
+      if (result.error) console.error('[questionnaires/submit] client copy error:', result.error.name);
+      else emailedCopy = Boolean(result.data?.id);
+    } catch (e) {
+      console.error('[questionnaires/submit] client copy thrown:', e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  return NextResponse.json({ success: true, emailed_copy: emailedCopy }, { headers: noCache });
 }

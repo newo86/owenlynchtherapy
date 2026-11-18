@@ -115,3 +115,20 @@ describe('Values worksheet', () => {
     expect(parseValuesAnswers({ ...base, areas: { bogus: {} } }, sanitiseInput)).toBeTypeOf('string');
   });
 });
+
+describe('Values results email', () => {
+  it('escapes everything the client typed', async () => {
+    const { buildValuesResultsHtml } = await import('@/lib/emailTemplates');
+    const html = buildValuesResultsHtml({
+      firstName: '<b>Jane</b>',
+      top: [{ name: '<img src=x onerror=alert(1)>', desc: null, neglected: true }],
+      areas: [{ name: 'Health and body', importance: 8, living: 3 }],
+      step: { action: '<script>alert(1)</script>\nthen rest', value: 'Nature', obstacles: '', worth: '' },
+    });
+    expect(html).not.toContain('<script>');
+    expect(html).not.toContain('<img src=x');
+    expect(html).toContain('&lt;script&gt;');
+    expect(html).toContain('<br>then rest');
+    expect(html).toContain('Wanting more room right now');
+  });
+});

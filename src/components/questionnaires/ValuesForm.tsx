@@ -29,6 +29,7 @@ export default function ValuesForm({ token, firstName }: { token: string; firstN
   const [step, setStep] = useState(0); // 0 = intro, 1..5 = steps, 6 = results
   const [a, setA] = useState<ValuesAnswers>(emptyAnswers);
   const [submitting, setSubmitting] = useState(false);
+  const [emailedCopy, setEmailedCopy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [linkProblem, setLinkProblem] = useState<'used' | 'expired' | 'invalid' | null>(null);
 
@@ -82,6 +83,7 @@ export default function ValuesForm({ token, firstName }: { token: string; firstN
         return;
       }
       clearDraft(draftKey);
+      setEmailedCopy(Boolean(json.emailed_copy));
       setStep(6);
     } catch {
       setError('Couldn’t reach the server. Check your connection and try again.');
@@ -91,7 +93,7 @@ export default function ValuesForm({ token, firstName }: { token: string; firstN
   }
 
   if (linkProblem && linkProblem !== 'used') return <QInvalid reason={linkProblem} />;
-  if (step === 6) return <ValuesResults a={a} firstName={firstName} />;
+  if (step === 6) return <ValuesResults a={a} firstName={firstName} emailedCopy={emailedCopy} />;
 
   return (
     <QShell>
@@ -417,7 +419,7 @@ function Scale10({ label, value, onChange }: { label: string; value: number | nu
   );
 }
 
-function ValuesResults({ a, firstName }: { a: ValuesAnswers; firstName: string }) {
+function ValuesResults({ a, firstName, emailedCopy }: { a: ValuesAnswers; firstName: string; emailedCopy: boolean }) {
   const gaps = useMemo(() => areaGaps(a.areas), [a.areas]);
   const scored = LIFE_AREAS.filter(x => a.areas[x.id]?.importance !== null || a.areas[x.id]?.living !== null);
   const hasStep = Object.values(a.step).some(Boolean);
@@ -426,7 +428,7 @@ function ValuesResults({ a, firstName }: { a: ValuesAnswers; firstName: string }
     <QShell>
       <QHeading
         title={firstName ? `Your values, ${firstName}` : 'Your values'}
-        lead="Thank you. Your answers are with me, and we can look at them together. Here’s what you chose, to keep for yourself."
+        lead={`Thank you. Your answers are with me, and we can look at them together. Here’s what you chose, to keep for yourself.${emailedCopy ? ' I’ve also emailed you a copy.' : ''}`}
       />
 
       <QCard className="flex flex-col gap-5">

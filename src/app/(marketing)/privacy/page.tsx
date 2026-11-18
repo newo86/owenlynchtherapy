@@ -68,7 +68,7 @@ export default async function PrivacyPage() {
           <ul className="list-disc pl-6 mb-4">
             <li className={li}><strong>Contact and waiting-list enquiries</strong>: your name, email and phone number, so I can reply to you. Waiting-list entries are kept only until you become a client, ask to be removed, or the entry goes stale.</li>
             <li className={li}><strong>Intake information</strong>: when you become a client you complete an intake form covering your contact details, relevant history and consent. This is clinical information and is treated with the highest level of care.</li>
-            <li className={li}><strong>Questionnaires</strong>: during therapy I may send you an optional questionnaire, such as a values worksheet or a short form about how you would like therapy to work. Your answers are stored with your clinical record so we can talk them through together. You never have to complete one.</li>
+            <li className={li}><strong>Questionnaires</strong>: during therapy I may send you an optional questionnaire, such as a values worksheet or a short form about how you would like therapy to work. Your answers are stored with your clinical record so we can talk them through together, and for the values worksheet I email you a copy of your own results. You never have to complete one.</li>
             <li className={li}><strong>Session and payment records</strong>: appointment dates, attendance, fees and receipts, kept because I am professionally and legally required to keep accurate records.</li>
             <li className={li}><strong>Basic website analytics</strong>: anonymous usage statistics that help me understand how people find the site. Nothing here identifies you.</li>
           </ul>

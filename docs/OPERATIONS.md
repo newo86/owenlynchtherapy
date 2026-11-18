@@ -122,7 +122,9 @@ therapy-preferences inventory (page `/preferences`).
   days. A client can be sent the same questionnaire any number of times; every
   completion is kept and the C–NIP–2 view overlays earlier completions.
 - Values: the client sees their top six, any (up to 3) they feel they're
-  neglecting, life-area scores and their small step at the end. C–NIP–2: the
+  neglecting, life-area scores and their small step at the end, and is
+  emailed a copy (to the address on their client record, through the kill
+  switch; the page only says so when the email actually went). C–NIP–2: the
   client sees **no** scores, only a thank-you.
 - Scoring is server-side in `src/lib/questionnaires/` (UK cut-offs from the
   form, unit-tested). The C–NIP–2 is CC BY-NC-ND 4.0: **never reword items or
