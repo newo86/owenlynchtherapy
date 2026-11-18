@@ -1975,6 +1975,23 @@
   padding: 10px 12px; border-radius: 10px; background: #fff; font-size: 13px; color: var(--ink);
 }
 
+.admin-qa-linklabel { font-size: 13px; color: var(--ink-muted); min-width: 64px; }
+.admin-qa-bulkcta { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.admin-qa-bulkcta button { min-height: 44px; }
+.admin-qa-bulk { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px; }
+.admin-qa-field .admin-qa-seg { align-self: flex-start; }
+.admin-qa-bulkhead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.admin-qa-bulkhead .admin-h3 { margin: 0; }
+.admin-qa-bulkpick { display: flex; gap: 14px; align-items: center; font-size: 14px; color: var(--forest); }
+.admin-qa-bulklist { list-style: none; margin: 0; padding: 0; max-height: 360px; overflow-y: auto; border: 1px solid var(--line); border-radius: 12px; }
+.admin-qa-bulklist li { padding: 10px 14px; border-top: 1px solid var(--line-soft); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; }
+.admin-qa-bulklist li:first-child { border-top: 0; }
+.admin-qa-bulklist label { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; cursor: pointer; width: 100%; min-height: 28px; }
+.admin-qa-bulklist input { width: 18px; height: 18px; accent-color: var(--forest-deep); }
+.admin-qa-bulklist li.is-sent span:last-child { color: var(--sage); font-weight: 500; }
+.admin-qa-bulklist li.is-failed span:last-child, .admin-qa-bulklist li.is-emails_off span:last-child { color: #A04714; }
+.admin-qa-bulklist li[class*="is-skipped"] span:last-child { color: var(--ink-muted); }
+.admin-qa-bulksummary { margin: 0; font-size: 15px; color: var(--forest-deep); }
 .admin-qa-pending { list-style: none; margin: 14px 0 0; padding: 0; }
 .admin-qa-pending li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 14px; align-items: baseline; }
 .admin-qa-pending li:first-child { border-top: 0; }
