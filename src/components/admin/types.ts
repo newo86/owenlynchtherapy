@@ -3,6 +3,9 @@ export interface SessionRow {
   client_id: string;
   session_date: string;
   session_format: string;
+  /** false = imported from the calendar without a clear format; reminders
+   *  are held until it's set. Missing on old rows = confirmed. */
+  format_confirmed?: boolean;
   location: string | null;
   fee: number; // cents
   status: 'scheduled' | 'attended' | 'cancelled' | 'no_show' | string;

@@ -56,6 +56,11 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
     session.session_format === 'online' ? 'online' : 'in_person'
   );
   const [applyFormatToAll, setApplyFormatToAll] = useState(false);
+  // A calendar import that couldn't tell the format starts unconfirmed: no
+  // option is selected until the practitioner picks one, and only then is it
+  // sent as confirmed. Saving other fields leaves it unconfirmed.
+  const formatWasConfirmed = session.format_confirmed !== false;
+  const [formatPicked, setFormatPicked] = useState(false);
   const [isLowCost, setIsLowCost]               = useState(client.is_low_cost ?? false);
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'unpaid' | 'refunded'>(
     session.payment_status === 'paid' ? 'paid'
@@ -84,6 +89,10 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
     if (!clientName.trim()) { setError('Client name is required.'); return; }
     if (!sessionDate)        { setError('Session date and time is required.'); return; }
     if (!fee || Number(fee) <= 0) { setError('Fee must be a positive number.'); return; }
+    // Follow-ups copy this session's format, so it must be a real choice.
+    if (followUpCadence !== 'none' && !formatWasConfirmed && !formatPicked) {
+      setError('Pick online or in person before scheduling follow-up sessions.'); return;
+    }
 
     setBusy(true);
     setError('');
@@ -99,7 +108,8 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
           phone:               clientPhone,
           session_date:        sessionDate,
           fee:                 Number(fee), // sessions/update expects EUROS (converts to cents itself)
-          session_format:      format,
+          session_format:      formatWasConfirmed || formatPicked ? format : undefined,
+          confirm_format:      !formatWasConfirmed && formatPicked,
           payment_status:      paymentStatus,
           status,
           notes,
@@ -322,6 +332,11 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
           {/* Format */}
           <div>
             <label className="admin-label">Format</label>
+            {!formatWasConfirmed && !formatPicked && (
+              <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--terracotta)' }}>
+                Not confirmed: your calendar event didn&rsquo;t say. Pick one. Reminders are held until you do.
+              </p>
+            )}
             <div style={{ display: 'flex', gap: 20, marginTop: 6 }}>
               {(['in_person', 'online'] as const).map(v => (
                 <label key={v} style={{
@@ -332,8 +347,8 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                     type="radio"
                     name="editFormat"
                     value={v}
-                    checked={format === v}
-                    onChange={() => setFormat(v)}
+                    checked={(formatWasConfirmed || formatPicked) && format === v}
+                    onChange={() => { setFormat(v); setFormatPicked(true); }}
                     style={{ accentColor: 'var(--terracotta)' }}
                   />
                   {v === 'in_person' ? 'In person' : 'Online'}
