@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LayoutGrid, UserRound, CalendarDays, FileText, UserRoundPlus, TrendingUp, ShieldCheck, Eye, EyeOff, Hourglass, Settings, MoreHorizontal, LogOut, GraduationCap } from 'lucide-react';
+import { LayoutGrid, UserRound, CalendarDays, FileText, TrendingUp, ShieldCheck, Eye, EyeOff, Hourglass, Settings, MoreHorizontal, LogOut, GraduationCap } from 'lucide-react';
 import type { AdminSection } from './types';
 
 interface Props {
@@ -21,9 +21,11 @@ const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> =
   { id: 'hours',      label: 'Hours',      Icon: GraduationCap },
   { id: 'forms',      label: 'Forms',      Icon: FileText },
   { id: 'waitlist',   label: 'Waitlist',   Icon: Hourglass },
-  { id: 'new-client', label: 'Onboarding', Icon: UserRoundPlus },
-  { id: 'settings',   label: 'Settings',   Icon: Settings },
 ];
+// Onboarding is no longer a nav item: "+ Add client" on the Dashboard and
+// Clients pages opens the same form. Settings, privacy mode, two-factor and
+// sign out live in the profile menu (the OL button) instead.
+const SETTINGS = { id: 'settings' as AdminSection, label: 'Settings', Icon: Settings };
 
 // Phone tab bar: the four places used between sessions, plus More for the rest.
 // Labels matter on a phone (icons alone are guesswork at arm's length).
@@ -33,7 +35,7 @@ const TABS: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> 
   { id: 'clients',   label: 'Clients',  Icon: UserRound },
   { id: 'revenue',   label: 'Money',    Icon: TrendingUp },
 ];
-const MORE = NAV.filter(n => !TABS.some(t => t.id === n.id));
+const MORE = [...NAV.filter(n => !TABS.some(t => t.id === n.id)), SETTINGS];
 
 export function Sidebar(props: Props) {
   return (
@@ -143,45 +145,72 @@ function DesktopSidebar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onT
         ))}
       </nav>
 
-      <button
-        type="button"
-        onClick={onTogglePrivacy}
-        className="admin-nav-btn"
-        title={privacy ? 'Privacy mode on — client info hidden (click to show)' : 'Privacy mode — hide client info to show others'}
-        aria-label="Toggle privacy mode"
-        aria-pressed={privacy}
-        style={privacy
-          ? { marginBottom: 10, background: 'var(--terracotta)', color: '#fff' }
-          : { marginBottom: 10 }}
-      >
-        {privacy
-          ? <EyeOff size={21} strokeWidth={1.6} aria-hidden />
-          : <Eye size={21} strokeWidth={1.6} aria-hidden />}
-        <span className="admin-nav-label" aria-hidden>Privacy</span>
-      </button>
+      <ProfileMenu
+        active={active}
+        onNavigate={onNavigate}
+        onSignOut={onSignOut}
+        onOpenMfa={onOpenMfa}
+        privacy={privacy}
+        onTogglePrivacy={onTogglePrivacy}
+      />
+    </aside>
+  );
+}
 
-      <button
-        type="button"
-        onClick={onOpenMfa}
-        className="admin-nav-btn"
-        title="Two-factor authentication"
-        aria-label="Two-factor authentication"
-        style={{ marginBottom: 10 }}
-      >
-        <ShieldCheck size={21} strokeWidth={1.6} aria-hidden />
-        <span className="admin-nav-label" aria-hidden>2FA</span>
-      </button>
+/** The OL button at the foot of the desktop sidebar: one place for Settings,
+ *  privacy mode, two-factor and sign out. Privacy mode stays visible while on
+ *  (an eye-off badge on the button), so it's never on by surprise. */
+function ProfileMenu({ active, onNavigate, onSignOut, onOpenMfa, privacy, onTogglePrivacy }: Props) {
+  const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  const item = (label: string, Icon: typeof LayoutGrid, onClick: () => void, extra?: { pressed?: boolean; current?: boolean }) => (
+    <button
+      type="button"
+      role={extra?.pressed === undefined ? 'menuitem' : 'menuitemcheckbox'}
+      className={`admin-more-item${extra?.current ? ' is-active' : ''}`}
+      aria-checked={extra?.pressed}
+      onClick={() => { setOpen(false); onClick(); }}
+    >
+      <Icon size={18} strokeWidth={1.6} aria-hidden />{label}
+    </button>
+  );
+
+  return (
+    <div className="admin-profile">
+      {open && <div className="admin-profile-scrim" onClick={() => setOpen(false)} />}
+      {open && (
+        <div className="admin-profile-menu" role="menu" aria-label="Profile">
+          {item('Settings', Settings, () => onNavigate('settings'), { current: active === 'settings' })}
+          {item(privacy ? 'Show client details' : 'Privacy mode', privacy ? EyeOff : Eye, onTogglePrivacy, { pressed: privacy })}
+          {item('Two-factor sign-in', ShieldCheck, onOpenMfa)}
+          <div className="admin-more-divider" />
+          {item('Sign out', LogOut, onSignOut)}
+        </div>
+      )}
       <button
         type="button"
-        onClick={onSignOut}
-        className="admin-sidebar-avatar"
-        title="Sign out"
-        aria-label="Sign out"
-        style={{ cursor: 'pointer', border: '2px solid var(--terracotta)', background: 'var(--cream)' }}
+        onClick={() => setOpen(o => !o)}
+        className={`admin-sidebar-avatar${active === 'settings' ? ' is-current' : ''}`}
+        title={privacy ? 'Profile and settings (privacy mode is on)' : 'Profile and settings'}
+        aria-label="Profile and settings"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        style={{ cursor: 'pointer', position: 'relative' }}
       >
         OL
+        {privacy && (
+          <span className="admin-profile-badge" aria-hidden>
+            <EyeOff size={11} strokeWidth={2} />
+          </span>
+        )}
       </button>
-    </aside>
+    </div>
   );
 }

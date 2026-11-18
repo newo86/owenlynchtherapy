@@ -20,7 +20,7 @@ export function Waitlist({ waitlist, onReload }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; kind: 'ok' | 'error'; msg: string } | null>(null);
 
-  async function act(id: string, action: 'contacted' | 'waiting' | 'delete') {
+  async function act(id: string, action: 'contacted' | 'waiting' | 'spam' | 'delete') {
     if (action === 'delete'
         && !confirm('Remove this person from the waiting list? Their details are permanently deleted — this is how an erasure request is honoured.')) {
       return;
@@ -33,7 +33,7 @@ export function Waitlist({ waitlist, onReload }: Props) {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setFeedback({ id, kind: 'error', msg: json.error ?? 'Failed — try again.' }); return; }
       if (action !== 'delete') {
-        setFeedback({ id, kind: 'ok', msg: action === 'contacted' ? 'Marked contacted.' : 'Back to waiting.' });
+        setFeedback({ id, kind: 'ok', msg: action === 'contacted' ? 'Marked contacted.' : action === 'spam' ? 'Moved to spam.' : 'Back to waiting.' });
       }
       onReload();
     } catch { setFeedback({ id, kind: 'error', msg: 'Network error — try again.' }); }
@@ -41,6 +41,10 @@ export function Waitlist({ waitlist, onReload }: Props) {
   }
 
   const waiting = waitlist.filter(w => w.status === 'waiting');
+  // Sales pitches caught by the signup filter (lib/waitlistSpam.ts) — kept
+  // out of the list, but never deleted automatically.
+  const spam = waitlist.filter(w => w.status === 'spam');
+  const people = waitlist.filter(w => w.status !== 'spam');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -63,14 +67,14 @@ export function Waitlist({ waitlist, onReload }: Props) {
             </tr>
           </thead>
           <tbody>
-            {waitlist.length === 0 && (
+            {people.length === 0 && (
               <tr>
                 <td colSpan={5} style={{ textAlign: 'center' as const, padding: 28, color: 'var(--ink-muted)' }}>
                   No one on the waiting list yet. The signup form is on the contact page.
                 </td>
               </tr>
             )}
-            {waitlist.map(w => (
+            {people.map(w => (
               <tr key={w.id}>
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -116,6 +120,9 @@ export function Waitlist({ waitlist, onReload }: Props) {
                         Back to waiting
                       </button>
                     )}
+                    <button onClick={() => act(w.id, 'spam')} disabled={busyId === w.id} className="admin-btn-secondary" title="A sales pitch, not someone looking for therapy">
+                      Spam
+                    </button>
                     <button onClick={() => act(w.id, 'delete')} disabled={busyId === w.id} className="admin-btn-secondary">
                       Remove
                     </button>
@@ -134,6 +141,37 @@ export function Waitlist({ waitlist, onReload }: Props) {
           </tbody>
         </table>
       </div>
+
+      {spam.length > 0 && (
+        <details style={{ border: '1px solid var(--line)', borderRadius: 12, padding: '12px 16px', background: 'white' }}>
+          <summary style={{ cursor: 'pointer', fontSize: 13, color: 'var(--ink-muted)' }}>
+            Likely spam ({spam.length}): sales pitches caught by the signup form, with no email sent to you. Check now and then that no real person is in here.
+          </summary>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 14 }}>
+            {spam.map(w => (
+              <div key={w.id} style={{ borderTop: '1px solid var(--line)', paddingTop: 12 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'baseline', justifyContent: 'space-between' }}>
+                  <div className="pii" style={{ fontSize: 13, color: 'var(--forest-deep)' }}>
+                    {w.full_name} · <span style={{ color: 'var(--ink-muted)' }}>{w.email}</span> · <span style={{ color: 'var(--ink-muted)', fontSize: 12 }}>{joinedWhen(w.created_at)}</span>
+                  </div>
+                  <div style={{ display: 'inline-flex', gap: 6 }}>
+                    <button onClick={() => act(w.id, 'waiting')} disabled={busyId === w.id} className="admin-btn-secondary">Not spam</button>
+                    <button onClick={() => act(w.id, 'delete')} disabled={busyId === w.id} className="admin-btn-secondary">Remove</button>
+                  </div>
+                </div>
+                {w.reason && (
+                  <div className="pii" style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 6, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                    &ldquo;{w.reason}&rdquo;
+                  </div>
+                )}
+                {feedback?.id === w.id && (
+                  <div style={{ marginTop: 6, fontSize: 11, color: feedback.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)' }}>{feedback.msg}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   );
 }

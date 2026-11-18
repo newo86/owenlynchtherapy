@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
 
-  let body: { id?: string; action?: 'contacted' | 'waiting' | 'delete' };
+  let body: { id?: string; action?: 'contacted' | 'waiting' | 'spam' | 'delete' };
   try {
     body = await req.json();
   } catch {
@@ -30,9 +30,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true }, { headers: noCache });
   }
 
+  if (!['contacted', 'waiting', 'spam'].includes(body.action)) {
+    return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+  }
   const patch = body.action === 'contacted'
     ? { status: 'contacted', contacted_at: new Date().toISOString() }
-    : { status: 'waiting', contacted_at: null };
+    : body.action === 'spam'
+      ? { status: 'spam', contacted_at: null }
+      : { status: 'waiting', contacted_at: null };
 
   const { error } = await supabaseAdmin.from('waitlist').update(patch).eq('id', body.id);
   if (error) {

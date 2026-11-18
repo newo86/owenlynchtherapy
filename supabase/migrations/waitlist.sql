@@ -14,7 +14,7 @@ create table if not exists public.waitlist (
   full_name    text not null,
   email        text not null,
   phone        text,
-  status       text not null default 'waiting',   -- 'waiting' | 'contacted'
+  status       text not null default 'waiting',   -- 'waiting' | 'contacted' | 'spam' (sales pitch, see src/lib/waitlistSpam.ts)
   consent_at   timestamptz not null default now(),
   consent_text text not null,
   created_at   timestamptz not null default now(),

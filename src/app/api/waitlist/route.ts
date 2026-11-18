@@ -5,6 +5,7 @@ import { rateLimit } from '@/lib/rateLimit';
 import { rateLimitDurable } from '@/lib/rateLimitDurable';
 import { escapeHtml, sanitiseInput } from '@/lib/sanitise';
 import { WAITLIST_CONSENT_TEXT } from '@/lib/waitlistConsent';
+import { looksLikeSalesPitch } from '@/lib/waitlistSpam';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 import { SITE_URL } from '@/practice.config';
 
@@ -55,12 +56,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Please tick the consent box so we may store your details.' }, { status: 400 });
   }
 
+  // Sales pitches ("we'll put your business top of search…") are stored as
+  // 'spam' rather than rejected, so a real person wrongly flagged is never
+  // lost: the dashboard shows them in a separate "Likely spam" section with
+  // a "Not spam" button. The sender gets the same reply either way, so the
+  // filter can't be probed, and no notification email goes out for spam.
+  const isSpam = looksLikeSalesPitch({ email, reason, full_name: fullName });
+
   const { error } = await supabaseAdmin.from('waitlist').insert({
     full_name: fullName,
     email,
     phone: phone || null,
     reason: reason || null,
     consent_text: WAITLIST_CONSENT_TEXT,
+    status: isSpam ? 'spam' : 'waiting',
   });
 
   if (error) {
@@ -72,6 +81,11 @@ export async function POST(req: NextRequest) {
     }
     console.error('[waitlist] insert failed:', error.message);
     return NextResponse.json({ error: 'Something went wrong — please try again.' }, { status: 500 });
+  }
+
+  if (isSpam) {
+    console.log('[waitlist] signup flagged as a sales pitch — stored as spam, no notification');
+    return NextResponse.json({ ok: true });
   }
 
   // Heads-up to the practitioner (best-effort; respects the kill switch).
