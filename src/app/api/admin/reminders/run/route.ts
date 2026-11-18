@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { escapeHtml } from '@/lib/sanitise';
 import { bearerMatches, requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { sendSessionReminder } from '@/lib/sendSessionReminder';
@@ -89,6 +90,37 @@ async function sendAbortAlert(reason: string, detail: string): Promise<void> {
     });
   } catch (err) {
     console.error('[reminders-cron] failed to send abort alert:', err instanceof Error ? err.message : String(err));
+  }
+}
+
+/** Tell the practitioner which of today's reminders were held back and why,
+ *  so they can fix the session and send by hand. Best-effort. */
+async function sendHeldAlert(items: Array<{ session_date: string; client_id: string; reason: string }>): Promise<void> {
+  try {
+    const { data: clients } = await supabaseAdmin
+      .from('clients')
+      .select('id, full_name')
+      .in('id', items.map(i => i.client_id));
+    const nameOf = new Map((clients ?? []).map(c => [c.id as string, c.full_name as string]));
+    const rows = items.map(i => {
+      const when = new Date(i.session_date).toLocaleTimeString('en-IE', {
+        hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
+      });
+      return `<li style="margin:0 0 8px"><strong>${escapeHtml(nameOf.get(i.client_id) ?? 'A client')}</strong>, ${when}: ${escapeHtml(i.reason)}</li>`;
+    }).join('');
+    await getResend().emails.send({
+      from: EMAIL_FROM,
+      to: CONTACT_EMAIL,
+      subject: `Action needed: ${items.length} reminder${items.length === 1 ? '' : 's'} held back today`,
+      html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
+        <p>These clients did <strong>not</strong> get this morning's reminder, because it could have told them the wrong thing:</p>
+        <ul style="padding-left:18px">${rows}</ul>
+        <p>Fix the session in the dashboard (set online or in person, or add a Meet link to the calendar event), then send the reminder by hand:
+        <a href="${SITE_URL}/admin/intake">${SITE_URL.replace('https://', '')}/admin/intake</a></p>
+      </div>`,
+    });
+  } catch (err) {
+    console.error('[reminders-cron] failed to send held-reminder alert:', err instanceof Error ? err.message : String(err));
   }
 }
 
@@ -247,6 +279,7 @@ export async function GET(req: NextRequest) {
   const details: Array<{ session_id: string; outcome: string }> =
     notOnCalendar.map(s => ({ session_id: s.id, outcome: 'skipped: no matching calendar event' }));
 
+  const held: Array<{ id: string; session_date: string; client_id: string; reason: string }> = [];
   for (const s of confirmed) {
     // A thrown exception (misconfigured Resend key, network fault) must not
     // kill the run for the remaining candidates — and sendSessionReminder
@@ -257,6 +290,7 @@ export async function GET(req: NextRequest) {
     } catch (err) {
       result = { success: false as const, error: err instanceof Error ? err.message : String(err) };
     }
+    if ((result as { held?: boolean }).held) held.push({ id: s.id, session_date: s.session_date, client_id: s.client_id, reason: result.error ?? '' });
     if (result.success) {
       results.sent += 1;
       details.push({ session_id: s.id, outcome: 'sent' });
@@ -268,6 +302,8 @@ export async function GET(req: NextRequest) {
       details.push({ session_id: s.id, outcome: `failed: ${result.error}` });
     }
   }
+
+  if (held.length > 0) await sendHeldAlert(held);
 
   console.log(`[reminders-cron] today ${dublinDate}: candidates ${unique.length}, sent ${results.sent}, skipped ${results.skipped}, failed ${results.failed}`);
   await recordRun({

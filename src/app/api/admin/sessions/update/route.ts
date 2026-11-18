@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
     client_email?: string;
     phone?: string;
     apply_format_to_all?: boolean; // propagate format+location change to all client sessions
+    /** The practitioner explicitly chose the format (it was unconfirmed). */
+    confirm_format?: boolean;
   };
   try {
     body = await req.json();
@@ -61,6 +63,13 @@ export async function POST(req: NextRequest) {
   }
   if (typeof body.session_format === 'string' && VALID_FORMATS.includes(body.session_format)) {
     sessionPatch.session_format = body.session_format;
+    // A guessed format becomes confirmed only when the practitioner actually
+    // chose it: an explicit confirm, or a change of value. The Edit form
+    // always re-sends the current format, so saving notes or a fee must NOT
+    // confirm a guess (that would let the wrong reminder out again).
+    if (body.confirm_format === true || body.session_format !== existing.session_format) {
+      sessionPatch.format_confirmed = true;
+    }
     sessionPatch.location = body.session_format === 'in_person'
       ? INSIGHT_MATTERS_ADDRESS
       : ONLINE_LOCATION;
@@ -164,6 +173,7 @@ export async function POST(req: NextRequest) {
     const bulkPatch = {
       session_format: sessionPatch.session_format,
       location: sessionPatch.location,
+      format_confirmed: true, // the practitioner set it for all of them
     };
     const { error: bulkErr } = await supabaseAdmin
       .from('sessions')

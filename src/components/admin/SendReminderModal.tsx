@@ -10,9 +10,37 @@ interface Props {
   session: SessionRow;
   client: ClientRow;
   onClose: () => void;
+  /** Called after the format is set here, so the list can refresh. */
+  onSessionChanged?: () => void;
 }
 
-export function SendReminderModal({ session, client, onClose }: Props) {
+export function SendReminderModal({ session: initialSession, client, onClose, onSessionChanged }: Props) {
+  // Local copy so setting the format here updates the banner straight away.
+  const [session, setSession] = useState(initialSession);
+  const formatConfirmed = session.format_confirmed !== false;
+  const [savingFormat, setSavingFormat] = useState(false);
+
+  async function setFormat(format: 'online' | 'in_person') {
+    setSavingFormat(true);
+    setFeedback(null);
+    try {
+      const res = await adminFetch('/api/admin/sessions/update', {
+        method: 'POST',
+        body: JSON.stringify({ session_id: session.id, client_id: client.id, session_format: format, confirm_format: true }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setFeedback({ kind: 'error', msg: json.error ?? 'Could not save the format.' });
+        return;
+      }
+      setSession(s => ({ ...s, session_format: format, format_confirmed: true }));
+      onSessionChanged?.();
+    } catch {
+      setFeedback({ kind: 'error', msg: 'Network error — please try again.' });
+    } finally {
+      setSavingFormat(false);
+    }
+  }
   const [channel, setChannel] = useState<'email' | null>(null);
   // Mirror of the server-side logic in lib/sendSessionReminder.ts so the
   // practitioner can see what the email will contain before sending.
@@ -21,7 +49,7 @@ export function SendReminderModal({ session, client, onClose }: Props) {
     : session.session_format === 'online'
       ? 'Reminds them the video link is in their calendar invite, plus the Stripe payment link for online sessions.'
       : 'Includes the Insight Matters address and the Stripe payment link for in-person sessions.';
-  const canSend = session.status === 'scheduled';
+  const canSend = session.status === 'scheduled' && formatConfirmed;
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; msg: string } | null>(null);
   // Send Receipt reuses the existing /api/admin/send-receipt route untouched.
@@ -161,6 +189,38 @@ export function SendReminderModal({ session, client, onClose }: Props) {
             <X size={14} />
           </button>
         </div>
+
+        {/* Format — the one thing a reminder must not get wrong. Shown large
+            so it's checked before sending; if the calendar didn't say, it
+            must be chosen here first. */}
+        {formatConfirmed ? (
+          <div style={{
+            marginBottom: 20, padding: '14px 18px', borderRadius: 12,
+            background: 'var(--linen, #F5F0E8)', border: '1px solid var(--line)',
+          }}>
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--ink-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>This reminder will say</p>
+            <p style={{ margin: '4px 0 0', fontSize: 22, fontWeight: 600, color: 'var(--forest-deep)', letterSpacing: '0.02em' }}>
+              {session.session_format === 'online' ? 'ONLINE' : 'IN PERSON'}
+              {session.session_format !== 'online' && (
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: 'var(--ink-muted)', letterSpacing: 0 }}>at Insight Matters, Capel Street</span>
+              )}
+            </p>
+          </div>
+        ) : (
+          <div style={{
+            marginBottom: 20, padding: '14px 18px', borderRadius: 12,
+            background: 'rgba(200,90,27,0.08)', border: '1px solid rgba(200,90,27,0.4)',
+          }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#A04714' }}>Is this session online or in person?</p>
+            <p style={{ margin: '4px 0 12px', fontSize: 12, color: 'var(--ink-muted)', lineHeight: 1.5 }}>
+              Your calendar event didn&rsquo;t say, so the reminder is held until you choose.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="admin-btn-secondary" disabled={savingFormat} onClick={() => void setFormat('online')}>Online</button>
+              <button className="admin-btn-secondary" disabled={savingFormat} onClick={() => void setFormat('in_person')}>In person</button>
+            </div>
+          </div>
+        )}
 
         {/* Channel option cards */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>

@@ -54,6 +54,24 @@ const SESSION_WORDS = new Set(['session', 'sessions', 'client']);
  * Full-name hits win over part+keyword hits, so two clients sharing a first
  * name don't make an app-created title ambiguous.
  */
+/**
+ * Work out an imported session's format from what the calendar event actually
+ * says. Never guesses silently: if the event gives no sign either way, the
+ * client's last format is used only as a placeholder and `confirmed` is false,
+ * so no reminder goes out until the practitioner sets it (18 Nov 2026: a
+ * guessed "online" sent an in-person client the wrong reminder).
+ */
+export function inferSessionFormat(
+  event: { title?: string; location?: string; hasVideo?: boolean },
+  lastFormat: string | null,
+): { format: 'online' | 'in_person'; confirmed: boolean } {
+  if (event.hasVideo) return { format: 'online', confirmed: true };
+  const text = `${event.title ?? ''} ${event.location ?? ''}`.toLowerCase();
+  if (/\bin[ -]?person\b|capel|insight matters/.test(text)) return { format: 'in_person', confirmed: true };
+  if (/\bonline\b|\bvideo\b|google meet|\bzoom\b/.test(text)) return { format: 'online', confirmed: true };
+  return { format: lastFormat === 'online' ? 'online' : 'in_person', confirmed: false };
+}
+
 export function matchOneActiveClient(title: string, clients: ActiveClient[]): string | null {
   const words = new Set((title ?? '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
   const hasSessionWord = [...SESSION_WORDS].some(w => words.has(w));
@@ -289,28 +307,25 @@ export async function reconcileCalendar(
       existingKeys.add(key);
       const ev = event;
       imports.push((async () => {
-        // Format: a video link on the event means online; otherwise follow the
-        // client's most recent session; default in person. (Always defaulting
-        // to in-person sent online clients the in-person address.)
-        let format: 'online' | 'in_person' = 'in_person';
-        if (ev.hasVideo) {
-          format = 'online';
-        } else {
-          const { data: last } = await supabaseAdmin
-            .from('sessions')
-            .select('session_format')
-            .eq('client_id', mc.id)
-            .neq('status', 'cancelled')
-            .order('session_date', { ascending: false })
-            .limit(1);
-          if (last?.[0]?.session_format === 'online') format = 'online';
-        }
+        // Format from what the event says (video link, "in person", the
+        // venue). If it says nothing, the client's last format is only a
+        // placeholder and the session is flagged unconfirmed — reminders are
+        // held until the practitioner sets it (see inferSessionFormat).
+        const { data: last } = await supabaseAdmin
+          .from('sessions')
+          .select('session_format')
+          .eq('client_id', mc.id)
+          .neq('status', 'cancelled')
+          .order('session_date', { ascending: false })
+          .limit(1);
+        const { format, confirmed } = inferSessionFormat(ev, (last?.[0]?.session_format as string | undefined) ?? null);
         const { data: newSession } = await supabaseAdmin
           .from('sessions')
           .insert({
             client_id: mc.id,
             session_date: new Date(ev.start).toISOString(),
             session_format: format,
+            format_confirmed: confirmed,
             location: format === 'online' ? null : INSIGHT_MATTERS,
             fee: mc.session_fee ?? 0,
             status: 'scheduled',

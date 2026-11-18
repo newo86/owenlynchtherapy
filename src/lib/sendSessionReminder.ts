@@ -3,6 +3,8 @@ import { getResend } from '@/lib/resend';
 import { buildReminderHtml, paymentLinkFor, sessionKind, EMAIL_FROM } from '@/lib/emailTemplates';
 import { reminderOptOutUrl } from '@/lib/reminderOptOut';
 import { PRACTICE } from '@/practice.config';
+import { google } from 'googleapis';
+import { getAuthorizedClient } from '@/lib/googleOAuth';
 
 export interface ReminderResult {
   success: boolean;
@@ -14,6 +16,30 @@ export interface ReminderResult {
   /** Manual path: set when a reminder was already sent and `force` wasn't
    *  given — the caller should confirm with the practitioner before resending. */
   alreadySentAt?: string;
+  /** Set when the reminder was held back because the email could have told
+   *  the client the wrong thing (format not confirmed, or an online session
+   *  with no video link). The daily run alerts the practitioner about these. */
+  held?: boolean;
+}
+
+/** Whether a session's Google Calendar event carries a video (Meet) link. */
+async function calendarEventHasVideo(gcalEventId: string | null): Promise<'yes' | 'no' | 'unknown'> {
+  if (!gcalEventId) return 'no';
+  const auth = await getAuthorizedClient();
+  if (!auth) return 'unknown';
+  try {
+    const { data } = await google.calendar({ version: 'v3', auth }).events.get({
+      calendarId: 'primary',
+      eventId: gcalEventId,
+    });
+    if (data.status === 'cancelled') return 'no';
+    return data.hangoutLink || data.conferenceData?.entryPoints?.length ? 'yes' : 'no';
+  } catch (err) {
+    const code = (err as { code?: number }).code;
+    if (code === 404 || code === 410) return 'no';
+    console.error('[send-reminder] could not read calendar event:', err instanceof Error ? err.message : String(err));
+    return 'unknown';
+  }
 }
 
 export interface ReminderOptions {
@@ -77,6 +103,34 @@ export async function sendSessionReminder(
   // permanently unremindable once emails are re-enabled.
   if (process.env.EMAILS_ENABLED !== 'true') {
     return { success: false, error: 'Email sending is disabled (EMAILS_ENABLED is not true)' };
+  }
+
+  // Never tell a client the wrong format (18 Nov 2026: a guessed "online"
+  // reminder went to an in-person client and the session was lost).
+  //  1. A calendar import that couldn't tell the format is held until the
+  //     practitioner sets it in the dashboard.
+  //  2. An online reminder says "the video link is in your calendar invite",
+  //     so it only goes out if the calendar event really has one.
+  if (session.format_confirmed === false) {
+    return {
+      success: false, skipped: true, held: true,
+      error: 'Format not confirmed — set online or in person in the dashboard first',
+    };
+  }
+  if (session.session_format === 'online') {
+    const video = await calendarEventHasVideo((session.gcal_event_id as string | null) ?? null);
+    if (video === 'no') {
+      return {
+        success: false, skipped: true, held: true,
+        error: 'Online session but its calendar event has no video link — add a Google Meet link, or change the session to in person',
+      };
+    }
+    if (video === 'unknown') {
+      return {
+        success: false, held: true,
+        error: "Couldn't check the calendar for this session's video link — not sending",
+      };
+    }
   }
 
   // The cron path claims a reminder row BEFORE sending (see below); manual

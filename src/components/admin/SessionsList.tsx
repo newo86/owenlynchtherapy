@@ -301,6 +301,12 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                 <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date)}</td>
                 <td>
                   {FORMAT_LABELS[s.session_format] ?? s.session_format}
+                  {s.format_confirmed === false && s.status === 'scheduled' && (
+                    <span
+                      style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--terracotta)', marginTop: 2 }}
+                      title="Imported from your calendar without a clear format. Reminders are held until you set it (Edit or Remind)."
+                    >Format not confirmed</span>
+                  )}
                   {s.session_format === 'online' && PRACTICE.telehealthUrl && (
                     <a
                       href={PRACTICE.telehealthUrl}
@@ -412,6 +418,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
         session={reminderData.session}
         client={reminderData.client}
         onClose={() => setReminderData(null)}
+        onSessionChanged={onReload}
       />
     )}
     </>
