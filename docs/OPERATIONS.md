@@ -121,11 +121,16 @@ therapy-preferences inventory (page `/preferences`).
   `getResend()`, so the kill switch applies. Links are single-use and last 14
   days. A client can be sent the same questionnaire any number of times; every
   completion is kept and the C–NIP–2 view overlays earlier completions.
-- Values: the client sees their top six, any (up to 3) they feel they're
-  neglecting, life-area scores and their small step at the end, and is
-  emailed a copy (to the address on their client record, through the kill
+- Values (simplified Nov 2026): the client rates the values, picks a top six
+  and up to three of those they feel they're neglecting. Nothing else (the
+  life-area scores and "one small step" were dropped; old results still show
+  them). The results page shows the top six, and the client is emailed the
+  same result (to the address on their client record, through the kill
   switch; the page only says so when the email actually went). C–NIP–2: the
   client sees **no** scores, only a thank-you.
+- C–NIP–2 in Analytics opens with a plain-English summary (`summariseCnip`):
+  strong preferences, scales with no strong preference, topics to discuss,
+  and what changed since the previous completion. Detailed results below.
 - Scoring is server-side in `src/lib/questionnaires/` (UK cut-offs from the
   form, unit-tested). The C–NIP–2 is CC BY-NC-ND 4.0: **never reword items or
   the 3 to −3 scale**. Use in your own practice is free; using it as an integral

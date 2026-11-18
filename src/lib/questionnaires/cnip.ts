@@ -225,3 +225,103 @@ export function parseCnipAnswers(raw: unknown): CnipAnswers | null {
   }
   return { items, additional };
 }
+
+// ── Plain-English summary for the dashboard ────────────────────────────────
+// Written for the therapist, from the scored scales and the ticked extras.
+// It names only STRONG preferences (outside the UK norm band), as the
+// guidelines suggest: the scores start a conversation rather than set a plan.
+
+/** What a strong preference at each pole asks of the therapist, finishing
+ *  "would like a therapist who …". */
+const SUMMARY_PHRASES: Record<CnipScale['id'], { left: string; right: string; neutral: string }> = {
+  pa_pr:  { left: 'explores their past and early years', right: 'focuses on the present and what they can do next', neutral: 'focusing on the past or the present' },
+  tl_ntl: { left: 'takes the lead and gives sessions structure', right: 'leaves space for them to lead and lets sessions unfold', neutral: 'who leads the sessions' },
+  ws_pr:  { left: 'is warm, friendly and personable', right: 'keeps a more formal, professional distance', neutral: 'warmth or professional reserve' },
+  bw_nbw: { left: 'gives tasks, worksheets or homework between sessions', right: 'doesn’t set work between sessions', neutral: 'work between sessions' },
+  in_ac:  { left: 'helps them understand themselves and their patterns', right: 'focuses on action and practical strategies', neutral: 'insight or action' },
+  ei_er:  { left: 'goes deeper into emotions and encourages expressing strong feelings', right: 'stays with their current feelings rather than going deeper', neutral: 'how deeply to explore emotions' },
+  tc_ntc: { left: 'challenges how they think and feel', right: 'accepts how they think and feel rather than challenging it', neutral: 'being challenged' },
+};
+
+/** Lower-case labels for the extra topics, for use mid-sentence. */
+const ADDITIONAL_PHRASES: Record<string, string> = {
+  characteristics: 'a therapist with particular personal characteristics',
+  language: 'the language therapy is in',
+  modality: 'the type of therapy (individual, couple, family or group)',
+  orientation: 'the therapy approach',
+  number: 'how many sessions',
+  length: 'session length',
+  frequency: 'how often to meet',
+  medication: 'medication alongside therapy',
+  self_help: 'self-help alongside therapy',
+  other: 'other strong preferences',
+  dislike: 'something they would dislike or despise happening in therapy',
+};
+
+function joinList(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? '';
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
+/**
+ * A short written summary, e.g. "Jane would like a therapist who takes the
+ * lead and gives sessions structure, and is warm, friendly and personable…".
+ * `name` is the client's first name (or "You" for the practitioner's test).
+ * `previous`, when given, adds what changed since the earlier completion.
+ */
+export function summariseCnip(
+  name: string,
+  scores: CnipScaleScore[],
+  additional: string[],
+  previous?: { scores: CnipScaleScore[]; label: string },
+): string[] {
+  const you = name === 'You';
+  const has = you ? 'have' : 'has';
+  const sentences: string[] = [];
+
+  const strong = CNIP_SCALES.flatMap((s, i) => {
+    const b = scores[i]?.band;
+    if (b === 'strong_left') return [SUMMARY_PHRASES[s.id].left];
+    if (b === 'strong_right') return [SUMMARY_PHRASES[s.id].right];
+    return [];
+  });
+  const neutral = CNIP_SCALES.filter((_, i) => scores[i]?.band === 'none').map(s => SUMMARY_PHRASES[s.id].neutral);
+
+  if (strong.length === 0) {
+    sentences.push(`${name} ${has} no strong preferences at the moment, so ${you ? 'you seem' : 'they seem'} open and flexible about how you work together. Worth checking that feels right, without suggesting there should be preferences.`);
+  } else {
+    sentences.push(`${name} would like a therapist who ${joinList(strong)}.`);
+    if (neutral.length > 0) sentences.push(`No strong preference about ${joinList(neutral)}.`);
+  }
+
+  const extras = CNIP_ADDITIONAL.filter(a => additional.includes(a.id)).map(a => ADDITIONAL_PHRASES[a.id] ?? a.id);
+  if (extras.length > 0) sentences.push(`${you ? 'You' : 'They'} would like to talk about ${joinList(extras)}.`);
+
+  if (previous) {
+    // Short pole names keep this to one readable line, however much moved.
+    const pole = (sc: CnipScale, b: CnipBand) => (b === 'strong_left' ? sc.leftPole : sc.rightPole).toLowerCase();
+    const gained: string[] = [];
+    const dropped: string[] = [];
+    const switched: string[] = [];
+    CNIP_SCALES.forEach((sc, i) => {
+      const was = previous.scores[i]?.band;
+      const now = scores[i]?.band;
+      if (!was || !now || was === now) return;
+      if (was === 'none') gained.push(pole(sc, now));
+      else if (now === 'none') dropped.push(pole(sc, was));
+      else switched.push(`${pole(sc, was)} to ${pole(sc, now)}`);
+    });
+    const parts = [
+      gained.length ? `now a strong preference for ${joinList(gained)}` : '',
+      dropped.length ? `no longer a strong preference for ${joinList(dropped)}` : '',
+      switched.length ? `switched from ${joinList(switched)}` : '',
+    ].filter(Boolean);
+    sentences.push(parts.length === 0
+      ? `No change in strong preferences since ${previous.label}.`
+      : `Since ${previous.label}: ${parts.join('; ')}.`);
+  }
+  // The practitioner's own test reads in the second person.
+  return you
+    ? sentences.map(t => t.replace(/\btheir\b/g, 'your').replace(/\bthem\b/g, 'you').replace(/\bthey\b/g, 'you'))
+    : sentences;
+}

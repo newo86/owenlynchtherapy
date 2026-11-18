@@ -6,7 +6,7 @@ import { adminFetch, formatDate } from './api';
 import type { ClientRow } from './types';
 import { PRACTICE } from '@/practice.config';
 import {
-  CNIP_SCALES, CNIP_ADDITIONAL, CNIP_ADDITIONAL_SHORT, scoreCnip,
+  CNIP_SCALES, CNIP_ADDITIONAL, CNIP_ADDITIONAL_SHORT, scoreCnip, summariseCnip,
   type CnipAnswers, type CnipScaleScore,
 } from '@/lib/questionnaires/cnip';
 import {
@@ -278,7 +278,13 @@ function CnipSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf: 
   const scores = scoresOf(current);
   const prevScores = prev ? scoresOf(prev) : null;
   const answers = current.answers as CnipAnswers;
-  const strong = CNIP_SCALES.map((s, i) => ({ s, sc: scores[i] })).filter(x => x.sc.band !== 'none');
+  const firstName = active === TEST_ID ? 'You' : (nameOf(active).trim().split(/\s+/)[0] || 'This client');
+  const summary = summariseCnip(
+    firstName,
+    scores,
+    answers.additional,
+    prev && prevScores ? { scores: prevScores, label: formatDate(prev.submitted_at) } : undefined,
+  );
 
   return (
     <section className="admin-card admin-qa-detail" aria-labelledby="qa-cnip-h">
@@ -289,20 +295,11 @@ function CnipSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf: 
       <Completions history={history} selected={current.id} onSelect={setSel} />
 
       <div className="admin-qa-summary">
-        {strong.length === 0 ? (
-          <p><b>No strong preferences.</b> Open and flexible about how you work together at the moment; worth checking that’s right, without suggesting they should have preferences.</p>
-        ) : (
-          <>
-            <p><b>Strong preference{strong.length > 1 ? 's' : ''}</b></p>
-            <ul>
-              {strong.map(({ s, sc }) => (
-                <li key={s.id}>{sc.band === 'strong_left' ? s.leftPole : s.rightPole} <span className="admin-qa-muted">({s.code} {fmtScore(sc.score)})</span></li>
-              ))}
-            </ul>
-          </>
-        )}
+        <h3 className="admin-h3">Summary</h3>
+        {summary.map((t, k) => <p key={k} className={firstName !== 'You' && t.includes(firstName) ? 'pii' : undefined}>{t}</p>)}
       </div>
 
+      <h3 className="admin-h3 admin-qa-resultshead">Results</h3>
       <div className="admin-qa-legend" aria-hidden>
         <span><i className="admin-qa-zone-swatch" />No strong preference (UK norms)</span>
         <span><i className="admin-qa-dot-swatch" />This completion</span>
