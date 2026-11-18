@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, Mail, Link2, Check } from 'lucide-react';
+import { Copy, Mail, Link2, Check, Users } from 'lucide-react';
 import { adminFetch, formatDate } from './api';
 import type { ClientRow } from './types';
 import { PRACTICE } from '@/practice.config';
@@ -128,17 +128,37 @@ export function Analytics({ clients }: { clients: ClientRow[] }) {
 
 // ── Sending ────────────────────────────────────────────────────────────────
 
+type SendChoice = Kind | 'both';
+const CHOICE_LABEL: Record<SendChoice, string> = { both: 'Both', cnip: 'C–NIP–2', values: 'Values' };
+const CHOICE_TEXT: Record<SendChoice, string> = {
+  both: 'both questionnaires',
+  cnip: KIND_LABEL.cnip,
+  values: KIND_LABEL.values,
+};
+
+function ChoiceSeg({ value, onChange, labelId }: { value: SendChoice; onChange: (c: SendChoice) => void; labelId: string }) {
+  return (
+    <div className="admin-qa-seg" role="radiogroup" aria-labelledby={labelId}>
+      {(['both', 'values', 'cnip'] as SendChoice[]).map(k => (
+        <button key={k} type="button" role="radio" aria-checked={value === k} className={value === k ? 'is-on' : ''} onClick={() => onChange(k)}>
+          {CHOICE_LABEL[k]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function SendPanel({ clients, onSent }: { clients: ClientRow[]; onSent: () => void }) {
   const sorted = useMemo(
     () => clients.slice().sort((a, b) => Number(a.status === 'completed') - Number(b.status === 'completed') || a.full_name.localeCompare(b.full_name)),
     [clients],
   );
   const [clientId, setClientId] = useState('');
-  const [kind, setKind] = useState<Kind>('cnip');
+  const [kind, setKind] = useState<SendChoice>('both');
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ url: string; emailed: boolean; emailError: string | null } | null>(null);
+  const [result, setResult] = useState<{ urls: Partial<Record<Kind, string>>; emailed: boolean; emailError: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<Kind | null>(null);
   const isTest = clientId === TEST_ID;
   const client = clients.find(c => c.id === clientId);
   const recipient = isTest ? PRACTICE.email : client?.email ?? '';
@@ -146,23 +166,24 @@ function SendPanel({ clients, onSent }: { clients: ClientRow[]; onSent: () => vo
   async function send(email: boolean) {
     if (!clientId) return;
     if (email && !confirm(isTest
-      ? `Email a test ${KIND_LABEL[kind]} link to you (${recipient})?`
-      : `Email the ${KIND_LABEL[kind]} link to ${client?.full_name} (${recipient})?`)) return;
-    setBusy(true); setError(null); setResult(null); setCopied(false);
+      ? `Email ${CHOICE_TEXT[kind]} to you as a test (${recipient})?`
+      : `Email ${CHOICE_TEXT[kind]} to ${client?.full_name} (${recipient})?`)) return;
+    setBusy(true); setError(null); setResult(null); setCopied(null);
     try {
       const res = await adminFetch('/api/admin/questionnaires/send', { method: 'POST', body: JSON.stringify({ client_id: clientId, kind, email }) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setError(json.error ?? 'Could not create the link.'); return; }
-      setResult({ url: json.url, emailed: json.emailed, emailError: json.email_error });
+      setResult({ urls: json.urls ?? {}, emailed: json.emailed, emailError: json.email_error });
       onSent();
     } catch { setError('Could not reach the server.'); }
     finally { setBusy(false); }
   }
 
-  async function copy() {
-    if (!result) return;
-    try { await navigator.clipboard.writeText(result.url); setCopied(true); setTimeout(() => setCopied(false), 2000); }
-    catch { window.prompt('Copy this link', result.url); }
+  async function copy(k: Kind) {
+    const url = result?.urls[k];
+    if (!url) return;
+    try { await navigator.clipboard.writeText(url); setCopied(k); setTimeout(() => setCopied(null), 2000); }
+    catch { window.prompt('Copy this link', url); }
   }
 
   return (
@@ -180,13 +201,7 @@ function SendPanel({ clients, onSent }: { clients: ClientRow[]; onSent: () => vo
         </label>
         <div className="admin-qa-field">
           <span id="qa-kind-l">Questionnaire</span>
-          <div className="admin-qa-seg" role="radiogroup" aria-labelledby="qa-kind-l">
-            {(['cnip', 'values'] as Kind[]).map(k => (
-              <button key={k} type="button" role="radio" aria-checked={kind === k} className={kind === k ? 'is-on' : ''} onClick={() => { setKind(k); setResult(null); }}>
-                {k === 'cnip' ? 'C–NIP–2' : 'Values'}
-              </button>
-            ))}
-          </div>
+          <ChoiceSeg value={kind} onChange={k => { setKind(k); setResult(null); }} labelId="qa-kind-l" />
         </div>
         <div className="admin-qa-actions">
           <button type="button" className="admin-btn-secondary" disabled={!clientId || busy} onClick={() => send(false)}>
@@ -205,15 +220,169 @@ function SendPanel({ clients, onSent }: { clients: ClientRow[]; onSent: () => vo
             {result.emailError ? <span className="admin-qa-warn">{result.emailError} </span> : null}
             {!result.emailed && 'Copy the link and send it however suits.'}
           </p>
-          <div className="admin-qa-linkrow">
-            <code className="pii">{result.url}</code>
-            <button type="button" className="admin-btn-secondary" onClick={copy}>
-              {copied ? <><Check size={14} aria-hidden /> Copied</> : <><Copy size={14} aria-hidden /> Copy</>}
-            </button>
-          </div>
+          {(['values', 'cnip'] as Kind[]).filter(k => result.urls[k]).map(k => (
+            <div key={k} className="admin-qa-linkrow">
+              <span className="admin-qa-linklabel">{k === 'values' ? 'Values' : 'C–NIP–2'}</span>
+              <code className="pii">{result.urls[k]}</code>
+              <button type="button" className="admin-btn-secondary" onClick={() => copy(k)}>
+                {copied === k ? <><Check size={14} aria-hidden /> Copied</> : <><Copy size={14} aria-hidden /> Copy</>}
+              </button>
+            </div>
+          ))}
         </div>
       )}
+
+      <BulkSend clients={clients} onSent={onSent} />
     </section>
+  );
+}
+
+type BulkOutcome = 'sent' | 'already_sent' | 'skipped_recent' | 'skipped_no_email' | 'skipped_inactive' | 'emails_off' | 'failed' | 'not_attempted';
+const OUTCOME_TEXT: Record<BulkOutcome, string> = {
+  sent: 'Sent',
+  already_sent: 'Skipped: already emailed today',
+  skipped_recent: 'Skipped: already sent in the last 12 hours',
+  skipped_no_email: 'Skipped: no email on record',
+  skipped_inactive: 'Skipped: not an active client',
+  emails_off: 'Not sent: emails are switched off on the site',
+  failed: 'Not sent: the email failed (links were made; try them one by one)',
+  not_attempted: 'Not sent yet: press “Continue sending” below',
+};
+
+/** Email the questionnaires to every active client with an email address, after
+ *  showing exactly who will get one. One email per client; the server skips
+ *  anyone already sent the same questionnaire in the last 12 hours. */
+function BulkSend({ clients, onSent }: { clients: ClientRow[]; onSent: () => void }) {
+  const eligible = useMemo(
+    () => clients.filter(c => c.status === 'active' && c.email?.trim()).sort((a, b) => a.full_name.localeCompare(b.full_name)),
+    [clients],
+  );
+  const noEmail = clients.filter(c => c.status === 'active' && !c.email?.trim());
+  const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState<SendChoice>('both');
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<Array<{ client_id: string; outcome: BulkOutcome }> | null>(null);
+
+  function start() {
+    setPicked(new Set(eligible.map(c => c.id)));
+    setResults(null); setError(null); setOpen(true);
+  }
+  function toggle(id: string) {
+    setPicked(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  }
+
+  async function sendAll() {
+    const ids = eligible.filter(c => picked.has(c.id)).map(c => c.id);
+    if (ids.length === 0) return;
+    if (!confirm(`Email ${CHOICE_TEXT[kind]} to ${ids.length} client${ids.length === 1 ? '' : 's'}? Each gets their own private links.`)) return;
+    setBusy(true); setError(null);
+    try {
+      const res = await adminFetch('/api/admin/questionnaires/send-bulk', { method: 'POST', body: JSON.stringify({ client_ids: ids, kind }) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(json.error ?? 'The send did not go through.'); return; }
+      setResults(json.results ?? []);
+      onSent();
+    } catch { setError('Could not reach the server. Some emails may have gone; pressing again is safe, as nobody will be emailed twice today.'); }
+    finally { setBusy(false); }
+  }
+
+  const nameOf = (id: string) => clients.find(c => c.id === id)?.full_name ?? 'Client';
+  const sentCount = results?.filter(r => r.outcome === 'sent').length ?? 0;
+  const remaining = results?.filter(r => r.outcome === 'not_attempted').map(r => r.client_id) ?? [];
+
+  /** A long list stops part-way by design; send the rest. Safe to repeat:
+   *  anyone already emailed is skipped by the server. */
+  async function continueSending() {
+    if (remaining.length === 0) return;
+    setBusy(true); setError(null);
+    try {
+      const res = await adminFetch('/api/admin/questionnaires/send-bulk', { method: 'POST', body: JSON.stringify({ client_ids: remaining, kind }) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(json.error ?? 'The send did not go through.'); return; }
+      const next = new Map<string, BulkOutcome>((json.results ?? []).map((r: { client_id: string; outcome: BulkOutcome }) => [r.client_id, r.outcome]));
+      setResults(prev => (prev ?? []).map(r => next.has(r.client_id) ? { client_id: r.client_id, outcome: next.get(r.client_id)! } : r));
+      onSent();
+    } catch { setError('Could not reach the server. Pressing again is safe: nobody will be emailed twice.'); }
+    finally { setBusy(false); }
+  }
+
+  if (!open) {
+    return (
+      <div className="admin-qa-bulkcta">
+        <button type="button" className="admin-btn-secondary" onClick={start} disabled={eligible.length === 0}>
+          <Users size={14} aria-hidden /> Send to all active clients…
+        </button>
+        <span className="admin-qa-muted">{eligible.length} active client{eligible.length === 1 ? '' : 's'} with an email address</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="admin-qa-bulk" aria-labelledby="qa-bulk-h">
+      <div className="admin-qa-bulkhead">
+        <h3 id="qa-bulk-h" className="admin-h3">Send to active clients</h3>
+        <button type="button" className="admin-link" onClick={() => setOpen(false)}>Close</button>
+      </div>
+
+      {results ? (
+        <>
+          <p className="admin-qa-bulksummary" role="status">
+            {sentCount} email{sentCount === 1 ? '' : 's'} sent{results.length > sentCount ? `, ${results.length - sentCount} not sent` : ''}.
+          </p>
+          {remaining.length > 0 && (
+            <div className="admin-qa-actions">
+              <button type="button" className="admin-btn-primary" disabled={busy} onClick={() => void continueSending()}>
+                <Mail size={14} aria-hidden /> {busy ? 'Sending…' : `Continue sending (${remaining.length} left)`}
+              </button>
+            </div>
+          )}
+          {error && <p className="admin-qa-note" role="alert">{error}</p>}
+          <ul className="admin-qa-bulklist">
+            {results.map(r => (
+              <li key={r.client_id} className={`is-${r.outcome}`}>
+                <span className="pii">{nameOf(r.client_id)}</span>
+                <span>{OUTCOME_TEXT[r.outcome]}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <div className="admin-qa-field">
+            <span id="qa-bulk-kind-l">Questionnaire</span>
+            <ChoiceSeg value={kind} onChange={setKind} labelId="qa-bulk-kind-l" />
+          </div>
+          <div className="admin-qa-bulkpick">
+            <span>{picked.size} of {eligible.length} selected</span>
+            <button type="button" className="admin-link" onClick={() => setPicked(picked.size === eligible.length ? new Set() : new Set(eligible.map(c => c.id)))}>
+              {picked.size === eligible.length ? 'Select none' : 'Select all'}
+            </button>
+          </div>
+          <ul className="admin-qa-bulklist">
+            {eligible.map(c => (
+              <li key={c.id}>
+                <label>
+                  <input type="checkbox" checked={picked.has(c.id)} onChange={() => toggle(c.id)} />
+                  <span className="pii">{c.full_name}</span>
+                  <span className="admin-qa-muted pii">{c.email}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          {noEmail.length > 0 && (
+            <p className="admin-qa-muted">Not included (no email on record): <span className="pii">{noEmail.map(c => c.full_name).join(', ')}</span></p>
+          )}
+          {error && <p className="admin-qa-note" role="alert">{error}</p>}
+          <div className="admin-qa-actions">
+            <button type="button" className="admin-btn-primary" disabled={busy || picked.size === 0} onClick={() => void sendAll()}>
+              <Mail size={14} aria-hidden /> {busy ? 'Sending… (this can take a minute)' : `Email ${picked.size} client${picked.size === 1 ? '' : 's'}`}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

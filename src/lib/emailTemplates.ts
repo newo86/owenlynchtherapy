@@ -343,3 +343,42 @@ export function buildValuesResultsHtml(input: ValuesResultsEmailInput): string {
       Based on acceptance and commitment therapy (ACT), drawing on the work of Steven Hayes and Russ Harris.
     </p>`);
 }
+
+// ── Both questionnaires in one email (Owen's wording, Nov 2026) ─────────────
+
+export interface QuestionnaireBundleEmailInput {
+  firstName: string;
+  valuesUrl: string;
+  cnipUrl: string;
+  ttlDays: number;
+}
+
+export function buildQuestionnaireBundleHtml(input: QuestionnaireBundleEmailInput): string {
+  const firstName = escapeHtml(input.firstName);
+  const p = (t: string) => `<p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">${t}</p>`;
+  const h = (t: string) => `<p style="color:#2A4D3C;font-size:15px;font-weight:600;margin:28px 0 8px;">${t}</p>`;
+  const btn = (url: string, label: string) =>
+    `<a href="${url}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:13px 28px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;margin:4px 0 8px;">${label}</a>`;
+  return emailShell(`
+    <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${firstName},</p>
+    ${p('Just a quick email with two short questionnaires. Both are completely optional, and there are no right or wrong answers.')}
+    ${h('1. Finding your values <span style="font-weight:400;color:#777;">(about 10 minutes)</span>')}
+    ${p('This is about what matters most to you in life. You&rsquo;ll go through a list of values, pick the six that feel most like you, and then choose any you feel you&rsquo;re not getting to live by as much as you&rsquo;d like at the moment. You&rsquo;ll see your top six at the end, and a copy will be emailed to you to keep.')}
+    ${btn(input.valuesUrl, 'Find your values')}
+    ${h('2. Your therapy preferences <span style="font-weight:400;color:#777;">(about 5 minutes)</span>')}
+    ${p('This one is about how you&rsquo;d like therapy to be for you: for example, how much you&rsquo;d like me to lead, whether you&rsquo;d like things to do between sessions, or how much you&rsquo;d like to focus on feelings. It helps me make our work fit you as well as it can, and we can talk through it together in a session.')}
+    ${btn(input.cnipUrl, 'Your therapy preferences')}
+    <div style="background:#F5F0E8;border-radius:8px;padding:16px 18px;margin:24px 0 0;">
+      <p style="color:#555;font-size:13px;line-height:1.7;margin:0;">
+        On the therapy preferences one, each row has two options with a scale from 3 to &minus;3 between them. The minus numbers on the right-hand side don&rsquo;t mean anything negative. They just show which side you lean towards: 3 is a strong preference for the left-hand option, &minus;3 a strong preference for the right-hand option, and 0 means no preference either way. Both sides are equally fine.
+      </p>
+    </div>
+    <p style="color:#777;font-size:13px;line-height:1.7;margin:24px 0 0;">
+      The links are private to you and stay open for ${input.ttlDays} days. If one runs out or anything doesn&rsquo;t work, just let me know.
+    </p>
+    <p style="color:#555;font-size:14px;line-height:1.7;margin:24px 0 4px;">Thanks, and see you soon,</p>
+    <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">${PRACTICE.practitionerFirstName}<br>
+      <span style="font-weight:400;font-size:13px;color:#666;">${PRACTICE.businessName}<br>
+      ${SITE_HOST}</span>
+    </p>`);
+}

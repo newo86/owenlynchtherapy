@@ -152,6 +152,16 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
 11. **Race conditions**: anything that must happen once (mark paid, send
     receipt, send reminder, use an intake token) is enforced by a database
     constraint or atomic update, not a read-then-write check.
+- **Repeatable email sends** (bulk sends, crons, anything a retry or a second
+  tab could repeat) pass a deterministic Resend `idempotencyKey`
+  (`send(payload, { idempotencyKey })`), keep inside the function time limit
+  (stop early and report "not sent yet"), and have a database-counted daily
+  cap. A database "already sent" check alone can be raced by overlapping
+  requests or cut off between send and record. Resend answers a reused key
+  with a different payload with 409 `invalid_idempotent_request` /
+  `concurrent_idempotent_requests` (it does not silently drop it): treat those
+  as "already sent", never as "failed", and never tell the user to resend by
+  hand on them.
 - **Cron and webhooks**: cron routes require the `CRON_SECRET` bearer;
   webhook routes verify signatures; both reject everything else.
 

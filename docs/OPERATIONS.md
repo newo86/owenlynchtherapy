@@ -137,6 +137,15 @@ therapy-preferences inventory (page `/preferences`).
   part of a commercial service (e.g. selling this template to other
   therapists with it built in) needs a licence from Mick Cooper.
 - On completion info@ gets a name-only email (answers stay behind the login).
+- **Both at once / bulk send (Nov 2026):** "Both" sends one email with both
+  private links (Owen's wording, `buildQuestionnaireBundleHtml`, explains the
+  minus side of the C–NIP–2 scale). "Send to all active clients…" lists every
+  active client with an email (all ticked, untick to leave out), confirms, then
+  `POST /api/admin/questionnaires/send-bulk` sends one email each, paced, max
+  50, skipping anyone already emailed the same questionnaire in the last 12
+  hours, and stopping if the kill switch is on. Shows an outcome per client.
+  The dashboard only says "Emailed" when Resend returned a message id (the
+  kill switch returns none).
 - **Test mode:** "Test (sends to you)" at the top of the client dropdown sends a
   questionnaire to the practice address with no client record behind it
   (`is_test`, `client_id` null; `questionnaires_test_mode.sql`). Test results

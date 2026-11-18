@@ -159,3 +159,21 @@ describe('C–NIP–2 written summary', () => {
       .toBe('No change in strong preferences since 1 Oct 2026.');
   });
 });
+
+describe('Both-questionnaires email', () => {
+  it('carries both private links, escapes the name and explains the minus side', async () => {
+    const { buildQuestionnaireBundleHtml } = await import('@/lib/emailTemplates');
+    const html = buildQuestionnaireBundleHtml({
+      firstName: '<b>Jane</b>',
+      valuesUrl: 'https://example.test/values?token=aaa',
+      cnipUrl: 'https://example.test/preferences?token=bbb',
+      ttlDays: 14,
+    });
+    expect(html).toContain('href="https://example.test/values?token=aaa"');
+    expect(html).toContain('href="https://example.test/preferences?token=bbb"');
+    expect(html).not.toContain('<b>Jane</b>');
+    expect(html).toContain('&lt;b&gt;Jane&lt;/b&gt;');
+    expect(html).toContain('don&rsquo;t mean anything negative');
+    expect(html).toContain('stay open for 14 days');
+  });
+});
