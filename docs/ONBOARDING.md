@@ -51,7 +51,9 @@ must be the account owner so they own their data):
    even though it's editable later.
 3. Replace assets in `/public`: logos (`images/logo-horizontal-pdf.png` is on
    receipts), accreditation badge images, `og-image.jpg`, favicon,
-   `site.webmanifest` names.
+   `site.webmanifest` names, and the dashboard's home-screen icon
+   (`admin-icon-180/192/512.png`, an opaque square with the mark well inside
+   the middle; the name and colours come from `practice.config.ts`).
 4. Rewrite the bespoke content: About bio, home/services/FAQ copy, condition
    pages, articles (delete Owen's articles in `src/content/articles/`).
    Empty `docs/design/TASTE.md` (Owen's design preferences) or replace it
