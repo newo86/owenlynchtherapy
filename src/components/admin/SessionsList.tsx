@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { List, CalendarRange, ChevronLeft, ChevronRight } from 'lucide-react';
+import { List, CalendarRange, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatDateTime, startOfWeek, dedupeSessions } from './api';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SessionRow, CalendarEvent, SessionFilter, GcalRef } from './types';
 import { SendReminderModal } from './SendReminderModal';
 import { CalendarWeekGrid } from './CalendarWeekGrid';
+import { CalendarMonth } from './CalendarMonth';
 import { SessionDoneOptions, type SessionDoneChoice } from './SessionDoneOptions';
 import { PRACTICE } from '@/practice.config';
 
@@ -34,7 +35,7 @@ function buildClickIso(day: Date): string {
   return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T17:00`;
 }
 
-type View = 'list' | 'calendar';
+type View = 'month' | 'list' | 'calendar';   // 'calendar' is the week view
 
 function statusTag(status: string) {
   if (status === 'attended') return 'admin-tag-attended';
@@ -71,9 +72,12 @@ function shortWhen(iso: string) {
 }
 
 export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter, onClickSession, onScheduleDay, onNewClient, onEditGcalEvent }: Props) {
-  // Default to calendar; only drop to list when arriving with a filter intent
-  // (Quick Actions like "Unpaid this week") because filters only apply in list view.
-  const [view, setView] = useState<View>(initialFilter ? 'list' : 'calendar');
+  // Phones open on the month (like Google Calendar), larger screens on the week.
+  // Only drop to the list when arriving with a filter intent (Quick Actions
+  // like "Unpaid this week") because filters only apply in the list.
+  const [view, setView] = useState<View>(() =>
+    initialFilter ? 'list'
+      : typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches ? 'month' : 'calendar');
   const [filter, setFilter] = useState<SessionFilter>(initialFilter ?? 'all');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -197,13 +201,16 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
       <div className="admin-cal-controls" style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
         <div className="admin-segmented admin-cal-view">
           {([
+            { id: 'month', label: 'Month', Icon: CalendarDays },
+            { id: 'calendar', label: 'Week', Icon: CalendarRange },
+            // On phones the list is reached from the Unpaid / Needs receipt
+            // shortcuts; the day-by-day agenda in the month view replaces it.
             { id: 'list', label: 'List', Icon: List },
-            { id: 'calendar', label: 'Calendar', Icon: CalendarRange },
           ] as const).map(({ id, label, Icon }) => (
             <button
               key={id}
               onClick={() => setView(id)}
-              className={`admin-segmented-btn${view === id ? ' is-active' : ''}`}
+              className={`admin-segmented-btn${view === id ? ' is-active' : ''}${id === 'list' ? ' admin-hide-phone' : ''}`}
             >
               <Icon size={13} strokeWidth={1.8} aria-hidden /> {label}
             </button>
@@ -249,7 +256,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
           </div>
         )}
 
-        {(onScheduleDay || onNewClient) && (
+        {view !== 'month' && (onScheduleDay || onNewClient) && (
           <div className="admin-cal-actions" style={{ display: 'flex', gap: 8, marginLeft: view === 'list' ? 'auto' : undefined }}>
             {onNewClient && (
               <button onClick={onNewClient} className="admin-btn-secondary admin-cal-addclient">
@@ -397,6 +404,15 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
           </tbody>
         </table>
         </div>
+      )}
+
+      {view === 'month' && (
+        <CalendarMonth
+          clients={clients}
+          onClickSession={onClickSession}
+          onScheduleDay={onScheduleDay}
+          onEditGcalEvent={onEditGcalEvent}
+        />
       )}
 
       {view === 'calendar' && (
