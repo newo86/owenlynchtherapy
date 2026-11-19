@@ -298,8 +298,8 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     </div>
                   </div>
                 </td>
-                <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date)}</td>
-                <td>
+                <td data-label="When" style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date)}</td>
+                <td data-label="Format">
                   {FORMAT_LABELS[s.session_format] ?? s.session_format}
                   {s.format_confirmed === false && s.status === 'scheduled' && (
                     <span
@@ -316,8 +316,8 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     >Open video room ↗</a>
                   )}
                 </td>
-                <td>{displayFee(s.fee)}</td>
-                <td>
+                <td data-label="Fee">{displayFee(s.fee)}</td>
+                <td data-label="Payment">
                   <span className={`admin-tag ${payTag(s.payment_status)}`}>{payLabel(s.payment_status)}</span>
                   {s.payment_status === 'paid' && s.stripe_payment_intent_id && (
                     <span style={{ display: 'block', fontSize: 10, color: 'var(--ink-muted)', marginTop: 3, fontWeight: 500 }}>
@@ -335,7 +335,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     </span>
                   )}
                 </td>
-                <td>
+                <td data-label="Status">
                   <span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span>
                   {lastReminderAt(s) && (
                     <span style={{ display: 'block', fontSize: 10, color: 'var(--sage)', marginTop: 3, fontWeight: 500 }}>

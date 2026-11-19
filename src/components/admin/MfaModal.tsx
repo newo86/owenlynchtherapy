@@ -112,7 +112,7 @@ export function MfaModal({ onClose }: Props) {
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
         background: 'white', borderRadius: 18, boxShadow: '0 24px 64px rgba(42,77,60,0.18)',
-        zIndex: 120, width: 'min(440px, 92vw)', maxHeight: '92vh', overflowY: 'auto',
+        zIndex: 120, width: 'min(440px, 92vw)', maxHeight: '92dvh', overflowY: 'auto',
         animation: 'admin-pop-in 180ms ease',
       }}>
         <div style={{

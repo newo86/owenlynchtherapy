@@ -335,7 +335,7 @@ export function Dashboard({
             <span className="admin-banner-dot" aria-hidden />{strip.msg}
           </div>
         )}
-        <CalendarDriftCard items={drift} onResolved={onReload} />
+        <CalendarDriftCard items={drift} onResolved={onReload} compact />
         <MobileHome
           clients={clients}
           todaySessions={todaySessions}

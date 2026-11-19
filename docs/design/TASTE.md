@@ -59,6 +59,14 @@ welcome if it never shouts.
   there; those live behind the tab bar. He was firm about it: design phone
   screens from the moment of use, not by shrinking the desktop (Nov 2026)
 
+- Phone screens must fit an iPhone 16 (393pt wide) with nothing off the edge
+  and nothing needing a sideways scroll to reach a button. Use Apple's
+  guidelines: 44pt touch targets, 16px text boxes (smaller makes Safari zoom
+  in and the page feels cut off), safe-area insets, `dvh` not `vh`, wide
+  tables as stacked cards. Check by loading the REAL pages in a phone-sized
+  browser with pretend data and measuring overflow on every screen, not by
+  eye on one screen (Nov 2026, dashboard)
+
 ## Dislikes
 - Heavy, dark drop shadows under cards: he wants cards lifted, not
   floating (a hairline edge plus a short soft shadow), site-wide (Nov 2026,

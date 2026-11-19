@@ -321,7 +321,7 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
           background: 'var(--cream)',
           borderRadius: 22,
           width: 'min(640px, 100%)',
-          maxHeight: '88vh',
+          maxHeight: '88dvh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',

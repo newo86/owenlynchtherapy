@@ -126,9 +126,9 @@ export function FormsTable({ submissions, tokens, initialTab }: Props) {
                     <div className="pii" style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{sub.full_name}</div>
                   </div>
                 </td>
-                <td className="pii">{sub.email ?? '—'}</td>
-                <td>{FORMAT_LABELS[sub.session_format] ?? sub.session_format}</td>
-                <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(sub.submitted_at)}</td>
+                <td className="pii" data-label="Email">{sub.email ?? '—'}</td>
+                <td data-label="Format">{FORMAT_LABELS[sub.session_format] ?? sub.session_format}</td>
+                <td data-label="Submitted" style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(sub.submitted_at)}</td>
                 <td style={{ textAlign: 'right' as const }}>
                   <button onClick={() => downloadPDF(sub)} disabled={downloadingId === sub.id} className="admin-btn-secondary">
                     <Download size={12} strokeWidth={1.8} />
@@ -168,9 +168,9 @@ export function FormsTable({ submissions, tokens, initialTab }: Props) {
                       <div style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{row.client_email}</div>
                     )}
                   </td>
-                  <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(row.created_at)}</td>
-                  <td style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(row.expires_at)}</td>
-                  <td><span className={`admin-tag ${t.cls}`}>{t.label}</span></td>
+                  <td data-label="Created" style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(row.created_at)}</td>
+                  <td data-label="Expires" style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(row.expires_at)}</td>
+                  <td data-label="Status"><span className={`admin-tag ${t.cls}`}>{t.label}</span></td>
                 </tr>
               );
             })}

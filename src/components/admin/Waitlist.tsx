@@ -94,12 +94,12 @@ export function Waitlist({ waitlist, onReload }: Props) {
                     </div>
                   )}
                 </td>
-                <td>
+                <td data-label="Contact">
                   <div className="pii" style={{ fontSize: 12 }}>{w.email}</div>
                   {w.phone && <div className="pii" style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{w.phone}</div>}
                 </td>
-                <td style={{ whiteSpace: 'nowrap' as const, fontSize: 12 }}>{joinedWhen(w.created_at)}</td>
-                <td>
+                <td data-label="Joined" style={{ whiteSpace: 'nowrap' as const, fontSize: 12 }}>{joinedWhen(w.created_at)}</td>
+                <td data-label="Status">
                   <span className={`admin-tag ${w.status === 'contacted' ? 'admin-tag-paid' : 'admin-tag-scheduled'}`}>
                     {w.status === 'contacted' ? 'Contacted' : 'Waiting'}
                   </span>
