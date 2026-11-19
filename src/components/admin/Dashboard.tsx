@@ -1,10 +1,11 @@
 'use client';
 
 import { PRACTICE } from '@/practice.config';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import { adminFetch, displayFee, isSameDay, startOfWeek, dedupeSessions } from './api';
 import { SessionDoneOptions, type SessionDoneChoice } from './SessionDoneOptions';
 import { NextUpCard, AccreditationMiniCard, findNextUp } from './TodayCards';
+import { MobileHome } from './MobileHome';
 import { useAccreditationSettings, useAccreditationHours } from './accreditation';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow,
@@ -314,6 +315,31 @@ export function Dashboard({
     text: `${visibleUnlinked.length} calendar event${visibleUnlinked.length === 1 ? '' : 's'} not linked to a client`,
     action: 'Calendar', go: () => onNavigateSection('sessions'),
   });
+
+  // Phones get their own home: today's clients, free times and booking only
+  // (Owen's brief, Nov 2026). Everything below is the desktop dashboard.
+  const isPhone = useSyncExternalStore(
+    cb => { const m = window.matchMedia('(max-width: 768px)'); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb); },
+    () => window.matchMedia('(max-width: 768px)').matches,
+    () => false,
+  );
+  if (isPhone) {
+    return (
+      <>
+        {strip && strip.tone !== 'ok' && (
+          <div className={`admin-banner is-${strip.tone}`} role="alert">
+            <span className="admin-banner-dot" aria-hidden />{strip.msg}
+          </div>
+        )}
+        <MobileHome
+          clients={clients}
+          todaySessions={todaySessions}
+          onOpenSession={onClickSession}
+          onBooked={onReload}
+        />
+      </>
+    );
+  }
 
   return (
     <>

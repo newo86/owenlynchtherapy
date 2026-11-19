@@ -119,6 +119,9 @@ export async function POST(req: NextRequest) {
 
   // Push to Google Calendar — skip if the caller already supplied a gcal_event_id
   // (linking an existing GCal event to a client rather than creating a new one).
+  // Tell the caller whether Google got it, so the phone can say so instead of
+  // a session silently existing only in the dashboard.
+  let calendarAdded = Boolean(body.gcal_event_id);
   if (!body.gcal_event_id) {
     try {
       const cadenceLabel = recurrence === 'once'
@@ -146,6 +149,7 @@ export async function POST(req: NextRequest) {
       });
       console.log('[sessions POST] google event:', eventId ?? 'skipped');
       if (eventId) {
+        calendarAdded = true;
         await supabaseAdmin
           .from('sessions')
           .update({ gcal_event_id: eventId })
@@ -160,7 +164,7 @@ export async function POST(req: NextRequest) {
 
   // Sort so the anchor session is the earliest one.
   sessions.sort((a, b) => new Date(a.session_date as string).getTime() - new Date(b.session_date as string).getTime());
-  return NextResponse.json({ session: sessions[0], sessions }, { headers: noCache });
+  return NextResponse.json({ session: sessions[0], sessions, calendarAdded }, { headers: noCache });
 }
 
 function buildOccurrences(firstIsoLocal: string, recurrence: Recurrence, count: number): string[] {

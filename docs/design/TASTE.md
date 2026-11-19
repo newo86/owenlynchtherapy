@@ -53,6 +53,12 @@ welcome if it never shouts.
   single-CTA version, so offer "calmer" before "fewer choices" (Nov 2026,
   robbiesemple.com, picked option A of four)
 
+- The phone dashboard home is for the end of a session: today's clients
+  (is their next session booked?), one Schedule button and his free times
+  (marked weekly / every 2 weeks / once). No money, accreditation or forms
+  there; those live behind the tab bar. He was firm about it: design phone
+  screens from the moment of use, not by shrinking the desktop (Nov 2026)
+
 ## Dislikes
 - Heavy, dark drop shadows under cards: he wants cards lifted, not
   floating (a hairline edge plus a short soft shadow), site-wide (Nov 2026,
