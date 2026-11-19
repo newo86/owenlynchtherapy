@@ -2247,3 +2247,8 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
 .drift-banner-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--terracotta); flex: none; }
 .drift-banner > span:nth-child(2) { flex: 1; min-width: 0; }
 .drift-banner-go { font-weight: 500; color: var(--terracotta); }
+
+/* Phone: the decorative footer line only ends up half-hidden behind the tab bar. */
+@media (max-width: 768px) {
+  .admin-foot { display: none; }
+}
