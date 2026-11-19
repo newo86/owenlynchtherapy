@@ -141,6 +141,88 @@ export function partitionByCalendarPresence<
   return { onCalendar, ghosts };
 }
 
+/** A scheduled session with no stored Google event id. */
+export interface UnlinkedSession {
+  id: string;
+  client_id: string;
+  session_date: string;
+  created_at: string;
+}
+
+export interface UnlinkedRepairPlan {
+  /** Rows Google has an event for: store that event id so later moves and
+   *  deletions in Google follow through to the dashboard. */
+  link: { id: string; gcal_event_id: string }[];
+  /** Rows Google clearly no longer has: cancel. */
+  cancel: string[];
+}
+
+/** Never cancel more unlinked rows than this in one run: a bigger number means
+ *  something is off (a partial fetch, a renamed series), so do nothing and log. */
+export const MAX_UNLINKED_CANCELS_PER_RUN = 30;
+/** Only rows created before this are ever auto-cancelled: the legacy rows that
+ *  predate stored event ids. A newer row without an id means its Google write
+ *  failed — that session is real, so it is linked if the event appears but
+ *  never cancelled (the reminder run already holds back anything not on the
+ *  calendar). */
+export const UNLINKED_CANCEL_CUTOFF = '2026-11-19T00:00:00Z';
+export const UNLINKED_CANCEL_NOTE = 'Auto-cancelled by calendar sync: no Google Calendar event at this time, though the client has other sessions there.';
+
+/**
+ * Decide what to do with scheduled sessions that carry no gcal_event_id.
+ *
+ * Before Nov 2026 the sync ignored these entirely: it only auto-cancelled rows
+ * linked to a Google event. Rows created before the app stored event ids (or
+ * whose Google write failed) were therefore invisible to it, and when a client
+ * was moved in Google (Paul Cashman, Mon → Tue) the old series stayed in the
+ * dashboard as a second weekly session for months.
+ *
+ *   - Same client + same wall-clock slot as a calendar event → LINK it.
+ *   - No event at that slot, AND the client clearly lives on this calendar
+ *     (they have at least one other matched event in the window), AND the row
+ *     is in the future and predates UNLINKED_CANCEL_CUTOFF → CANCEL it.
+ *   - Otherwise leave it alone (a client who is never put in Google keeps
+ *     their manual sessions untouched).
+ *
+ * Pure so the rule is unit-tested.
+ */
+export function planUnlinkedRepairs(
+  sessions: UnlinkedSession[],
+  events: MappedEvent[],
+  clients: ActiveClient[],
+  /** `${clientId}@${wallclock}` of scheduled rows that already have an id. */
+  linkedSlots: Set<string>,
+  now: Date,
+): UnlinkedRepairPlan {
+  const eventBySlot = new Map<string, string>();      // `${clientId}@${wallclock}` → event id
+  const clientsOnCalendar = new Set<string>();
+  for (const e of events) {
+    if (e.allDay) continue;
+    const cid = matchOneActiveClient(e.title ?? '', clients);
+    if (!cid) continue;
+    clientsOnCalendar.add(cid);
+    const key = `${cid}@${utcToDublinLocal(new Date(e.start).toISOString())}`;
+    if (!eventBySlot.has(key)) eventBySlot.set(key, e.id);
+  }
+
+  const plan: UnlinkedRepairPlan = { link: [], cancel: [] };
+  const claimed = new Set(linkedSlots);
+  for (const s of sessions) {
+    const key = `${s.client_id}@${utcToDublinLocal(s.session_date)}`;
+    const eventId = eventBySlot.get(key);
+    if (eventId) {
+      // One slot, one session: if a linked row already holds it, this is a
+      // duplicate — leave it for the dedupe tool rather than guess.
+      if (!claimed.has(key)) { claimed.add(key); plan.link.push({ id: s.id, gcal_event_id: eventId }); }
+      continue;
+    }
+    const isFuture = new Date(s.session_date).getTime() >= now.getTime();
+    const isLegacy = new Date(s.created_at).getTime() < new Date(UNLINKED_CANCEL_CUTOFF).getTime();
+    if (isFuture && isLegacy && clientsOnCalendar.has(s.client_id)) plan.cancel.push(s.id);
+  }
+  return plan;
+}
+
 /**
  * Two-way reconciliation between the practice's Google Calendar and the
  * Supabase `sessions` table, over an arbitrary [timeMin, timeMax] window.
@@ -159,9 +241,11 @@ export function partitionByCalendarPresence<
  * stamped with the SERIES id. A session is considered "still on the calendar"
  * if its stored id matches an instance id, OR its stored (series) id matches a
  * returned instance of that series at the same time, OR — as a fallback — any
- * returned event maps to the same client at the same wall-clock time. Only
- * sessions that carry a gcal_event_id are ever auto-cancelled, so manually
- * added (calendar-free) sessions are left untouched.
+ * returned event maps to the same client at the same wall-clock time.
+ *   4. heal unlinked rows — scheduled sessions with no gcal_event_id are
+ *      linked to their event, or cancelled when the client is on the calendar
+ *      but not at that slot (see planUnlinkedRepairs). Clients who never
+ *      appear in Google keep their manual sessions untouched.
  *
  * Read-only toward Google: this never creates, edits or deletes calendar
  * events — it only reads them and updates Supabase.
@@ -177,6 +261,7 @@ export async function reconcileCalendar(
   // would otherwise look like a deletion and wrongly cancel a session).
   const raw: calendar_v3.Schema$Event[] = [];
   let pageToken: string | undefined;
+  let truncated = false;
   for (let page = 0; page < 6; page++) {
     const { data } = await calendar.events.list({
       calendarId: 'primary',
@@ -190,6 +275,7 @@ export async function reconcileCalendar(
     raw.push(...(data.items ?? []));
     pageToken = data.nextPageToken ?? undefined;
     if (!pageToken) break;
+    if (page === 5) truncated = true;
   }
 
   const events: MappedEvent[] = raw
@@ -374,6 +460,49 @@ export async function reconcileCalendar(
     await supabaseAdmin.from('sessions').update({ status: 'cancelled' }).in('id', orphaned);
     outcome.cancelled = orphaned.length;
     console.log('[calendarSync] auto-cancelled', orphaned.length, 'session(s) removed from Google Calendar');
+  }
+
+  // 4. Heal scheduled rows that never got a Google event id. Skipped when the
+  //    fetch was cut short: a missing event must never read as a deletion.
+  if (!truncated) {
+    const { data: windowScheduled } = await supabaseAdmin
+      .from('sessions')
+      .select('id, client_id, gcal_event_id, session_date, created_at, notes')
+      .gte('session_date', timeMin)
+      .lte('session_date', timeMax)
+      .eq('status', 'scheduled');
+    const rows = windowScheduled ?? [];
+    const unlinked = rows.filter(r => !r.gcal_event_id) as UnlinkedSession[];
+    if (unlinked.length > 0) {
+      const linkedSlots = new Set(
+        rows.filter(r => r.gcal_event_id)
+          .map(r => `${r.client_id}@${utcToDublinLocal(r.session_date as string)}`),
+      );
+      const plan = planUnlinkedRepairs(unlinked, events, activeClientsForCancel ?? [], linkedSlots, new Date());
+
+      await Promise.all(plan.link.map(l =>
+        supabaseAdmin.from('sessions').update({ gcal_event_id: l.gcal_event_id })
+          .eq('id', l.id).is('gcal_event_id', null)));
+      if (plan.link.length > 0) console.log('[calendarSync] linked', plan.link.length, 'unlinked session(s) to their Google event');
+
+      if (plan.cancel.length > MAX_UNLINKED_CANCELS_PER_RUN) {
+        console.warn('[calendarSync] NOT cancelling', plan.cancel.length, 'unlinked session(s): over the safety cap of', MAX_UNLINKED_CANCELS_PER_RUN);
+      } else if (plan.cancel.length > 0) {
+        // Leave a trace on each row so an auto-cancel is never mistaken for a
+        // manual one and can be found and undone.
+        const notesById = new Map(rows.map(r => [r.id as string, (r.notes as string | null) ?? null]));
+        await Promise.all(plan.cancel.map(id => {
+          const prev = notesById.get(id);
+          return supabaseAdmin.from('sessions')
+            .update({ status: 'cancelled', notes: prev ? `${prev}\n${UNLINKED_CANCEL_NOTE}` : UNLINKED_CANCEL_NOTE })
+            .eq('id', id).is('gcal_event_id', null).eq('status', 'scheduled');
+        }));
+        outcome.cancelled += plan.cancel.length;
+        console.log('[calendarSync] cancelled unlinked session(s) with no Google event at that time:', plan.cancel.join(', '));
+      }
+    }
+  } else {
+    console.warn('[calendarSync] calendar fetch truncated; skipped unlinked-session repair');
   }
 
   return outcome;
