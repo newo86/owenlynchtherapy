@@ -25,6 +25,8 @@ export interface MappedEvent {
   allDay?: boolean;
   /** Has a Google Meet / video conference attached. */
   hasVideo?: boolean;
+  /** Marked "free" (show as available) in Google: doesn't block time. */
+  free?: boolean;
 }
 
 export interface ReconcileOutcome {
@@ -292,6 +294,7 @@ export async function reconcileCalendar(
       originalStart: e.originalStartTime?.dateTime ?? undefined,
       allDay: !e.start?.dateTime,
       hasVideo: Boolean(e.hangoutLink || e.conferenceData?.entryPoints?.length),
+      free: e.transparency === 'transparent',
     }));
 
   const outcome: ReconcileOutcome = { events, imported: 0, cancelled: 0, conflictsFixed: 0 };

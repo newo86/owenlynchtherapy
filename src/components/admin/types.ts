@@ -76,6 +76,10 @@ export interface CalendarEvent {
   description?: string;
   location?: string;
   htmlLink?: string;
+  /** All-day item (birthday, day off): never blocks a session slot. */
+  allDay?: boolean;
+  /** Marked "free" in Google: doesn't block time. */
+  free?: boolean;
 }
 
 export interface CalendarStatus {

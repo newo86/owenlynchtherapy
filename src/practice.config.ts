@@ -98,9 +98,8 @@ export const PRACTICE = {
 
   /** Practice days — feeds Google's opening-hours display (schema.org). */
   openingHours: [
-    { dayOfWeek: 'Monday', opens: '17:00', closes: '20:00' },
-    { dayOfWeek: 'Tuesday', opens: '17:00', closes: '20:00' },
-    { dayOfWeek: 'Friday', opens: '15:00', closes: '20:00' },
+    { dayOfWeek: 'Tuesday', opens: '16:00', closes: '20:00' },
+    { dayOfWeek: 'Friday', opens: '15:00', closes: '19:00' },
   ],
 
   /** The specific slots currently open to new clients — the cards on the

@@ -1,7 +1,11 @@
 <!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
 <!-- END:nextjs-agent-rules -->
 
 <!-- BEGIN:project-context -->
@@ -65,8 +69,9 @@ docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
 - **Design work** (any site, app or page design) goes through the
   `design-partner` skill. Owen's house style (his design system for every project) is docs/design/HOUSE-STYLE.md; his taste log is docs/design/TASTE.md.
 - **Dates:** trust the environment's date (the SessionStart primer prints it
-  in Europe/Dublin). Owen sees clients Mon/Tue/Fri — don't assume from
-  marketing copy.
+  in Europe/Dublin). Owen sees clients Tue 4–8pm and Fri 3–7pm (Nov 2026;
+  the rest is his day job, though he may book a lunchtime one-off) — don't
+  assume from marketing copy; the live hours are in Settings.
 - **Docs drift is real:** OPERATIONS.md has been wrong before (sync direction,
   domain state). When code and docs disagree, verify against code/production,
   then fix the doc in the same PR.

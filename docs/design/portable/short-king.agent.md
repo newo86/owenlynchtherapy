@@ -237,7 +237,9 @@ images, redirects, sitemap, analytics, and cookie controls.
   Composition that guides the eye and reads easily. Foundations first.
   Status by importance (one "needs attention" item first, then a calm
   checklist). "New" markers only on request. Phone-first for tools he uses
-  between sessions.
+  between sessions; design each phone screen from the moment it's used (the
+  dashboard's phone home is only today's clients, a Schedule button and free
+  times), not by shrinking the desktop.
 - **Dislikes:** anything that looks AI-made, especially common AI fonts
   and an eyebrow label over every heading.
 

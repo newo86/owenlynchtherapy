@@ -2112,3 +2112,102 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
   .admin-qa-tab { flex: 1; justify-content: center; }
   .admin-qa-items td { padding: 6px 4px; }
 }
+
+/* ── Phone home (MobileHome.tsx) ─────────────────────────────────────────
+   End-of-session screen: today, one Schedule button, free times. Thumb-sized
+   targets (min 48px), one column, nothing that isn't about booking. */
+.m-home { display: flex; flex-direction: column; gap: 20px; }
+.m-head .admin-h1 { font-size: 36px; }
+.m-head .admin-subline { margin-top: 2px; }
+
+.m-today { display: flex; flex-direction: column; gap: 10px; }
+.m-today-row {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; border: 1px solid var(--line); border-radius: 14px;
+  padding: 10px 10px 10px 14px; box-shadow: var(--shadow-card);
+}
+.m-today-who {
+  flex: 1; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; row-gap: 2px;
+  text-align: left; background: none; border: 0; padding: 4px 0; font-family: inherit; color: var(--ink); cursor: pointer;
+}
+.m-time { grid-row: span 2; align-self: center; font-size: 15px; font-weight: 500; color: var(--forest-deep); min-width: 40px; }
+.m-name { font-size: 16px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-meta { font-size: 13px; color: var(--ink-muted); }
+.m-book-next {
+  flex: none; min-height: 44px; padding: 0 16px; border-radius: 12px;
+  border: 1px solid var(--terracotta); background: #fff; color: var(--terracotta);
+  font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+}
+
+.m-schedule, .m-book {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-height: 56px; border: 0; border-radius: 16px;
+  background: var(--terracotta); color: #fff;
+  font-family: inherit; font-size: 17px; font-weight: 500; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(200, 90, 27, 0.22);
+}
+.m-book:disabled { background: var(--terracotta-soft); box-shadow: none; cursor: not-allowed; }
+
+.m-free .admin-h2 { margin: 0; }
+.m-note { margin: 4px 0 12px; font-size: 13px; color: var(--ink-muted); }
+.m-day + .m-day { margin-top: 14px; }
+.m-day-label { margin: 0 0 8px; font-size: 13px; font-weight: 500; color: var(--forest-deep); }
+.m-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.m-slot {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  min-height: 56px; padding: 9px 12px; text-align: left;
+  background: #fff; border: 1px solid var(--line); border-left-width: 1px; border-radius: 12px;
+  font-family: inherit; color: var(--ink); cursor: pointer;
+}
+.m-slot-time { font-size: 16px; font-weight: 500; }
+.m-slot-tag { font-size: 12px; color: var(--ink-muted); display: inline-flex; align-items: center; gap: 6px; }
+.m-slot-tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.m-slot.is-weekly .m-slot-tag::before { background: var(--sage); }
+.m-slot.is-fortnightly .m-slot-tag::before { background: var(--gold); }
+.m-slot.is-once .m-slot-tag::before { background: var(--lilac); }
+
+/* Booking sheet */
+.m-scrim {
+  position: fixed; inset: 0; z-index: 120; background: rgba(42, 77, 60, 0.32);
+  display: flex; align-items: flex-end;
+}
+.m-sheet {
+  width: 100%; max-height: 92dvh; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--cream); border-radius: 22px 22px 0 0;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 16px;
+  box-shadow: 0 -10px 30px rgba(42, 77, 60, 0.18);
+}
+.m-sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.m-sheet-head .admin-h2 { margin: 0; }
+.m-close { width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: none; color: var(--ink); cursor: pointer; }
+.m-field { display: flex; flex-direction: column; gap: 8px; }
+.m-label { font-size: 13px; font-weight: 500; color: var(--ink-muted); }
+.m-chosen {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 48px; padding: 0 14px; background: #fff; border: 1px solid var(--line); border-radius: 12px;
+  font-size: 16px;
+}
+.m-chosen small { color: var(--ink-muted); font-size: 13px; }
+.m-client-list, .m-slot-picker { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; }
+.m-slot-picker .m-slot { min-height: 52px; }
+.m-client {
+  min-height: 48px; padding: 0 14px; text-align: left; font-family: inherit; font-size: 16px; color: var(--ink);
+  background: #fff; border: 1px solid var(--line); border-radius: 12px; cursor: pointer;
+}
+.m-sheet .admin-input { font-size: 16px; min-height: 48px; } /* 16px stops iOS zooming in */
+.m-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+.m-seg button {
+  min-height: 44px; border: 0; border-radius: 10px; background: transparent;
+  font-family: inherit; font-size: 15px; color: var(--ink-muted); cursor: pointer;
+}
+.m-seg button.is-on { background: var(--forest-deep); color: #fff; }
+.m-warn { margin: 0; font-size: 14px; color: #A04714; }
+.m-other-open { align-self: flex-start; min-height: 44px; font-size: 14px; }
+.m-other { display: flex; flex-direction: column; gap: 8px; }
+.m-other-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 8px; }
+.m-other-use {
+  min-height: 48px; border-radius: 12px; border: 1px solid var(--forest-deep); background: #fff;
+  color: var(--forest-deep); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
+}
+.m-client-list > *, .m-slot-picker > * { flex: none; }
