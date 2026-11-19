@@ -267,7 +267,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
 
       {view === 'list' && (
         <div className="admin-table-wrap">
-        <table className="admin-table">
+        <table className="admin-table is-sessions">
           <thead>
             <tr>
               <th>Client</th>
@@ -289,7 +289,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
             )}
             {filtered.map(({ s, c }) => (
               <tr key={s.id}>
-                <td>
+                <td className="st-client">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <Avatar name={c.full_name} size={32} />
                     <div>
@@ -298,8 +298,8 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     </div>
                   </div>
                 </td>
-                <td data-label="When" style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date)}</td>
-                <td data-label="Format">
+                <td className="st-when" data-label="When" style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date)}</td>
+                <td className="st-format" data-label="Format">
                   {FORMAT_LABELS[s.session_format] ?? s.session_format}
                   {s.format_confirmed === false && s.status === 'scheduled' && (
                     <span
@@ -316,8 +316,8 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     >Open video room ↗</a>
                   )}
                 </td>
-                <td data-label="Fee">{displayFee(s.fee)}</td>
-                <td data-label="Payment">
+                <td className="st-fee" data-label="Fee">{displayFee(s.fee)}</td>
+                <td className="st-pay" data-label="Payment">
                   <span className={`admin-tag ${payTag(s.payment_status)}`}>{payLabel(s.payment_status)}</span>
                   {s.payment_status === 'paid' && s.stripe_payment_intent_id && (
                     <span style={{ display: 'block', fontSize: 10, color: 'var(--ink-muted)', marginTop: 3, fontWeight: 500 }}>
@@ -335,7 +335,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     </span>
                   )}
                 </td>
-                <td data-label="Status">
+                <td className="st-status" data-label="Status">
                   <span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span>
                   {lastReminderAt(s) && (
                     <span style={{ display: 'block', fontSize: 10, color: 'var(--sage)', marginTop: 3, fontWeight: 500 }}>
@@ -343,7 +343,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     </span>
                   )}
                 </td>
-                <td style={{ textAlign: 'right' as const }}>
+                <td className="st-actions" style={{ textAlign: 'right' as const }}>
                   <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {onClickSession && (
                       <button onClick={() => onClickSession(s, c)} disabled={busyId === s.id} className="admin-btn-secondary">

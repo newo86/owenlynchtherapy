@@ -209,7 +209,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
           animation: 'admin-fade-in 150ms ease',
         }}
       />
-      <div style={{
+      <div className="admin-sheet" style={{
         position: 'fixed',
         top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
@@ -223,7 +223,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
         animation: 'admin-pop-in 180ms ease',
       }}>
         {/* Header */}
-        <div style={{
+        <div className="admin-sheet-head" style={{
           padding: '20px 26px',
           background: 'var(--forest-deep)',
           color: 'white',
@@ -231,12 +231,12 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
           borderRadius: '18px 18px 0 0',
         }}>
           <div>
-            <p style={{
+            <p className="admin-sheet-eyebrow" style={{
               margin: 0, fontSize: 10, fontWeight: 500,
               letterSpacing: '4px', textTransform: 'uppercase',
               color: 'var(--terracotta-soft)',
             }}>Session</p>
-            <h2 style={{
+            <h2 className="admin-sheet-title" style={{
               margin: '4px 0 0',
               fontFamily: 'var(--font-montserrat), Avenir, sans-serif',
               fontWeight: 300, fontSize: 22, color: 'white',

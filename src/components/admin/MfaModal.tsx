@@ -109,19 +109,19 @@ export function MfaModal({ onClose }: Props) {
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,77,60,0.32)', zIndex: 110, animation: 'admin-fade-in 150ms ease' }} />
-      <div style={{
+      <div className="admin-sheet" style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
         background: 'white', borderRadius: 18, boxShadow: '0 24px 64px rgba(42,77,60,0.18)',
         zIndex: 120, width: 'min(440px, 92vw)', maxHeight: '92dvh', overflowY: 'auto',
         animation: 'admin-pop-in 180ms ease',
       }}>
-        <div style={{
+        <div className="admin-sheet-head" style={{
           padding: '20px 26px', background: 'var(--forest-deep)', color: 'white',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '18px 18px 0 0',
         }}>
           <div>
-            <p style={{ margin: 0, fontSize: 10, fontWeight: 500, letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--terracotta-soft)' }}>Security</p>
-            <h2 style={{ margin: '4px 0 0', fontFamily: 'var(--font-montserrat), Avenir, sans-serif', fontWeight: 300, fontSize: 22, color: 'white' }}>Two-factor authentication</h2>
+            <p className="admin-sheet-eyebrow" style={{ margin: 0, fontSize: 10, fontWeight: 500, letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--terracotta-soft)' }}>Security</p>
+            <h2 className="admin-sheet-title" style={{ margin: '4px 0 0', fontFamily: 'var(--font-montserrat), Avenir, sans-serif', fontWeight: 300, fontSize: 22, color: 'white' }}>Two-factor authentication</h2>
           </div>
           <button onClick={onClose} aria-label="Close" style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', padding: 6 }}>
             <X size={20} strokeWidth={1.8} />

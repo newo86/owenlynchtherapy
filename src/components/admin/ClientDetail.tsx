@@ -305,6 +305,7 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
       onClick={onClose}
       role="dialog"
       aria-modal="true"
+      className="admin-sheet-overlay"
       style={{
         position: 'fixed', inset: 0,
         background: 'rgba(42,77,60,0.34)',
@@ -317,6 +318,7 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
     >
       <div
         onClick={e => e.stopPropagation()}
+        className="admin-sheet admin-sheet-flow"
         style={{
           background: 'var(--cream)',
           borderRadius: 22,
@@ -330,7 +332,7 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
         }}
       >
         {/* Header */}
-        <div style={{
+        <div className="admin-sheet-head" style={{
           padding: '20px 22px',
           background: 'var(--forest-deep)',
           color: 'white',

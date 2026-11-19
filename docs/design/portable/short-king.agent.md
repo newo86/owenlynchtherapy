@@ -242,7 +242,9 @@ images, redirects, sitemap, analytics, and cookie controls.
   times), not by shrinking the desktop. Phone screens must fit an iPhone 16
   (393pt) with nothing off the edge: 44pt targets, 16px text boxes, safe-area
   insets, `dvh`, wide tables as stacked cards; verify by measuring overflow on
-  every real screen in a phone-sized browser.
+  every real screen in a phone-sized browser. Phone dashboard = one calm
+  system: plain title, one primary action, full-width segments, bottom-sheet
+  pop-ups, compact cards not tables, 16px text, no tracked-out capitals.
 - **Dislikes:** anything that looks AI-made, especially common AI fonts
   and an eyebrow label over every heading.
 

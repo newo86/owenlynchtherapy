@@ -50,9 +50,9 @@ export function Waitlist({ waitlist, onReload }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: 0, maxWidth: 640 }}>
         People who asked to be contacted when a space opens up ({waiting.length} waiting).
-        Entries store only name, email and phone, with their consent recorded. &ldquo;Remove&rdquo;
+        <span className="admin-hide-phone"> Entries store only name, email and phone, with their consent recorded. &ldquo;Remove&rdquo;
         deletes the details permanently — use it once someone becomes a client, asks to be
-        taken off, or the entry goes stale.
+        taken off, or the entry goes stale.</span>
       </p>
 
       <div className="admin-table-wrap">

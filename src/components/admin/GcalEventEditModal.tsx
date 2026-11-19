@@ -94,7 +94,7 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
           animation: 'admin-fade-in 150ms ease',
         }}
       />
-      <div style={{
+      <div className="admin-sheet" style={{
         position: 'fixed',
         top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
@@ -140,7 +140,7 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
         ) : (
         <>
         {/* Header */}
-        <div style={{
+        <div className="admin-sheet-head" style={{
           padding: '20px 26px',
           background: 'var(--forest-deep)',
           color: 'white',
@@ -148,12 +148,12 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
           borderRadius: '18px 18px 0 0',
         }}>
           <div>
-            <p style={{
+            <p className="admin-sheet-eyebrow" style={{
               margin: 0, fontSize: 10, fontWeight: 500,
               letterSpacing: '4px', textTransform: 'uppercase',
               color: 'var(--terracotta-soft)',
             }}>Google Calendar</p>
-            <h2 style={{
+            <h2 className="admin-sheet-title" style={{
               margin: '4px 0 0',
               fontFamily: 'var(--font-montserrat), Avenir, sans-serif',
               fontWeight: 300, fontSize: 22, color: 'white', letterSpacing: '0.5px',
