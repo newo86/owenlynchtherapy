@@ -1,12 +1,10 @@
 import { google, calendar_v3 } from 'googleapis';
 import { supabaseAdmin } from '@/lib/supabase';
 import { utcToDublinLocal } from '@/lib/dateUtils';
-import { INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
 
 // The OAuth2 client instance returned by getAuthorizedClient().
 type AuthClient = InstanceType<typeof google.auth.OAuth2>;
 
-const INSIGHT_MATTERS = INSIGHT_MATTERS_ADDRESS;
 
 export interface MappedEvent {
   id: string;
@@ -27,13 +25,17 @@ export interface MappedEvent {
   hasVideo?: boolean;
   /** Marked "free" (show as available) in Google: doesn't block time. */
   free?: boolean;
+  /** An invitation from someone else (the owner is not the organiser). */
+  foreign?: boolean;
 }
 
 export interface ReconcileOutcome {
   events: MappedEvent[];
-  imported: number;
-  cancelled: number;
-  conflictsFixed: number;
+  /** The Google fetch hit its page cap: events may be missing, so nothing may
+   *  be concluded from an event's absence. */
+  truncated: boolean;
+  /** Sessions newly tied to the Google event they match (metadata only). */
+  linked: number;
 }
 
 type ActiveClient = { id: string; full_name: string };
@@ -104,15 +106,13 @@ export interface CalendarPresence {
  * client about a session that has no calendar event) so the two can't disagree.
  */
 export function buildCalendarPresence(events: MappedEvent[], clients: ActiveClient[]): CalendarPresence {
-  const presentIds = new Set(events.map(e => e.id));
-  const presentSeriesSlots = new Set<string>();   // `${seriesId}@${wallclock}`
+  const presentSeriesSlots = new Set<string>();   // `${seriesOrEventId}@${wallclock}`
   const presentClientSlots = new Set<string>();   // `${clientId}@${wallclock}` (name-matched)
   for (const e of events) {
-    const slot = utcToDublinLocal(new Date(e.start).toISOString());
-    const seriesId = e.recurringEventId ?? e.id;
-    presentSeriesSlots.add(`${seriesId}@${slot}`);
-    presentSeriesSlots.add(`${e.id}@${slot}`);
     if (e.allDay) continue; // an all-day item is never a client's session
+    const slot = utcToDublinLocal(new Date(e.start).toISOString());
+    presentSeriesSlots.add(`${(e.recurringEventId ?? e.id).split('_')[0]}@${slot}`);
+    presentSeriesSlots.add(`${e.id}@${slot}`);
     const cid = matchOneActiveClient(e.title ?? '', clients);
     if (cid) presentClientSlots.add(`${cid}@${slot}`);
   }
@@ -120,9 +120,13 @@ export function buildCalendarPresence(events: MappedEvent[], clients: ActiveClie
     has(session) {
       const gid = session.gcal_event_id ?? null;
       const slot = utcToDublinLocal(session.session_date);
-      if (gid && presentIds.has(gid)) return true;                  // exact instance
-      if (gid && presentSeriesSlots.has(`${gid}@${slot}`)) return true; // series occurrence
-      if (presentClientSlots.has(`${session.client_id}@${slot}`)) return true; // same client+time
+      // Slot-strict: the app is the source of truth, so an event Google has at
+      // a DIFFERENT time (moved there by hand) must not confirm the app's
+      // time. That session is held back from reminders until it is resolved
+      // (it shows in the dashboard's "doesn't match Google" list).
+      if (gid && presentSeriesSlots.has(`${gid}@${slot}`)) return true;               // exact event / instance
+      if (gid && presentSeriesSlots.has(`${gid.split('_')[0]}@${slot}`)) return true; // series occurrence
+      if (presentClientSlots.has(`${session.client_id}@${slot}`)) return true;         // same client + time
       return false;
     },
   };
@@ -143,124 +147,75 @@ export function partitionByCalendarPresence<
   return { onCalendar, ghosts };
 }
 
-/** A scheduled session with no stored Google event id. */
-export interface UnlinkedSession {
+/** A scheduled session row, for deciding whether to tie it to a Google event. */
+export interface LinkableSession {
   id: string;
   client_id: string;
   session_date: string;
-  created_at: string;
+  gcal_event_id: string | null;
 }
 
-export interface UnlinkedRepairPlan {
-  /** Rows Google has an event for: store that event id so later moves and
-   *  deletions in Google follow through to the dashboard. */
-  link: { id: string; gcal_event_id: string }[];
-  /** Rows Google clearly no longer has: cancel. */
-  cancel: string[];
+export interface LinkPlan {
+  link: { id: string; gcal_event_id: string; previous: string | null }[];
 }
 
-/** Never cancel more unlinked rows than this in one run: a bigger number means
- *  something is off (a partial fetch, a renamed series), so do nothing and log. */
-export const MAX_UNLINKED_CANCELS_PER_RUN = 30;
-/** Only rows created before this are ever auto-cancelled: the legacy rows that
- *  predate stored event ids. A newer row without an id means its Google write
- *  failed — that session is real, so it is linked if the event appears but
- *  never cancelled (the reminder run already holds back anything not on the
- *  calendar). */
-export const UNLINKED_CANCEL_CUTOFF = '2026-11-19T00:00:00Z';
-export const UNLINKED_CANCEL_NOTE = 'Auto-cancelled by calendar sync: no Google Calendar event at this time, though the client has other sessions there.';
+const INSTANCE_ID = /_\d{8}T\d{6}Z?$/;
 
 /**
- * Decide what to do with scheduled sessions that carry no gcal_event_id.
+ * Which sessions to tie to the Google event they already match.
  *
- * Before Nov 2026 the sync ignored these entirely: it only auto-cancelled rows
- * linked to a Google event. Rows created before the app stored event ids (or
- * whose Google write failed) were therefore invisible to it, and when a client
- * was moved in Google (Paul Cashman, Mon → Tue) the old series stayed in the
- * dashboard as a second weekly session for months.
- *
- *   - Same client + same wall-clock slot as a calendar event → LINK it.
- *   - No event at that slot, AND the client clearly lives on this calendar
- *     (they have at least one other matched event in the window), AND the row
- *     is in the future and predates UNLINKED_CANCEL_CUTOFF → CANCEL it.
- *   - Otherwise leave it alone (a client who is never put in Google keeps
- *     their manual sessions untouched).
- *
+ * This is bookkeeping, not a schedule change: it stores the event's id on a
+ * session whose client and time match an event, so later moves and removals
+ * from the app act on the right event. A row counts as already linked when
+ * its stored id is an event Google has (or a series with live occurrences). A
+ * row with no id, or an id whose event is gone, is linked to a name-matched
+ * event at the same client + wall-clock time, if exactly that event is free.
  * Pure so the rule is unit-tested.
  */
-export function planUnlinkedRepairs(
-  sessions: UnlinkedSession[],
+export function planLinks(
+  sessions: LinkableSession[],
   events: MappedEvent[],
   clients: ActiveClient[],
-  /** `${clientId}@${wallclock}` of scheduled rows that already have an id. */
-  linkedSlots: Set<string>,
   now: Date,
-): UnlinkedRepairPlan {
-  const eventBySlot = new Map<string, string>();      // `${clientId}@${wallclock}` → event id
-  const clientsOnCalendar = new Set<string>();
-  for (const e of events) {
-    if (e.allDay) continue;
+): LinkPlan {
+  const timed = events.filter(e => !e.allDay);
+  const eventIds = new Set(timed.map(e => e.id));
+  const seriesBases = new Set(timed.map(e => (e.recurringEventId ?? e.id).split('_')[0]));
+  const isLinked = (gid: string | null) =>
+    !!gid && (eventIds.has(gid) || (!INSTANCE_ID.test(gid) && seriesBases.has(gid.split('_')[0])));
+
+  const bySlot = new Map<string, string>();            // `${clientId}@${wallclock}` → event id
+  for (const e of timed) {
     const cid = matchOneActiveClient(e.title ?? '', clients);
     if (!cid) continue;
-    clientsOnCalendar.add(cid);
     const key = `${cid}@${utcToDublinLocal(new Date(e.start).toISOString())}`;
-    if (!eventBySlot.has(key)) eventBySlot.set(key, e.id);
+    if (!bySlot.has(key)) bySlot.set(key, e.id);
   }
 
-  const plan: UnlinkedRepairPlan = { link: [], cancel: [] };
-  const claimed = new Set(linkedSlots);
-  for (const s of sessions) {
+  const future = sessions.filter(s => new Date(s.session_date).getTime() >= now.getTime());
+  const claimed = new Set<string>();                   // slots already held by a properly linked row
+  for (const s of future) if (isLinked(s.gcal_event_id)) claimed.add(`${s.client_id}@${utcToDublinLocal(s.session_date)}`);
+
+  const plan: LinkPlan = { link: [] };
+  for (const s of future) {
+    if (isLinked(s.gcal_event_id)) continue;
     const key = `${s.client_id}@${utcToDublinLocal(s.session_date)}`;
-    const eventId = eventBySlot.get(key);
-    if (eventId) {
-      // One slot, one session: if a linked row already holds it, this is a
-      // duplicate — leave it for the dedupe tool rather than guess.
-      if (!claimed.has(key)) { claimed.add(key); plan.link.push({ id: s.id, gcal_event_id: eventId }); }
-      continue;
-    }
-    const isFuture = new Date(s.session_date).getTime() >= now.getTime();
-    const isLegacy = new Date(s.created_at).getTime() < new Date(UNLINKED_CANCEL_CUTOFF).getTime();
-    if (isFuture && isLegacy && clientsOnCalendar.has(s.client_id)) plan.cancel.push(s.id);
+    const eventId = bySlot.get(key);
+    if (!eventId || claimed.has(key)) continue;        // no event, or a twin row already owns the slot
+    claimed.add(key);
+    plan.link.push({ id: s.id, gcal_event_id: eventId, previous: s.gcal_event_id });
   }
   return plan;
 }
 
-/**
- * Two-way reconciliation between the practice's Google Calendar and the
- * Supabase `sessions` table, over an arbitrary [timeMin, timeMax] window.
- *
- * Google is the source of truth for the schedule. We:
- *   1. conflict-resolve — move a scheduled session to match its GCal time;
- *   2. auto-import — create a session for a name-matched GCal event we don't
- *      track yet (skipping slots that already exist, including cancelled
- *      tombstones, so a deliberately-removed session is never resurrected);
- *   3. auto-cancel — mark a calendar-linked session 'cancelled' once its
- *      Google event no longer exists.
- *
- * The matching is slot-aware so it is correct for recurring series: Google
- * returns recurring events as individual instances (id `<series>_<stamp>`,
- * with `recurringEventId` = the series id), while sessions created in-app are
- * stamped with the SERIES id. A session is considered "still on the calendar"
- * if its stored id matches an instance id, OR its stored (series) id matches a
- * returned instance of that series at the same time, OR — as a fallback — any
- * returned event maps to the same client at the same wall-clock time.
- *   4. heal unlinked rows — scheduled sessions with no gcal_event_id are
- *      linked to their event, or cancelled when the client is on the calendar
- *      but not at that slot (see planUnlinkedRepairs). Clients who never
- *      appear in Google keep their manual sessions untouched.
- *
- * Read-only toward Google: this never creates, edits or deletes calendar
- * events — it only reads them and updates Supabase.
- */
-export async function reconcileCalendar(
+/** Read the calendar window. `truncated` means a page cap was hit: events may
+ *  be missing, so the caller must not conclude anything from an absence. */
+export async function fetchCalendarEvents(
   auth: AuthClient,
   timeMin: string,
   timeMax: string,
-): Promise<ReconcileOutcome> {
+): Promise<{ events: MappedEvent[]; truncated: boolean }> {
   const calendar = google.calendar({ version: 'v3', auth });
-
-  // Paginate so a busy window is never silently truncated (a missed event
-  // would otherwise look like a deletion and wrongly cancel a session).
   const raw: calendar_v3.Schema$Event[] = [];
   let pageToken: string | undefined;
   let truncated = false;
@@ -279,7 +234,6 @@ export async function reconcileCalendar(
     if (!pageToken) break;
     if (page === 5) truncated = true;
   }
-
   const events: MappedEvent[] = raw
     .filter(e => (e.start?.dateTime || e.start?.date) && (e.end?.dateTime || e.end?.date))
     .map(e => ({
@@ -295,218 +249,57 @@ export async function reconcileCalendar(
       allDay: !e.start?.dateTime,
       hasVideo: Boolean(e.hangoutLink || e.conferenceData?.entryPoints?.length),
       free: e.transparency === 'transparent',
+      foreign: e.organizer ? e.organizer.self !== true : false,
     }));
+  return { events, truncated };
+}
 
-  const outcome: ReconcileOutcome = { events, imported: 0, cancelled: 0, conflictsFixed: 0 };
+/**
+ * Read the practice's Google Calendar over [timeMin, timeMax].
+ *
+ * The APP is the source of truth for the schedule (Nov 2026); Google mirrors
+ * it. This used to make Google the master: every few minutes it imported,
+ * cancelled and moved sessions to match whatever Google showed, guessing from
+ * event titles, which is why edits in Google "sometimes" appeared. It now
+ * never changes a session's date, status or existence. All it does is
+ *   - read the events (the week view, free-time finder and reminder check
+ *     need them), and
+ *   - tie sessions to the events they already match (see planLinks).
+ * Differences between the app and Google are reported by calendarDrift.ts for
+ * the practitioner to resolve; they are never "fixed" silently.
+ *
+ * Read-only toward Google: nothing here creates, edits or deletes an event.
+ */
+export async function reconcileCalendar(
+  auth: AuthClient,
+  timeMin: string,
+  timeMax: string,
+): Promise<ReconcileOutcome> {
+  const { events, truncated } = await fetchCalendarEvents(auth, timeMin, timeMax);
+  const outcome: ReconcileOutcome = { events, truncated, linked: 0 };
+  if (truncated || events.length === 0) return outcome;
 
-  if (events.length > 0) {
-    const eventIds = events.map(e => e.id);
-
-    // Sessions already tracked by their exact (instance) gcal_event_id.
-    const { data: trackedByIdRows } = await supabaseAdmin
+  const now = new Date();
+  const from = new Date(timeMin).getTime() > now.getTime() ? timeMin : now.toISOString();
+  const [{ data: rows }, { data: clients }] = await Promise.all([
+    supabaseAdmin
       .from('sessions')
-      .select('id, gcal_event_id, session_date, status')
-      .in('gcal_event_id', eventIds);
-    const trackedByGcalId = new Map<string, { id: string; session_date: string; status: string }>();
-    for (const s of (trackedByIdRows ?? [])) {
-      if (s.gcal_event_id) trackedByGcalId.set(s.gcal_event_id, s);
-    }
-
-    // 1. Conflict resolution (only for instance-tracked scheduled sessions).
-    const conflictFixes: Promise<void>[] = [];
-    for (const event of events) {
-      const tracked = trackedByGcalId.get(event.id);
-      if (!tracked || tracked.status !== 'scheduled') continue;
-      const gcalUtcIso = new Date(event.start).toISOString();
-      if (utcToDublinLocal(gcalUtcIso) !== utcToDublinLocal(tracked.session_date)) {
-        conflictFixes.push((async () => {
-          await supabaseAdmin.from('sessions').update({ session_date: gcalUtcIso }).eq('id', tracked.id);
-          console.log('[calendarSync] conflict-resolved session:', tracked.id, '→', event.start);
-        })());
-      }
-    }
-    // 1b. Moved occurrences of a recurring series. Sessions created in-app are
-    //     stamped with the SERIES id, so the instance-id pass above never sees
-    //     them. When one occurrence is dragged to a new time in Google, the
-    //     instance keeps `originalStartTime` = where the series put it. Match on
-    //     that and MOVE the session (keeping its format, fee, payment and notes)
-    //     instead of letting step 3 cancel it and step 2 re-import a blank,
-    //     in-person, unpaid copy.
-    const movedInstances = events.filter(e =>
-      e.recurringEventId && e.originalStart
-      && utcToDublinLocal(new Date(e.originalStart).toISOString()) !== utcToDublinLocal(new Date(e.start).toISOString()),
-    );
-    if (movedInstances.length > 0) {
-      const seriesIds = [...new Set(movedInstances.map(e => e.recurringEventId as string))];
-      const { data: seriesRows } = await supabaseAdmin
-        .from('sessions')
-        .select('id, gcal_event_id, session_date')
-        .in('gcal_event_id', seriesIds)
-        .eq('status', 'scheduled');
-      const moves: Promise<void>[] = [];
-      for (const e of movedInstances) {
-        const originalSlot = utcToDublinLocal(new Date(e.originalStart as string).toISOString());
-        const row = (seriesRows ?? []).find(r =>
-          r.gcal_event_id === e.recurringEventId && utcToDublinLocal(r.session_date as string) === originalSlot);
-        if (!row) continue;
-        const newIso = new Date(e.start).toISOString();
-        moves.push((async () => {
-          await supabaseAdmin.from('sessions').update({ session_date: newIso }).eq('id', row.id);
-          console.log('[calendarSync] moved recurring occurrence:', row.id, '→', e.start);
-        })());
-      }
-      if (moves.length > 0) { await Promise.all(moves); outcome.conflictsFixed += moves.length; }
-    }
-
-    // 2. Auto-import name-matched events we don't track yet.
-    const { data: activeClients } = await supabaseAdmin
-      .from('clients')
-      .select('id, full_name, session_fee')
-      .eq('status', 'active');
-    const clientById = new Map((activeClients ?? []).map(c => [c.id as string, c]));
-
-    // Existing slots (incl. cancelled tombstones, on purpose) so we never
-    // double-import or resurrect a deliberately-removed session.
-    const { data: windowSessions } = await supabaseAdmin
-      .from('sessions')
-      .select('client_id, session_date, status, gcal_event_id')
-      .gte('session_date', timeMin)
-      .lte('session_date', timeMax);
-    const existingKeys = new Set(
-      (windowSessions ?? []).map(s => `${s.client_id}@${utcToDublinLocal(s.session_date as string)}`),
-    );
-    const cancelledGcalIds = new Set(
-      (windowSessions ?? [])
-        .filter(s => s.status === 'cancelled' && s.gcal_event_id)
-        .map(s => s.gcal_event_id as string),
-    );
-
-    const imports: Promise<void>[] = [];
-    for (const event of events) {
-      if (trackedByGcalId.has(event.id)) continue;
-      if (cancelledGcalIds.has(event.id)) continue;
-      if (event.recurringEventId && cancelledGcalIds.has(event.recurringEventId)) continue;
-      if (event.allDay) continue; // birthdays, days off, payment reminders — never sessions
-
-      const matchedId = matchOneActiveClient(event.title ?? '', (activeClients ?? []) as ActiveClient[]);
-      const mc = matchedId ? clientById.get(matchedId) : undefined;
-      if (!mc) continue;
-      const key = `${mc.id}@${utcToDublinLocal(new Date(event.start).toISOString())}`;
-      if (existingKeys.has(key)) continue;
-      existingKeys.add(key);
-      const ev = event;
-      imports.push((async () => {
-        // Format from what the event says (video link, "in person", the
-        // venue). If it says nothing, the client's last format is only a
-        // placeholder and the session is flagged unconfirmed — reminders are
-        // held until the practitioner sets it (see inferSessionFormat).
-        const { data: last } = await supabaseAdmin
-          .from('sessions')
-          .select('session_format')
-          .eq('client_id', mc.id)
-          .neq('status', 'cancelled')
-          .order('session_date', { ascending: false })
-          .limit(1);
-        const { format, confirmed } = inferSessionFormat(ev, (last?.[0]?.session_format as string | undefined) ?? null);
-        const { data: newSession } = await supabaseAdmin
-          .from('sessions')
-          .insert({
-            client_id: mc.id,
-            session_date: new Date(ev.start).toISOString(),
-            session_format: format,
-            format_confirmed: confirmed,
-            location: format === 'online' ? null : INSIGHT_MATTERS,
-            fee: mc.session_fee ?? 0,
-            status: 'scheduled',
-            payment_status: 'unpaid',
-            notes: `Imported from Google Calendar: "${ev.title}"`,
-            gcal_event_id: ev.id,
-          })
-          .select('id')
-          .single();
-        if (newSession) console.log('[calendarSync] auto-linked GCal event:', ev.id, '→ session:', newSession.id);
-      })());
-    }
-    if (imports.length > 0) { await Promise.all(imports); outcome.imported = imports.length; }
-  }
-
-  // 3. Auto-cancel calendar-linked sessions whose Google event is gone.
-  //    Slot-aware (via buildCalendarPresence) so a single deleted occurrence of
-  //    a recurring series cancels only that session, and a series-id-tracked
-  //    session isn't wrongly nuked.
-  const { data: activeClientsForCancel } = await supabaseAdmin
-    .from('clients')
-    .select('id, full_name')
-    .eq('status', 'active');
-  const presence = buildCalendarPresence(events, activeClientsForCancel ?? []);
-
-  // Only ever auto-cancel still-SCHEDULED sessions. Attended / no-show rows are
-  // historical records — deleting their old Google event must never retro-flip
-  // them to cancelled and drop them out of revenue.
-  const { data: trackedSessions } = await supabaseAdmin
-    .from('sessions')
-    .select('id, client_id, gcal_event_id, session_date')
-    .gte('session_date', timeMin)
-    .lte('session_date', timeMax)
-    .not('gcal_event_id', 'is', null)
-    .eq('status', 'scheduled');
-
-  const orphaned = (trackedSessions ?? [])
-    .filter(s => !presence.has({
-      gcal_event_id: s.gcal_event_id as string,
-      client_id: s.client_id as string,
-      session_date: s.session_date as string,
-    }))
-    .map(s => s.id);
-
-  if (orphaned.length > 0) {
-    await supabaseAdmin.from('sessions').update({ status: 'cancelled' }).in('id', orphaned);
-    outcome.cancelled = orphaned.length;
-    console.log('[calendarSync] auto-cancelled', orphaned.length, 'session(s) removed from Google Calendar');
-  }
-
-  // 4. Heal scheduled rows that never got a Google event id. Skipped when the
-  //    fetch was cut short: a missing event must never read as a deletion.
-  if (!truncated) {
-    const { data: windowScheduled } = await supabaseAdmin
-      .from('sessions')
-      .select('id, client_id, gcal_event_id, session_date, created_at, notes')
-      .gte('session_date', timeMin)
+      .select('id, client_id, session_date, gcal_event_id')
+      .gte('session_date', from)
       .lte('session_date', timeMax)
-      .eq('status', 'scheduled');
-    const rows = windowScheduled ?? [];
-    const unlinked = rows.filter(r => !r.gcal_event_id) as UnlinkedSession[];
-    if (unlinked.length > 0) {
-      const linkedSlots = new Set(
-        rows.filter(r => r.gcal_event_id)
-          .map(r => `${r.client_id}@${utcToDublinLocal(r.session_date as string)}`),
-      );
-      const plan = planUnlinkedRepairs(unlinked, events, activeClientsForCancel ?? [], linkedSlots, new Date());
+      .eq('status', 'scheduled'),
+    supabaseAdmin.from('clients').select('id, full_name').eq('status', 'active'),
+  ]);
+  if (!rows || !clients) return outcome;
 
-      await Promise.all(plan.link.map(l =>
-        supabaseAdmin.from('sessions').update({ gcal_event_id: l.gcal_event_id })
-          .eq('id', l.id).is('gcal_event_id', null)));
-      if (plan.link.length > 0) console.log('[calendarSync] linked', plan.link.length, 'unlinked session(s) to their Google event');
-
-      if (plan.cancel.length > MAX_UNLINKED_CANCELS_PER_RUN) {
-        console.warn('[calendarSync] NOT cancelling', plan.cancel.length, 'unlinked session(s): over the safety cap of', MAX_UNLINKED_CANCELS_PER_RUN);
-      } else if (plan.cancel.length > 0) {
-        // Leave a trace on each row so an auto-cancel is never mistaken for a
-        // manual one and can be found and undone.
-        const notesById = new Map(rows.map(r => [r.id as string, (r.notes as string | null) ?? null]));
-        await Promise.all(plan.cancel.map(id => {
-          const prev = notesById.get(id);
-          return supabaseAdmin.from('sessions')
-            .update({ status: 'cancelled', notes: prev ? `${prev}\n${UNLINKED_CANCEL_NOTE}` : UNLINKED_CANCEL_NOTE })
-            .eq('id', id).is('gcal_event_id', null).eq('status', 'scheduled');
-        }));
-        outcome.cancelled += plan.cancel.length;
-        console.log('[calendarSync] cancelled unlinked session(s) with no Google event at that time:', plan.cancel.join(', '));
-      }
-    }
-  } else {
-    console.warn('[calendarSync] calendar fetch truncated; skipped unlinked-session repair');
-  }
-
+  const plan = planLinks(rows as LinkableSession[], events, clients, now);
+  const results = await Promise.all(plan.link.map(async l => {
+    let q = supabaseAdmin.from('sessions').update({ gcal_event_id: l.gcal_event_id }).eq('id', l.id).eq('status', 'scheduled');
+    q = l.previous ? q.eq('gcal_event_id', l.previous) : q.is('gcal_event_id', null);
+    const { data } = await q.select('id');
+    return data?.length ?? 0;
+  }));
+  outcome.linked = results.reduce((a, b) => a + b, 0);
+  if (outcome.linked > 0) console.log('[calendarSync] linked', outcome.linked, 'session(s) to their Google event');
   return outcome;
 }

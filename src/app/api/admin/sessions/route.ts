@@ -150,10 +150,13 @@ export async function POST(req: NextRequest) {
       console.log('[sessions POST] google event:', eventId ?? 'skipped');
       if (eventId) {
         calendarAdded = true;
+        // Only rows still without an id: if the retry job already linked one,
+        // keep its link rather than overwrite it.
         await supabaseAdmin
           .from('sessions')
           .update({ gcal_event_id: eventId })
-          .in('id', sessions.map((s: { id: string }) => s.id));
+          .in('id', sessions.map((s: { id: string }) => s.id))
+          .is('gcal_event_id', null);
       }
     } catch (calErr) {
       console.error('[sessions POST] google calendar error:', calErr);

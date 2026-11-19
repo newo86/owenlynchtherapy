@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { getAuthorizedClient } from '@/lib/googleOAuth';
 import { startOfWeek } from '@/lib/dateUtils';
 import { reconcileCalendar } from '@/lib/calendarSync';
+import { loadDrift } from '@/lib/calendarDrift';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -36,10 +37,14 @@ export async function GET(req: NextRequest) {
   const timeMax = (viewEnd > reconEnd ? viewEnd : reconEnd).toISOString();
 
   try {
-    const { events, imported, cancelled, conflictsFixed } = await reconcileCalendar(client, timeMin, timeMax);
-    // Tells the dashboard the session list just changed, so it reloads it on
-    // this refresh instead of showing pre-sync data until the next poll.
-    const changed = imported + cancelled + conflictsFixed;
+    const { events, truncated, linked } = await reconcileCalendar(client, timeMin, timeMax);
+    // Tells the dashboard a session just got tied to its Google event, so it
+    // reloads the list on this refresh. (The calendar never changes a
+    // session's date or status any more: the app is the source of truth.)
+    const changed = linked;
+    // Where the app and Google disagree, for the practitioner to resolve.
+    // Null = couldn't be judged (truncated fetch); the dashboard shows nothing.
+    const drift = await loadDrift(events, truncated, new Date(timeMax));
 
     // Return only the viewed window for display.
     const viewMinMs = viewStart.getTime();
@@ -49,7 +54,7 @@ export async function GET(req: NextRequest) {
       return t >= viewMinMs && t < viewMaxMs;
     });
 
-    return NextResponse.json({ connected: true, events: display, changed }, { headers: noCache });
+    return NextResponse.json({ connected: true, events: display, changed, drift: drift ?? [] }, { headers: noCache });
   } catch (err: unknown) {
     console.error('[admin/calendar] error:', err);
     const msg = err instanceof Error ? err.message : 'Unknown error';

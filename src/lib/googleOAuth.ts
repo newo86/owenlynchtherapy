@@ -246,7 +246,7 @@ export async function createCalendarEvent(input: CreateEventInput): Promise<stri
 // These operate purely on the wall-clock components of an ISO string so we
 // never accidentally apply the host's timezone offset.
 
-function normaliseLocalDateTime(iso: string): string {
+export function normaliseLocalDateTime(iso: string): string {
   // Accepts "YYYY-MM-DD", "YYYY-MM-DDTHH:MM", "YYYY-MM-DDTHH:MM:SS", or with
   // a fractional seconds/Z suffix — returns "YYYY-MM-DDTHH:MM:SS".
   const stripped = iso.replace(/\.\d+/, '').replace(/Z$/, '').replace(/[+-]\d{2}:?\d{2}$/, '');
@@ -256,7 +256,7 @@ function normaliseLocalDateTime(iso: string): string {
   return `${datePart}T${pad(h)}:${pad(m)}:${pad(s)}`;
 }
 
-function addMinutesLocal(iso: string, minutes: number): string {
+export function addMinutesLocal(iso: string, minutes: number): string {
   const norm = normaliseLocalDateTime(iso);
   const [datePart, timePart] = norm.split('T');
   const [y, mo, d] = datePart.split('-').map(Number);

@@ -2211,3 +2211,15 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
   color: var(--forest-deep); font-family: inherit; font-size: 15px; font-weight: 500; cursor: pointer;
 }
 .m-client-list > *, .m-slot-picker > * { flex: none; }
+
+/* ── "Google Calendar doesn't match the app" (CalendarDriftCard.tsx) ───── */
+.drift-card { margin-bottom: 20px; }
+.drift-note { margin: 0 0 12px; font-size: 14px; color: var(--ink-muted); }
+.drift-done { margin: 0 0 10px; font-size: 14px; color: #2D5A42; }
+.drift-list { list-style: none; margin: 0; padding: 0; }
+.drift-item { padding: 12px 0; border-top: 1px solid var(--line); }
+.drift-item:first-child { border-top: 0; padding-top: 0; }
+.drift-line { margin: 0 0 8px; font-size: 15px; line-height: 1.4; }
+.drift-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.drift-actions .admin-btn-secondary { min-height: 44px; }
+.drift-problem { margin: 8px 0 0; font-size: 14px; color: #A04714; }

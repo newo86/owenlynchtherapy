@@ -3,7 +3,7 @@ import {
   matchOneActiveClient,
   buildCalendarPresence,
   partitionByCalendarPresence,
-  planUnlinkedRepairs,
+  planLinks,
   type MappedEvent,
 } from './calendarSync';
 
@@ -170,67 +170,80 @@ describe('partitionByCalendarPresence (the reminder run decision)', () => {
   });
 });
 
-describe('planUnlinkedRepairs (scheduled rows with no Google event id)', () => {
-  // Tuesday 24 Nov 2026, 19:00 Dublin (GMT) — Paul's real slot after his move.
-  const paulTue = 'oljoe5384oq6s2bi2lb8rmbmct';
+describe('buildCalendarPresence: the app is the source of truth', () => {
+  it('does not confirm a session whose event Google has at a DIFFERENT time (moved there by hand)', () => {
+    const m = 'k58ks7ij3d3rvgvt47r2ch6fu0';
+    const moved: MappedEvent[] = [
+      { id: `${m}_20261211T160000Z`, recurringEventId: m, start: '2026-12-11T17:00:00Z', end: '2026-12-11T17:50:00Z', title: 'Session — Jane Durnin' },
+    ];
+    const presence = buildCalendarPresence(moved, clients);
+    // The app still says 16:00, Google says 17:00: held back from reminders until resolved.
+    expect(presence.has({ gcal_event_id: `${m}_20261211T160000Z`, client_id: 'c-jane', session_date: '2026-12-11T16:00:00Z' })).toBe(false);
+  });
+
+  it('still confirms it once the times agree', () => {
+    const m = 'k58ks7ij3d3rvgvt47r2ch6fu0';
+    const same: MappedEvent[] = [
+      { id: `${m}_20261211T160000Z`, recurringEventId: m, start: '2026-12-11T16:00:00Z', end: '2026-12-11T16:50:00Z', title: 'Session — Jane Durnin' },
+    ];
+    expect(buildCalendarPresence(same, clients).has({ gcal_event_id: `${m}_20261211T160000Z`, client_id: 'c-jane', session_date: '2026-12-11T16:00:00Z' })).toBe(true);
+  });
+
+  it('confirms through a split-series master id', () => {
+    const base = '544e3vhvjfannb14noukkeubqg';
+    const evs: MappedEvent[] = [
+      { id: `${base}_20261127T180000Z`, recurringEventId: `${base}_R20261030T180000`, start: '2026-11-27T18:00:00Z', end: '2026-11-27T19:00:00Z', title: 'Philip (online)' },
+    ];
+    expect(buildCalendarPresence(evs, clients).has({ gcal_event_id: base, client_id: 'c-philip', session_date: '2026-11-27T18:00:00Z' })).toBe(true);
+  });
+});
+
+describe('planLinks (tie a session to the Google event it already matches)', () => {
   const nov: MappedEvent[] = [
-    { id: `${paulTue}_20261124T190000Z`, recurringEventId: paulTue, start: '2026-11-24T19:00:00Z', end: '2026-11-24T19:50:00Z', title: 'Session — Paul Cashman' },
+    { id: 'paul_20261124T190000Z', recurringEventId: 'paul', start: '2026-11-24T19:00:00Z', end: '2026-11-24T19:50:00Z', title: 'Session — Paul Cashman' },
     { id: 'jane-1', start: '2026-11-24T17:00:00Z', end: '2026-11-24T17:50:00Z', title: 'Session — Jane Durnin' },
   ];
   const now = new Date('2026-11-19T00:00:00Z');
-  const old = '2026-05-29T09:15:29Z';
 
-  it('re-creates the Paul Cashman case: cancels the stale Monday, links the real Tuesday', () => {
-    const plan = planUnlinkedRepairs([
-      { id: 'mon', client_id: 'c-paul', session_date: '2026-11-23T18:00:00Z', created_at: old },
-      { id: 'tue', client_id: 'c-paul', session_date: '2026-11-24T19:00:00Z', created_at: old },
-    ], nov, clients, new Set(), now);
-    expect(plan.cancel).toEqual(['mon']);
-    expect(plan.link).toEqual([{ id: 'tue', gcal_event_id: `${paulTue}_20261124T190000Z` }]);
+  it('links a row with no id to the event at the same client and time', () => {
+    const plan = planLinks([{ id: 'tue', client_id: 'c-paul', session_date: '2026-11-24T19:00:00Z', gcal_event_id: null }], nov, clients, now);
+    expect(plan.link).toEqual([{ id: 'tue', gcal_event_id: 'paul_20261124T190000Z', previous: null }]);
   });
 
-  it('leaves a client who never appears in Google alone', () => {
-    const plan = planUnlinkedRepairs([
-      { id: 'k', client_id: 'c-kieran', session_date: '2026-11-23T18:00:00Z', created_at: old },
-    ], nov, clients, new Set(), now);
-    expect(plan).toEqual({ link: [], cancel: [] });
+  it('never cancels or links a stale row with no event (Paul\'s old Monday)', () => {
+    const plan = planLinks([{ id: 'mon', client_id: 'c-paul', session_date: '2026-11-23T18:00:00Z', gcal_event_id: null }], nov, clients, now);
+    expect(plan.link).toEqual([]);
   });
 
-  it('never cancels a past session (it may have happened and just not been marked)', () => {
-    const plan = planUnlinkedRepairs([
-      { id: 'past', client_id: 'c-paul', session_date: '2026-11-16T18:00:00Z', created_at: old },
-    ], nov, clients, new Set(), now);
-    expect(plan.cancel).toEqual([]);
+  it('relinks a row whose stored event is gone when a replacement sits at the same time', () => {
+    const plan = planLinks([{ id: 'tue', client_id: 'c-paul', session_date: '2026-11-24T19:00:00Z', gcal_event_id: 'deleted_20261124T190000Z' }], nov, clients, now);
+    expect(plan.link).toEqual([{ id: 'tue', gcal_event_id: 'paul_20261124T190000Z', previous: 'deleted_20261124T190000Z' }]);
   });
 
-  it('never cancels a row created after the cutoff (its Google write failed; the session is real)', () => {
-    const plan = planUnlinkedRepairs([
-      { id: 'new', client_id: 'c-paul', session_date: '2026-12-21T18:00:00Z', created_at: '2026-11-20T10:00:00Z' },
-    ], nov, clients, new Set(), new Date('2026-12-01T00:00:00Z'));
-    expect(plan.cancel).toEqual([]);
+  it('leaves an already-linked row alone (instance id, or a series with live occurrences)', () => {
+    const plan = planLinks([
+      { id: 'a', client_id: 'c-paul', session_date: '2026-11-24T19:00:00Z', gcal_event_id: 'paul_20261124T190000Z' },
+      { id: 'b', client_id: 'c-paul', session_date: '2026-12-01T19:00:00Z', gcal_event_id: 'paul' },
+    ], nov, clients, now);
+    expect(plan.link).toEqual([]);
   });
 
-  it('does not link a duplicate onto a slot a linked row already holds', () => {
-    const plan = planUnlinkedRepairs([
-      { id: 'dup', client_id: 'c-paul', session_date: '2026-11-24T19:00:00Z', created_at: old },
-    ], nov, clients, new Set(['c-paul@2026-11-24T19:00']), now);
-    expect(plan).toEqual({ link: [], cancel: [] });
+  it('does not link a twin row onto a slot another row already holds', () => {
+    const plan = planLinks([
+      { id: 'a', client_id: 'c-paul', session_date: '2026-11-24T19:00:00Z', gcal_event_id: 'paul_20261124T190000Z' },
+      { id: 'twin', client_id: 'c-paul', session_date: '2026-11-24T19:00:00Z', gcal_event_id: null },
+    ], nov, clients, now);
+    expect(plan.link).toEqual([]);
   });
 
-  it('never acts on an empty calendar', () => {
-    const plan = planUnlinkedRepairs([
-      { id: 'x', client_id: 'c-paul', session_date: '2026-11-23T18:00:00Z', created_at: old },
-    ], [], clients, new Set(), now);
-    expect(plan).toEqual({ link: [], cancel: [] });
-  });
-
-  it('ignores all-day events and personal events naming a client', () => {
-    const plan = planUnlinkedRepairs([
-      { id: 'x', client_id: 'c-jane', session_date: '2026-11-27T17:00:00Z', created_at: old },
+  it('ignores past sessions, all-day items and personal events naming a client', () => {
+    const plan = planLinks([
+      { id: 'past', client_id: 'c-paul', session_date: '2026-11-16T19:00:00Z', gcal_event_id: null },
+      { id: 'jd', client_id: 'c-jane', session_date: '2026-11-27T17:00:00Z', gcal_event_id: null },
     ], [
       { id: 'a', start: '2026-11-27', end: '2026-11-28', title: 'Jane Durnin session', allDay: true },
-      { id: 'b', start: '2026-11-25T12:00:00Z', end: '2026-11-25T13:00:00Z', title: 'Coffee Jane' },
-    ], clients, new Set(), now);
-    expect(plan).toEqual({ link: [], cancel: [] });
+      { id: 'b', start: '2026-11-27T17:00:00Z', end: '2026-11-27T18:00:00Z', title: 'Coffee Jane' },
+    ], clients, now);
+    expect(plan.link).toEqual([]);
   });
 });

@@ -16,6 +16,7 @@ import { SettingsPanel } from './SettingsPanel';
 import { StatementImport } from './StatementImport';
 import { NewClientModal } from './NewClientModal';
 import { ScheduleSessionModal } from './ScheduleSessionModal';
+import type { DriftItem } from '@/lib/calendarDrift';
 import { SessionEditModal } from './SessionEditModal';
 import { GcalEventEditModal } from './GcalEventEditModal';
 import { MfaModal } from './MfaModal';
@@ -61,6 +62,8 @@ export function AdminShell() {
   const [tokens, setTokens] = useState<TokenRow[]>([]);
   const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  // Where Google Calendar disagrees with the app (the app is the diary).
+  const [drift, setDrift] = useState<DriftItem[]>([]);
   const [calStatus, setCalStatus] = useState<CalendarStatus | null>(null);
 
   const [openClient, setOpenClient] = useState<ClientRow | null>(null);
@@ -147,13 +150,14 @@ export function AdminShell() {
         const calStatusJson = (await calStatusRes.json()) as CalendarStatus;
         setCalStatus(calStatusJson);
         connected = calStatusJson.connected;
-        if (!connected) setEvents([]);
+        if (!connected) { setEvents([]); setDrift([]); }
       }
       if (connected) {
         const evRes = await adminFetch(`/api/admin/calendar?weekOffset=${weekOffset}`);
         if (evRes.ok) {
           const evJson = await evRes.json();
           setEvents(evJson.events ?? []);
+          setDrift(evJson.drift ?? []);
           // The calendar call reconciles Google → sessions. The client list
           // above was fetched in parallel (before that sync), so if the sync
           // changed anything, reload it now — otherwise a Google-side delete or
@@ -193,6 +197,7 @@ export function AdminShell() {
       if (!evRes.ok || cancelled) return;
       const evJson = await evRes.json();
       setEvents(evJson.events ?? []);
+      setDrift(evJson.drift ?? []);
     })();
     return () => { cancelled = true; };
   }, [weekOffset, calStatus?.connected]);
@@ -219,6 +224,7 @@ export function AdminShell() {
     await adminFetch('/api/auth/google/disconnect', { method: 'POST' });
     setCalStatus({ connected: false });
     setEvents([]);
+    setDrift([]);
   }
 
   return (
@@ -279,6 +285,7 @@ export function AdminShell() {
               clients={clients}
               tokens={tokens}
               events={events}
+              drift={drift}
               calendarStatus={calStatus}
               onReload={reload}
               onConnectCalendar={connectCalendar}
