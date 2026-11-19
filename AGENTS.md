@@ -43,13 +43,18 @@ docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
   auth/google, admin/calendar)
 - Supabase tables clients, sessions, intake_submissions, intake_tokens already
   exist — don't recreate them
-- Google Calendar is two-way: the app reads events for the week view AND writes
-  back — sessions/clients created, rescheduled or deleted in-app push to the
-  practice's primary calendar via createCalendarEvent / updateCalendarEvent /
-  deleteCalendarEvent in src/lib/googleOAuth.ts (OAuth scope calendar.events).
-  Exception: the reconcileCalendar sync job (src/lib/calendarSync.ts) is
-  deliberately read-only toward Google — it only updates Supabase — to avoid
-  sync loops; keep it that way.
+- **The app is the source of truth for the schedule; Google Calendar mirrors
+  it (19 Nov 2026).** App changes (book, move, edit, cancel) push to the
+  practice's primary calendar for that one session's event only
+  (src/lib/googleSessionEvents.ts; a repeating series' stored id is resolved
+  to the occurrence first, never the whole series). Google never changes a
+  session: `reconcileCalendar` (src/lib/calendarSync.ts) only reads events and
+  links sessions to the events they match. Differences are found by
+  src/lib/calendarDrift.ts and shown on the dashboard for the owner to
+  resolve with a tap (src/lib/calendarFix.ts); only a failed write from the
+  last 7 days is retried automatically. Keep it that way: no job may import,
+  cancel or move sessions from Google (that is what made edits "sometimes"
+  appear and left stale rows).
 
 ## Working practices (learned from past sessions — follow these)
 - **Ship flow:** `/check` → (`/preview` if UI is visible) → `/ship`. The
@@ -97,10 +102,8 @@ Full detail in **docs/OPERATIONS.md**. The must-knows:
   part plus "session"/"client" ("Philip client"). A bare first name ("Walk
   Kate") never matches, and all-day events are never sessions — loose matching
   once turned personal events into sessions that emailed clients. One matcher
-  (`matchOneActiveClient`) serves import, auto-cancel and reminder confirmation.
-- **Moved recurring occurrences** now move the session (matched on Google's
-  `originalStartTime`), keeping its format/fee/payment, instead of cancel +
-  blank re-import.
+  (`matchOneActiveClient`) serves linking, difference detection and reminder
+  confirmation.
 - **Signing keys:** admin cookies and opt-out links are signed with keys derived
   from a server-only secret (`src/lib/signingKeys.ts`), never the admin
   password — so the password alone can't forge a session past 2FA.

@@ -199,7 +199,7 @@ export async function GET(req: NextRequest) {
   try {
     const outcome = await reconcileCalendar(gcal, startOfToday, endOfToday);
     calEvents = outcome.events;
-    console.log(`[reminders-cron] calendar synced: imported ${outcome.imported}, cancelled ${outcome.cancelled}, conflictsFixed ${outcome.conflictsFixed}`);
+    console.log(`[reminders-cron] calendar read: ${outcome.events.length} event(s), linked ${outcome.linked}, truncated ${outcome.truncated}`);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[reminders-cron] ABORT: calendar sync failed — sending nothing:', msg);

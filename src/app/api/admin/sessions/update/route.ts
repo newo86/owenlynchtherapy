@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
-import { updateCalendarEvent } from '@/lib/googleOAuth';
-import { localDublinToUtcIso, utcToDublinLocal } from '@/lib/dateUtils';
+import { moveSessionEvent, removeSessionEvent, addSessionEvent, type GoogleResult } from '@/lib/googleSessionEvents';
+import { sessionEventFields } from '@/lib/calendarFix';
+import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { sessionKind, ONLINE_LOCATION, ONLINE_JOIN_LINE, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
@@ -186,27 +187,53 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Sync to Google Calendar if the event is linked and any GCal-relevant field changed.
-  const gcalNeedsUpdate = !!(existing.gcal_event_id && (newWallClock || sessionPatch.session_format || clientPatch.full_name));
-  if (gcalNeedsUpdate) {
-    const format = (sessionPatch.session_format ?? existing.session_format) as string;
-    const location = format === 'in_person'
-      ? INSIGHT_MATTERS_ADDRESS
-      : ONLINE_LOCATION;
-    const clientName = (clientPatch.full_name ?? body.client_name ?? 'Client') as string;
-    const startIso = newWallClock ?? utcToDublinLocal(existing.session_date);
-    try {
-      await updateCalendarEvent(existing.gcal_event_id, {
-        summary: `Session — ${clientName}`,
-        description: format === 'online' ? ONLINE_JOIN_LINE : undefined,
-        location,
-        startIso,
-        durationMinutes: 50,
+  // Mirror the change to Google Calendar. The app is the source of truth;
+  // Google follows it, and only THAT session's event is touched (a session
+  // booked as part of a repeating series is moved or removed on its own, never
+  // the whole series). If Google can't be reached the change is still saved
+  // here, the response says so, and the dashboard lists the difference.
+  const oldRef = { gcal_event_id: (existing.gcal_event_id as string | null) ?? null, session_date: existing.session_date as string };
+  const wasCancelled = existing.status === 'cancelled';
+  const nowCancelled = (sessionPatch.status ?? existing.status) === 'cancelled';
+  const gcalFieldsChanged = !!(newWallClock || sessionPatch.session_format || clientPatch.full_name);
+  let google: GoogleResult | null = null;
+
+  if (nowCancelled && !wasCancelled) {
+    google = await removeSessionEvent(oldRef);
+  } else if (!nowCancelled && (wasCancelled || gcalFieldsChanged)) {
+    const { data: cRow } = await supabaseAdmin.from('clients').select('full_name').eq('id', client_id).maybeSingle();
+    const merged = {
+      session_date: (sessionPatch.session_date as string | undefined) ?? (existing.session_date as string),
+      session_format: (sessionPatch.session_format as string | undefined) ?? (existing.session_format as string),
+      location: (sessionPatch.location as string | undefined) ?? (existing.location as string | null),
+      fee: (sessionPatch.fee as number | undefined) ?? (existing.fee as number),
+    };
+    const fields = sessionEventFields(merged, (cRow?.full_name as string | undefined) ?? 'Client');
+    if (oldRef.gcal_event_id && !wasCancelled) {
+      google = await moveSessionEvent(oldRef, {
+        summary: fields.summary,
+        description: merged.session_format === 'online' ? ONLINE_JOIN_LINE : undefined,
+        location: fields.location,
+        ...(newWallClock ? { startLocal: newWallClock, minutes: fields.minutes } : {}),
       });
-    } catch (calErr) {
-      console.error('[sessions/update] gcal update error:', calErr);
+    } else {
+      // Brought back from cancelled, or never reached Google: create it now,
+      // but only for a live, upcoming session (not an old finished one).
+      const live = (sessionPatch.status ?? existing.status) === 'scheduled' && new Date(merged.session_date).getTime() > Date.now();
+      if (live) {
+        google = await addSessionEvent(fields);
+        if (google.ok && google.eventId) {
+          // Conditional: if something linked the session meanwhile, undo ours.
+          let q = supabaseAdmin.from('sessions').update({ gcal_event_id: google.eventId }).eq('id', session_id);
+          q = oldRef.gcal_event_id ? q.eq('gcal_event_id', oldRef.gcal_event_id) : q.is('gcal_event_id', null);
+          const { data: linked } = await q.select('id');
+          if (!linked?.length) await removeSessionEvent({ gcal_event_id: google.eventId, session_date: merged.session_date });
+        }
+      }
     }
   }
+  const calendar = google === null ? 'unchanged' : google.ok ? 'ok' : google.reason === 'not_connected' ? 'not_connected' : 'failed';
+  if (google && !google.ok) console.error('[sessions/update] google not updated:', google.reason, google.message ?? '');
 
-  return NextResponse.json({ ok: true }, { headers: noCache });
+  return NextResponse.json({ ok: true, calendar }, { headers: noCache });
 }

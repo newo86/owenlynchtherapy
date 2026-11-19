@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { deleteCalendarEvent } from '@/lib/googleOAuth';
+import { removeSessionEvent } from '@/lib/googleSessionEvents';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -36,8 +37,13 @@ export async function POST(req: NextRequest) {
     .eq('id', session_id!)
     .single();
 
+  // Remove only THIS session's event. A session booked as part of a repeating
+  // series stores the series id; deleting that id would delete every session in
+  // the series in Google, so it is resolved to this occurrence first.
+  let calendar: 'ok' | 'failed' | 'not_connected' = 'ok';
   if (sessionRow?.gcal_event_id) {
-    await deleteCalendarEvent(sessionRow.gcal_event_id);
+    const r = await removeSessionEvent({ gcal_event_id: sessionRow.gcal_event_id, session_date: sessionRow.session_date });
+    if (!r.ok) calendar = r.reason === 'not_connected' ? 'not_connected' : 'failed';
   }
 
   // Soft-delete: mark the session 'cancelled' rather than hard-deleting it.
@@ -78,5 +84,5 @@ export async function POST(req: NextRequest) {
   }
 
   console.log('[sessions/delete] cancelled session(s):', session_id, '· rows:', cancelled);
-  return NextResponse.json({ success: true, cancelled }, { headers: noCache });
+  return NextResponse.json({ success: true, cancelled, calendar }, { headers: noCache });
 }

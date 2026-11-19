@@ -123,6 +123,14 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
 - **New client-data tables** are added to `TABLES` in
   `src/app/api/admin/backup/route.ts` and are removed by client delete and the
   7-year purge (`on delete cascade` or an explicit delete).
+- **Acting on a calendar event or session:** an endpoint takes only an opaque
+  key from the browser, recomputes the target server-side
+  (`/api/admin/calendar/fix`), and makes every write that follows an external
+  API call conditional (`.eq('status', …)`, `.is('gcal_event_id', null)`), so a
+  slow or repeated call can't overwrite or duplicate. Google never changes the
+  schedule on its own; the app is the source of truth.
+- **Any automated change to client records** (cancel, merge, move) leaves a
+  trace naming the rows and the reason, and alerts the practitioner.
 
 ### Input handling and injection
 15. **Path traversal**: no file path built from user input
