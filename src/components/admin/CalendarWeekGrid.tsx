@@ -87,7 +87,7 @@ function buildClickIsoAt(day: Date, hour: number): string {
   return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}T${pad(hour)}:00`;
 }
 
-interface MergedEvent {
+export interface MergedEvent {
   time: string;
   label: string;
   accent: Accent;
@@ -99,6 +99,57 @@ interface MergedEvent {
   client?: ClientRow;
   gcalId?: string;
   gcalLocation?: string;
+}
+
+/** Everything on one day: sessions (de-duplicated) plus Google events that
+ *  aren't a session's own copy. Shared by the week and month views so they
+ *  always agree. */
+export function mergedEventsForDay(clients: ClientRow[], events: CalendarEvent[], day: Date): MergedEvent[] {
+  const matched = new Set<string>();
+  const out: MergedEvent[] = [];
+
+  for (const c of clients) {
+    // Collapse duplicate rows (recurring-sync artefact) to the best one —
+    // prefers the paid/attended row so a paid session never shows as unpaid.
+    for (const s of dedupeSessions(c.sessions)) {
+      const d = new Date(s.session_date);
+      if (!isSameDay(d, day) || s.status === 'cancelled') continue;
+      const ev = events.find(e => {
+        if (s.gcal_event_id && s.gcal_event_id === e.id) return true;
+        const eStart = new Date(e.start);
+        if (!isSameDay(eStart, d)) return false;
+        const sameTitle = e.title?.toLowerCase().includes(c.full_name.toLowerCase().split(' ')[0]);
+        const closeInTime = Math.abs(eStart.getTime() - d.getTime()) < 30 * 60 * 1000;
+        return sameTitle || closeInTime;
+      });
+      if (ev) matched.add(ev.id);
+      out.push({
+        time: formatTime(s.session_date),
+        label: c.full_name,
+        accent: accentForSession(s, c),
+        start: s.session_date,
+        format: s.session_format,
+        session: s,
+        client: c,
+      });
+    }
+  }
+
+  for (const e of events) {
+    if (matched.has(e.id)) continue;
+    if (!isSameDay(new Date(e.start), day)) continue;
+    out.push({
+      time: formatTime(e.start),
+      label: e.title || '(no title)',
+      accent: 'e-lilac',
+      start: e.start,
+      end: e.end,
+      gcalId: e.id,
+      gcalLocation: e.location,
+    });
+  }
+
+  return out.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 }
 
 export interface CalendarWeekGridProps {
@@ -270,53 +321,7 @@ export function CalendarWeekGrid({
     });
   }, [clients]);
 
-  function eventsForDay(day: Date): MergedEvent[] {
-    const matched = new Set<string>();
-    const out: MergedEvent[] = [];
-
-    for (const c of clients) {
-      // Collapse duplicate rows (recurring-sync artefact) to the best one —
-      // prefers the paid/attended row so a paid session never shows as unpaid.
-      for (const s of dedupeSessions(c.sessions)) {
-        const d = new Date(s.session_date);
-        if (!isSameDay(d, day) || s.status === 'cancelled') continue;
-        const ev = events.find(e => {
-          if (s.gcal_event_id && s.gcal_event_id === e.id) return true;
-          const eStart = new Date(e.start);
-          if (!isSameDay(eStart, d)) return false;
-          const sameTitle = e.title?.toLowerCase().includes(c.full_name.toLowerCase().split(' ')[0]);
-          const closeInTime = Math.abs(eStart.getTime() - d.getTime()) < 30 * 60 * 1000;
-          return sameTitle || closeInTime;
-        });
-        if (ev) matched.add(ev.id);
-        out.push({
-          time: formatTime(s.session_date),
-          label: c.full_name,
-          accent: accentForSession(s, c),
-          start: s.session_date,
-          format: s.session_format,
-          session: s,
-          client: c,
-        });
-      }
-    }
-
-    for (const e of events) {
-      if (matched.has(e.id)) continue;
-      if (!isSameDay(new Date(e.start), day)) continue;
-      out.push({
-        time: formatTime(e.start),
-        label: e.title || '(no title)',
-        accent: 'e-lilac',
-        start: e.start,
-        end: e.end,
-        gcalId: e.id,
-        gcalLocation: e.location,
-      });
-    }
-
-    return out.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-  }
+  function eventsForDay(day: Date): MergedEvent[] { return mergedEventsForDay(clients, events, day); }
 
   const clickable = !!onScheduleDay;
   const gcalEditable = !!onEditGcalEvent;
