@@ -27,8 +27,15 @@ function isOwed(s: SessionRow): boolean {
 }
 
 export function CalendarLegend() {
+  // On phones the key is a small "Key" toggle (CSS hides the toggle on desktop,
+  // where the key is always shown), so it doesn't push the diary down.
+  const [open, setOpen] = useState(false);
   return (
-    <div className="admin-cal-legend" aria-label="Calendar key">
+    <>
+    <button type="button" className="admin-cal-key-toggle" aria-expanded={open} onClick={() => setOpen(o => !o)}>
+      {open ? 'Hide key' : 'Key'}
+    </button>
+    <div className={`admin-cal-legend${open ? ' is-open' : ''}`} aria-label="Calendar key">
       <span><i className="sw e-sage" />In person</span>
       <span><i className="sw e-online" />Online</span>
       <span><i className="sw e-gold" />Low cost</span>
@@ -36,6 +43,7 @@ export function CalendarLegend() {
       <span><i className="dot" style={{ background: '#4F8A68' }} />Reminder sent</span>
       <span><i className="dot" style={{ background: 'var(--terracotta)' }} />Not paid</span>
     </div>
+    </>
   );
 }
 

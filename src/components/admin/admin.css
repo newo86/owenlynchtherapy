@@ -2252,3 +2252,37 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
 @media (max-width: 768px) {
   .admin-foot { display: none; }
 }
+
+/* ── Calm phone headers (the diary comes first) ───────────────────────────
+   Phones only. Every section used to open with a title, the date, a status
+   pill and a button before any content. Now: just the title; the connection
+   status only matters when something is wrong, and Add client lives on the
+   Clients tab. The Calendar's controls become two tidy rows and the colour
+   key folds away behind "Key". */
+.admin-cal-key-toggle { display: none; }
+@media (max-width: 768px) {
+  .admin-topbar { margin-bottom: 14px; gap: 8px; }
+  .admin-topbar .admin-h1 { font-size: 30px; margin: 0; }
+  .admin-topbar .admin-subline { display: none; }
+  .admin-topbar .admin-status-pill,
+  .admin-topbar .admin-btn-primary { display: none; }
+  .admin-hide-phone { display: none; }
+
+  /* Calendar controls: [List | Calendar]   [+ Schedule]
+                         ‹      16–22 Nov 2026      ›              */
+  .admin-cal-controls { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; gap: 10px !important; align-items: center; }
+  .admin-cal-view { grid-column: 1; grid-row: 1; justify-self: start; }
+  .admin-cal-actions { grid-column: 2; grid-row: 1; margin: 0 !important; }
+  .admin-cal-actions .admin-cal-addclient { display: none; }
+  .admin-cal-weeknav, .admin-cal-filters { grid-column: 1 / -1; grid-row: 2; margin: 0 !important; }
+  .admin-cal-weeknav { justify-content: space-between; }
+  .admin-cal-weeknav > div:not([class]) { min-width: 0 !important; flex: 1; }
+  .admin-cal-filters { flex-wrap: wrap; justify-self: stretch; }
+
+  /* Colour key: folded away until asked for. */
+  .admin-cal-key-toggle {
+    display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; padding: 0 4px; margin: 0 0 4px;
+    border: 0; background: none; font-family: inherit; font-size: 13px; color: var(--ink-muted); cursor: pointer;
+  }
+  .admin-cal-legend:not(.is-open) { display: none; }
+}

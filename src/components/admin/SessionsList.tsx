@@ -194,8 +194,8 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
   return (
     <>
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-        <div className="admin-segmented">
+      <div className="admin-cal-controls" style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <div className="admin-segmented admin-cal-view">
           {([
             { id: 'list', label: 'List', Icon: List },
             { id: 'calendar', label: 'Calendar', Icon: CalendarRange },
@@ -211,7 +211,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
         </div>
 
         {view === 'list' && (
-          <div className="admin-segmented">
+          <div className="admin-segmented admin-cal-filters">
             {([
               { id: 'all',              label: 'All' },
               { id: 'unpaid',           label: 'Unpaid' },
@@ -229,7 +229,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
         )}
 
         {view === 'calendar' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+          <div className="admin-cal-weeknav" style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
             <button onClick={() => onWeekOffsetChange(weekOffset - 1)} className="admin-btn-secondary" aria-label="Previous week">
               <ChevronLeft size={13} />
             </button>
@@ -250,15 +250,15 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
         )}
 
         {(onScheduleDay || onNewClient) && (
-          <div style={{ display: 'flex', gap: 8, marginLeft: view === 'list' ? 'auto' : undefined }}>
+          <div className="admin-cal-actions" style={{ display: 'flex', gap: 8, marginLeft: view === 'list' ? 'auto' : undefined }}>
             {onNewClient && (
-              <button onClick={onNewClient} className="admin-btn-secondary">
+              <button onClick={onNewClient} className="admin-btn-secondary admin-cal-addclient">
                 + Add client
               </button>
             )}
             {onScheduleDay && (
               <button onClick={() => onScheduleDay(buildClickIso(new Date()))} className="admin-btn-primary">
-                + Schedule session
+                + Schedule<span className="admin-hide-phone"> session</span>
               </button>
             )}
           </div>
