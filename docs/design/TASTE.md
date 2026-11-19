@@ -67,6 +67,15 @@ welcome if it never shouts.
   browser with pretend data and measuring overflow on every screen, not by
   eye on one screen (Nov 2026, dashboard)
 
+- The phone dashboard is one calm system (Nov 2026, "apply it throughout, think
+  Apple or Google design"): a plain title with no date, status pill or
+  header buttons; one primary action per screen; full-width segmented
+  controls; pop-ups as bottom sheets (grab handle, light header, one close
+  button, no letter-spaced label); lists as compact cards, never tables;
+  text 16px, captions 14px+, no tracked-out capitals, secondary text dark
+  enough to read; rare actions as quiet text buttons. All of it lives in the
+  phone blocks at the end of `src/components/admin/admin.css`.
+
 ## Dislikes
 - Heavy, dark drop shadows under cards: he wants cards lifted, not
   floating (a hairline edge plus a short soft shadow), site-wide (Nov 2026,

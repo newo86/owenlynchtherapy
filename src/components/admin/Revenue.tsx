@@ -233,8 +233,8 @@ export function Revenue({ clients }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Period selector */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-        <div className="admin-segmented">
+      <div className="admin-rev-controls" style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        <div className="admin-segmented admin-rev-period">
           {([
             { id: 'week',  label: 'This week' },
             { id: 'month', label: 'This month' },
@@ -249,7 +249,7 @@ export function Revenue({ clients }: Props) {
           ))}
         </div>
 
-        <div className="admin-segmented" style={{ marginLeft: 'auto' }}>
+        <div className="admin-segmented admin-rev-basis" style={{ marginLeft: 'auto' }}>
           {([
             { id: 'paid',     label: 'Earned (paid)' },
             { id: 'attended', label: 'Billed (attended)' },
@@ -263,17 +263,17 @@ export function Revenue({ clients }: Props) {
         </div>
 
         <button
-          className="admin-btn-secondary"
+          className="admin-btn-secondary admin-rev-action"
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}
           onClick={exportCsv}
           title="Downloads the sessions behind the numbers on screen (current period and basis) as a spreadsheet. Low-cost sessions are excluded."
         >
           <Download size={12} strokeWidth={1.8} />
-          CSV for accountant
+          CSV<span className="admin-hide-phone"> for accountant</span>
         </button>
 
         <button
-          className="admin-btn-secondary"
+          className="admin-btn-secondary admin-rev-action"
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12 }}
           disabled={reportStatus === 'sending'}
           onClick={async () => {
@@ -291,7 +291,7 @@ export function Revenue({ clients }: Props) {
           {reportStatus === 'sending' ? 'Sending…'
             : reportStatus === 'sent'  ? 'Sent!'
             : reportStatus === 'error' ? 'Failed'
-            : 'Email weekly report'}
+            : <>Email<span className="admin-hide-phone"> weekly</span> report</>}
         </button>
       </div>
 

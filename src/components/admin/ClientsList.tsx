@@ -66,11 +66,11 @@ export function ClientsList({ clients, submissions, onOpen, onNewClient, onSched
         </div>
 
         <div style={{ display: 'flex', gap: 8, marginLeft: 'auto' }}>
-          <button onClick={onScheduleSession} className="admin-btn-secondary" title="Schedule a session for an existing client">
+          <button onClick={onScheduleSession} className="admin-btn-secondary admin-hide-phone" title="Schedule a session for an existing client">
             + Add
           </button>
           <button onClick={onNewClient} className="admin-btn-primary" title="Create a brand new client">
-            + New
+            + New<span className="admin-show-phone"> client</span>
           </button>
         </div>
       </div>
@@ -117,7 +117,7 @@ export function ClientsList({ clients, submissions, onOpen, onNewClient, onSched
                       }}
                     >{c.full_name}</div>
                     <div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 2 }}>
-                      {age != null ? `Age ${age}` : 'Age not on file'}
+                      {age != null ? `Age ${age}` : <span className="admin-hide-phone">Age not on file</span>}
                     </div>
                   </div>
                 </div>

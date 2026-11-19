@@ -2286,3 +2286,258 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
   }
   .admin-cal-legend:not(.is-open) { display: none; }
 }
+
+/* ── Phone layout system: bottom sheets, full-width segments, compact rows ── */
+@keyframes admin-sheet-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: none; }
+}
+.admin-show-phone { display: none; }
+@media (max-width: 768px) {
+  .admin-show-phone { display: inline; }
+
+  /* One gutter and one rhythm: 16 page gutter, 12 between neighbours, 24 between groups. */
+  .admin-main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+  /* Segmented controls span the width (iOS), buttons share it equally. */
+  .admin-segmented:not(.admin-cal-view) { display: flex; width: 100%; box-sizing: border-box; }
+  .admin-segmented:not(.admin-cal-view) .admin-segmented-btn { flex: 1 1 0; justify-content: center; text-align: center; padding-left: 6px; padding-right: 6px; }
+  .admin-cal-filters { flex-wrap: wrap; }
+  .admin-cal-filters .admin-segmented-btn { flex: 1 1 auto; }
+
+  /* Pop-ups become bottom sheets: grabber, light header, one close button. */
+  .admin-sheet:not(.admin-sheet-flow) {
+    top: auto !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+    transform: none !important; width: 100% !important; max-width: none !important;
+    max-height: 92dvh !important; border-radius: 20px 20px 0 0 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    animation: admin-sheet-up 240ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+  .admin-sheet-overlay { align-items: flex-end !important; padding: 0 !important; }
+  .admin-sheet.admin-sheet-flow {
+    width: 100% !important; max-height: 92dvh !important; border-radius: 20px 20px 0 0 !important;
+    animation: admin-sheet-up 240ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  }
+  .admin-sheet-head {
+    position: relative; background: transparent !important; border-radius: 0 !important;
+    padding: 24px 8px 8px 20px !important; gap: 12px;
+  }
+  .admin-sheet-head::before {
+    content: ''; position: absolute; top: 8px; left: 50%; width: 36px; height: 5px;
+    border-radius: 3px; background: rgba(42, 77, 60, 0.22); transform: translateX(-50%);
+  }
+  .admin-sheet-head, .admin-sheet-head *:not(.admin-avatar) { color: var(--forest-deep) !important; }
+  .admin-sheet-eyebrow { display: none !important; }
+  .admin-sheet-title { font-size: 24px !important; margin: 0 !important; }
+  .admin-sheet-head button { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .admin-sheet > div:not(.admin-sheet-head) { padding-left: 20px !important; padding-right: 20px !important; }
+
+  /* Calendar list: one compact card per session, not a table of labels. */
+  .admin-table.is-sessions tr { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+  .admin-table.is-sessions td { display: block !important; padding: 0 !important; }
+  .admin-table.is-sessions td::before { display: none !important; }
+  .admin-table.is-sessions .st-client { flex: 1 0 100%; }
+  .admin-table.is-sessions .st-client > div > div > div:nth-child(2) { display: none; }
+  .admin-table.is-sessions .st-when { font-weight: 500; flex: 0 0 auto; }
+  .admin-table.is-sessions .st-format, .admin-table.is-sessions .st-fee { flex: 0 0 auto; color: var(--ink-muted); }
+  .admin-table.is-sessions .st-pay, .admin-table.is-sessions .st-status { flex: 0 0 auto; }
+  .admin-table.is-sessions .st-pay > span:not(.admin-tag),
+  .admin-table.is-sessions .st-status > span:not(.admin-tag) { display: none; }
+  .admin-table.is-sessions .st-actions { flex: 1 0 100%; padding-top: 8px !important; }
+
+  /* Money: segments on their own rows, rare actions as quiet text buttons. */
+  .admin-rev-controls { display: grid !important; grid-template-columns: 1fr 1fr; gap: 12px !important; }
+  .admin-rev-period, .admin-rev-basis { grid-column: 1 / -1; margin: 0 !important; }
+  .admin-rev-action {
+    background: transparent !important; border: 0 !important; box-shadow: none !important;
+    justify-content: flex-start; padding-left: 4px !important; color: var(--ink-muted) !important;
+  }
+  .admin-stat { padding: 18px 18px 16px; border-radius: 18px; }
+  .admin-stat-value { font-size: 44px; }
+  .admin-stat-value-prefix { font-size: 24px; }
+
+  /* Client cards: the name and what's next, nothing else. */
+  .admin-client-card { padding: 14px 16px; gap: 8px; }
+}
+
+/* ── Readable phone type (Apple HIG / Material: body 16, captions 14+) ───────
+   Generated from the sizes in this file; phones only. Captions and meta that
+   were 10-12.5px are 14px, 13px text is 15px, 14-15px text is 16px. Labels are
+   plain (no tracked-out capitals) and secondary text is darker so it passes
+   contrast. Inline sizes in components are matched by attribute below. */
+@media (max-width: 768px) {
+  .admin-root { --ink-muted: #4f5f55; }
+  .admin-bar-label,
+  .admin-bar-value,
+  .admin-btn-compact,
+  .admin-choice-sub,
+  .admin-clientrow-meta,
+  .admin-day-name,
+  .admin-event-empty,
+  .admin-event-flash,
+  .admin-event-name,
+  .admin-event-time,
+  .admin-hours-kind,
+  .admin-hours-state,
+  .admin-hours-timeline-labels,
+  .admin-label,
+  .admin-nav-label,
+  .admin-nextup-chip,
+  .admin-nextup-ghost,
+  .admin-qa-bar span,
+  .admin-qa-count,
+  .admin-qa-dot span,
+  .admin-qa-foot,
+  .admin-qa-gap,
+  .admin-qa-step dt,
+  .admin-qa-top em,
+  .admin-revenue-delta,
+  .admin-session-feedback,
+  .admin-session-meta,
+  .admin-session-room,
+  .admin-session-sent,
+  .admin-session-time-meridiem,
+  .admin-stat-delta,
+  .admin-stat-foot,
+  .admin-status-pill,
+  .admin-tag,
+  .admin-task-body,
+  .admin-task-cta,
+  .admin-task-eyebrow,
+  .admin-tgrid-axis span,
+  .admin-tgrid-day .name,
+  .admin-week-sum span {
+    font-size: 14px;
+  }
+  .admin-accred-hint,
+  .admin-btn-primary,
+  .admin-btn-secondary,
+  .admin-event-peek,
+  .admin-eyebrow,
+  .admin-formlib-sub,
+  .admin-formlib-text span,
+  .admin-health,
+  .admin-hours-attention-head,
+  .admin-hours-bar-row,
+  .admin-hours-body p,
+  .admin-hours-form label,
+  .admin-hours-log li,
+  .admin-hours-msg,
+  .admin-hours-note,
+  .admin-link,
+  .admin-nextup-feedback,
+  .admin-nextup-head span,
+  .admin-nextup-meta,
+  .admin-qa-additional span,
+  .admin-qa-chips button,
+  .admin-qa-field > span,
+  .admin-qa-items,
+  .admin-qa-legend,
+  .admin-qa-linklabel,
+  .admin-qa-linkrow code,
+  .admin-qa-muted,
+  .admin-qa-rank,
+  .admin-qa-scalefoot,
+  .admin-qa-testbar .admin-link,
+  .admin-qa-top span,
+  .admin-segmented-btn,
+  .admin-session-row .admin-session-meta,
+  .admin-stat-label,
+  .admin-subline,
+  .admin-week-next .when,
+  .admin-week-other {
+    font-size: 15px;
+  }
+  .admin-accred-row,
+  .admin-attn-list li,
+  .admin-banner,
+  .admin-choice-title,
+  .admin-clientrow-name,
+  .admin-empty,
+  .admin-event-peek-name,
+  .admin-formlib-text b,
+  .admin-hours-attention p,
+  .admin-hours-form input,
+  .admin-hours-form select,
+  .admin-hours-intro,
+  .admin-hours-row,
+  .admin-hours-subhead,
+  .admin-input,
+  .admin-nextup-note,
+  .admin-qa-additional b,
+  .admin-qa-areahead,
+  .admin-qa-bulklist li,
+  .admin-qa-bulkpick,
+  .admin-qa-bulksummary,
+  .admin-qa-note,
+  .admin-qa-pending li,
+  .admin-qa-poles,
+  .admin-qa-quote,
+  .admin-qa-ratings,
+  .admin-qa-result p,
+  .admin-qa-seg button,
+  .admin-qa-select,
+  .admin-qa-step dd,
+  .admin-qa-sub,
+  .admin-qa-summary,
+  .admin-qa-tab,
+  .admin-qa-tally li,
+  .admin-qa-testbar,
+  .admin-qa-top b,
+  .admin-session-name,
+  .admin-session-row .admin-session-name,
+  .admin-textarea,
+  .admin-week-next button,
+  details.admin-qa-block summary {
+    font-size: 16px;
+  }
+  .admin-event-flash,
+  .admin-revenue-value,
+  .admin-session-time,
+  .admin-stat-delta,
+  .admin-stat-value,
+  .admin-task-title {
+    text-transform: none; letter-spacing: 0;
+  }
+  /* Inline sizes/labels set in components */
+  .admin-root [style*="font-size: 10px"], .admin-root [style*="font-size: 10.5px"],
+  .admin-root [style*="font-size: 11px"], .admin-root [style*="font-size: 11.5px"],
+  .admin-root [style*="font-size: 12px"], .admin-root [style*="font-size: 12.5px"] { font-size: 14px !important; }
+  .admin-root [style*="font-size: 13px"], .admin-root [style*="font-size: 13.5px"] { font-size: 15px !important; }
+  .admin-root [style*="font-size: 14px"] { font-size: 16px !important; }
+  .admin-root [style*="letter-spacing"] { letter-spacing: 0 !important; }
+  .admin-root [style*="text-transform: uppercase"] { text-transform: none !important; }
+}
+
+/* Phone refinements (second pass after looking at every screen) */
+@media (max-width: 768px) {
+  .admin-segmented-btn { white-space: nowrap; }
+  .admin-rev-period .admin-segmented-btn { font-size: 14px; padding-left: 2px; padding-right: 2px; }
+  .admin-rev-action { white-space: nowrap; font-size: 15px !important; }
+  .admin-root .admin-link { min-width: 44px; justify-content: center; }
+
+  /* Session notes under the tags are secondary: keep the tags only. */
+  .admin-table.is-sessions .st-pay > span:not(.admin-tag),
+  .admin-table.is-sessions .st-status > span:not(.admin-tag) { display: none !important; }
+
+  /* Long email addresses get their own line instead of breaking mid-word. */
+  .admin-table td[data-label="Contact"], .admin-table td[data-label="Email"] { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+
+  /* Calendar list filters: one row of pills you can swipe, not a wrapped block. */
+  .admin-cal-filters {
+    overflow-x: auto; flex-wrap: nowrap; gap: 8px; padding: 0 !important;
+    background: none !important; border: 0 !important; box-shadow: none !important;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  }
+  .admin-cal-filters::-webkit-scrollbar { display: none; }
+  .admin-cal-filters .admin-segmented-btn {
+    flex: 0 0 auto; white-space: nowrap; padding: 0 16px; border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72); border: 1px solid var(--line);
+  }
+  .admin-cal-filters .admin-segmented-btn.is-active { background: var(--forest-deep); color: #fff; border-color: transparent; }
+
+  /* The differences list */
+  .drift-card .admin-h2 { font-size: 20px; }
+  .drift-actions .admin-btn-secondary { font-size: 15px !important; padding: 0 8px !important; }
+}
+@media (max-width: 768px) { .admin-segmented-btn { min-width: 44px; } }
