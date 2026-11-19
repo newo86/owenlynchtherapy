@@ -239,7 +239,10 @@ images, redirects, sitemap, analytics, and cookie controls.
   checklist). "New" markers only on request. Phone-first for tools he uses
   between sessions; design each phone screen from the moment it's used (the
   dashboard's phone home is only today's clients, a Schedule button and free
-  times), not by shrinking the desktop.
+  times), not by shrinking the desktop. Phone screens must fit an iPhone 16
+  (393pt) with nothing off the edge: 44pt targets, 16px text boxes, safe-area
+  insets, `dvh`, wide tables as stacked cards; verify by measuring overflow on
+  every real screen in a phone-sized browser.
 - **Dislikes:** anything that looks AI-made, especially common AI fonts
   and an eyebrow label over every heading.
 

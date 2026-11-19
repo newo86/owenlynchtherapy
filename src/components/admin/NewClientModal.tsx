@@ -351,7 +351,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
         boxShadow: '0 24px 64px rgba(42, 77, 60, 0.18)',
         zIndex: 100,
         width: 'min(640px, 92vw)',
-        maxHeight: '92vh',
+        maxHeight: '92dvh',
         overflowY: 'auto',
         animation: 'admin-pop-in 180ms ease',
       }}>

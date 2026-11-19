@@ -443,7 +443,7 @@ function DrillDownModal({ title, rows, onClose }: { title: string; rows: DrillRo
         background: 'white', borderRadius: 18,
         boxShadow: '0 24px 64px rgba(42,77,60,0.18)',
         zIndex: 120, width: 'min(580px, 92vw)',
-        maxHeight: '82vh', overflowY: 'auto',
+        maxHeight: '82dvh', overflowY: 'auto',
         animation: 'admin-pop-in 180ms ease',
       }}>
         <div style={{

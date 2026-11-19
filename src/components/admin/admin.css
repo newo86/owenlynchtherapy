@@ -70,6 +70,7 @@
 
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--cream);
   color: var(--ink);
   font-family: var(--font-poppins), system-ui, sans-serif;
@@ -135,6 +136,7 @@
   display: grid;
   grid-template-columns: 84px 1fr;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .admin-main {
@@ -1310,7 +1312,7 @@
   .admin-shell { grid-template-columns: minmax(0, 1fr); }
   .admin-sidebar { display: none; }
 
-  .admin-main { padding: 16px max(14px, env(safe-area-inset-left, 0px)) calc(96px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-right, 0px)); }
+  .admin-main { padding: calc(16px + env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-left, 0px)) calc(96px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-right, 0px)); }
 
   /* Headings scale down */
   .admin-h1 { font-size: 24px; }
@@ -1370,38 +1372,6 @@
 /* Slightly larger phones / small tablets keep 2-up stats */
 @media (min-width: 480px) and (max-width: 768px) {
   .admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-/* ── Mobile schedule FAB ───────────────────────────────────────────────────
-   Hidden on desktop (which has inline "+ Schedule session" buttons); on phones
-   it floats bottom-right as a large, thumb-reachable target. */
-.admin-fab {
-  display: none;
-}
-@media (max-width: 768px) {
-  .admin-fab {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    position: fixed;
-    right: 16px;
-    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
-    z-index: 80;
-    padding: 14px 20px 14px 16px;
-    border: none;
-    border-radius: 999px;
-    background: var(--terracotta);
-    color: #fff;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    box-shadow: 0 8px 24px rgba(200, 90, 27, 0.4);
-    cursor: pointer;
-  }
-  .admin-fab:active {
-    transform: scale(0.96);
-  }
 }
 
 /* ── Schedule chooser buttons (New vs Existing client) ─────────────────── */
@@ -1634,7 +1604,6 @@
 .admin-nextup-avatar { display: inline-flex; flex: none; }
 .admin-nextup-avatar > div { background: var(--gold) !important; color: var(--forest-deep) !important; }
 /* The More sheet sits above the Schedule button while it's open. */
-.admin-root:has(.admin-more-scrim) .admin-fab { display: none; }
 
 /* ── Hours (re-accreditation) ─────────────────────────────────────────── */
 .admin-hours { display: flex; flex-direction: column; gap: 20px; }
@@ -2223,3 +2192,58 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
 .drift-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
 .drift-actions .admin-btn-secondary { min-height: 44px; }
 .drift-problem { margin: 8px 0 0; font-size: 14px; color: #A04714; }
+
+/* ── iPhone fit (Apple HIG) ───────────────────────────────────────────────
+   Phones only. Nothing may sit off the right edge, every control is at least
+   44pt, text boxes are 16px so Safari never zooms the page in on tap, and wide
+   tables become stacked cards instead of scrolling sideways. */
+@media (max-width: 768px) {
+  .admin-root { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+  /* 16px stops iOS Safari zooming in when a box is tapped (it then feels cut off). */
+  .admin-root input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .admin-root select,
+  .admin-root textarea { font-size: 16px !important; min-height: 44px; }
+
+  /* 44pt minimum touch targets. */
+  .admin-root button,
+  .admin-root [role="button"],
+  .admin-root .admin-status-pill,
+  .admin-root .admin-segmented-btn { min-height: 44px; }
+  .admin-root .admin-link { display: inline-flex; align-items: center; min-height: 44px; }
+  .admin-root button:not(.admin-tab):not(.admin-client-card):not(.m-slot):not(.m-today-who):not(.m-client):not(.admin-more-item):has(> svg:only-child),
+  .admin-root .admin-event-action-btn { min-width: 44px; min-height: 44px; }
+
+  /* Tables → stacked cards. No sideways scrolling, every button reachable. */
+  .admin-table-wrap { overflow: visible; }
+  .admin-table { min-width: 0; background: transparent; box-shadow: none; border-radius: 0; display: block; }
+  .admin-table thead { display: none; }
+  .admin-table tbody { display: grid; gap: 10px; }
+  .admin-table tr {
+    display: block; background: #fff; border: 1px solid var(--line);
+    border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow-card);
+  }
+  .admin-table td {
+    display: block; padding: 5px 0; border: 0; font-size: 14px;
+    text-align: left !important; white-space: normal !important; min-width: 0; overflow-wrap: anywhere;
+  }
+  .admin-table td[data-label] { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+  .admin-table td[data-label]::before { content: attr(data-label); font-size: 12px; color: var(--ink-muted); }
+  .admin-table td[colspan] { text-align: center !important; }
+  .admin-table td:last-child:not([data-label]):not([colspan]) { padding-top: 10px; }
+  .admin-table td:last-child:not([data-label]) > div { display: flex !important; flex-wrap: wrap; justify-content: flex-start !important; gap: 8px !important; }
+  .admin-table td button { font-size: 14px !important; padding: 0 16px !important; flex: 1 1 auto; }
+  .admin-table td .pii[style*="maxWidth"], .admin-table td div[style*="max-width"] { max-width: none !important; }
+  .admin-table td[data-label] > .admin-tag { justify-self: start; }
+  .admin-table tr:hover td { background: transparent; }
+}
+
+/* Phone: the differences list is one line until tapped. */
+.drift-card.is-collapsed { padding: 0; }
+.drift-banner {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 0 16px;
+  background: none; border: 0; font-family: inherit; font-size: 15px; color: var(--ink); text-align: left; cursor: pointer;
+}
+.drift-banner-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--terracotta); flex: none; }
+.drift-banner > span:nth-child(2) { flex: 1; min-width: 0; }
+.drift-banner-go { font-weight: 500; color: var(--terracotta); }

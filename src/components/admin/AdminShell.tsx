@@ -20,7 +20,6 @@ import type { DriftItem } from '@/lib/calendarDrift';
 import { SessionEditModal } from './SessionEditModal';
 import { GcalEventEditModal } from './GcalEventEditModal';
 import { MfaModal } from './MfaModal';
-import { Plus } from 'lucide-react';
 import { adminFetch, logout } from './api';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
@@ -445,19 +444,6 @@ export function AdminShell() {
       )}
 
       {mfaOpen && <MfaModal onClose={() => setMfaOpen(false)} />}
-
-      {/* Thumb-friendly schedule button — mobile only (desktop has inline
-          "+ Schedule session" buttons). Opens the schedule modal with no preset
-          date so it can be used from any section. */}
-      <button
-        type="button"
-        className="admin-fab"
-        onClick={() => { setScheduleInitialIso(undefined); setScheduleOpen(true); }}
-        aria-label="Schedule a session"
-      >
-        <Plus size={22} strokeWidth={2.4} />
-        <span>Schedule</span>
-      </button>
     </div>
   );
 }

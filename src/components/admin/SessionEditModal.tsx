@@ -218,7 +218,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
         boxShadow: '0 24px 64px rgba(42, 77, 60, 0.18)',
         zIndex: 510,
         width: 'min(560px, 92vw)',
-        maxHeight: '92vh',
+        maxHeight: '92dvh',
         overflowY: 'auto',
         animation: 'admin-pop-in 180ms ease',
       }}>

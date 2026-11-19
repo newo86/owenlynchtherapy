@@ -49,16 +49,21 @@ interface Props {
   items: DriftItem[];
   /** Reload the dashboard after a choice is applied. */
   onResolved: () => void;
+  /** Phone: a one-line banner that opens on tap, so it never pushes today's
+   *  clients off the first screen. */
+  compact?: boolean;
 }
 
-export function CalendarDriftCard({ items, onResolved }: Props) {
+export function CalendarDriftCard({ items, onResolved, compact = false }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<{ key: string; msg: string } | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [all, setAll] = useState(false);
+  const [open, setOpen] = useState(false);
 
   if (items.length === 0 && !done) return null;
   const shown = all ? items : items.slice(0, SHOW_FIRST);
+  const collapsed = compact && !open && items.length > 0;
 
   async function apply(item: DriftItem, choice: FixChoice) {
     setBusy(item.key + choice);
@@ -83,8 +88,14 @@ export function CalendarDriftCard({ items, onResolved }: Props) {
   }
 
   return (
-    <section className="admin-card drift-card" aria-label="Differences between the app and Google Calendar">
-      {items.length > 0 && (
+    <section className={`admin-card drift-card${collapsed ? ' is-collapsed' : ''}`} aria-label="Differences between the app and Google Calendar">
+      {collapsed ? (
+        <button type="button" className="drift-banner" onClick={() => setOpen(true)}>
+          <span className="drift-banner-dot" aria-hidden />
+          <span>{items.length} {items.length === 1 ? 'difference' : 'differences'} with Google</span>
+          <span className="drift-banner-go">Review</span>
+        </button>
+      ) : items.length > 0 && (
         <>
           <div className="admin-card-head">
             <h2 className="admin-h2">Google Calendar doesn&apos;t match the app</h2>
@@ -95,7 +106,7 @@ export function CalendarDriftCard({ items, onResolved }: Props) {
         </>
       )}
       {done && <p className="drift-done" role="status">{done}</p>}
-      <ul className="drift-list">
+      {!collapsed && <ul className="drift-list">
         {shown.map(i => (
           <li key={i.key} className="drift-item">
             <p className="drift-line"><b className="pii">{i.clientName}</b> · {COPY[i.kind].line(i)}</p>
@@ -115,11 +126,14 @@ export function CalendarDriftCard({ items, onResolved }: Props) {
             {problem?.key === i.key && <p className="drift-problem" role="alert">{problem.msg}</p>}
           </li>
         ))}
-      </ul>
-      {items.length > SHOW_FIRST && (
+      </ul>}
+      {!collapsed && items.length > SHOW_FIRST && (
         <button type="button" className="admin-link" onClick={() => setAll(a => !a)}>
           {all ? 'Show fewer' : `Show ${items.length - SHOW_FIRST} more`}
         </button>
+      )}
+      {compact && open && items.length > 0 && (
+        <button type="button" className="admin-link" onClick={() => setOpen(false)}>Hide</button>
       )}
     </section>
   );
