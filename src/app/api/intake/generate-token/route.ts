@@ -8,7 +8,7 @@ import { generatePrivacyPolicyPDF } from '@/lib/pdf/generatePrivacyPolicyPDF';
 import { createCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { getResend } from '@/lib/resend';
-import { paymentLinkFor, EMAIL_FROM, INSIGHT_MATTERS_ADDRESS, CONTACT_EMAIL } from '@/lib/emailTemplates';
+import { paymentLinkFor, welcomePaymentStep, EMAIL_FROM, INSIGHT_MATTERS_ADDRESS, CONTACT_EMAIL } from '@/lib/emailTemplates';
 import { PRACTICE, SITE_URL } from '@/practice.config';
 const VALID_FORMATS = ['in_person', 'online'];
 const VALID_RECURRENCE = ['once', 'weekly', 'biweekly', 'monthly'] as const;
@@ -257,8 +257,8 @@ export async function POST(req: NextRequest) {
 
   // 6. Send welcome email with Therapeutic Agreement + Privacy Policy attached.
   // Now that the owenlynchtherapy.com domain is verified in Resend the welcome
-  // email goes directly to the client (it carries their intake link and Stripe
-  // payment link, which would be useless landing in info@).
+  // email goes directly to the client (it carries their intake link and payment
+  // link, which would be useless landing in info@).
   const firstName = client_name.trim().split(' ')[0];
   const emailTo = client_email.trim();
   console.log('[generate-token] step 6: sending welcome email | payment link present:', !!paymentLinkUrl);
@@ -344,9 +344,7 @@ function buildWelcomeHtml(d: WelcomeEmailData): string {
     ? `<tr><td style="padding:8px 0;color:#777;border-bottom:1px solid #F0EAE0;vertical-align:top;">Location</td><td style="padding:8px 0;border-bottom:1px solid #F0EAE0;">${d.location}</td></tr>`
     : '';
 
-  const paymentBtn = d.paymentUrl
-    ? `<a href="${d.paymentUrl}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;">PAY €${d.feeEuros} FOR YOUR FIRST SESSION</a>`
-    : `<p style="color:#666;font-size:14px;">${PRACTICE.practitionerFirstName} will send you payment details separately.</p>`;
+  const paymentStep = welcomePaymentStep({ stripeUrl: d.paymentUrl, feeEuros: d.feeEuros });
 
   const logoUrl = `${d.siteUrl}/images/logo-horizontal-dark-bg.svg`;
 
@@ -396,13 +394,7 @@ function buildWelcomeHtml(d: WelcomeEmailData): string {
       <a href="${d.intakeUrl}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;">COMPLETE INTAKE FORM</a>
     </div>
 
-    <div style="margin:32px 0 0;">
-      <p style="color:#2A4D3C;font-size:13px;font-weight:600;margin:0 0 8px;">2. Pay for your session in advance to secure your slot</p>
-      <p style="color:#666;font-size:13px;line-height:1.6;margin:0 0 16px;">
-        Payment is handled securely via Stripe.
-      </p>
-      ${paymentBtn}
-    </div>
+    ${paymentStep}
 
     <hr style="border:none;border-top:1px solid #F0EAE0;margin:32px 0;">
     <p style="color:#666;font-size:13px;line-height:1.7;margin:0 0 20px;">

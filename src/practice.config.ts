@@ -139,7 +139,8 @@ export const PRACTICE = {
     inPerson: 'https://buy.stripe.com/5kQ8wR8aJc4D9RK2E57g40q',
   },
   /** Revolut checkout link, shown as the main pay button in reminder emails
-   *  (Stripe stays as a "pay by card" fallback). '' to show Stripe only.
+   *  and as the pay link in the new-client welcome email (Stripe stays as a
+   *  "pay by card" fallback in reminders). '' to use Stripe only.
    *  Revolut payments aren't auto-matched — mark them paid by hand or via
    *  the Revolut statement import. */
   revolutLink: 'https://checkout.revolut.com/pay/ffdf3049-df23-42d6-8e29-27fef9a14e69',

@@ -32,8 +32,45 @@ export const CONTACT_EMAIL = PRACTICE.email;
 // appending ?client_reference_id=<session_id> when the link is emailed.
 export const STRIPE_LINK_ONLINE    = PRACTICE.stripeLinks.online;
 export const STRIPE_LINK_IN_PERSON = PRACTICE.stripeLinks.inPerson;
-/** Revolut checkout link — main pay button in reminders when set. */
+/** Revolut checkout link — main pay button in reminders and the welcome email when set. */
 export const REVOLUT_LINK: string = PRACTICE.revolutLink;
+
+/**
+ * The "pay in advance" step of the new-client welcome email.
+ *
+ * Revolut is the pay link when one is configured, the same as in reminders.
+ * The Stripe link is used only when no Revolut link is set (a fresh clone), and
+ * "will send you payment details" when neither exists. The fee is stated in
+ * words, not only on the button, because a Revolut link doesn't carry the
+ * client's amount the way the per-session Stripe link does.
+ * Note: Revolut payments are not auto-matched (no webhook), so the first
+ * session is marked paid by hand or from the Revolut statement import.
+ */
+export function welcomePaymentStep(d: { stripeUrl: string; feeEuros: number; revolutUrl?: string }): string {
+  const revolutUrl = d.revolutUrl ?? REVOLUT_LINK;
+  const button = (url: string, label: string) =>
+    `<a href="${url}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:500;letter-spacing:2px;text-transform:uppercase;">${label}</a>`;
+  let intro: string;
+  let action: string;
+  if (revolutUrl) {
+    intro = `Your first session is &euro;${d.feeEuros}. Payment is handled securely via Revolut.`;
+    action = button(revolutUrl, 'PAY FOR YOUR FIRST SESSION');
+  } else if (d.stripeUrl) {
+    intro = 'Payment is handled securely via Stripe.';
+    action = button(d.stripeUrl, `PAY &euro;${d.feeEuros} FOR YOUR FIRST SESSION`);
+  } else {
+    intro = '';
+    action = `<p style="color:#666;font-size:14px;">${PRACTICE.practitionerFirstName} will send you payment details separately.</p>`;
+  }
+  return `
+    <div style="margin:32px 0 0;">
+      <p style="color:#2A4D3C;font-size:13px;font-weight:600;margin:0 0 8px;">2. Pay for your session in advance to secure your slot</p>${intro ? `
+      <p style="color:#666;font-size:13px;line-height:1.6;margin:0 0 16px;">
+        ${intro}
+      </p>` : ''}
+      ${action}
+    </div>`;
+}
 
 /** The three billing categories a session can fall into. Low cost is a
  *  property of the client (clients.is_low_cost), not the session format. */
