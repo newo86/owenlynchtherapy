@@ -67,7 +67,7 @@ export async function issueQuestionnaires(input: IssueInput): Promise<IssueResul
   const prefix = input.isTest ? '[Test] ' : '';
   const subject = input.choice === 'both'
     ? `${prefix}Two short questionnaires`
-    : `${prefix}${input.choice === 'values' ? 'Your values worksheet' : 'A short questionnaire before we continue'}`;
+    : `${prefix}${input.choice === 'values' ? 'Values questionnaire for our sessions' : 'A short questionnaire before we continue'}`;
   const html = input.choice === 'both'
     ? buildQuestionnaireBundleHtml({ firstName: input.firstName, valuesUrl: urls.values!, cnipUrl: urls.cnip!, ttlDays: LINK_TTL_DAYS })
     : buildQuestionnaireHtml({ firstName: input.firstName, kind: input.choice, url: urls[input.choice]!, ttlDays: LINK_TTL_DAYS });
