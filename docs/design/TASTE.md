@@ -76,7 +76,16 @@ welcome if it never shouts.
   enough to read; rare actions as quiet text buttons. All of it lives in the
   phone blocks at the end of `src/components/admin/admin.css`.
 
+- For the therapist app he plans to sell, he wants colour that is bold and
+  art-led, not "calm therapy" muted: he named Hilma af Klint, Matisse's
+  cut-outs and pop art. Calm should come from space and layout, not from
+  grey-toned colour (Nov 2026, rejected three muted palettes: slate and
+  yellow, plum and amber, oxblood and duck-egg)
+
 ## Dislikes
+- Palettes that "AI uses everywhere": forest or sage with terracotta and
+  cream, lavender, mint and teal, navy and coral, muted greys with one
+  accent (Nov 2026, app palette)
 - Heavy, dark drop shadows under cards: he wants cards lifted, not
   floating (a hairline edge plus a short soft shadow), site-wide (Nov 2026,
   robbiesemple.com)

@@ -245,8 +245,13 @@ images, redirects, sitemap, analytics, and cookie controls.
   every real screen in a phone-sized browser. Phone dashboard = one calm
   system: plain title, one primary action, full-width segments, bottom-sheet
   pop-ups, compact cards not tables, 16px text, no tracked-out capitals.
+  For the therapist app he plans to sell: bold, art-led colour (Hilma af
+  Klint, Matisse cut-outs, pop art), with calm coming from space, not muted
+  colour.
 - **Dislikes:** anything that looks AI-made, especially common AI fonts
-  and an eyebrow label over every heading.
+  and an eyebrow label over every heading; the palettes "AI uses
+  everywhere" (sage or forest with terracotta and cream, lavender, mint and
+  teal, navy and coral, muted greys with one accent).
 
 ## Where to look
 
