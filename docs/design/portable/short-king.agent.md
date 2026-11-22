@@ -247,7 +247,8 @@ images, redirects, sitemap, analytics, and cookie controls.
   pop-ups, compact cards not tables, 16px text, no tracked-out capitals.
   For the therapist app he plans to sell: bold, art-led colour (Hilma af
   Klint, Matisse cut-outs, pop art), with calm coming from space, not muted
-  colour.
+  colour. Liked af Klint's split-circle composition in Matisse's colours,
+  with buttons and controls softer than the artwork.
 - **Dislikes:** anything that looks AI-made, especially common AI fonts
   and an eyebrow label over every heading; the palettes "AI uses
   everywhere" (sage or forest with terracotta and cream, lavender, mint and

@@ -81,6 +81,11 @@ welcome if it never shouts.
   cut-outs and pop art. Calm should come from space and layout, not from
   grey-toned colour (Nov 2026, rejected three muted palettes: slate and
   yellow, plum and amber, oxblood and duck-egg)
+- Of the art-led options he liked af Klint's composition (a big split
+  circle in the header) with Matisse's colours (cobalt, lemon, coral, a
+  touch of green, warm paper), and asked for buttons and controls to be
+  less saturated than the art. So: full colour lives in the artwork only;
+  everything you tap uses softened versions (Nov 2026, app palette)
 
 ## Dislikes
 - Palettes that "AI uses everywhere": forest or sage with terracotta and
