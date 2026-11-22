@@ -86,6 +86,11 @@ welcome if it never shouts.
   touch of green, warm paper), and asked for buttons and controls to be
   less saturated than the art. So: full colour lives in the artwork only;
   everything you tap uses softened versions (Nov 2026, app palette)
+- He then chose af Klint's own palette from "The Ten Largest" (No. 1 and
+  No. 2): powder blue, burnt orange, deep navy, olive, pink, pale yellow,
+  cream. Explored as one painting per tab (blue for Today, orange for
+  Calendar) with two overlapping circles and an olive overlap as the icon.
+  Shapes are drawn in her manner, never copied (Nov 2026, app palette)
 
 ## Dislikes
 - Palettes that "AI uses everywhere": forest or sage with terracotta and
