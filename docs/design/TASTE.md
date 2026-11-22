@@ -102,6 +102,12 @@ welcome if it never shouts.
   admin. Every design is checked against Fitts, Hick, Jakob, proximity and
   Von Restorff, by name (Nov 2026, therapist app)
 
+- Therapist app palette, his own (Nov 2026): pink #F7B4B5 as the main
+  colour (70%), orange #EA7025 (20%), yellow #FBB807 (10%). Chose the soft
+  version: pink header, blush page, and a softened yellow for the main
+  button instead of orange; orange stays in the artwork and dots only.
+  Text in a dark plum-brown, since none of the three is dark enough.
+
 ## Dislikes
 - Palettes that "AI uses everywhere": forest or sage with terracotta and
   cream, lavender, mint and teal, navy and coral, muted greys with one
