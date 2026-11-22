@@ -107,6 +107,11 @@ welcome if it never shouts.
   version: pink header, blush page, and a softened yellow for the main
   button instead of orange; orange stays in the artwork and dots only.
   Text in a dark plum-brown, since none of the three is dark enough.
+  Then: the softer yellow (#F6CB52) for the button, and orange removed
+  completely, trying a soft green (#9FBF9A) or af Klint's powder blue
+  (#AFC3DE) in its place. Also exploring a flower medallion (after af
+  Klint's Ten Largest No. 2: heart petals in a ring of pink scallops,
+  powder-blue edge) as the header motif and icon (Nov 2026)
 
 ## Dislikes
 - Palettes that "AI uses everywhere": forest or sage with terracotta and
