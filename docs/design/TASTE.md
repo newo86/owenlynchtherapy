@@ -114,6 +114,9 @@ welcome if it never shouts.
   powder-blue edge) as the header motif and icon (Nov 2026). Rejected: in
   pink, soft rounded petal and heart shapes read as anatomical. Keep the
   motifs geometric (circles, halves, lines), especially on pink grounds
+- Chosen for the therapist app (Nov 2026): the split circle in soft blue
+  (#AFC3DE) and yellow on the pink header, softer yellow button, no orange.
+  Next step is a Figma prototype
 
 ## Dislikes
 - Palettes that "AI uses everywhere": forest or sage with terracotta and
