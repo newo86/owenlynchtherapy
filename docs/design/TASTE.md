@@ -91,6 +91,12 @@ welcome if it never shouts.
   cream. Explored as one painting per tab (blue for Today, orange for
   Calendar) with two overlapping circles and an olive overlap as the icon.
   Shapes are drawn in her manner, never copied (Nov 2026, app palette)
+- "It is an app, not a painting": art stays to ONE shape per screen (the
+  split circle in the header) plus a soft sense of flow (a wavy header edge,
+  one fine flowing line). No lines and circles everywhere. Current pick:
+  the Coral room layout in the paintings' colours: soft orange header,
+  circle in navy, pale yellow, powder blue and cream with an olive centre;
+  dusky navy buttons, pale-yellow free times, powder-blue labels (Nov 2026)
 
 ## Dislikes
 - Palettes that "AI uses everywhere": forest or sage with terracotta and
