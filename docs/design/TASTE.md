@@ -111,7 +111,9 @@ welcome if it never shouts.
   completely, trying a soft green (#9FBF9A) or af Klint's powder blue
   (#AFC3DE) in its place. Also exploring a flower medallion (after af
   Klint's Ten Largest No. 2: heart petals in a ring of pink scallops,
-  powder-blue edge) as the header motif and icon (Nov 2026)
+  powder-blue edge) as the header motif and icon (Nov 2026). Rejected: in
+  pink, soft rounded petal and heart shapes read as anatomical. Keep the
+  motifs geometric (circles, halves, lines), especially on pink grounds
 
 ## Dislikes
 - Palettes that "AI uses everywhere": forest or sage with terracotta and
