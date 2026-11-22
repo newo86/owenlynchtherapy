@@ -22,3 +22,7 @@ Run each in a fresh session.
    house token names, bottom tab bar and photo-first centred hero on phones,
    square soft cards, no tracking or eyebrows, no em dashes; asks only what
    the house style leaves open (palette, fonts, pages).
+6. "Design the client list screen for the therapist app."
+   Good: starts from the user's moment (a busy, tech-shy therapist between
+   sessions), and when showing the design names how it meets Fitts, Hick,
+   Jakob, proximity and Von Restorff, with exactly one standout element.

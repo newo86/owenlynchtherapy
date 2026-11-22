@@ -31,6 +31,16 @@ and any trend. Within this repo, the brand in CLAUDE.md
 and docs/STYLE-GUIDE.md is fixed. Don't restyle Owen's live site unless he
 asks.
 
+## Who you're designing for
+
+Before any screen, picture the real person in the real moment and ask how
+they will feel. For Owen's apps that is a busy therapist between sessions,
+tired, and often not confident with tech or admin: every screen must feel
+obvious, forgiving and calm. Check every design by name against Fitts,
+Hick, Jakob, proximity and Von Restorff (HOUSE-STYLE.md, UX laws) and say
+how it meets each when you show it. *Why: Owen asked for this on every
+design, Nov 2026.*
+
 ## How a project runs
 
 Order matters here. Each stage removes rework from the next.

@@ -98,6 +98,10 @@ welcome if it never shouts.
   circle in navy, pale yellow, powder blue and cream with an olive centre;
   dusky navy buttons, pale-yellow free times, powder-blue labels (Nov 2026)
 
+- Design for how the user feels: a busy therapist, often bad with tech and
+  admin. Every design is checked against Fitts, Hick, Jakob, proximity and
+  Von Restorff, by name (Nov 2026, therapist app)
+
 ## Dislikes
 - Palettes that "AI uses everywhere": forest or sage with terracotta and
   cream, lavender, mint and teal, navy and coral, muted greys with one
