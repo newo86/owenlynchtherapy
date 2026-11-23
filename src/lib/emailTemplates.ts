@@ -6,6 +6,7 @@
 // address) are re-exported from the master config so a cloned practice's
 // emails and calendar events use ITS details, never Owen's.
 import { PRACTICE } from '@/practice.config';
+import { messageBlocks } from './waitlistMessage';
 import { escapeHtml } from '@/lib/sanitise';
 
 /** Video platform name (e.g. "Google Meet") and optional fixed room URL.
@@ -378,6 +379,30 @@ export function buildValuesResultsHtml(input: ValuesResultsEmailInput): string {
     <p style="color:#999;font-size:12px;line-height:1.6;margin:24px 0 0;border-top:1px solid #EFE9DF;padding-top:14px;">
       Based on acceptance and commitment therapy (ACT), drawing on the work of Steven Hayes and Russ Harris.
     </p>`);
+}
+
+// ── Message to the waiting list (dashboard: "Email the waiting list") ─────
+// Owen's own plain text, escaped and laid out in paragraphs. [buttons] in the
+// text becomes the yes/no buttons; null links (a test send) show them inert.
+
+export function buildWaitlistMessageHtml(input: {
+  firstName: string;
+  message: string;
+  yesUrl: string | null;
+  noUrl: string | null;
+}): string {
+  const btn = (url: string | null, label: string, primary: boolean) => {
+    const style = primary
+      ? 'background-color:#C85A1A;color:#FFFFFF;border:1px solid #C85A1A;'
+      : 'background-color:#FFFFFF;color:#2A4D3C;border:1px solid #2A4D3C;';
+    return `<a href="${url ?? '#'}" style="display:inline-block;${style}padding:12px 24px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;margin:0 8px 8px 0;">${label}</a>`;
+  };
+  const html = messageBlocks(input.message, input.firstName).map(b =>
+    b.kind === 'buttons'
+      ? `<div style="margin:8px 0 20px;">${btn(input.yesUrl, 'Yes, keep me on the list', true)}${btn(input.noUrl, 'No, please take me off', false)}</div>`
+      : `<p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">${b.lines.map(escapeHtml).join('<br>')}</p>`,
+  ).join('\n    ');
+  return emailShell(html);
 }
 
 // ── Values questionnaire on its own (Owen's wording, 21 Nov 2026) ──────────
