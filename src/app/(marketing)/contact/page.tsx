@@ -143,7 +143,7 @@ export default async function ContactPage() {
                   ? "If none of these times suit, join the waiting list below and I'll be in touch when another space opens up."
                   : practice.waitlistNotice}
               </p>
-              <WaitlistForm />
+              <WaitlistForm hasInPerson={practice.hasInPerson} />
             </div>
 
             {/* Right — venue image, proportional */}

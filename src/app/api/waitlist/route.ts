@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Too many requests — please try again later.' }, { status: 429 });
   }
 
-  let body: { full_name?: string; email?: string; phone?: string; reason?: string; consent?: boolean; website?: string };
+  let body: { full_name?: string; email?: string; phone?: string; reason?: string; consent?: boolean; website?: string; format_preference?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -43,6 +43,16 @@ export async function POST(req: NextRequest) {
   const phone = (body.phone ?? '').trim().slice(0, 40);
   // Optional free text — sanitise and cap. Empty stays null.
   const reason = sanitiseInput((body.reason ?? '').trim()).slice(0, 1000);
+
+  // Online / in person / either. Optional at the API (an online-only practice
+  // doesn't ask), but anything sent must be one of the three.
+  const FORMATS = { online: 'Online', in_person: 'In person', either: 'Either is fine' } as const;
+  const formatPreference = typeof body.format_preference === 'string' && Object.hasOwn(FORMATS, body.format_preference)
+    ? body.format_preference as keyof typeof FORMATS
+    : null;
+  if (body.format_preference != null && body.format_preference !== '' && !formatPreference) {
+    return NextResponse.json({ error: 'Please choose online, in person or either.' }, { status: 400 });
+  }
 
   if (!fullName || !email) {
     return NextResponse.json({ error: 'Please fill in your name and email.' }, { status: 400 });
@@ -68,6 +78,7 @@ export async function POST(req: NextRequest) {
     email,
     phone: phone || null,
     reason: reason || null,
+    format_preference: formatPreference,
     consent_text: WAITLIST_CONSENT_TEXT,
     status: isSpam ? 'spam' : 'waiting',
   });
@@ -97,6 +108,7 @@ export async function POST(req: NextRequest) {
       html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
         <p><strong>${escapeHtml(fullName)}</strong> joined the waiting list.</p>
         <p>Email: ${escapeHtml(email)}${phone ? `<br/>Phone: ${escapeHtml(phone)}` : ''}</p>
+        ${formatPreference ? `<p>Would like: <strong>${FORMATS[formatPreference]}</strong></p>` : ''}
         ${reason ? `<p style="margin-top:12px"><strong>What brings them to therapy:</strong><br/>${escapeHtml(reason).replace(/\n/g, '<br/>')}</p>` : ''}
         <p>View the list in the <a href="${SITE_URL}/admin/intake">dashboard</a> → Waitlist.</p>
       </div>`,

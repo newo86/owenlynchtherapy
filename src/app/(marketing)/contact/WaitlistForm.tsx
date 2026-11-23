@@ -10,7 +10,7 @@ const inputClass =
   'w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-base text-gray-800 ' +
   'focus:outline-none focus:ring-2 focus:ring-[#C85A1A]/40 focus:border-[#C85A1A]';
 
-export default function WaitlistForm() {
+export default function WaitlistForm({ hasInPerson = true }: { hasInPerson?: boolean }) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +30,7 @@ export default function WaitlistForm() {
           email: data.get('email'),
           phone: data.get('phone'),
           reason: data.get('reason'),
+          format_preference: data.get('format_preference'),
           consent: data.get('consent') === 'on',
           website: data.get('website'), // honeypot
         }),
@@ -99,6 +100,24 @@ export default function WaitlistForm() {
         <label htmlFor="wl-phone" className={labelClass}>Phone (optional)</label>
         <input id="wl-phone" name="phone" type="tel" maxLength={40} autoComplete="tel" className={inputClass} />
       </div>
+
+      {hasInPerson && (
+        <fieldset className="mb-5">
+          <legend className={labelClass}>Would you like online or in-person sessions? *</legend>
+          <div className="flex flex-wrap gap-x-6 gap-y-2 mt-1">
+            {([
+              ['online', 'Online'],
+              ['in_person', 'In person (Capel Street, Dublin 1)'],
+              ['either', 'Either is fine'],
+            ] as const).map(([value, label]) => (
+              <label key={value} className="inline-flex items-center gap-2 cursor-pointer text-base text-gray-700">
+                <input type="radio" name="format_preference" value={value} required className="h-4 w-4 accent-[#C85A1A]" />
+                {label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <div className="mb-5">
         <label htmlFor="wl-reason" className={labelClass}>What brings you to therapy? (optional)</label>

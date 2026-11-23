@@ -124,6 +124,8 @@ export interface WaitlistRow {
   last_emailed_at?: string | null;
   response?: 'yes' | 'no' | null;
   responded_at?: string | null;
+  /** Asked on the sign-up form from 23 Nov 2026; null for older entries. */
+  format_preference?: 'online' | 'in_person' | 'either' | null;
 }
 
 export type AdminSection = 'dashboard' | 'clients' | 'sessions' | 'revenue' | 'hours' | 'forms' | 'waitlist' | 'analytics' | 'settings' | 'new-client';
