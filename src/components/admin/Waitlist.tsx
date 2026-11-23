@@ -11,6 +11,8 @@ interface Props {
   onReload: () => void;
 }
 
+const FORMAT_LABEL: Record<string, string> = { online: 'Online', in_person: 'In person', either: 'Online or in person' };
+
 function joinedWhen(iso: string) {
   return new Date(iso).toLocaleDateString('en-IE', {
     day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Dublin',
@@ -50,6 +52,12 @@ export function Waitlist({ waitlist, onReload }: Props) {
   // only until removed.
   const declined = waitlist.filter(w => w.status === 'declined');
   const people = waitlist.filter(w => w.status !== 'spam' && w.status !== 'declined');
+  // Online / in-person breakdown of who's waiting (only people who were asked).
+  const byPref = (v: string) => waiting.filter(w => w.format_preference === v).length;
+  const asked = waiting.filter(w => w.format_preference).length;
+  const prefCounts = asked > 0
+    ? `: ${byPref('online')} online, ${byPref('in_person')} in person, ${byPref('either')} either${asked < waiting.length ? `, ${waiting.length - asked} not asked` : ''}`
+    : '';
   // Replies to the latest "Email the waiting list" message.
   const emailed = people.filter(w => w.last_emailed_at);
   const saidYes = emailed.filter(w => w.response === 'yes').length;
@@ -72,7 +80,7 @@ export function Waitlist({ waitlist, onReload }: Props) {
       )}
 
       <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: 0, maxWidth: 640 }}>
-        People who asked to be contacted when a space opens up ({waiting.length} waiting).
+        People who asked to be contacted when a space opens up ({waiting.length} waiting{prefCounts}).
         <span className="admin-hide-phone"> Entries store only name, email and phone, with their consent recorded. &ldquo;Remove&rdquo;
         deletes the details permanently — use it once someone becomes a client, asks to be
         taken off, or the entry goes stale.</span>
@@ -103,6 +111,11 @@ export function Waitlist({ waitlist, onReload }: Props) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <Avatar name={w.full_name} size={32} />
                     <div className="pii" style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{w.full_name}</div>
+                    {w.format_preference && (
+                      <span className="admin-tag" title="What they asked for on the sign-up form" style={{ fontSize: 10.5 }}>
+                        {FORMAT_LABEL[w.format_preference] ?? w.format_preference}
+                      </span>
+                    )}
                   </div>
                   {w.reason && (
                     <div
