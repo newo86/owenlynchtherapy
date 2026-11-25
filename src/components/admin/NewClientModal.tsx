@@ -1,5 +1,7 @@
 'use client';
 
+import { PRACTICE } from '@/practice.config';
+
 import { useState } from 'react';
 import { X, Check, Copy } from 'lucide-react';
 import { adminFetch } from './api';
@@ -149,7 +151,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
           </label>
           <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--ink-muted)' }}>
             {sendIntake
-              ? 'New client gets an intake form, Stripe payment link, and welcome email.'
+              ? `New client gets an intake form and a welcome email with ${PRACTICE.revolutLink ? 'your Revolut payment link' : 'a Stripe payment link'}.`
               : 'Quick add — just create the record. No intake link, payment link, or email sent. Useful for clients already onboarded outside this dashboard.'}
           </p>
         </div>
