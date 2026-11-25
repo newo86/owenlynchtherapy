@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { X, Mail, Phone, Receipt, Check } from 'lucide-react';
 import { adminFetch, formatDateTime } from './api';
 import type { SessionRow, ClientRow } from './types';
+import { PRACTICE } from '@/practice.config';
 
 interface Props {
   session: SessionRow;
@@ -44,11 +45,17 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
   const [channel, setChannel] = useState<'email' | null>(null);
   // Mirror of the server-side logic in lib/sendSessionReminder.ts so the
   // practitioner can see what the email will contain before sending.
+  // Payment: Revolut is the main "Pay for your session" button when a Revolut
+  // link is set (lib/emailTemplates.ts buildReminderHtml), with a small
+  // "pay by card" Stripe line underneath; otherwise Stripe is the button.
+  const payment = PRACTICE.revolutLink
+    ? 'your Revolut payment link (with a small "pay by card" option underneath)'
+    : 'the Stripe payment link';
   const contents = client.is_low_cost
     ? 'Includes the Insight Matters address and a note that payment is cash on the day — no payment link.'
     : session.session_format === 'online'
-      ? 'Reminds them the video link is in their calendar invite, plus the Stripe payment link for online sessions.'
-      : 'Includes the Insight Matters address and the Stripe payment link for in-person sessions.';
+      ? `Reminds them the video link is in their calendar invite, plus ${payment}.`
+      : `Includes the Insight Matters address and ${payment}.`;
   const canSend = session.status === 'scheduled' && formatConfirmed;
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; msg: string } | null>(null);
