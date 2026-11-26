@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
+import { endSeriesForClient } from '@/lib/sessionSeries';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
@@ -76,6 +77,9 @@ export async function POST(req: NextRequest) {
     console.error('[clients/update] error:', dbError(error));
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Therapy ended: stop booking their ongoing sessions ahead (src/lib/sessionSeries.ts).
+  if (patch.status === 'completed') await endSeriesForClient(body.client_id);
 
   return NextResponse.json({ success: true }, { headers: noCache });
 }

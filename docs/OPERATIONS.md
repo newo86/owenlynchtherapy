@@ -42,6 +42,22 @@ Anything else (unset/false) silently blocks every send.
   - A truncated Google fetch (page cap) disables drift detection and linking: a missing event is never read as a deletion.
 - **Which calendar events count as a client's session** (linking, difference detection and the reminder check all use `matchOneActiveClient`): the title must contain the client's full name, or a name part plus "session"/"client". "Walk Kate" or "Day off" never becomes a session; all-day events never do. Events that don't match show in the dashboard's unlinked-events queue to link by hand.
 
+## Ongoing clients (sessions keep coming)
+- A client booked "ongoing" weekly or every 2 weeks gets a `session_series`
+  row. A daily cron (`/api/admin/sessions/extend`, 05:30 UTC,
+  `src/lib/sessionSeries.ts`) keeps about 16 weeks of sessions booked ahead,
+  after the client's latest session in that series, on the series' own weekday
+  and Dublin time (`anchor_at`), with the latest session's format, place and
+  fee, tied to the same repeating Google event. Caps: 20 per series and 200 per
+  run (over 200 it adds none and reports it).
+- Why: a repeating Google event has no end, but the app used to get a fixed
+  batch of rows. When the batch ran out, the dashboard flagged each new Google
+  date as "in Google Calendar, not in the app", one per week (Nov 2026).
+- To end it, mark the client Completed (that switches their series off), or
+  set the row's `active = false`. Cancelling one session (a holiday) doesn't
+  end it. It reads only the database and never imports from Google; ending a
+  client's repeating Google event is still done in Google.
+
 ## Accreditation hours (Hours page)
 
 - Client hours count automatically from sessions (baseline + sessions since

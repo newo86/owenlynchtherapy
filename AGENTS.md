@@ -97,6 +97,9 @@ Full detail in **docs/OPERATIONS.md**. The must-knows:
 - **Stripe webhook** points at the apex `https://owenlynchtherapy.com/api/webhooks/stripe`
   (apex is the primary domain since 2 Jul 2026; www 308-redirects to it; Stripe
   won't follow redirects, so never point it at a redirecting host).
+- **Ongoing clients (Nov 2026):** weekly / fortnightly clients booked with no
+  end have a `session_series` row; a daily job keeps ~16 weeks of sessions
+  ahead (src/lib/sessionSeries.ts). Marking the client Completed ends it.
 - **Calendar → client matching is strict (Sep 2026):** an event is only tied to
   a client if its title has their FULL name ("Session — Jane Durnin") or a name
   part plus "session"/"client" ("Philip client"). A bare first name ("Walk
