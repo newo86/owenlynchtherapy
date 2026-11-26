@@ -24,6 +24,7 @@ Every rule here comes from a change Owen asked for at least once. The section "W
 4. **One axis per screen on phones.** A centred photo means a centred headline and centred buttons. Never mix a centred image with left-aligned text beneath it.
 5. **Quiet, never shouting.** Light shadows, slow motion, no hard edges, no tracking. One small memorable detail per page is welcome if it never shouts.
 6. **Nothing looks AI-made.** A designer should see decisions, not defaults.
+7. **Design for how the person feels.** Picture the real user in the real moment: for apps, a busy therapist between sessions, tired, often not confident with tech or admin. Every screen should feel obvious, forgiving and calm, never like homework. If it needs explaining, simplify it.
 
 ## Colour
 
@@ -82,7 +83,7 @@ Every rule here comes from a change Owen asked for at least once. The section "W
 
 ## UX laws and motion principles
 
-Owen asked for these 20 to be applied by default. The animation principles come from Disney's twelve; on a therapy site they are used gently, so each one is translated into what it means here.
+Owen asked for these to be applied by default. The animation principles come from Disney's twelve; on a therapy site they are used gently, so each one is translated into what it means here.
 
 **Motion (use sparingly, always behind `prefers-reduced-motion`)**
 
@@ -109,6 +110,10 @@ Owen asked for these 20 to be applied by default. The animation principles come 
 18. **Postel's law:** accept what people type in any reasonable format (phone numbers with or without spaces or +353, dates in several forms, emails with stray spaces) and tidy it quietly; be strict and clear in what the site sends back.
 19. **Jakob's law:** people expect a site to work like the others they use. Keep conventions: logo top left goes home, tab bar at the bottom, links look like links, forms behave like forms. Be original in look, not in how things work.
 20. **Frequency of use:** the most used actions are the most reachable (Book, Today in the dashboard, Session done); rare settings sit deeper. Check real use before moving anything.
+21. **Law of proximity:** things placed close together read as one group. Group by spacing first (space inside a group smaller than between groups), and add a line or box only if spacing can't do it.
+22. **Von Restorff effect:** the one thing that looks different gets seen first. Give each screen exactly one standout element (the primary action), and keep everything else quieter so nothing competes with it: no second filled button or filled pill in the same colour.
+
+The five Owen names as non-negotiable on every screen: **Fitts, Hick, Jakob, proximity, Von Restorff.** Check each one by name before showing a design.
 
 ## Images
 
@@ -196,6 +201,7 @@ Each rule in this system is a change Owen asked for, often more than once and ac
 | No hidden photo descriptions, fast photos | Home photo readable by screen readers; AVIF and WebP at phone sizes | Robbie, Nov 2026 |
 | Status by importance | The one thing that needs attention leads; the rest is a calm checklist | Owen's dashboard, Oct 2026 |
 | Glass and circles: dashboard only | Kept glass panels and soft circles on his dashboard as his own signature; removed floating circles from the public site | Owen, May and Oct 2026 |
+| Design for how the user feels; five core UX laws | "Always think about how the user might feel, a busy therapist, most therapists are bad with tech and admin"; Fitts, Hick, Jakob, proximity and Von Restorff on every design | Therapist app, Nov 2026 |
 | UX laws and motion principles | Asked for the 20 principles of UX and animation (Disney's twelve plus Fitts, Hick, Miller, Doherty, Postel, Jakob and frequency of use) to be learned and applied | All projects, Nov 2026 |
 | Show first, then merge | Every change previewed with screenshots; mock-ups for open choices | All projects |
 | Reasoning from research | Asked for eye-tracking and design research to back layout choices | Robbie, Nov 2026 |

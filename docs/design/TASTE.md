@@ -76,7 +76,52 @@ welcome if it never shouts.
   enough to read; rare actions as quiet text buttons. All of it lives in the
   phone blocks at the end of `src/components/admin/admin.css`.
 
+- For the therapist app he plans to sell, he wants colour that is bold and
+  art-led, not "calm therapy" muted: he named Hilma af Klint, Matisse's
+  cut-outs and pop art. Calm should come from space and layout, not from
+  grey-toned colour (Nov 2026, rejected three muted palettes: slate and
+  yellow, plum and amber, oxblood and duck-egg)
+- Of the art-led options he liked af Klint's composition (a big split
+  circle in the header) with Matisse's colours (cobalt, lemon, coral, a
+  touch of green, warm paper), and asked for buttons and controls to be
+  less saturated than the art. So: full colour lives in the artwork only;
+  everything you tap uses softened versions (Nov 2026, app palette)
+- He then chose af Klint's own palette from "The Ten Largest" (No. 1 and
+  No. 2): powder blue, burnt orange, deep navy, olive, pink, pale yellow,
+  cream. Explored as one painting per tab (blue for Today, orange for
+  Calendar) with two overlapping circles and an olive overlap as the icon.
+  Shapes are drawn in her manner, never copied (Nov 2026, app palette)
+- "It is an app, not a painting": art stays to ONE shape per screen (the
+  split circle in the header) plus a soft sense of flow (a wavy header edge,
+  one fine flowing line). No lines and circles everywhere. Current pick:
+  the Coral room layout in the paintings' colours: soft orange header,
+  circle in navy, pale yellow, powder blue and cream with an olive centre;
+  dusky navy buttons, pale-yellow free times, powder-blue labels (Nov 2026)
+
+- Design for how the user feels: a busy therapist, often bad with tech and
+  admin. Every design is checked against Fitts, Hick, Jakob, proximity and
+  Von Restorff, by name (Nov 2026, therapist app)
+
+- Therapist app palette, his own (Nov 2026): pink #F7B4B5 as the main
+  colour (70%), orange #EA7025 (20%), yellow #FBB807 (10%). Chose the soft
+  version: pink header, blush page, and a softened yellow for the main
+  button instead of orange; orange stays in the artwork and dots only.
+  Text in a dark plum-brown, since none of the three is dark enough.
+  Then: the softer yellow (#F6CB52) for the button, and orange removed
+  completely, trying a soft green (#9FBF9A) or af Klint's powder blue
+  (#AFC3DE) in its place. Also exploring a flower medallion (after af
+  Klint's Ten Largest No. 2: heart petals in a ring of pink scallops,
+  powder-blue edge) as the header motif and icon (Nov 2026). Rejected: in
+  pink, soft rounded petal and heart shapes read as anatomical. Keep the
+  motifs geometric (circles, halves, lines), especially on pink grounds
+- Chosen for the therapist app (Nov 2026): the split circle in soft blue
+  (#AFC3DE) and yellow on the pink header, softer yellow button, no orange.
+  Next step is a Figma prototype
+
 ## Dislikes
+- Palettes that "AI uses everywhere": forest or sage with terracotta and
+  cream, lavender, mint and teal, navy and coral, muted greys with one
+  accent (Nov 2026, app palette)
 - Heavy, dark drop shadows under cards: he wants cards lifted, not
   floating (a hairline edge plus a short soft shadow), site-wide (Nov 2026,
   robbiesemple.com)

@@ -157,6 +157,18 @@ export async function POST(req: NextRequest) {
           .update({ gcal_event_id: eventId })
           .in('id', sessions.map((s: { id: string }) => s.id))
           .is('gcal_event_id', null);
+        // Ongoing weekly / fortnightly: remember the rhythm so the daily job
+        // keeps sessions booked ahead after this first batch runs out
+        // (src/lib/sessionSeries.ts). Monthly isn't a fixed weekday, so no.
+        if (isContinuous && (recurrence === 'weekly' || recurrence === 'biweekly')) {
+          const { error: seriesErr } = await supabaseAdmin.from('session_series').insert({
+            client_id,
+            interval_weeks: recurrence === 'weekly' ? 1 : 2,
+            gcal_event_id: eventId,
+            anchor_at: utcDates[0],
+          });
+          if (seriesErr) console.error('[sessions POST] series not recorded:', dbError(seriesErr));
+        }
       }
     } catch (calErr) {
       console.error('[sessions POST] google calendar error:', calErr);

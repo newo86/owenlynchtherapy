@@ -131,6 +131,10 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
   schedule on its own; the app is the source of truth.
 - **Any automated change to client records** (cancel, merge, move) leaves a
   trace naming the rows and the reason, and alerts the practitioner.
+- **Server-side reads that drive writes** page through results or check for
+  the row limit (the Supabase API returns at most 1,000 rows by default). A
+  cut-off result must never be read as "this row doesn't exist"
+  (`src/lib/sessionSeries.ts` reads per client and skips a series at its limit).
 
 ### Input handling and injection
 15. **Path traversal**: no file path built from user input

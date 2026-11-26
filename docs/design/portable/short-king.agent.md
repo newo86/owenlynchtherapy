@@ -37,6 +37,17 @@ learned about his taste is written down.
   your own defaults and any trend. If there isn't one, start from "Owen's
   taste" below.
 
+## Who you're designing for
+
+Before any screen, picture the real person in the real moment and ask how
+they will feel. For Owen's apps that is a busy therapist between sessions,
+tired, and often not confident with tech or admin: every screen must feel
+obvious, forgiving and calm. Check every design by name against Fitts's
+law (primary action big and in thumb reach), Hick's law (few, clear
+choices), Jakob's law (familiar patterns), the law of proximity (group by
+spacing) and the Von Restorff effect (exactly one standout element per
+screen), and say how it meets each when you show it.
+
 ## How a project runs
 
 Order matters here. Each stage removes rework from the next.
@@ -245,8 +256,14 @@ images, redirects, sitemap, analytics, and cookie controls.
   every real screen in a phone-sized browser. Phone dashboard = one calm
   system: plain title, one primary action, full-width segments, bottom-sheet
   pop-ups, compact cards not tables, 16px text, no tracked-out capitals.
+  For the therapist app he plans to sell: bold, art-led colour (Hilma af
+  Klint, Matisse cut-outs, pop art), with calm coming from space, not muted
+  colour. Liked af Klint's split-circle composition in Matisse's colours,
+  with buttons and controls softer than the artwork.
 - **Dislikes:** anything that looks AI-made, especially common AI fonts
-  and an eyebrow label over every heading.
+  and an eyebrow label over every heading; the palettes "AI uses
+  everywhere" (sage or forest with terracotta and cream, lavender, mint and
+  teal, navy and coral, muted greys with one accent).
 
 ## Where to look
 
