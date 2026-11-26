@@ -6,6 +6,7 @@
 // address) are re-exported from the master config so a cloned practice's
 // emails and calendar events use ITS details, never Owen's.
 import { PRACTICE } from '@/practice.config';
+import { messageBlocks } from './waitlistMessage';
 import { escapeHtml } from '@/lib/sanitise';
 
 /** Video platform name (e.g. "Google Meet") and optional fixed room URL.
@@ -292,10 +293,9 @@ export interface QuestionnaireEmailInput {
 
 export function buildQuestionnaireHtml(input: QuestionnaireEmailInput): string {
   const firstName = escapeHtml(input.firstName);
-  const intro = input.kind === 'values'
-    ? `Here is the <strong style="color:#2A4D3C;">Finding your values</strong> worksheet we talked about. It takes around 10 minutes. There are no right or wrong answers, and at the end you&rsquo;ll see your top six values, and I&rsquo;ll email you a copy to keep.`
-    : `I&rsquo;d like therapy to fit you as well as it can. This short questionnaire asks how you&rsquo;d like a therapist to work with you. It takes about five minutes, there are no right or wrong answers, and we can talk through it together in a session.`;
-  const button = input.kind === 'values' ? 'Open the worksheet' : 'Open the questionnaire';
+  if (input.kind === 'values') return buildValuesQuestionnaireHtml(firstName, input.url, input.ttlDays);
+  const intro = `I&rsquo;d like therapy to fit you as well as it can. This short questionnaire asks how you&rsquo;d like a therapist to work with you. It takes about five minutes, there are no right or wrong answers, and we can talk through it together in a session.`;
+  const button = 'Open the questionnaire';
   return emailShell(`
     <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${firstName},</p>
     <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 24px;">${intro}</p>
@@ -381,6 +381,57 @@ export function buildValuesResultsHtml(input: ValuesResultsEmailInput): string {
     </p>`);
 }
 
+// ── Message to the waiting list (dashboard: "Email the waiting list") ─────
+// Owen's own plain text, escaped and laid out in paragraphs. [buttons] in the
+// text becomes the yes/no buttons; null links (a test send) show them inert.
+
+export function buildWaitlistMessageHtml(input: {
+  firstName: string;
+  message: string;
+  yesUrl: string | null;
+  noUrl: string | null;
+}): string {
+  const btn = (url: string | null, label: string, primary: boolean) => {
+    const style = primary
+      ? 'background-color:#C85A1A;color:#FFFFFF;border:1px solid #C85A1A;'
+      : 'background-color:#FFFFFF;color:#2A4D3C;border:1px solid #2A4D3C;';
+    return `<a href="${url ?? '#'}" style="display:inline-block;${style}padding:12px 24px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;margin:0 8px 8px 0;">${label}</a>`;
+  };
+  const html = messageBlocks(input.message, input.firstName).map(b =>
+    b.kind === 'buttons'
+      ? `<div style="margin:8px 0 20px;">${btn(input.yesUrl, 'Yes, keep me on the list', true)}${btn(input.noUrl, 'No, please take me off', false)}</div>`
+      : `<p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">${b.lines.map(escapeHtml).join('<br>')}</p>`,
+  ).join('\n    ');
+  return emailShell(html);
+}
+
+// ── Values questionnaire on its own (Owen's wording, 21 Nov 2026) ──────────
+// Subject is set in lib/questionnaires/send.ts: "Values questionnaire for our
+// sessions". Keep the wording as Owen wrote it.
+
+const VALUES_PARAGRAPHS = [
+  'I&rsquo;m sending you this values questionnaire. It&rsquo;s a way of finding out what matters most to you in life, and we can use it in our sessions together.',
+  'There are no right or wrong answers. Values can also change over time, so think of this as a snapshot of what&rsquo;s important to you right now.',
+  'Do take your time with it. Sometimes we feel we should value something when it isn&rsquo;t really that important to us. Friendship is a common example: for some people it matters a lot, for others it&rsquo;s only somewhat important, and for some it isn&rsquo;t a priority at all. All of those are completely okay.',
+  'If you notice yourself thinking &ldquo;I should value this&rdquo;, pause and ask whether you really do. If you don&rsquo;t, that&rsquo;s fine. Mark it the way it honestly feels.',
+];
+
+function buildValuesQuestionnaireHtml(firstName: string, url: string, ttlDays: number): string {
+  const p = (t: string) => `<p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">${t}</p>`;
+  return emailShell(`
+    <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${firstName},</p>
+    ${VALUES_PARAGRAPHS.map(p).join('\n    ')}
+    <a href="${url}" style="display:inline-block;background-color:#C85A1A;color:#FFFFFF;padding:14px 32px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;margin:8px 0 0;">Open the values questionnaire</a>
+    <p style="color:#777;font-size:13px;line-height:1.7;margin:24px 0 0;">
+      The link is private to you and works for ${ttlDays} days. If it has expired, just let me know and I&rsquo;ll send a new one.
+    </p>
+    <p style="color:#555;font-size:14px;line-height:1.7;margin:24px 0 4px;">Best wishes,</p>
+    <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">${PRACTICE.practitionerName}<br>
+      <span style="font-weight:400;font-size:13px;color:#666;">${PRACTICE.businessName}<br>
+      ${SITE_HOST}</span>
+    </p>`);
+}
+
 // ── Both questionnaires in one email (Owen's wording, Nov 2026) ─────────────
 
 export interface QuestionnaireBundleEmailInput {
@@ -400,7 +451,7 @@ export function buildQuestionnaireBundleHtml(input: QuestionnaireBundleEmailInpu
     <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${firstName},</p>
     ${p('Just a quick email with two short questionnaires. Both are completely optional, and there are no right or wrong answers.')}
     ${h('1. Finding your values <span style="font-weight:400;color:#777;">(about 10 minutes)</span>')}
-    ${p('This is about what matters most to you in life. You&rsquo;ll go through a list of values, pick the six that feel most like you, and then choose any you feel you&rsquo;re not getting to live by as much as you&rsquo;d like at the moment. You&rsquo;ll see your top six at the end, and a copy will be emailed to you to keep.')}
+    ${VALUES_PARAGRAPHS.map(p).join('\n    ')}
     ${btn(input.valuesUrl, 'Find your values')}
     ${h('2. Your therapy preferences <span style="font-weight:400;color:#777;">(about 5 minutes)</span>')}
     ${p('This one is about how you&rsquo;d like therapy to be for you: for example, how much you&rsquo;d like me to lead, whether you&rsquo;d like things to do between sessions, or how much you&rsquo;d like to focus on feelings. It helps me make our work fit you as well as it can, and we can talk through it together in a session.')}
@@ -413,7 +464,7 @@ export function buildQuestionnaireBundleHtml(input: QuestionnaireBundleEmailInpu
     <p style="color:#777;font-size:13px;line-height:1.7;margin:24px 0 0;">
       The links are private to you and stay open for ${input.ttlDays} days. If one runs out or anything doesn&rsquo;t work, just let me know.
     </p>
-    <p style="color:#555;font-size:14px;line-height:1.7;margin:24px 0 4px;">Thanks, and see you soon,</p>
+    <p style="color:#555;font-size:14px;line-height:1.7;margin:24px 0 4px;">Best wishes,</p>
     <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">${PRACTICE.practitionerFirstName}<br>
       <span style="font-weight:400;font-size:13px;color:#666;">${PRACTICE.businessName}<br>
       ${SITE_HOST}</span>

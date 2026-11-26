@@ -37,7 +37,9 @@ export async function POST(req: NextRequest) {
     ? { status: 'contacted', contacted_at: new Date().toISOString() }
     : body.action === 'spam'
       ? { status: 'spam', contacted_at: null }
-      : { status: 'waiting', contacted_at: null };
+      // Back to waiting (incl. undoing a "no"): clear the old answer so the
+      // dashboard doesn't show a stale reply.
+      : { status: 'waiting', contacted_at: null, response: null, responded_at: null };
 
   const { error } = await supabaseAdmin.from('waitlist').update(patch).eq('id', body.id);
   if (error) {

@@ -31,3 +31,10 @@ export function optOutSigningKey(): string | null {
   if (!secret) return null;
   return createHmac('sha256', secret).update('reminder-optout-v2').digest('base64url');
 }
+
+/** HMAC key for the yes/no links in waiting-list emails, or null if not configured. */
+export function waitlistResponseKey(): string | null {
+  const secret = serverSecret();
+  if (!secret) return null;
+  return createHmac('sha256', secret).update('waitlist-response-v1').digest('base64url');
+}

@@ -116,9 +116,16 @@ export interface WaitlistRow {
   phone: string | null;
   /** Optional free text: what the person is looking to work on. May be empty. */
   reason: string | null;
-  status: 'waiting' | 'contacted' | string;
+  /** 'declined' = answered "No, please take me off" to a waiting-list email. */
+  status: 'waiting' | 'contacted' | 'declined' | 'spam' | string;
   created_at: string;
   contacted_at: string | null;
+  /** Last "Email the waiting list" message sent to them, and their answer. */
+  last_emailed_at?: string | null;
+  response?: 'yes' | 'no' | null;
+  responded_at?: string | null;
+  /** Asked on the sign-up form from 23 Nov 2026; null for older entries. */
+  format_preference?: 'online' | 'in_person' | 'either' | null;
 }
 
 export type AdminSection = 'dashboard' | 'clients' | 'sessions' | 'revenue' | 'hours' | 'forms' | 'waitlist' | 'analytics' | 'settings' | 'new-client';
