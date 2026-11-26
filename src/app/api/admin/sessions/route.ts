@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { createCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
-import { ONLINE_LOCATION, ONLINE_JOIN_LINE, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
+import { ONLINE_LOCATION, ONLINE_JOIN_LINE, inPersonAddressFor } from '@/lib/emailTemplates';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   const location = session_format === 'in_person'
-    ? INSIGHT_MATTERS_ADDRESS
+    ? inPersonAddressFor(localDublinToUtcIso(session_date))
     : ONLINE_LOCATION;
 
   // isoDates = wall-clock Dublin strings (used as-is for Google Calendar).

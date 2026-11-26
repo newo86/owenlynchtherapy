@@ -75,6 +75,9 @@ export const PRACTICE = {
     postalCode: 'D01 WY40',
     addressCountry: 'IE',
   },
+  /** In-person rooms that change by weekday (Dublin; 0 = Sunday … 6 = Saturday),
+   *  as the full line clients see. Days not listed use `address` above. */
+  venuesByWeekday: { 5: '124 Baggot Street Lower, Dublin 2' } as Record<number, string>,
   geo: { latitude: '53.3488', longitude: '-6.2687' },
   /** Where the practitioner serves clients, in prose. */
   serviceArea: 'Dublin & Online · Ireland & the UK',

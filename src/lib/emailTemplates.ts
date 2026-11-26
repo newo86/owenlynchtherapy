@@ -24,6 +24,18 @@ export const ONLINE_JOIN_LINE = PRACTICE.telehealthUrl
   : `Online session (${PRACTICE.telehealthPlatform})`;
 export const INSIGHT_MATTERS_ADDRESS =
   `${PRACTICE.address.venue}, ${PRACTICE.address.streetAddress}, ${PRACTICE.address.addressLocality}, ${PRACTICE.address.postalCode}`;
+/**
+ * Where an in-person session on this date takes place. Some days use another
+ * room (`PRACTICE.venuesByWeekday`, e.g. Fridays at Baggot Street); every
+ * other day is the main venue. Judged on the Dublin calendar day.
+ */
+export function inPersonAddressFor(when: string | Date): string {
+  const d = typeof when === 'string' ? new Date(when) : when;
+  const day = new Intl.DateTimeFormat('en-GB', { weekday: 'short', timeZone: 'Europe/Dublin' }).format(d);
+  const idx = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(day);
+  const byDay = (PRACTICE as { venuesByWeekday?: Record<number, string> }).venuesByWeekday ?? {};
+  return byDay[idx] ?? INSIGHT_MATTERS_ADDRESS;
+}
 /** From-address for all outgoing mail (Resend-verified domain). */
 export const EMAIL_FROM = PRACTICE.emailFrom;
 /** Practice reply-to / contact address. */
@@ -140,6 +152,8 @@ export interface ReminderEmailInput {
   /** Public opt-out link; when present an "unsubscribe from reminders" line
    *  is shown in the footer. */
   optOutUrl?: string | null;
+  /** In-person address for this session (defaults to the main venue). */
+  address?: string;
 }
 
 export function buildReminderHtml(input: ReminderEmailInput): string {
@@ -161,7 +175,7 @@ export function buildReminderHtml(input: ReminderEmailInput): string {
       <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#2A4D3C;letter-spacing:1px;text-transform:uppercase;">Where to find me</p>
       <p style="margin:0;font-size:14px;color:#555;line-height:1.7;">
         Your session takes place at:<br>
-        <strong style="color:#2A4D3C;">${INSIGHT_MATTERS_ADDRESS}</strong>
+        <strong style="color:#2A4D3C;">${escapeHtml(input.address ?? INSIGHT_MATTERS_ADDRESS)}</strong>
       </p>
     </div>`;
 

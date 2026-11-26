@@ -8,7 +8,7 @@ import { generatePrivacyPolicyPDF } from '@/lib/pdf/generatePrivacyPolicyPDF';
 import { createCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
 import { getResend } from '@/lib/resend';
-import { paymentLinkFor, welcomePaymentStep, EMAIL_FROM, INSIGHT_MATTERS_ADDRESS, CONTACT_EMAIL } from '@/lib/emailTemplates';
+import { paymentLinkFor, welcomePaymentStep, EMAIL_FROM, inPersonAddressFor, CONTACT_EMAIL } from '@/lib/emailTemplates';
 import { PRACTICE, SITE_URL } from '@/practice.config';
 const VALID_FORMATS = ['in_person', 'online'];
 const VALID_RECURRENCE = ['once', 'weekly', 'biweekly', 'monthly'] as const;
@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
     hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
   });
   const location = session_format === 'in_person'
-    ? INSIGHT_MATTERS_ADDRESS
+    ? inPersonAddressFor(sessionUtcIso)
     : "I'll send you a link to join shortly before your session.";
 
   // 1. Insert intake token

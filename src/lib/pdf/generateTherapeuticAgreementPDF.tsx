@@ -4,6 +4,10 @@ import { loadHorizontalLogoPng } from './loadLogo';
 import { INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
 import { PRACTICE, SITE_URL } from '@/practice.config';
 
+const DAY_NAMES = ['Sundays', 'Mondays', 'Tuesdays', 'Wednesdays', 'Thursdays', 'Fridays', 'Saturdays'];
+const OTHER_VENUES = Object.entries((PRACTICE as { venuesByWeekday?: Record<number, string> }).venuesByWeekday ?? {})
+  .map(([d, a]) => `${DAY_NAMES[Number(d)]}: ${a}`).join('; ');
+
 const SITE_HOST = SITE_URL.replace('https://', '');
 
 // The document is static — same bytes for every call. Memoise after the
@@ -56,7 +60,7 @@ export async function generateTherapeuticAgreementPDF(): Promise<Buffer> {
         A session is one therapeutic hour, which is 50 minutes. Sessions run
         between 50 minutes and one hour. They take place:
       </P>
-      <Bullet>In person at: {INSIGHT_MATTERS_ADDRESS}</Bullet>
+      <Bullet>In person at: {INSIGHT_MATTERS_ADDRESS}{OTHER_VENUES ? ` (${OTHER_VENUES})` : ''}</Bullet>
       <Bullet>
         Online via {PRACTICE.telehealthPlatform}, a secure, encrypted video
         service
