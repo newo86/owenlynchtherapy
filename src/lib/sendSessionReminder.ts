@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
-import { buildReminderHtml, paymentLinkFor, sessionKind, EMAIL_FROM } from '@/lib/emailTemplates';
+import { buildReminderHtml, paymentLinkFor, sessionKind, EMAIL_FROM, inPersonAddressFor } from '@/lib/emailTemplates';
 import { reminderOptOutUrl } from '@/lib/reminderOptOut';
 import { PRACTICE } from '@/practice.config';
 import { google } from 'googleapis';
@@ -209,6 +209,7 @@ export async function sendSessionReminder(
         paymentUrl: paymentLinkFor(kind, sessionId, client.email),
         alreadyPaid: session.payment_status === 'paid',
         optOutUrl: reminderOptOutUrl(session.client_id as string),
+        address: inPersonAddressFor(session.session_date as string),
       }),
     });
   } catch (err) {

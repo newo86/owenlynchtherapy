@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase';
 import { utcToDublinLocal } from '@/lib/dateUtils';
-import { ONLINE_LOCATION, ONLINE_JOIN_LINE, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
+import { ONLINE_LOCATION, ONLINE_JOIN_LINE, inPersonAddressFor } from '@/lib/emailTemplates';
 import { inferSessionFormat, type MappedEvent } from '@/lib/calendarSync';
 import type { DriftItem, DriftKind } from '@/lib/calendarDrift';
 import { insertSessionEvent, patchEvent, deleteEvent, type CalLike } from '@/lib/googleSessionEvents';
@@ -50,7 +50,7 @@ export function sessionEventFields(s: Pick<SessionRow, 'session_date' | 'session
       inPerson ? '' : ONLINE_JOIN_LINE,
       `Fee: €${Math.round((s.fee ?? 0) / 100)}`,
     ].filter(Boolean).join('\n'),
-    location: s.location ?? (inPerson ? INSIGHT_MATTERS_ADDRESS : ONLINE_LOCATION),
+    location: s.location ?? (inPerson ? inPersonAddressFor(s.session_date) : ONLINE_LOCATION),
     startLocal: utcToDublinLocal(s.session_date),
     minutes: SESSION_MINUTES,
   };
@@ -152,7 +152,7 @@ export async function applyDriftChoice(cal: CalLike, item: DriftItem, choice: Fi
         session_date: item.googleStart,
         session_format: format,
         format_confirmed: confirmed,
-        location: format === 'online' ? ONLINE_LOCATION : INSIGHT_MATTERS_ADDRESS,
+        location: format === 'online' ? ONLINE_LOCATION : inPersonAddressFor(item.googleStart),
         fee: (client?.session_fee as number | undefined) ?? 0,
         status: 'scheduled',
         payment_status: 'unpaid',

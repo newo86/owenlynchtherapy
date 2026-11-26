@@ -4,7 +4,7 @@ import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { moveSessionEvent, removeSessionEvent, addSessionEvent, type GoogleResult } from '@/lib/googleSessionEvents';
 import { sessionEventFields } from '@/lib/calendarFix';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
-import { sessionKind, ONLINE_LOCATION, ONLINE_JOIN_LINE, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
+import { sessionKind, ONLINE_LOCATION, ONLINE_JOIN_LINE, inPersonAddressFor } from '@/lib/emailTemplates';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       sessionPatch.format_confirmed = true;
     }
     sessionPatch.location = body.session_format === 'in_person'
-      ? INSIGHT_MATTERS_ADDRESS
+      ? inPersonAddressFor((sessionPatch.session_date as string | undefined) ?? (existing.session_date as string))
       : ONLINE_LOCATION;
   }
   // Payment changes go through the same bookkeeping as the mark-paid route —

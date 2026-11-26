@@ -38,3 +38,12 @@ describe('welcomePaymentStep (new-client welcome email)', () => {
     expect(html).not.toContain('buy.stripe.com');
   });
 });
+
+describe('inPersonAddressFor', () => {
+  it('Fridays are at Baggot Street, other days at the main venue', async () => {
+    const { inPersonAddressFor, INSIGHT_MATTERS_ADDRESS } = await import('./emailTemplates');
+    expect(inPersonAddressFor('2026-11-27T16:00:00Z')).toBe('124 Baggot Street Lower, Dublin 2');   // Fri 4pm
+    expect(inPersonAddressFor('2026-11-24T17:00:00Z')).toBe(INSIGHT_MATTERS_ADDRESS);               // Tue
+    expect(inPersonAddressFor('2027-07-02T23:30:00Z')).toBe(INSIGHT_MATTERS_ADDRESS);               // 00:30 Saturday in Dublin (summer time)
+  });
+});

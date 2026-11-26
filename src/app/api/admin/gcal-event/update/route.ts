@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { updateCalendarEvent } from '@/lib/googleOAuth';
 import { localDublinToUtcIso } from '@/lib/dateUtils';
-import { ONLINE_LOCATION, ONLINE_JOIN_LINE, INSIGHT_MATTERS_ADDRESS } from '@/lib/emailTemplates';
+import { ONLINE_LOCATION, ONLINE_JOIN_LINE, inPersonAddressFor } from '@/lib/emailTemplates';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 const VALID_FORMATS = ['in_person', 'online'];
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
   const format = VALID_FORMATS.includes(body.session_format ?? '') ? body.session_format! : 'in_person';
   const location = format === 'in_person'
-    ? INSIGHT_MATTERS_ADDRESS
+    ? inPersonAddressFor(localDublinToUtcIso(session_date))
     : ONLINE_LOCATION;
 
   // Update the Google Calendar event.

@@ -1,5 +1,6 @@
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { utcToDublinLocal, localDublinToUtcIso } from '@/lib/dateUtils';
+import { inPersonAddressFor } from '@/lib/emailTemplates';
 
 /**
  * Ongoing clients: keep their sessions booked ahead.
@@ -149,7 +150,7 @@ export async function extendAllSeries(now = new Date()): Promise<ExtendOutcome> 
       session_date: d,
       session_format: template.session_format,
       format_confirmed: template.format_confirmed ?? true,
-      location: template.location,
+      location: template.session_format === 'in_person' ? inPersonAddressFor(d) : template.location,
       fee: template.fee,
       status: 'scheduled',
       payment_status: 'unpaid',

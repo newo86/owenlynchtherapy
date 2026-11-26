@@ -42,6 +42,14 @@ Anything else (unset/false) silently blocks every send.
   - A truncated Google fetch (page cap) disables drift detection and linking: a missing event is never read as a deletion.
 - **Which calendar events count as a client's session** (linking, difference detection and the reminder check all use `matchOneActiveClient`): the title must contain the client's full name, or a name part plus "session"/"client". "Walk Kate" or "Day off" never becomes a session; all-day events never do. Events that don't match show in the dashboard's unlinked-events queue to link by hand.
 
+## In-person venue by weekday
+- Fridays in person are at 124 Baggot Street Lower, Dublin 2 (from 27 Nov
+  2026); other days at Insight Matters, Capel Street. Set in
+  `PRACTICE.venuesByWeekday` (src/practice.config.ts) and applied by
+  `inPersonAddressFor()` (src/lib/emailTemplates.ts) to reminders, bookings,
+  calendar events, welcome emails and the agreement PDF. Not editable in the
+  Settings page yet: change it in the config.
+
 ## Ongoing clients (sessions keep coming)
 - A client booked "ongoing" weekly or every 2 weeks gets a `session_series`
   row. A daily cron (`/api/admin/sessions/extend`, 05:30 UTC,
