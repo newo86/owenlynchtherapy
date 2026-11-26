@@ -99,7 +99,8 @@ export async function POST(req: NextRequest) {
     client_id,
     session_date: d,
     session_format,
-    location,
+    // Per date: a monthly run can land on different weekdays (venues differ by day).
+    location: session_format === 'in_person' ? inPersonAddressFor(d) : location,
     fee: Math.round(fee),
     status: 'scheduled',
     payment_status: 'unpaid',

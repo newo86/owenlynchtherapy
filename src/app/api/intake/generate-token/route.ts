@@ -1,3 +1,4 @@
+import { escapeHtml } from '@/lib/sanitise';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { randomUUID, randomBytes } from 'node:crypto';
@@ -341,7 +342,7 @@ interface WelcomeEmailData {
 
 function buildWelcomeHtml(d: WelcomeEmailData): string {
   const locationLine = d.sessionFormat === 'in_person'
-    ? `<tr><td style="padding:8px 0;color:#777;border-bottom:1px solid #F0EAE0;vertical-align:top;">Location</td><td style="padding:8px 0;border-bottom:1px solid #F0EAE0;">${d.location}</td></tr>`
+    ? `<tr><td style="padding:8px 0;color:#777;border-bottom:1px solid #F0EAE0;vertical-align:top;">Location</td><td style="padding:8px 0;border-bottom:1px solid #F0EAE0;">${escapeHtml(d.location)}</td></tr>`
     : '';
 
   const paymentStep = welcomePaymentStep({ stripeUrl: d.paymentUrl, feeEuros: d.feeEuros });
