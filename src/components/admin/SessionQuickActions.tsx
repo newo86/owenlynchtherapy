@@ -28,7 +28,7 @@ export function SessionQuickActions({ session, client, onChanged }: Props) {
   const [paid, setPaid] = useState(session.payment_status === 'paid');
   const [receiptAt, setReceiptAt] = useState<string | null>(session.receipt_sent_at);
   const [busy, setBusy] = useState<null | 'reminder' | 'paid' | 'receipt'>(null);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string; email?: string } | null>(null);
 
   const live = session.status === 'scheduled' || session.status === 'attended';
   const upcoming = session.status === 'scheduled' && new Date(session.session_date) > new Date(Date.now() - 60 * 60_000);
@@ -51,7 +51,7 @@ export function SessionQuickActions({ session, client, onChanged }: Props) {
         setMsg({ ok: false, text: (json.error as string) ?? 'The reminder could not be sent.' });
       } else {
         setReminderAt(new Date().toISOString());
-        setMsg({ ok: true, text: `Reminder sent to ${(json.email as string) ?? client.email}.` });
+        setMsg({ ok: true, text: 'Reminder sent to', email: (json.email as string) ?? client.email ?? '' });
         onChanged();
       }
     } catch { setMsg({ ok: false, text: 'No connection. Please try again.' }); }
@@ -80,7 +80,7 @@ export function SessionQuickActions({ session, client, onChanged }: Props) {
       }
       if (!res.ok) { setMsg({ ok: false, text: (json.error as string) ?? 'The receipt could not be sent.' }); return; }
       setReceiptAt(new Date().toISOString());
-      setMsg({ ok: true, text: `Receipt emailed to ${client.email}.` });
+      setMsg({ ok: true, text: 'Receipt emailed to', email: client.email ?? '' });
       onChanged();
     } catch { setMsg({ ok: false, text: 'No connection. Please try again.' }); }
     finally { setBusy(null); }
@@ -122,7 +122,7 @@ export function SessionQuickActions({ session, client, onChanged }: Props) {
         </div>
       )}
 
-      {msg && <p className={`sqa-msg${msg.ok ? ' is-ok' : ' is-error'}`} role="status">{msg.text}</p>}
+      {msg && <p className={`sqa-msg${msg.ok ? ' is-ok' : ' is-error'}`} role="status">{msg.text}{msg.email !== undefined && <> <span className="pii">{msg.email}</span>.</>}</p>}
     </section>
   );
 }
