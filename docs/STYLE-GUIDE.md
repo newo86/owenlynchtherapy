@@ -64,6 +64,11 @@ governed by this guide.
 | Linen | `#F5F0E8` | Light background |
 | Cream | `#F9F7F2` | Light background (alt) |
 
+**Dashboard primary button (`.admin-btn-primary`)** uses `#B04E16` (hover
+`#9C4413`, pressed `#8A3B10`) instead of brand terracotta. White on `#C85A1A`
+is 4.3:1, which fails WCAG AA for small text; `#B04E16` is 5.3:1. The public
+site keeps `#C85A1A`.
+
 Colour tokens live in the `@theme` block in `src/app/globals.css`
 (`--color-forest`, `--color-sage`/`green`, `--color-orange`, `--color-gold`,
 `--color-cream`, `--color-linen`).

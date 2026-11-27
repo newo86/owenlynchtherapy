@@ -56,3 +56,24 @@ export function localDublinToUtcIso(wallClock: string): string {
   }
   return new Date(Date.UTC(y, mo - 1, d, h, mi, 0)).toISOString();
 }
+
+/**
+ * "Tue 24 Nov, 4:00pm" in Europe/Dublin. Built from parts so the server and
+ * every browser print exactly the same text (Intl's own punctuation and am/pm
+ * spelling differ between engines, which caused a hydration mismatch).
+ */
+export function formatShortWhen(iso: string): string {
+  const parts = new Intl.DateTimeFormat('en-IE', {
+    timeZone: 'Europe/Dublin',
+    weekday: 'short', day: 'numeric', month: 'short',
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  }).formatToParts(new Date(iso));
+  const v = (t: string) => parts.find(p => p.type === t)?.value ?? '';
+  const period = v('dayPeriod').replace(/[.\s]/g, '').toLowerCase();
+  return `${v('weekday')} ${v('day')} ${v('month')}, ${v('hour')}:${v('minute')}${period}`;
+}
+
+/** "Tue 24 Nov": the day part of formatShortWhen. */
+export function formatShortDay(iso: string): string {
+  return formatShortWhen(iso).split(',')[0];
+}

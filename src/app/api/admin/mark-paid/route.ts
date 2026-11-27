@@ -73,35 +73,56 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Session is already marked paid' }, { status: 409 });
   }
 
+  if (session.payment_status === 'refunded') {
+    return NextResponse.json({ error: 'This session was refunded, so it can\'t be marked paid here' }, { status: 409 });
+  }
+
   const client = (session as { clients: { id: string; is_low_cost?: boolean } | null }).clients;
   const isLowCost = Boolean(client?.is_low_cost);
   const kind = sessionKind(session.session_format as string, isLowCost);
   const method = isLowCost ? 'cash' : 'manual';
   const paidAt = new Date().toISOString();
 
-  const { error: updateErr } = await supabaseAdmin
+  // Conditional so a double tap can't log the payment twice: only the request
+  // whose update actually flipped unpaid -> paid writes the ledger row.
+  const { data: flipped, error: updateErr } = await supabaseAdmin
     .from('sessions')
     .update({ payment_status: 'paid', paid_at: paidAt })
-    .eq('id', session_id);
+    .eq('id', session_id)
+    .eq('payment_status', 'unpaid')
+    .select('id');
 
   if (updateErr) {
     console.error('[mark-paid] update error:', dbError(updateErr));
     return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
   }
 
-  // Log in the finance ledger. Graceful — if the payments table hasn't been
-  // created yet the session is already marked paid; we just skip the log.
-  const { error: ledgerErr } = await supabaseAdmin.from('payments').insert({
-    session_id,
-    client_id: session.client_id,
-    amount_cents: session.fee ?? 0,
-    currency: 'eur',
-    session_type: kind,
-    method,
-    paid_at: paidAt,
-  });
-  if (ledgerErr) {
-    console.warn('[mark-paid] Could not log payment (run the payments migration):', ledgerErr.message);
+  if (!flipped || flipped.length === 0) {
+    // Nothing changed: re-read so a refund (or a payment that landed first) is reported truthfully.
+    const { data: now } = await supabaseAdmin.from('sessions').select('payment_status').eq('id', session_id).single();
+    if (now?.payment_status === 'refunded') {
+      return NextResponse.json({ error: 'This session was refunded, so it can\'t be marked paid here' }, { status: 409 });
+    }
+    if (now?.payment_status === 'paid') {
+      return NextResponse.json({ error: 'Session is already marked paid' }, { status: 409 });
+    }
+  }
+
+  if (flipped && flipped.length > 0) {
+    // Log in the finance ledger. Graceful — if the payments table hasn't been
+    // created yet the session is already marked paid; we just skip the log.
+    const { error: ledgerErr } = await supabaseAdmin.from('payments').insert({
+      session_id,
+      client_id: session.client_id,
+      amount_cents: session.fee ?? 0,
+      currency: 'eur',
+      session_type: kind,
+      method,
+      paid_at: paidAt,
+    });
+    if (ledgerErr) {
+      console.warn('[mark-paid] Could not log payment (run the payments migration):', ledgerErr.message);
+    }
   }
 
   console.log(`[mark-paid] Session ${session_id} marked paid (${method}, ${kind})`);

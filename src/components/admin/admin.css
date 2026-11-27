@@ -396,7 +396,8 @@
   align-items: center;
   gap: 6px;
   padding: 13px 22px;
-  background: var(--terracotta);
+  /* #B04E16 = 5.3:1 with white (WCAG AA); the brand terracotta #C85A1A is 4.3:1. Dashboard only. */
+  background: #B04E16;
   color: white;
   border: none;
   border-radius: 12px;
@@ -406,20 +407,22 @@
   letter-spacing: 0;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(200, 90, 27, 0.28);
+  box-shadow: 0 6px 16px rgba(176, 78, 22, 0.28);
   transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
 @media (hover: hover) {
   .admin-btn-primary:hover:not(:disabled) {
+  background: #9C4413;
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(200, 90, 27, 0.34);
+  box-shadow: 0 10px 22px rgba(176, 78, 22, 0.34);
 }
 }
 
 .admin-btn-primary:active:not(:disabled) {
+  background: #8A3B10;
   transform: translateY(0);
-  box-shadow: 0 3px 8px rgba(200, 90, 27, 0.28);
+  box-shadow: 0 3px 8px rgba(176, 78, 22, 0.28);
 }
 
 .admin-btn-primary:disabled {
@@ -2589,4 +2592,38 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
   .cm-title { font-size: 22px; }
   .cm-nav { gap: 6px; }
   .cm-nav .admin-link { padding: 0 6px; }
+}
+
+/* ── "Did they pay?" card ─────────────────────────────────────────────── */
+
+.pp-card { margin-bottom: 20px; }
+.pp-note { margin: -6px 0 14px; font-size: 13px; color: var(--forest-deep); line-height: 1.5; }
+.pp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.pp-row { padding: 14px 0 0; border-top: 1px solid var(--line); }
+.pp-row:first-child { padding-top: 0; border-top: none; }
+.pp-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 10px; }
+.pp-who { font-size: 16px; font-weight: 500; color: var(--forest-deep); }
+.pp-when { font-size: 13px; color: var(--forest-deep); }
+.pp-amount { font-size: 14px; font-weight: 500; color: var(--forest-deep); }
+.pp-snoozed { font-size: 12px; color: var(--forest-deep); background: var(--cream); border-radius: 999px; padding: 2px 10px; }
+.pp-failed { font-size: 12px; font-weight: 500; color: #8a3b0e; background: #fbeadd; border-radius: 999px; padding: 2px 10px; }
+.pp-quiet { margin: 8px 0 0; font-size: 13px; color: var(--forest-deep); line-height: 1.5; }
+.pp-saving { margin: 0; min-height: 44px; display: flex; align-items: center; font-size: 14px; color: var(--forest-deep); }
+.pp-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pp-btn { min-height: 44px; justify-content: center; }
+.pp-confirm { background: var(--cream); border-radius: 14px; padding: 14px 16px; }
+.pp-confirm-text { margin: 0 0 12px; font-size: 14px; line-height: 1.55; color: var(--forest-deep); }
+/* Phone: one compact line per prompt + a single button; choices live in the sheet. */
+.pp-row.is-compact { padding-top: 12px; }
+.pp-row.is-compact:first-child { padding-top: 0; }
+.pp-compact-line { display: flex; flex-direction: column; gap: 10px; }
+.pp-compact-text { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.pp-sheet-who { margin: 0; font-size: 16px; color: var(--forest-deep); }
+.m-sheet .pp-confirm { background: #fff; }
+@media (max-width: 768px) {
+  .pp-card { padding: 20px 18px; border-radius: 18px; }
+  .pp-actions { flex-direction: column; }
+  .pp-btn { width: 100%; }
+  .pp-note, .pp-when, .pp-snoozed, .pp-failed, .pp-quiet, .pp-saving { font-size: 14px; }
+  .pp-confirm-text, .pp-amount { font-size: 16px; }
 }

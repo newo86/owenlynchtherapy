@@ -7,6 +7,7 @@ import { SessionDoneOptions, type SessionDoneChoice } from './SessionDoneOptions
 import { NextUpCard, AccreditationMiniCard, findNextUp } from './TodayCards';
 import { MobileHome } from './MobileHome';
 import { CalendarDriftCard } from './CalendarDriftCard';
+import { PaymentPromptsPanel } from './PaymentPromptsPanel';
 import type { DriftItem } from '@/lib/calendarDrift';
 import { useAccreditationSettings, useAccreditationHours } from './accreditation';
 import type {
@@ -380,6 +381,8 @@ export function Dashboard({
       )}
 
       <CalendarDriftCard items={drift} onResolved={onReload} />
+
+      <PaymentPromptsPanel onChanged={onReload} />
 
       <div className={`admin-row-today${nextUp ? '' : ' is-single'}`}>
         {nextUp && (

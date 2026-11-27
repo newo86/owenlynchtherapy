@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
-import { supabaseAdmin, dbError } from '@/lib/supabase';
-import { sessionKind } from '@/lib/emailTemplates';
-import { sendReceiptEmail } from '@/lib/sendReceiptEmail';
+import { closeOutSession } from '@/lib/closeOutSession';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
-// "Session done" — closes out a session in one explicit call:
+// "Session done" — closes out a session in one explicit call (the logic lives
+// in src/lib/closeOutSession.ts, shared with the "Did they pay?" prompt):
 //   - always: status → attended
 //   - record_payment: also mark paid + log to the payments ledger
 //     ('cash' for low-cost clients, 'manual' otherwise), exactly like the
@@ -35,87 +34,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
   }
 
-  const { data: session, error: fetchErr } = await supabaseAdmin
-    .from('sessions')
-    .select('*, clients(*)')
-    .eq('id', session_id)
-    .single();
-
-  if (fetchErr || !session) {
-    return NextResponse.json({ error: 'Session not found' }, { status: 404 });
-  }
-
-  const client = (session as {
-    clients: { id: string; full_name: string; email: string; is_low_cost?: boolean } | null;
-  }).clients;
-
-  // 1. Mark attended.
-  const { error: updateErr } = await supabaseAdmin
-    .from('sessions')
-    .update({ status: 'attended' })
-    .eq('id', session_id);
-
-  if (updateErr) {
-    console.error('[mark-attended] update error:', dbError(updateErr));
-    return NextResponse.json({ error: 'Failed to update session status' }, { status: 500 });
-  }
-
-  // 2. Record the payment, if asked and not already paid.
-  let paid = session.payment_status === 'paid';
-  if (body.record_payment && !paid) {
-    const isLowCost = Boolean(client?.is_low_cost);
-    const kind = sessionKind(session.session_format as string, isLowCost);
-    const method = isLowCost ? 'cash' : 'manual';
-    const paidAt = new Date().toISOString();
-
-    const { error: payErr } = await supabaseAdmin
-      .from('sessions')
-      .update({ payment_status: 'paid', paid_at: paidAt })
-      .eq('id', session_id);
-
-    if (payErr) {
-      console.error('[mark-attended] payment update error:', dbError(payErr));
-      return NextResponse.json(
-        { error: 'Marked attended, but recording the payment failed — mark it paid separately.' },
-        { status: 500 },
-      );
-    }
-    paid = true;
-
-    const { error: ledgerErr } = await supabaseAdmin.from('payments').insert({
-      session_id,
-      client_id: session.client_id,
-      amount_cents: session.fee ?? 0,
-      currency: 'eur',
-      session_type: kind,
-      method,
-      paid_at: paidAt,
-    });
-    if (ledgerErr) {
-      console.warn('[mark-attended] Could not log payment (run the payments migration):', ledgerErr.message);
-    }
-  }
-
-  // 3. Email the receipt, if asked — guarded exactly like send-receipt.
-  let receipt_sent = false;
-  if (body.send_receipt && paid && !session.receipt_sent_at && client?.email) {
-    receipt_sent = 'sent' === await sendReceiptEmail(
-      {
-        id: session_id,
-        fee: session.fee as number,
-        session_date: session.session_date as string,
-        session_format: session.session_format as string,
-      },
-      client,
-    );
+  const result = await closeOutSession(session_id, {
+    record_payment: body.record_payment,
+    send_receipt: body.send_receipt,
+  });
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
   return NextResponse.json(
     {
       success: true,
-      paid,
-      receipt_sent,
-      payment_status: paid ? 'paid' : (session.payment_status ?? 'unknown'),
+      paid: result.paid,
+      receipt_sent: result.receipt_sent,
+      payment_status: result.payment_status,
     },
     { headers: noCache },
   );

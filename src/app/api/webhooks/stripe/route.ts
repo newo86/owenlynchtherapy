@@ -6,6 +6,7 @@ import { getResend } from '@/lib/resend';
 import { PRACTICE } from '@/practice.config';
 import {
   buildReceiptHtml,
+  inPersonAddressFor,
   sessionKind,
   STRIPE_LINK_IN_PERSON,
   STRIPE_LINK_ONLINE, EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
@@ -375,6 +376,7 @@ async function sendReceipt(
       time: formattedTime,
       feeEuros,
       sessionFormat: session.session_format,
+      inPersonAddress: inPersonAddressFor(session.session_date),
     }),
   });
   } catch (err) {

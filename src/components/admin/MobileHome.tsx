@@ -12,6 +12,7 @@ import { PRACTICE } from '@/practice.config';
 import { utcToDublinLocal } from '@/lib/dateUtils';
 import { adminFetch, startOfWeek, dedupeSessions } from './api';
 import { findFreeSlots, checkTime, CADENCE_LABEL, type Cadence, type FreeSlot, type OpeningHours } from './freeSlots';
+import { PaymentPromptsPanel } from './PaymentPromptsPanel';
 import type { CalendarEvent, ClientRow, SessionRow } from './types';
 
 const WEEKS_AHEAD = 8;
@@ -183,6 +184,8 @@ export function MobileHome({ clients, todaySessions, onOpenSession, onBooked }: 
       <button type="button" className="m-schedule" onClick={() => setSheet({})}>
         <CalendarPlus size={20} strokeWidth={1.8} aria-hidden /> Schedule a client
       </button>
+
+      <PaymentPromptsPanel onChanged={onBooked} compact />
 
       <section className="m-free" aria-label="Free times">
         <h2 className="admin-h2">Free times</h2>
