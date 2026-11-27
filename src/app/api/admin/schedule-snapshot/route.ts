@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { bearerMatches } from '@/lib/adminAuth';
 import { rateLimit, isTokenBlocked, trackTokenFailure } from '@/lib/rateLimit';
 import { getAuthorizedClient } from '@/lib/googleOAuth';
-import { fetchCalendarEvents, type MappedEvent } from '@/lib/calendarSync';
+import { fetchCalendarEvents } from '@/lib/calendarSync';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { promptLabel } from '@/lib/paymentPrompts';
+import { busyBlocks, snapshotLabel } from '@/lib/scheduleSnapshot';
 
 // Read-only schedule snapshot for the practice-manager agent.
 //
@@ -30,19 +31,6 @@ const MIN_TOKEN_LENGTH = 32;
 function clientIp(req: NextRequest): string {
   // x-real-ip is set by Vercel; the first x-forwarded-for entry is caller-controlled.
   return req.headers.get('x-real-ip') ?? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-}
-
-/** Events that block time and aren't already one of the listed sessions. */
-function busyBlocks(
-  events: MappedEvent[],
-  live: Array<{ gcal_event_id: string | null; startMs: number }>,
-): Array<{ start: string; end: string }> {
-  const ids = new Set(live.map(s => s.gcal_event_id).filter((x): x is string => Boolean(x)));
-  const starts = new Set(live.map(s => s.startMs));
-  return events
-    .filter(e => !e.allDay && !e.free)
-    .filter(e => !ids.has(e.id) && !starts.has(new Date(e.start).getTime()))
-    .map(e => ({ start: new Date(e.start).toISOString(), end: new Date(e.end).toISOString() }));
 }
 
 export async function GET(req: NextRequest) {
@@ -86,7 +74,7 @@ export async function GET(req: NextRequest) {
 
   const sessions = (data ?? []).map(s => ({
     when: new Date(s.session_date as string).toISOString(),
-    client: promptLabel({ full_name: (s.clients as unknown as { full_name: string } | null)?.full_name ?? '' }),
+    client: snapshotLabel(promptLabel({ full_name: (s.clients as unknown as { full_name: string } | null)?.full_name ?? '' })),
     status: s.status as string,
     payment: s.payment_status === 'paid' ? 'paid' as const : 'not marked paid' as const,
   }));
@@ -107,8 +95,9 @@ export async function GET(req: NextRequest) {
       } else {
         const live = (data ?? [])
           .filter(s => s.status !== 'cancelled')
-          .map(s => ({ gcal_event_id: (s.gcal_event_id as string | null) ?? null, startMs: new Date(s.session_date as string).getTime() }));
-        busy = busyBlocks(events, live);
+          .map(s => ({ gcal_event_id: (s.gcal_event_id as string | null) ?? null }));
+        const { data: active } = await supabaseAdmin.from('clients').select('id, full_name').eq('status', 'active');
+        busy = busyBlocks(events, live, (active ?? []) as Array<{ id: string; full_name: string }>);
       }
     }
   } catch (err) {

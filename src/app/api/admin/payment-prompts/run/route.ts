@@ -3,6 +3,7 @@ import { bearerMatches, requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL, buildPaymentPromptDigestHtml } from '@/lib/emailTemplates';
+import { paymentPromptIdempotencyKey } from '@/lib/scheduleSnapshot';
 import { SITE_URL } from '@/practice.config';
 import { formatShortWhen } from '@/lib/dateUtils';
 import {
@@ -51,6 +52,23 @@ export async function POST(req: NextRequest) {
   return run();
 }
 
+// Same pattern as the reminders' abort alert: best-effort, via getResend().
+async function sendDigestBrokenAlert(): Promise<void> {
+  try {
+    await getResend().emails.send({
+      from: EMAIL_FROM,
+      to: CONTACT_EMAIL,
+      subject: "Heads-up: the 'Did they pay?' emails have stopped",
+      html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
+        <p>The hourly "Did they pay?" email was rejected by the email service as invalid, so nothing was sent. This is a fault in the website, not something you did, and retrying will not fix it.</p>
+        <p>You can still tick off payments in the dashboard: <a href="${SITE_URL}/admin/intake">${SITE_URL.replace('https://', '')}/admin/intake</a></p>
+      </div>`,
+    });
+  } catch (err) {
+    console.error('[payment-prompts] failed to send broken-digest alert:', err instanceof Error ? err.message : String(err));
+  }
+}
+
 async function run(): Promise<NextResponse> {
   const now = new Date();
 
@@ -69,7 +87,7 @@ async function run(): Promise<NextResponse> {
   const since = new Date(now.getTime() - PROMPT_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const { data: sessions, error } = await supabaseAdmin
     .from('sessions')
-    .select('id, session_date, status, payment_status, fee, client_id, clients(full_name)')
+    .select('id, session_date, status, payment_status, fee, client_id, clients(full_name, email), receipt_sent_at')
     .in('status', ['scheduled', 'attended'])
     .eq('payment_status', 'unpaid')
     .gte('session_date', since)
@@ -89,7 +107,7 @@ async function run(): Promise<NextResponse> {
     return NextResponse.json({ ok: false, aborted: 'ledger-unavailable', sent: 0 }, { status: 500 });
   }
 
-  type Row = PromptSession & { client_id: string; clients: { full_name: string } | null };
+  type Row = PromptSession & { client_id: string; clients: { full_name: string; email: string | null } | null; receipt_sent_at: string | null };
   const due = sessionsNeedingPrompt((sessions ?? []) as unknown as Row[], (prompts ?? []) as PromptRow[], now);
   if (due.length === 0) return NextResponse.json({ ok: true, due: 0, sent: 0 });
 
@@ -129,7 +147,7 @@ async function run(): Promise<NextResponse> {
       .eq('prompt_count', prior)
       .lt('prompt_count', MAX_PROMPTS_PER_SESSION)
       .is('resolved_at', null)
-      .or(`and(snoozed_until.is.null,or(last_prompted_at.is.null,last_prompted_at.lt.${gapCut})),snoozed_until.lte.${nowIso}`)
+      .or(`and(snoozed_until.is.null,or(last_prompted_at.is.null,last_prompted_at.lt."${gapCut}")),snoozed_until.lte."${nowIso}"`)
       .select('session_id');
     if (claimErr) {
       console.error('[payment-prompts] claim failed — NOT prompting:', claimErr.message);
@@ -141,8 +159,10 @@ async function run(): Promise<NextResponse> {
   if (claimed.length === 0) return NextResponse.json({ ok: true, due: due.length, prompted: 0, sent: 0, skipped: 'nothing-claimed' });
 
   let failed = false;
+  let codeBug = false;
   try {
-    const idempotencyKey = `payprompt:${claimed.map(c => c.id).sort().join(',')}:${Math.floor(now.getTime() / 3_600_000)}`;
+    // Hashed: Resend keys are 1-256 chars and raw uuids overflow that at 7+ sessions.
+    const idempotencyKey = paymentPromptIdempotencyKey(claimed.map(c => c.id), Math.floor(now.getTime() / 3_600_000));
     const result = await getResend().emails.send({
       from: EMAIL_FROM,
       to: CONTACT_EMAIL,
@@ -154,7 +174,8 @@ async function run(): Promise<NextResponse> {
           sessionId: s.id,
           label: promptLabel({ full_name: s.clients?.full_name ?? '' }),
           when: formatShortWhen(s.session_date),
-          feeEuros: Math.round((s.fee ?? 0) / 100),
+          canEmailReceipt: !s.receipt_sent_at && Boolean(s.clients?.email),
+          receiptAlreadySent: Boolean(s.receipt_sent_at),
         })),
       }),
     }, { idempotencyKey });
@@ -166,6 +187,10 @@ async function run(): Promise<NextResponse> {
       console.warn('[payment-prompts] duplicate digest refused by Resend — treating as already sent');
     } else {
       failed = Boolean(err);
+      // A 4xx validation error (bad idempotency key, bad payload) is a code bug
+      // that retrying can never fix: tell the practitioner instead of failing silently.
+      const status = err?.statusCode ?? 0;
+      if (err && (err.name === 'invalid_idempotency_key' || (status >= 400 && status < 500))) codeBug = true;
     }
     if (failed) console.error('[payment-prompts] Resend error:', JSON.stringify(result.error));
   } catch (err) {
@@ -186,6 +211,10 @@ async function run(): Promise<NextResponse> {
           ...(p ? {} : { first_prompted_at: null }),
         })
         .eq('session_id', s.id);
+    }
+    if (codeBug) {
+      console.error('[payment-prompts] CODE BUG: Resend rejected the digest as invalid; claims released, alerting the practice address. Retrying will not help.');
+      await sendDigestBrokenAlert();
     }
     return NextResponse.json({ ok: false, aborted: 'send-failed', sent: 0 });
   }

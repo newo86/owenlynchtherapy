@@ -60,8 +60,21 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
   Bash, network or secrets.** Untrusted content means calendar invites,
   email and web pages. Scope the agent with its `tools` list: prompt wording
   is not a control. (A calendar-invite prompt injection leaked data through
-  Gemini in Jan 2026.) The practice-manager agent therefore only has
-  WebFetch to `/api/admin/schedule-snapshot`.
+  Gemini in Jan 2026.) The practice-manager agent therefore has WebFetch
+  only (no Bash, no Calendar tools). It is not limited to one URL: the
+  snapshot is auto-allowed for owenlynchtherapy.com, and every other fetch
+  prompts Owen. The environment network secret is added to every request to
+  owenlynchtherapy.com from any process in the session, which is acceptable
+  only because the snapshot is read-only and minimal.
+- **The ask-list in `.claude/settings.json` only slows a session down.** The
+  real controls are branch protection on `main` and the security-gate hook.
+- **WebFetch agents are scoped by domain and never run in bypass/auto mode
+  when reading text others wrote** (CVE-2026-54316, CVE-2026-24052).
+- **Resend idempotency keys are 1-256 characters.** Hash multi-id keys
+  (`paymentPromptIdempotencyKey`). An `invalid_idempotency_key` error alerts
+  Owen; it is never just retried.
+- **Environment network secrets reach every process** in the session, so
+  only read-only, minimal-data tokens belong there.
 - **Read deny rules don't stop `cat` through Bash.** A `Read(...)` deny in
   settings blocks the Read tool only; an agent with Bash can still print the
   file. Don't rely on one to protect a secret.

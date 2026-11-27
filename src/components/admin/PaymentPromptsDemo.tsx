@@ -28,12 +28,13 @@ export function PaymentPromptsDemo() {
 
       <h2 className="admin-h2" style={{ margin: '24px 0 10px' }}>List</h2>
       <div style={{ maxWidth: 760 }}>
-        <PaymentPromptsCard prompts={demoPrompts} onChoose={onChoose} compact={compact} />
+        <PaymentPromptsCard key={compact ? 'phone' : 'desk'} prompts={demoPrompts} onChoose={onChoose} compact={compact} />
       </div>
 
       <h2 className="admin-h2" style={{ margin: '24px 0 10px' }}>Confirm open</h2>
       <div style={{ maxWidth: 760 }}>
         <PaymentPromptsCard
+          key={compact ? 'phone' : 'desk'}
           prompts={demoPrompts}
           onChoose={onChoose}
           compact={compact}

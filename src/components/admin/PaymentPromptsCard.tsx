@@ -11,6 +11,7 @@
 // the choices and the confirm step. The amount only appears in the confirm.
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { formatShortWhen, formatShortDay } from '@/lib/dateUtils';
 import { displayFee } from './api';
@@ -168,19 +169,41 @@ function PromptActions({ p, open, isBusy, onOpen, onBack, onConfirm }: ActionsPr
   );
 }
 
-/** Bottom sheet (phone): same pattern as the booking sheet. */
-function PromptSheet({ p, onClose, children }: { p: PaymentPromptItem; onClose: () => void; children: React.ReactNode }) {
+/** Bottom sheet (phone): same pattern as the booking sheet. Rendered into
+ *  .admin-root (not inside the card, whose backdrop-filter would trap a
+ *  position:fixed child), and only after mount. Focus moves in, Tab is kept
+ *  inside, Escape closes. */
+function PromptSheet({ p, root, onClose, children }: { p: PaymentPromptItem; root: Element; onClose: () => void; children: React.ReactNode }) {
+  const sheet = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  useEffect(() => { closeRef.current = onClose; });
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const focusables = () => Array.from(sheet.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])') ?? []);
+    // A deep link opens straight on the confirm step, which has already taken focus.
+    if (!sheet.current?.contains(document.activeElement)) {
+      (sheet.current?.querySelector<HTMLElement>('[data-choice]') ?? focusables()[0])?.focus();
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { closeRef.current(); return; }
+      if (e.key !== 'Tab') return;
+      const els = focusables();
+      if (els.length === 0) return;
+      const first = els[0], last = els[els.length - 1];
+      const active = document.activeElement;
+      if (!sheet.current?.contains(active)) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+    };
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
-  }, [onClose]);
+  }, []);
   const titleId = `pp-sheet-${p.session_id}`;
-  return (
+  return createPortal(
     <div className="m-scrim" onClick={onClose}>
-      <div className="m-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={e => e.stopPropagation()}>
+      <div className="m-sheet" ref={sheet} role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={e => e.stopPropagation()}>
         <div className="m-sheet-head">
           <h2 className="admin-h2" id={titleId}>Did they pay?</h2>
           <button type="button" className="m-close" onClick={onClose} aria-label="Close"><X size={20} /></button>
@@ -188,7 +211,8 @@ function PromptSheet({ p, onClose, children }: { p: PaymentPromptItem; onClose: 
         <p className="pp-sheet-who"><span className="pii">{p.label}</span> · {formatShortWhen(p.session_date)}</p>
         {children}
       </div>
-    </div>
+    </div>,
+    root,
   );
 }
 
@@ -203,6 +227,12 @@ export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConf
   const [sheetId, setSheetId] = useState<string | null>(compact ? confirm?.sessionId ?? null : null);
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
   const sheetOpener = useRef<HTMLButtonElement | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  // Where the sheet is portalled; known only after mount.
+  const [sheetRoot, setSheetRoot] = useState<Element | null>(null);
+  useEffect(() => {
+    setSheetRoot(sectionRef.current?.closest('.admin-root') ?? document.body);
+  }, []);
 
   // Arriving from the email link: bring that row into view once.
   const focusId = initialConfirm?.sessionId;
@@ -235,7 +265,7 @@ export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConf
   const sheetPrompt = sheetId ? prompts.find(p => p.session_id === sheetId) : undefined;
 
   return (
-    <section className="admin-card pp-card" aria-labelledby="pp-heading">
+    <section ref={sectionRef} className="admin-card pp-card" aria-labelledby="pp-heading">
       <div className="admin-card-head">
         <h2 className="admin-h2" id="pp-heading">Did they pay?</h2>
       </div>
@@ -252,7 +282,7 @@ export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConf
               <div className="pp-compact-line">
                 <div className="pp-compact-text">
                   <span className="pp-who pii">{p.label}</span>
-                  <span className="pp-when"> · {formatShortWhen(p.session_date)}</span>
+                  <span className="pp-when">&nbsp;· {formatShortWhen(p.session_date)}</span>
                   {p.snoozed && <span className="pp-snoozed">Reminding you tomorrow</span>}
                   {p.receipt_failed && <span className="pp-failed">Receipt not sent</span>}
                 </div>
@@ -280,8 +310,8 @@ export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConf
           </li>
         ))}
       </ul>
-      {compact && sheetPrompt && (
-        <PromptSheet p={sheetPrompt} onClose={closeSheet}>
+      {compact && sheetPrompt && sheetRoot && (
+        <PromptSheet p={sheetPrompt} root={sheetRoot} onClose={closeSheet}>
           {actionsFor(sheetPrompt)}
         </PromptSheet>
       )}

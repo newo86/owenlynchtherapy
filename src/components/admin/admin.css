@@ -396,7 +396,8 @@
   align-items: center;
   gap: 6px;
   padding: 13px 22px;
-  background: var(--terracotta);
+  /* #B04E16 = 5.3:1 with white (WCAG AA); the brand terracotta #C85A1A is 4.3:1. Dashboard only. */
+  background: #B04E16;
   color: white;
   border: none;
   border-radius: 12px;
@@ -406,20 +407,22 @@
   letter-spacing: 0;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(200, 90, 27, 0.28);
+  box-shadow: 0 6px 16px rgba(176, 78, 22, 0.28);
   transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
 @media (hover: hover) {
   .admin-btn-primary:hover:not(:disabled) {
+  background: #9C4413;
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(200, 90, 27, 0.34);
+  box-shadow: 0 10px 22px rgba(176, 78, 22, 0.34);
 }
 }
 
 .admin-btn-primary:active:not(:disabled) {
+  background: #8A3B10;
   transform: translateY(0);
-  box-shadow: 0 3px 8px rgba(200, 90, 27, 0.28);
+  box-shadow: 0 3px 8px rgba(176, 78, 22, 0.28);
 }
 
 .admin-btn-primary:disabled {
@@ -2614,8 +2617,7 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
 .pp-row.is-compact { padding-top: 12px; }
 .pp-row.is-compact:first-child { padding-top: 0; }
 .pp-compact-line { display: flex; flex-direction: column; gap: 10px; }
-.pp-compact-text { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 0; }
-.pp-compact-text .pp-snoozed, .pp-compact-text .pp-failed { margin-left: 10px; }
+.pp-compact-text { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
 .pp-sheet-who { margin: 0; font-size: 16px; color: var(--forest-deep); }
 .m-sheet .pp-confirm { background: #fff; }
 @media (max-width: 768px) {

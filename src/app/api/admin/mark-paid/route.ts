@@ -73,6 +73,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Session is already marked paid' }, { status: 409 });
   }
 
+  if (session.payment_status === 'refunded') {
+    return NextResponse.json({ error: 'This session was refunded, so it can\'t be marked paid here' }, { status: 409 });
+  }
+
   const client = (session as { clients: { id: string; is_low_cost?: boolean } | null }).clients;
   const isLowCost = Boolean(client?.is_low_cost);
   const kind = sessionKind(session.session_format as string, isLowCost);
@@ -91,6 +95,17 @@ export async function POST(req: NextRequest) {
   if (updateErr) {
     console.error('[mark-paid] update error:', dbError(updateErr));
     return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
+  }
+
+  if (!flipped || flipped.length === 0) {
+    // Nothing changed: re-read so a refund (or a payment that landed first) is reported truthfully.
+    const { data: now } = await supabaseAdmin.from('sessions').select('payment_status').eq('id', session_id).single();
+    if (now?.payment_status === 'refunded') {
+      return NextResponse.json({ error: 'This session was refunded, so it can\'t be marked paid here' }, { status: 409 });
+    }
+    if (now?.payment_status === 'paid') {
+      return NextResponse.json({ error: 'Session is already marked paid' }, { status: 409 });
+    }
   }
 
   if (flipped && flipped.length > 0) {

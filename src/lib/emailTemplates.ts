@@ -307,7 +307,10 @@ export interface PaymentPromptDigestItem {
   label: string;
   /** e.g. "Tue 2 Dec, 4:00pm" */
   when: string;
-  feeEuros: number;
+  /** An email address is on file and no receipt has gone yet. */
+  canEmailReceipt: boolean;
+  /** A receipt was already emailed for this session. */
+  receiptAlreadySent?: boolean;
 }
 
 export interface PaymentPromptDigestInput {
@@ -334,10 +337,11 @@ export function buildPaymentPromptDigestHtml(input: PaymentPromptDigestInput): s
   const rows = input.items.map(i => `
     <div style="border:1px solid #E0D8CE;border-radius:8px;padding:18px 20px;background:#FAF7F2;margin:0 0 16px;">
       <p style="margin:0 0 12px;font-size:15px;color:#2A4D3C;line-height:1.5;">
-        Did <strong>${escapeHtml(i.label)}</strong> pay for ${escapeHtml(i.when)} (&euro;${i.feeEuros})?
+        Did <strong>${escapeHtml(i.label)}</strong> pay for ${escapeHtml(i.when)}?
       </p>
-      ${btn(paymentPromptLink(input.origin, i.sessionId, 'paid_receipt'), 'Paid, email receipt', true)}
-      ${btn(paymentPromptLink(input.origin, i.sessionId, 'paid_no_receipt'), 'Paid, no receipt', false)}
+      ${i.canEmailReceipt ? btn(paymentPromptLink(input.origin, i.sessionId, 'paid_receipt'), 'Paid, email receipt', true) : ''}
+      ${btn(paymentPromptLink(input.origin, i.sessionId, 'paid_no_receipt'), 'Paid, no receipt', !i.canEmailReceipt)}
+      ${i.canEmailReceipt ? '' : `<p style="margin:0 0 10px;font-size:14px;color:#555;line-height:1.5;">${i.receiptAlreadySent ? 'A receipt already went.' : 'No email address on file, so no receipt can be sent.'}</p>`}
       ${btn(paymentPromptLink(input.origin, i.sessionId, 'remind_tomorrow'), 'Not yet, ask me tomorrow', false)}
     </div>`).join('');
 

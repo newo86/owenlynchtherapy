@@ -73,10 +73,20 @@ export async function closeOutSession(sessionId: string, opts: CloseOutOptions):
         error: 'Marked attended, but recording the payment failed — mark it paid separately.',
       };
     }
-    // Either way the session is paid now (by us, or by whoever got there first).
-    paid = true;
+    const weFlipped = Boolean(flipped && flipped.length > 0);
+    if (weFlipped) {
+      paid = true;
+    } else {
+      // Nothing changed: someone else got there first, or the session was
+      // refunded. Believe the database, so a refunded session is never
+      // reported paid and never gets a receipt.
+      const { data: now } = await supabaseAdmin
+        .from('sessions').select('payment_status').eq('id', sessionId).single();
+      paid = now?.payment_status === 'paid';
+      if (!paid) session.payment_status = now?.payment_status ?? session.payment_status;
+    }
 
-    if (flipped && flipped.length > 0) {
+    if (weFlipped) {
       const { error: ledgerErr } = await supabaseAdmin.from('payments').insert({
         session_id: sessionId,
         client_id: session.client_id,

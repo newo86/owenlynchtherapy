@@ -53,4 +53,12 @@ describe('closeOutSession: paid is recorded once', () => {
     expect(a.ok && a.paid).toBe(true);
     expect(b.ok && b.paid).toBe(true);
   });
+
+  it('a refunded session is not reported paid and gets no receipt', async () => {
+    db.payment_status = 'refunded';
+    const r = await closeOutSession('s1', { record_payment: true, send_receipt: true });
+    expect(r.ok && r.paid).toBe(false);
+    expect(r.ok && r.receipt_sent).toBe(false);
+    expect(db.ledger).toHaveLength(0);
+  });
 });
