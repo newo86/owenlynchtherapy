@@ -1,5 +1,13 @@
 {
+  "model": "opus",
   "permissions": {
+    "ask": [
+      "mcp__github__merge_pull_request",
+      "Bash(git push origin main:*)",
+      "Bash(git push -u origin main:*)",
+      "mcp__Vercel__create_deployment",
+      "mcp__Vercel__request_promote"
+    ],
     "allow": [
       "Bash(git status:*)",
       "Bash(git diff:*)",

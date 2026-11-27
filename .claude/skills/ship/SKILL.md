@@ -8,6 +8,11 @@ description: Commit, push, open a PR, wait for the checks by polling (never slee
 Goal: the change is live on owenlynchtherapy.com and you can say so plainly.
 The repo squash-merges PRs into `main`, and Vercel auto-deploys `main`.
 
+Start only once Owen has replied "approve" to the preview summary (see "How
+work flows" in CLAUDE.md). If he hasn't, stop and send him the preview
+instead. *Why: merging puts the change in front of clients; Owen decides
+when that happens, not a green check.*
+
 Done looks like: PR merged, the newest production deployment for the merge
 commit is `READY`, and the user has a one-line report — plus a note to run
 any new migration (step 7).
