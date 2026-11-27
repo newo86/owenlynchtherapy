@@ -77,7 +77,16 @@ Update this map when files move or new systems are added.
 
 ## Where the line is (cheap agent fell short → redone one level up)
 
-_Nothing logged yet. Format: date · task · agent → redone by · why._
+Format: date · task · agent → caught by · why.
+
+- 27 Nov 2026 · payment-prompt copy review · `reviewer-quick` (haiku) passed it →
+  `reviewer` (opus) found Friday receipts print the wrong venue. Haiku checks
+  the wording in front of it; following variables back to their source (which
+  address, which date) needs opus. Keep the opus pass for client-facing work.
+- 27 Nov 2026 · payment-prompt build · `developer` (sonnet) shipped a working
+  feature, but `designer` (opus) found 7 must-fixes against TASTE.md and
+  `security-guardian` found a race in "mark paid". Expected: that's what the
+  review steps are for, not a reason to move the build to opus.
 
 ## End of every session
 

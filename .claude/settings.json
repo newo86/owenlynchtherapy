@@ -3,10 +3,17 @@
   "permissions": {
     "ask": [
       "mcp__github__merge_pull_request",
+      "mcp__github__push_files",
+      "mcp__github__create_or_update_file",
       "Bash(git push origin main:*)",
       "Bash(git push -u origin main:*)",
+      "Bash(git push origin HEAD:main:*)",
+      "Bash(git push --force:*)",
+      "Bash(gh pr merge:*)",
       "mcp__Vercel__create_deployment",
-      "mcp__Vercel__request_promote"
+      "mcp__Vercel__request_promote",
+      "mcp__Supabase__apply_migration",
+      "mcp__Supabase__execute_sql"
     ],
     "allow": [
       "Bash(git status:*)",
