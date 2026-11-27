@@ -61,7 +61,8 @@ export async function GET(req: NextRequest) {
     // 3. Google Calendar leads: make the app follow it (src/lib/googleTruth.ts).
     //    Skipped when Google's answer was cut short (drift is null then).
     let followed = { applied: 0, held: 0, failed: 0 };
-    if (drift && drift.length) {
+    // An empty answer from Google while sessions exist is 'unknown', never 'all deleted'.
+    if (drift && drift.length && events.length > 0) {
       const res = await withGoogle(cal => applyGoogleTruth(cal, drift));
       if (res.ok) followed = res.value;
       else console.error('[calendar-sync-cron] follow-Google failed:', res.reason, res.message ?? '');

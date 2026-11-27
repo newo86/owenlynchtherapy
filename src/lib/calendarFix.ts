@@ -89,7 +89,14 @@ export async function pushSessionToGoogle(cal: CalLike, sessionId: string): Prom
 
 /** Apply one choice to one difference. `item` comes from a fresh server-side
  *  recomputation (never from the browser), so every id here is trusted. */
-export async function applyDriftChoice(cal: CalLike, item: DriftItem, choice: FixChoice): Promise<FixResult> {
+/**
+ * `auto`: the change is made by the sync job, not a tap. Then an added
+ * session's format is only taken from the app's own "Format:" line in the
+ * event description; otherwise it stays unconfirmed (no reminder until the
+ * practitioner picks), because Google can add a Meet link to every event.
+ * A move only applies if the session is still at the time the plan saw.
+ */
+export async function applyDriftChoice(cal: CalLike, item: DriftItem, choice: FixChoice, opts: { auto?: boolean } = {}): Promise<FixResult> {
   if (!CHOICES[item.kind].includes(choice)) return { ok: false, message: 'That choice does not apply here.' };
 
   switch (choice) {
@@ -104,9 +111,11 @@ export async function applyDriftChoice(cal: CalLike, item: DriftItem, choice: Fi
 
     case 'keep_google': {
       if (!item.sessionId || !item.googleStart || !item.eventId) return { ok: false, message: 'Missing details.' };
-      const { data } = await supabaseAdmin.from('sessions')
+      let q = supabaseAdmin.from('sessions')
         .update({ session_date: item.googleStart, gcal_event_id: item.eventId })
-        .eq('id', item.sessionId).eq('status', 'scheduled').select('id');
+        .eq('id', item.sessionId).eq('status', 'scheduled');
+      if (item.appStart) q = q.eq('session_date', item.appStart);   // not if it moved meanwhile
+      const { data } = await q.select('id');
       return data?.length ? { ok: true, message: "The app now uses Google's time. Your client hasn't been told about it." } : { ok: false, message: 'That session has changed.' };
     }
 
@@ -146,7 +155,12 @@ export async function applyDriftChoice(cal: CalLike, item: DriftItem, choice: Fi
         location: (ev.data as { location?: string }).location,
         hasVideo: Boolean((ev.data as { hangoutLink?: string }).hangoutLink),
       };
-      const { format, confirmed } = inferSessionFormat(mapped, (last?.[0]?.session_format as string | undefined) ?? null);
+      const inferred = inferSessionFormat(mapped, (last?.[0]?.session_format as string | undefined) ?? null);
+      const desc = (ev.data as { description?: string }).description ?? '';
+      const stated = /Format:\s*Online/i.test(desc) ? 'online' : /Format:\s*In Person/i.test(desc) ? 'in_person' : null;
+      const { format, confirmed } = opts.auto
+        ? (stated ? { format: stated, confirmed: true } : { format: inferred.format, confirmed: false })
+        : inferred;
       const { error } = await supabaseAdmin.from('sessions').insert({
         client_id: item.clientId,
         session_date: item.googleStart,

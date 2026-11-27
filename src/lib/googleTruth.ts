@@ -29,6 +29,11 @@ import type { CalLike } from '@/lib/googleSessionEvents';
  *  - every change is written to `calendar_sync_log`, shown on the dashboard.
  */
 
+/** Only events titled like a session are added on their own ("Session — Jake
+ *  Walsh", "Philip client"); a bare name ("Call Jane Durnin's GP") waits for a tap. */
+const SESSIONISH = /\b(session|client)\b/i;
+/** Most cancellations in 24 hours before the rest are held (a slow glitch). */
+export const MAX_CANCELS_PER_DAY = 15;
 /** Most additions and moves in one run; the rest follow on the next run. */
 export const MAX_AUTO_CHANGES = 15;
 /** More deletions than this at once looks like a glitch: cancel none, flag it. */
@@ -50,7 +55,7 @@ export function planGoogleTruth(items: DriftItem[], paidIds: Set<string>): Truth
   let left = 0;
   for (const item of items) {
     const paid = item.sessionId ? paidIds.has(item.sessionId) : false;
-    if (item.kind === 'only_in_google' && item.eventId && item.googleStart) {
+    if (item.kind === 'only_in_google' && item.eventId && item.googleStart && SESSIONISH.test(item.eventTitle ?? '')) {
       changes.push({ item, choice: 'add_to_app', action: 'added' });
     } else if (item.kind === 'moved_in_google' && !paid && item.sessionId && item.googleStart) {
       changes.push({ item, choice: 'keep_google', action: 'moved' });
@@ -68,7 +73,7 @@ export function planGoogleTruth(items: DriftItem[], paidIds: Set<string>): Truth
 
 export interface TruthOutcome { applied: number; held: number; failed: number }
 
-/** Apply the plan with the dashboard's own fix actions, logging each one. */
+/** Apply the plan with the dashboard's own fix actions, logging each one first. */
 export async function applyGoogleTruth(cal: CalLike, items: DriftItem[]): Promise<TruthOutcome> {
   const sessionIds = items.map(i => i.sessionId).filter((x): x is string => Boolean(x));
   const paidIds = new Set<string>();
@@ -77,22 +82,38 @@ export async function applyGoogleTruth(cal: CalLike, items: DriftItem[]): Promis
     for (const r of data ?? []) paidIds.add(r.id as string);
   }
   const plan = planGoogleTruth(items, paidIds);
+  let held = plan.held;
+  let changes = plan.changes;
 
-  const lines: LogLine[] = [];
-  if (plan.held && !(await heldRecently())) {
-    lines.push({ action: 'held', client_id: null, session_id: null, detail: `${plan.held} sessions disappeared from Google Calendar at once, so none were cancelled. Check them in the list below.` });
+  // A slow glitch can delete a few each run: cap cancellations per 24 hours too.
+  const cancels = changes.filter(c => c.action === 'cancelled');
+  if (cancels.length) {
+    const since = new Date(Date.now() - 24 * 3600_000).toISOString();
+    const { count, error } = await supabaseAdmin.from('calendar_sync_log')
+      .select('id', { count: 'exact', head: true }).eq('action', 'cancelled').gte('at', since);
+    if (error || (count ?? 0) + cancels.length > MAX_CANCELS_PER_DAY) {
+      held += cancels.length;
+      changes = changes.filter(c => c.action !== 'cancelled');
+    }
+  }
+
+  if (held && !(await heldRecently())) {
+    await log({ action: 'held', client_id: null, session_id: null, detail: `${held} sessions disappeared from Google Calendar in a short time, so none were cancelled. Check them in the list below.` });
   }
 
   let applied = 0;
   let failed = 0;
-  for (const { item, choice, action } of plan.changes) {
-    const r = await applyDriftChoice(cal, item, choice);
-    if (!r.ok) { failed += 1; continue; }
-    applied += 1;
-    lines.push({ action, client_id: item.clientId, session_id: item.sessionId ?? null, detail: describe(action, item) });
+  for (const { item, choice, action } of changes) {
+    // Record first: a change must never happen without its line on the dashboard.
+    const logId = await log({ action, client_id: item.clientId, session_id: item.sessionId ?? null, detail: describe(action, item) });
+    if (!logId) break;
+    const r = await applyDriftChoice(cal, item, choice, { auto: true });
+    if (r.ok) { applied += 1; continue; }
+    failed += 1;
+    await supabaseAdmin.from('calendar_sync_log').delete().eq('id', logId);   // it didn't happen
   }
-  if (lines.length) await log(lines);
-  return { applied, held: plan.held, failed };
+  await purgeOldLog();
+  return { applied, held, failed };
 }
 
 const fmt = (iso?: string) => iso
@@ -107,9 +128,16 @@ function describe(action: PlannedChange['action'], item: DriftItem): string {
 
 interface LogLine { action: string; client_id: string | null; session_id: string | null; detail: string }
 
-async function log(lines: LogLine[]) {
-  const { error } = await supabaseAdmin.from('calendar_sync_log').insert(lines);
-  if (error) console.error('[googleTruth] could not write the change log:', dbError(error));
+async function log(line: LogLine): Promise<string | null> {
+  const { data, error } = await supabaseAdmin.from('calendar_sync_log').insert(line).select('id').single();
+  if (error || !data) { console.error('[googleTruth] could not write the change log, so no change was made:', dbError(error)); return null; }
+  return data.id as string;
+}
+
+/** The log is a short-term record: keep 90 days. */
+async function purgeOldLog() {
+  const before = new Date(Date.now() - 90 * 86_400_000).toISOString();
+  await supabaseAdmin.from('calendar_sync_log').delete().lt('at', before);
 }
 
 /** One "held" line per few hours is enough; the job runs every 5 minutes. */

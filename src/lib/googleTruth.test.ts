@@ -11,7 +11,7 @@ const item = (kind: DriftItem['kind'], over: Partial<DriftItem> = {}): DriftItem
 describe('planGoogleTruth', () => {
   it('adds new Google sessions, follows moves and cancels deletions', () => {
     const plan = planGoogleTruth([
-      item('only_in_google', { eventId: 'e1', googleStart: '2026-12-11T16:00:00Z' }),
+      item('only_in_google', { eventTitle: 'Session — Jake Walsh', eventId: 'e1', googleStart: '2026-12-11T16:00:00Z' }),
       item('moved_in_google', { sessionId: 's1', eventId: 'e2', appStart: '2026-12-04T16:00:00Z', googleStart: '2026-12-04T15:00:00Z' }),
       item('not_in_google', { sessionId: 's2', appStart: '2026-12-25T16:00:00Z', retry: false }),
     ], new Set());
@@ -45,13 +45,19 @@ describe('planGoogleTruth', () => {
 
   it('holds every cancellation when too many vanish at once, but still adds and moves', () => {
     const gone = Array.from({ length: MAX_AUTO_CANCELS + 1 }, (_, i) => item('not_in_google', { sessionId: `s${i}`, retry: false }));
-    const plan = planGoogleTruth([...gone, item('only_in_google', { eventId: 'e', googleStart: '2026-12-11T16:00:00Z' })], new Set());
+    const plan = planGoogleTruth([...gone, item('only_in_google', { eventTitle: 'Jake session', eventId: 'e', googleStart: '2026-12-11T16:00:00Z' })], new Set());
     expect(plan.held).toBe(MAX_AUTO_CANCELS + 1);
     expect(plan.changes.map(c => c.action)).toEqual(['added']);
   });
 
+  it('waits for a tap on an event that names a client but is not titled as a session', () => {
+    const plan = planGoogleTruth([item('only_in_google', { eventTitle: "Call Jane Durnin's GP", eventId: 'e', googleStart: '2026-12-11T16:00:00Z' })], new Set());
+    expect(plan.changes).toEqual([]);
+    expect(plan.left).toBe(1);
+  });
+
   it('adds and moves a batch at a time', () => {
-    const many = Array.from({ length: MAX_AUTO_CHANGES + 5 }, (_, i) => item('only_in_google', { eventId: `e${i}`, googleStart: '2026-12-11T16:00:00Z' }));
+    const many = Array.from({ length: MAX_AUTO_CHANGES + 5 }, (_, i) => item('only_in_google', { eventTitle: 'Session — Jake Walsh', eventId: `e${i}`, googleStart: '2026-12-11T16:00:00Z' }));
     expect(planGoogleTruth(many, new Set()).changes).toHaveLength(MAX_AUTO_CHANGES);
   });
 });

@@ -98,3 +98,5 @@ what is retained, what is purged automatically, and the items still open.
 5. **Processor DPAs.** Personal data is shared with Resend, Stripe, Google,
    Supabase and Vercel. Ensure a Data Processing Agreement is in place with each
    and that the privacy policy lists them.
+
+- **calendar_sync_log** (Google Calendar changes copied into the app: client name, session time): kept 90 days, purged by the sync job (src/lib/googleTruth.ts); deleted with the client.

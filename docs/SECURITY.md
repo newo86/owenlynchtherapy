@@ -131,6 +131,12 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
   the schedule (src/lib/googleTruth.ts): automatic changes never touch paid
   sessions, never undo an app cancellation, hold a burst of deletions, and are
   all logged in `calendar_sync_log`.
+- **Imports from an external calendar** never confirm a session's format from
+  a Meet link alone (Google can add Meet to every event); only events titled
+  like a session are added without a tap.
+- **Automated cancellations** have a rolling 24-hour limit as well as a per-run
+  one, and an empty answer from the source counts as "unknown", not "all
+  deleted". Each automatic change is logged before it is made.
 - **Any automated change to client records** (cancel, merge, move) leaves a
   trace naming the rows and the reason, and alerts the practitioner.
 - **Server-side reads that drive writes** page through results or check for

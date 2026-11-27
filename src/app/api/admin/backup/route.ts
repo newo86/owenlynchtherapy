@@ -22,6 +22,8 @@ const TABLES = [
   'reminder_runs',
   'waitlist',
   'practice_settings',
+  'calendar_sync_log',
+  'session_series',
 ] as const;
 
 async function fetchAll(table: string): Promise<unknown[]> {
