@@ -4,6 +4,7 @@ import { getAuthorizedClient } from '@/lib/googleOAuth';
 import { startOfWeek } from '@/lib/dateUtils';
 import { reconcileCalendar } from '@/lib/calendarSync';
 import { loadDrift } from '@/lib/calendarDrift';
+import { recentGoogleChanges } from '@/lib/googleTruth';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -54,7 +55,8 @@ export async function GET(req: NextRequest) {
       return t >= viewMinMs && t < viewMaxMs;
     });
 
-    return NextResponse.json({ connected: true, events: display, changed, drift: drift ?? [] }, { headers: noCache });
+    const googleChanges = await recentGoogleChanges();
+    return NextResponse.json({ connected: true, events: display, changed, drift: drift ?? [], googleChanges }, { headers: noCache });
   } catch (err: unknown) {
     console.error('[admin/calendar] error:', err);
     const msg = err instanceof Error ? err.message : 'Unknown error';

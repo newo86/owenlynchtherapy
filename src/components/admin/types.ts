@@ -138,3 +138,6 @@ export const FORMAT_LABELS: Record<string, string> = {
   online: 'Online',
   no_preference: 'No preference',
 };
+
+/** One automatic change the sync job made because of Google Calendar (src/lib/googleTruth.ts). */
+export interface GoogleChange { at: string; action: 'added' | 'moved' | 'cancelled' | 'held' | string; detail: string }

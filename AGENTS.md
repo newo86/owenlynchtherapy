@@ -43,18 +43,19 @@ docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
   auth/google, admin/calendar)
 - Supabase tables clients, sessions, intake_submissions, intake_tokens already
   exist — don't recreate them
-- **The app is the source of truth for the schedule; Google Calendar mirrors
-  it (19 Nov 2026).** App changes (book, move, edit, cancel) push to the
-  practice's primary calendar for that one session's event only
-  (src/lib/googleSessionEvents.ts; a repeating series' stored id is resolved
-  to the occurrence first, never the whole series). Google never changes a
-  session: `reconcileCalendar` (src/lib/calendarSync.ts) only reads events and
-  links sessions to the events they match. Differences are found by
-  src/lib/calendarDrift.ts and shown on the dashboard for the owner to
-  resolve with a tap (src/lib/calendarFix.ts); only a failed write from the
-  last 7 days is retried automatically. Keep it that way: no job may import,
-  cancel or move sessions from Google (that is what made edits "sometimes"
-  appear and left stale rows).
+- **Google Calendar leads the schedule (27 Nov 2026, Owen's choice; it was
+  the other way from 19 Nov).** Owen manages his diary in Google; the
+  5-minute sync job (`/api/admin/calendar/sync`) makes the app follow it via
+  src/lib/googleTruth.ts: sessions added, moved or deleted in Google are added,
+  moved or cancelled in the app, using the strict client-name matcher. Safety
+  rules there must stay: paid sessions and sessions cancelled in the app are
+  never changed automatically (left on the dashboard for a tap); more than 6
+  deletions at once are held, not applied; an added session with an unclear
+  format gets no reminder until confirmed; every change is logged in
+  `calendar_sync_log` and shown on the dashboard. App changes (book, move,
+  cancel) still push to that one session's Google event
+  (src/lib/googleSessionEvents.ts; a series id is resolved to the occurrence
+  first, never the whole series). Reminders stay slot-strict.
 
 ## Working practices (learned from past sessions — follow these)
 - **Ship flow:** `/check` → (`/preview` if UI is visible) → `/ship`. The
@@ -97,9 +98,10 @@ Full detail in **docs/OPERATIONS.md**. The must-knows:
 - **Stripe webhook** points at the apex `https://owenlynchtherapy.com/api/webhooks/stripe`
   (apex is the primary domain since 2 Jul 2026; www 308-redirects to it; Stripe
   won't follow redirects, so never point it at a redirecting host).
-- **Ongoing clients (Nov 2026):** weekly / fortnightly clients booked with no
-  end have a `session_series` row; a daily job keeps ~16 weeks of sessions
-  ahead (src/lib/sessionSeries.ts). Marking the client Completed ends it.
+- **Ongoing clients:** with Google leading, a repeating Google event's new
+  dates are added to the app by the sync job, so the daily extend job
+  (src/lib/sessionSeries.ts, `/api/admin/sessions/extend`) is no longer
+  scheduled in vercel.json (kept for if the app leads again).
 - **Calendar → client matching is strict (Sep 2026):** an event is only tied to
   a client if its title has their FULL name ("Session — Jane Durnin") or a name
   part plus "session"/"client" ("Philip client"). A bare first name ("Walk

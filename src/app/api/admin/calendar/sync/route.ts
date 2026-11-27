@@ -6,18 +6,19 @@ import { reconcileCalendar } from '@/lib/calendarSync';
 import { loadDrift } from '@/lib/calendarDrift';
 import { pushSessionToGoogle } from '@/lib/calendarFix';
 import { withGoogle } from '@/lib/googleSessionEvents';
+import { applyGoogleTruth } from '@/lib/googleTruth';
 
 // Background calendar upkeep, called by Vercel Cron every few minutes (see
 // vercel.json) and callable by hand with the admin session cookie.
 //
-// The APP is the source of truth for the schedule; Google Calendar mirrors it.
-// This job therefore never changes a session. It does two things:
-//   1. ties sessions to the Google events they already match (bookkeeping), and
+// GOOGLE CALENDAR LEADS the schedule (since 27 Nov 2026, Owen's choice). This job:
+//   1. ties sessions to the Google events they already match (bookkeeping),
 //   2. RETRIES a booking whose write to Google failed: a session made in the
-//      app in the last week that still has no Google event gets one. Anything
-//      else that differs (a time changed in Google, an event deleted there) is
-//      left for the practitioner to resolve in the dashboard, never silently
-//      "fixed" in either direction.
+//      app in the last week that still has no Google event gets one, and
+//   3. makes the app follow Google: sessions added, moved or deleted in Google
+//      are added, moved or cancelled in the app, with the safety rules in
+//      src/lib/googleTruth.ts (paid sessions and app cancellations are left for
+//      a tap; a burst of deletions is held; every change is logged).
 
 export const dynamic = 'force-dynamic';
 
@@ -57,9 +58,18 @@ export async function GET(req: NextRequest) {
       if (!res.ok) console.error('[calendar-sync-cron] retry failed:', res.reason, res.message ?? '');
     }
 
-    console.log(`[calendar-sync-cron] linked ${linked}, retried ${retried}, differences ${drift?.length ?? 'unknown'}`);
+    // 3. Google Calendar leads: make the app follow it (src/lib/googleTruth.ts).
+    //    Skipped when Google's answer was cut short (drift is null then).
+    let followed = { applied: 0, held: 0, failed: 0 };
+    if (drift && drift.length) {
+      const res = await withGoogle(cal => applyGoogleTruth(cal, drift));
+      if (res.ok) followed = res.value;
+      else console.error('[calendar-sync-cron] follow-Google failed:', res.reason, res.message ?? '');
+    }
+
+    console.log(`[calendar-sync-cron] linked ${linked}, retried ${retried}, followed ${followed.applied} (held ${followed.held}, failed ${followed.failed}), differences ${drift?.length ?? 'unknown'}`);
     return NextResponse.json(
-      { ok: true, connected: true, linked, retried, differences: drift?.length ?? null },
+      { ok: true, connected: true, linked, retried, followed, differences: drift?.length ?? null },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (err: unknown) {

@@ -7,6 +7,7 @@ import { SessionDoneOptions, type SessionDoneChoice } from './SessionDoneOptions
 import { NextUpCard, AccreditationMiniCard, findNextUp } from './TodayCards';
 import { MobileHome } from './MobileHome';
 import { CalendarDriftCard } from './CalendarDriftCard';
+import type { GoogleChange } from './types';
 import type { DriftItem } from '@/lib/calendarDrift';
 import { useAccreditationSettings, useAccreditationHours } from './accreditation';
 import type {
@@ -22,6 +23,8 @@ interface Props {
   onReload: () => void;
   /** Where Google Calendar disagrees with the app. */
   drift: DriftItem[];
+  /** Changes copied from Google Calendar in the last week. */
+  googleChanges?: GoogleChange[];
   onConnectCalendar: () => void;
   onDisconnectCalendar: () => void;
   onNewClient: () => void;
@@ -109,7 +112,7 @@ function shortTime(iso: string) {
 
 export function Dashboard({
   clients, tokens, events, calendarStatus,
-  onReload, drift, onConnectCalendar, onDisconnectCalendar, onNewClient,
+  onReload, drift, googleChanges = [], onConnectCalendar, onDisconnectCalendar, onNewClient,
   onClickSession, onNavigateSection,
   greeting, dateLine, flash, reminderHealth, waitlist,
 }: Props) {
@@ -335,7 +338,7 @@ export function Dashboard({
             <span className="admin-banner-dot" aria-hidden />{strip.msg}
           </div>
         )}
-        <CalendarDriftCard items={drift} onResolved={onReload} compact />
+        <CalendarDriftCard items={drift} changes={googleChanges} onResolved={onReload} compact />
         <MobileHome
           clients={clients}
           todaySessions={todaySessions}
@@ -379,7 +382,7 @@ export function Dashboard({
         </div>
       )}
 
-      <CalendarDriftCard items={drift} onResolved={onReload} />
+      <CalendarDriftCard items={drift} changes={googleChanges} onResolved={onReload} />
 
       <div className={`admin-row-today${nextUp ? '' : ' is-single'}`}>
         {nextUp && (

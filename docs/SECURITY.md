@@ -127,8 +127,10 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
   key from the browser, recomputes the target server-side
   (`/api/admin/calendar/fix`), and makes every write that follows an external
   API call conditional (`.eq('status', …)`, `.is('gcal_event_id', null)`), so a
-  slow or repeated call can't overwrite or duplicate. Google never changes the
-  schedule on its own; the app is the source of truth.
+  slow or repeated call can't overwrite or duplicate. Google Calendar leads
+  the schedule (src/lib/googleTruth.ts): automatic changes never touch paid
+  sessions, never undo an app cancellation, hold a burst of deletions, and are
+  all logged in `calendar_sync_log`.
 - **Any automated change to client records** (cancel, merge, move) leaves a
   trace naming the rows and the reason, and alerts the practitioner.
 - **Server-side reads that drive writes** page through results or check for

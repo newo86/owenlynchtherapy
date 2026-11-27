@@ -2622,3 +2622,8 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
   .sqa { padding: 16px 20px 0; }
   .sqa-actions .admin-btn-secondary { flex: 1 1 calc(50% - 4px); justify-content: center; white-space: nowrap; padding-left: 10px; padding-right: 10px; font-size: 15px; }
 }
+
+/* Changes copied from Google Calendar this week (CalendarDriftCard). */
+.drift-changes { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.drift-change-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: var(--ink); }
+.drift-changes .admin-link { align-self: flex-start; }

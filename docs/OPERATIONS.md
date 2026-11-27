@@ -33,13 +33,12 @@ Anything else (unset/false) silently blocks every send.
 - **Client opt-out:** reminder emails carry a signed unsubscribe link → `/unsubscribe` → sets `clients.reminders_opted_out`. Togglable per client in the record modal. Honoured by both the cron and manual sends.
 - **Manual Remind button** refuses a repeat: if a reminder already went out for that session the route returns 409 and the modal asks before resending (`force`).
 - **Phone home (≤768px)** is `MobileHome.tsx`: today's clients (next session booked or a "Book next" button), one Schedule button, and free times from the Settings working hours minus sessions and busy Google events (all-day and "free" events ignored), each tagged free every week / every 2 weeks / once (`freeSlots.ts`, unit-tested). Booking refuses a repeat that would clash; "Other time" allows any time (e.g. lunchtime) after the same clash check. The session API now returns `calendarAdded` so the phone says if Google didn't take a booking.
-- **The app is the source of truth for the schedule; Google Calendar is its mirror (since 19 Nov 2026).** Before that, a job every 5 minutes (`/api/admin/calendar/sync`) made Google the master: it imported, cancelled and moved sessions to match Google, guessing from event titles, so edits in Google only "sometimes" appeared and stale rows lingered (a client moved Mon→Tue in Google kept a second weekly series in the dashboard for months). Now:
-  - `reconcileCalendar()` only **reads** Google and **links** sessions to the event they already match (client + same Dublin time). It never changes a session's date, status or existence.
-  - **App → Google:** booking, moving, editing and cancelling in the app write to Google, **one session's event only** (`src/lib/googleSessionEvents.ts`). A session booked as a repeating series stores the *series* id; the id is first resolved to that slot's occurrence, so moving or cancelling one session no longer moves or deletes the whole series in Google. Session routes return `calendar: ok | failed | not_connected`.
-  - **Google → app is never automatic.** `src/lib/calendarDrift.ts` finds differences (not in Google / moved in Google / cancelled but still in Google / in Google for a client but not in the app) and the dashboard's "Google Calendar doesn't match the app" card lists them with two buttons each (`/api/admin/calendar/fix`, applied by `src/lib/calendarFix.ts`). The server recomputes the differences and acts on the matching key, so the browser can't name an arbitrary event. Nothing changes until the owner taps.
-  - **One automatic retry:** the 5-minute job re-creates the Google event for a session made in the app in the last 7 days that still has no Google id (a failed write), max 10 per run. Old unlinked rows, deleted events and moved events are only ever shown for a decision.
-  - **Reminders are slot-strict:** a session is reminded only if Google has an event for it at the *same* time. A session moved in Google (and not yet resolved) is held back, not reminded at the app's time.
-  - A truncated Google fetch (page cap) disables drift detection and linking: a missing event is never read as a deletion.
+- **Google Calendar leads the schedule (since 27 Nov 2026, Owen's choice).** From 19 to 27 Nov the app led and Google changes only showed as differences to tap; Owen found managing the diary in Google easier. Now:
+  - **Google → app, automatic** (`src/lib/googleTruth.ts`, run by the 5-minute job `/api/admin/calendar/sync` after linking): differences found by `src/lib/calendarDrift.ts` are applied with the dashboard's own fix actions (`src/lib/calendarFix.ts`): new in Google → added (strict name matcher; invitations from others never count); moved in Google → moved; deleted in Google → cancelled.
+  - **Safety rules:** paid sessions are never changed automatically; a session cancelled in the app is never brought back; a failed app booking is retried, not cancelled; more than 6 deletions in one run are all held (a "held" line on the dashboard, at most one per 6 hours) while additions and moves go 15 per run; an added session whose format is unclear stays unconfirmed, so no reminder until Owen picks in person / online; a truncated Google fetch disables it.
+  - **Record:** every change is written to `calendar_sync_log` and the dashboard card ("Changes from Google Calendar" / "Needs a decision") lists the last week. What's left in the card needs a tap.
+  - **App → Google** still works: booking, moving and cancelling in the app write to that one session's Google event (`src/lib/googleSessionEvents.ts`; a series id is resolved to the occurrence first).
+  - **Reminders are slot-strict:** a session is reminded only if Google has an event at the same time.
 - **Which calendar events count as a client's session** (linking, difference detection and the reminder check all use `matchOneActiveClient`): the title must contain the client's full name, or a name part plus "session"/"client". "Walk Kate" or "Day off" never becomes a session; all-day events never do. Events that don't match show in the dashboard's unlinked-events queue to link by hand.
 
 ## In-person venue by weekday
@@ -51,6 +50,9 @@ Anything else (unset/false) silently blocks every send.
   Settings page yet: change it in the config.
 
 ## Ongoing clients (sessions keep coming)
+- **Not scheduled while Google leads (27 Nov 2026):** the sync job adds a
+  repeating Google event's new dates itself. The cron below was removed from
+  vercel.json; the code stays for if the app leads again.
 - A client booked "ongoing" weekly or every 2 weeks gets a `session_series`
   row. A daily cron (`/api/admin/sessions/extend`, 05:30 UTC,
   `src/lib/sessionSeries.ts`) keeps about 16 weeks of sessions booked ahead,

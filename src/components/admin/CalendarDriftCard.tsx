@@ -10,6 +10,7 @@ import { utcToDublinLocal } from '@/lib/dateUtils';
 import type { DriftItem, DriftKind } from '@/lib/calendarDrift';
 import type { FixChoice } from '@/lib/calendarFix';
 import { adminFetch } from './api';
+import type { GoogleChange } from './types';
 
 const SHOW_FIRST = 4;
 
@@ -52,18 +53,27 @@ interface Props {
   /** Phone: a one-line banner that opens on tap, so it never pushes today's
    *  clients off the first screen. */
   compact?: boolean;
+  /** What the app copied from Google Calendar this week (Google leads). */
+  changes?: GoogleChange[];
 }
 
-export function CalendarDriftCard({ items, onResolved, compact = false }: Props) {
+export function CalendarDriftCard({ items, onResolved, compact = false, changes = [] }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<{ key: string; msg: string } | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [all, setAll] = useState(false);
   const [open, setOpen] = useState(false);
 
-  if (items.length === 0 && !done) return null;
+  const [showChanges, setShowChanges] = useState(false);
+  const held = changes.find(c => c.action === 'held');
+  const log = changes.filter(c => c.action !== 'held');
+
+  if (items.length === 0 && log.length === 0 && !held && !done) return null;
   const shown = all ? items : items.slice(0, SHOW_FIRST);
-  const collapsed = compact && !open && items.length > 0;
+  const collapsed = compact && !open;
+  const bannerText = items.length > 0
+    ? `${items.length} ${items.length === 1 ? 'thing needs' : 'things need'} a decision`
+    : `${log.length} ${log.length === 1 ? 'change' : 'changes'} from Google this week`;
 
   async function apply(item: DriftItem, choice: FixChoice) {
     setBusy(item.key + choice);
@@ -92,17 +102,19 @@ export function CalendarDriftCard({ items, onResolved, compact = false }: Props)
       {collapsed ? (
         <button type="button" className="drift-banner" onClick={() => setOpen(true)}>
           <span className="drift-banner-dot" aria-hidden />
-          <span>{items.length} {items.length === 1 ? 'difference' : 'differences'} with Google</span>
+          <span>{bannerText}</span>
           <span className="drift-banner-go">Review</span>
         </button>
-      ) : items.length > 0 && (
+      ) : (
         <>
           <div className="admin-card-head">
-            <h2 className="admin-h2">Google Calendar doesn&apos;t match the app</h2>
+            <h2 className="admin-h2">{items.length > 0 ? 'Needs a decision' : 'Changes from Google Calendar'}</h2>
           </div>
           <p className="drift-note">
-            The app is your diary. Choose what to do with each one; nothing changes until you tap.
+            Google Calendar leads: what you add, move or delete there is copied here within a few minutes.
+            {items.length > 0 && ' These ones need you to choose (paid sessions, or ones you cancelled in the app).'}
           </p>
+          {held && <p className="drift-problem" role="alert">{held.detail}</p>}
         </>
       )}
       {done && <p className="drift-done" role="status">{done}</p>}
@@ -132,7 +144,19 @@ export function CalendarDriftCard({ items, onResolved, compact = false }: Props)
           {all ? 'Show fewer' : `Show ${items.length - SHOW_FIRST} more`}
         </button>
       )}
-      {compact && open && items.length > 0 && (
+      {!collapsed && log.length > 0 && (
+        <div className="drift-changes">
+          <button type="button" className="admin-link" aria-expanded={showChanges} onClick={() => setShowChanges(s => !s)}>
+            {showChanges ? 'Hide' : 'See'} {log.length} {log.length === 1 ? 'change' : 'changes'} from Google this week
+          </button>
+          {showChanges && (
+            <ul className="drift-change-list">
+              {log.map((c, i) => <li key={i} className="pii">{c.detail}</li>)}
+            </ul>
+          )}
+        </div>
+      )}
+      {compact && open && (
         <button type="button" className="admin-link" onClick={() => setOpen(false)}>Hide</button>
       )}
     </section>

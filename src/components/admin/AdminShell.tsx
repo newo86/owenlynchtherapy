@@ -17,6 +17,7 @@ import { StatementImport } from './StatementImport';
 import { NewClientModal } from './NewClientModal';
 import { ScheduleSessionModal } from './ScheduleSessionModal';
 import type { DriftItem } from '@/lib/calendarDrift';
+import type { GoogleChange } from './types';
 import { SessionEditModal } from './SessionEditModal';
 import { GcalEventEditModal } from './GcalEventEditModal';
 import { MfaModal } from './MfaModal';
@@ -63,6 +64,7 @@ export function AdminShell() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   // Where Google Calendar disagrees with the app (the app is the diary).
   const [drift, setDrift] = useState<DriftItem[]>([]);
+  const [googleChanges, setGoogleChanges] = useState<GoogleChange[]>([]);
   const [calStatus, setCalStatus] = useState<CalendarStatus | null>(null);
 
   const [openClient, setOpenClient] = useState<ClientRow | null>(null);
@@ -157,6 +159,7 @@ export function AdminShell() {
           const evJson = await evRes.json();
           setEvents(evJson.events ?? []);
           setDrift(evJson.drift ?? []);
+          setGoogleChanges(evJson.googleChanges ?? []);
           // The calendar call reconciles Google → sessions. The client list
           // above was fetched in parallel (before that sync), so if the sync
           // changed anything, reload it now — otherwise a Google-side delete or
@@ -197,6 +200,7 @@ export function AdminShell() {
       const evJson = await evRes.json();
       setEvents(evJson.events ?? []);
       setDrift(evJson.drift ?? []);
+          setGoogleChanges(evJson.googleChanges ?? []);
     })();
     return () => { cancelled = true; };
   }, [weekOffset, calStatus?.connected]);
@@ -285,6 +289,7 @@ export function AdminShell() {
               tokens={tokens}
               events={events}
               drift={drift}
+              googleChanges={googleChanges}
               calendarStatus={calStatus}
               onReload={reload}
               onConnectCalendar={connectCalendar}
