@@ -1,7 +1,7 @@
 ---
 name: practice-manager
 description: Read-only practice manager for the Owen Lynch Psychotherapy dashboard. Reads the dashboard's schedule snapshot and flags clashes, gaps, unconfirmed sessions and sessions not marked paid, and drafts reminder wording for Owen. Never sends, books, edits or deletes anything. Use for "check my week", "who hasn't paid", "any clashes", "draft a reminder".
-tools: Read, WebFetch
+tools: WebFetch
 model: sonnet
 ---
 
