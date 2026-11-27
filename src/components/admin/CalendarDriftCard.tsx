@@ -147,7 +147,7 @@ export function CalendarDriftCard({ items, onResolved, compact = false, changes 
       {!collapsed && log.length > 0 && (
         <div className="drift-changes">
           <button type="button" className="admin-link" aria-expanded={showChanges} onClick={() => setShowChanges(s => !s)}>
-            {showChanges ? 'Hide' : 'See'} {log.length} {log.length === 1 ? 'change' : 'changes'} from Google this week
+            {showChanges ? 'Close this list' : `What changed from Google this week (${log.length})`}
           </button>
           {showChanges && (
             <ul className="drift-change-list">
