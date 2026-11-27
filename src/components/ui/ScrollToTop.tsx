@@ -1,10 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function ScrollToTop() {
   const [visible, setVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
+  // The dashboard (and its demo page) has its own layout and tab bar; this
+  // public-site button would sit on top of it.
+  const pathname = usePathname() ?? '';
+  const inAdmin = pathname === '/admin' || pathname.startsWith('/admin/') || pathname.startsWith('/admin-demo');
 
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 200);
@@ -12,7 +17,7 @@ export default function ScrollToTop() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  if (!visible) return null;
+  if (!visible || inAdmin) return null;
 
   return (
     <button

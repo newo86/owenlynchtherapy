@@ -30,7 +30,7 @@ vi.mock('@/lib/supabase', () => ({
   },
 }));
 vi.mock('@/lib/resend', () => ({ getResend: () => ({ emails: { send } }) }));
-vi.mock('@/lib/emailTemplates', () => ({ buildReceiptHtml: () => '<p>receipt</p>', EMAIL_FROM: 'x@example.com' }));
+vi.mock('@/lib/emailTemplates', () => ({ buildReceiptHtml: () => '<p>receipt</p>', inPersonAddressFor: () => 'Test Venue', EMAIL_FROM: 'x@example.com' }));
 vi.mock('@/practice.config', () => ({ PRACTICE: { practitionerName: 'Test' } }));
 
 import { sendReceiptEmail } from './sendReceiptEmail';

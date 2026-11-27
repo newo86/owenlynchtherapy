@@ -51,6 +51,28 @@ export async function GET(req: NextRequest) {
   const snoozeOf = new Map(rows.map(p => [p.session_id, p.snoozed_until]));
 
   const due = sessionsNeedingPrompt((sessions ?? []) as unknown as SessionRowDb[], rows, now, { forDashboard: true });
+  // Paid with a receipt asked for but not sent: keep them visible for a retry.
+  // (They are no longer unpaid, so the query above can't see them.)
+  type FailedRow = {
+    id: string; session_date: string; fee: number | null; receipt_sent_at: string | null;
+    clients: { full_name: string; email: string | null } | null;
+  };
+  let failedReceipts: FailedRow[] = [];
+  if (!promptErr) {
+    const { data: failedPrompts } = await supabaseAdmin
+      .from('payment_prompts').select('session_id').eq('resolution', 'paid_receipt_failed');
+    const failedIds = (failedPrompts ?? []).map(r => r.session_id as string);
+    if (failedIds.length > 0) {
+      const { data: fs } = await supabaseAdmin
+        .from('sessions')
+        .select('id, session_date, fee, receipt_sent_at, clients(full_name, email)')
+        .in('id', failedIds)
+        .eq('payment_status', 'paid')
+        .is('receipt_sent_at', null);
+      failedReceipts = (fs ?? []) as unknown as FailedRow[];
+    }
+  }
+
   const out = due.map(s => {
     const until = snoozeOf.get(s.id);
     return {
@@ -62,8 +84,23 @@ export async function GET(req: NextRequest) {
       client_email: s.clients?.email ?? null,
       receipt_sent_at: s.receipt_sent_at ?? null,
       snoozed: Boolean(until && new Date(until).getTime() > now.getTime()),
+      receipt_failed: false,
     };
   });
+  for (const f of failedReceipts) {
+    out.push({
+      session_id: f.id,
+      session_date: f.session_date,
+      fee: f.fee ?? 0,
+      label: promptLabel({ full_name: f.clients?.full_name ?? '' }),
+      client_name: f.clients?.full_name ?? '',
+      client_email: f.clients?.email ?? null,
+      receipt_sent_at: null,
+      snoozed: false,
+      receipt_failed: true,
+    });
+  }
+  out.sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime());
 
   return NextResponse.json({ prompts: out }, { headers: noCache });
 }
@@ -96,7 +133,7 @@ export async function POST(req: NextRequest) {
   }
 
   const nowIso = new Date().toISOString();
-  const resolve = async (resolution: 'paid_receipt' | 'paid_no_receipt' | 'already_paid') => {
+  const resolve = async (resolution: 'paid_receipt' | 'paid_receipt_failed' | 'paid_no_receipt' | 'already_paid') => {
     const { error } = await supabaseAdmin.from('payment_prompts').upsert(
       { session_id: sessionId, resolved_at: nowIso, resolution, snoozed_until: null },
       { onConflict: 'session_id' },
@@ -139,7 +176,14 @@ export async function POST(req: NextRequest) {
   });
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
 
-  await resolve(choice);
+  // A receipt was asked for but didn't go: remember that so the dashboard keeps
+  // offering "Send receipt". (If it had already gone earlier, that's fine.)
+  let resolution: 'paid_receipt' | 'paid_receipt_failed' | 'paid_no_receipt' = choice;
+  if (choice === 'paid_receipt' && !result.receipt_sent) {
+    const { data: after } = await supabaseAdmin.from('sessions').select('receipt_sent_at').eq('id', sessionId).single();
+    if (!after?.receipt_sent_at) resolution = 'paid_receipt_failed';
+  }
+  await resolve(resolution);
   return NextResponse.json(
     {
       ok: true,

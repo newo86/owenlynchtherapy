@@ -56,6 +56,15 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
 - **Agent tooling**: any change to `.claude/` (hooks, settings, agents) is
   security-sensitive. A 2026 npm worm planted a Claude Code SessionStart
   hook to run its payload in every session.
+- **An agent that reads untrusted content must not also have unrestricted
+  Bash, network or secrets.** Untrusted content means calendar invites,
+  email and web pages. Scope the agent with its `tools` list: prompt wording
+  is not a control. (A calendar-invite prompt injection leaked data through
+  Gemini in Jan 2026.) The practice-manager agent therefore only has
+  WebFetch to `/api/admin/schedule-snapshot`.
+- **Read deny rules don't stop `cat` through Bash.** A `Read(...)` deny in
+  settings blocks the Read tool only; an agent with Bash can still print the
+  file. Don't rely on one to protect a secret.
 
 ### Secrets and keys
 - **No secrets in the repo or git history** (gitleaks in CI).
@@ -67,6 +76,12 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
 10. **Weak JWT / signing secrets**: cookies and links are signed with keys
     from `src/lib/signingKeys.ts`, derived from a long random server-only
     secret, never from the admin password. Comparisons are constant-time.
+
+- **Machine bearer tokens** (`CRON_SECRET`, `SCHEDULE_READ_TOKEN`) are 32+
+  random bytes (`openssl rand -base64 32`). Routes refuse to run with a
+  shorter one, compare in constant time, and rate-limit failed attempts per
+  IP before comparing. They live only in Vercel env (and, for the snapshot
+  token, an environment network secret), never in the repo or a `.env` file.
 
 ### Authentication and accounts
 5. **Credential stuffing / brute force**: admin login and MFA are rate
@@ -155,6 +170,11 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
    payments or database writes without a human check.
 
 ### Payments, messaging and abuse
+- **"Mark paid" must be idempotent.** Updates that mark a session paid use
+  `.eq('payment_status','unpaid')` and insert the `payments` ledger row only
+  if the update returned a row, so a double tap or a webhook landing at the
+  same moment can't log the money twice (`closeOutSession.ts`,
+  `mark-paid/route.ts`).
 4. **Price from the browser**: Stripe amounts come from the server
    (practice settings / session record), never from the request body.
    The Stripe webhook verifies the signature with the raw body.

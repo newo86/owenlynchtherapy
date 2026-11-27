@@ -4,8 +4,10 @@ import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL, buildPaymentPromptDigestHtml } from '@/lib/emailTemplates';
 import { SITE_URL } from '@/practice.config';
+import { formatShortWhen } from '@/lib/dateUtils';
 import {
   sessionsNeedingPrompt, promptLabel, withinSendingHours, PROMPT_WINDOW_DAYS,
+  MAX_PROMPTS_PER_SESSION, REPROMPT_GAP_HOURS,
   type PromptSession, type PromptRow,
 } from '@/lib/paymentPrompts';
 
@@ -18,8 +20,12 @@ import {
 //   - the email goes ONLY to the practice address, never to a client
 //   - quiet hours: nothing is sent between 22:00 and 08:00 Dublin time
 //   - KILL SWITCH: if EMAILS_ENABLED is not 'true', nothing is claimed
-//   - CLAIM BEFORE SEND: each prompt row is claimed (count bumped) before the
-//     email goes; fail-closed if the claim can't be recorded
+//   - CLAIM BEFORE SEND: each prompt row is claimed by a conditional write
+//     (compare-and-swap on prompt_count, plus the gap/snooze/resolved checks)
+//     that returns the row, so two overlapping runs can't both claim it;
+//     only sessions actually claimed are emailed; fail-closed otherwise
+//   - the send carries an idempotency key (sessions + hour), so a retried or
+//     duplicate request can't produce a second digest
 //   - HARD CAP: at most 10 sessions per email, 5 prompts per session ever,
 //     and an unanswered prompt is repeated at most once every 18 hours
 //   - the links in the email carry no secret: the action happens only after
@@ -30,18 +36,22 @@ export const maxDuration = 30;
 
 const MAX_PER_RUN = 10;
 
-function whenLabel(iso: string): string {
-  const d = new Date(iso);
-  const day = d.toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Dublin' });
-  const time = d.toLocaleTimeString('en-IE', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin' })
-    .replace(/\s/g, '').toLowerCase();
-  return `${day.replace(',', '')}, ${time}`;
+// Vercel Cron: GET + bearer only.
+export async function GET(req: NextRequest) {
+  if (!bearerMatches(req, process.env.CRON_SECRET)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  return run();
 }
 
-export async function GET(req: NextRequest) {
+// Manual run from the dashboard: POST + admin cookie (or the bearer).
+export async function POST(req: NextRequest) {
   const valid = bearerMatches(req, process.env.CRON_SECRET) || (await requireAdmin(req)) === null;
   if (!valid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  return run();
+}
 
+async function run(): Promise<NextResponse> {
   const now = new Date();
 
   if (!withinSendingHours(now)) {
@@ -85,33 +95,54 @@ export async function GET(req: NextRequest) {
 
   const batch = due.slice(0, MAX_PER_RUN);
   const more = due.length - batch.length;
-  const countOf = new Map(((prompts ?? []) as PromptRow[]).map(p => [p.session_id, p.prompt_count]));
+  const priorOf = new Map(((prompts ?? []) as PromptRow[]).map(p => [p.session_id, p]));
 
-  // CLAIM each prompt before sending; only claimed sessions go in the email.
+  // Make sure every session in the batch has a ledger row (count 0). Ignoring
+  // duplicates means a row created by a racing run is left alone.
+  const missing = batch.filter(s => !priorOf.has(s.id)).map(s => ({ session_id: s.id, prompt_count: 0 }));
+  if (missing.length > 0) {
+    const { error: seedErr } = await supabaseAdmin.from('payment_prompts')
+      .upsert(missing, { onConflict: 'session_id', ignoreDuplicates: true });
+    if (seedErr) {
+      console.error('[payment-prompts] could not create ledger rows — NOT prompting:', seedErr.message);
+      return NextResponse.json({ ok: false, aborted: 'claim-failed', sent: 0 });
+    }
+  }
+
+  // CLAIM each prompt with a conditional write that returns the row it changed.
+  // The update only matches if the row still looks exactly as we read it
+  // (prompt_count unchanged), isn't resolved, is under the cap, and is past
+  // its snooze / re-ask gap. Whoever's update returns a row owns the claim.
+  const nowIso = now.toISOString();
+  const gapCut = new Date(now.getTime() - REPROMPT_GAP_HOURS * 60 * 60 * 1000).toISOString();
   const claimed: Row[] = [];
   for (const s of batch) {
-    const nowIso = now.toISOString();
-    const { error: claimErr } = await supabaseAdmin.from('payment_prompts').upsert(
-      {
-        session_id: s.id,
-        // first_prompted_at is only set on the first claim (a re-claim leaves it).
-        ...(countOf.has(s.id) ? {} : { first_prompted_at: nowIso }),
+    const prior = priorOf.get(s.id)?.prompt_count ?? 0;
+    const { data: got, error: claimErr } = await supabaseAdmin.from('payment_prompts')
+      .update({
         last_prompted_at: nowIso,
-        prompt_count: (countOf.get(s.id) ?? 0) + 1,
+        prompt_count: prior + 1,
         snoozed_until: null,
-      },
-      { onConflict: 'session_id' },
-    );
+        ...(prior === 0 ? { first_prompted_at: nowIso } : {}),
+      })
+      .eq('session_id', s.id)
+      .eq('prompt_count', prior)
+      .lt('prompt_count', MAX_PROMPTS_PER_SESSION)
+      .is('resolved_at', null)
+      .or(`and(snoozed_until.is.null,or(last_prompted_at.is.null,last_prompted_at.lt.${gapCut})),snoozed_until.lte.${nowIso}`)
+      .select('session_id');
     if (claimErr) {
       console.error('[payment-prompts] claim failed — NOT prompting:', claimErr.message);
       continue;
     }
+    if (!got || got.length === 0) continue; // someone else has it, or it isn't due
     claimed.push(s);
   }
-  if (claimed.length === 0) return NextResponse.json({ ok: false, aborted: 'claim-failed', sent: 0 });
+  if (claimed.length === 0) return NextResponse.json({ ok: true, due: due.length, prompted: 0, sent: 0, skipped: 'nothing-claimed' });
 
   let failed = false;
   try {
+    const idempotencyKey = `payprompt:${claimed.map(c => c.id).sort().join(',')}:${Math.floor(now.getTime() / 3_600_000)}`;
     const result = await getResend().emails.send({
       from: EMAIL_FROM,
       to: CONTACT_EMAIL,
@@ -122,24 +153,39 @@ export async function GET(req: NextRequest) {
         items: claimed.map(s => ({
           sessionId: s.id,
           label: promptLabel({ full_name: s.clients?.full_name ?? '' }),
-          when: whenLabel(s.session_date),
+          when: formatShortWhen(s.session_date),
           feeEuros: Math.round((s.fee ?? 0) / 100),
         })),
       }),
-    });
-    failed = Boolean(result.error);
-    if (result.error) console.error('[payment-prompts] Resend error:', JSON.stringify(result.error));
+    }, { idempotencyKey });
+    const err = result.error as { statusCode?: number | null; name?: string } | null;
+    const duplicate = err?.statusCode === 409
+      || err?.name === 'invalid_idempotent_request' || err?.name === 'concurrent_idempotent_requests';
+    if (duplicate) {
+      // Resend already has this exact digest: it went (or is going) out. Keep the claims.
+      console.warn('[payment-prompts] duplicate digest refused by Resend — treating as already sent');
+    } else {
+      failed = Boolean(err);
+    }
+    if (failed) console.error('[payment-prompts] Resend error:', JSON.stringify(result.error));
   } catch (err) {
     failed = true;
     console.error('[payment-prompts] send threw:', err instanceof Error ? err.message : String(err));
   }
 
   if (failed) {
-    // Give the claims back so the next hourly run can try again.
+    // Give the claims back (count, last-asked time and snooze) so the next
+    // hourly run can try again.
     for (const s of claimed) {
-      const prior = countOf.get(s.id) ?? 0;
+      const p = priorOf.get(s.id);
       await supabaseAdmin.from('payment_prompts')
-        .update({ prompt_count: prior }).eq('session_id', s.id);
+        .update({
+          prompt_count: p?.prompt_count ?? 0,
+          last_prompted_at: p?.last_prompted_at ?? null,
+          snoozed_until: p?.snoozed_until ?? null,
+          ...(p ? {} : { first_prompted_at: null }),
+        })
+        .eq('session_id', s.id);
     }
     return NextResponse.json({ ok: false, aborted: 'send-failed', sent: 0 });
   }

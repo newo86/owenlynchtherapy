@@ -1,6 +1,6 @@
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
-import { buildReceiptHtml, EMAIL_FROM } from '@/lib/emailTemplates';
+import { buildReceiptHtml, inPersonAddressFor, EMAIL_FROM } from '@/lib/emailTemplates';
 import { PRACTICE } from '@/practice.config';
 
 interface ReceiptSession {
@@ -73,6 +73,7 @@ export async function sendReceiptEmail(
         time: formattedTime,
         feeEuros,
         sessionFormat: session.session_format,
+        inPersonAddress: inPersonAddressFor(session.session_date),
       }),
     });
   } catch (err) {

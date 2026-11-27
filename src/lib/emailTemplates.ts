@@ -238,6 +238,9 @@ export interface ReceiptEmailInput {
   time: string;
   feeEuros: number;
   sessionFormat: string;
+  /** Where an in-person session took place (use inPersonAddressFor(session_date)).
+   *  Falls back to the main venue when omitted. */
+  inPersonAddress?: string;
 }
 
 export function buildReceiptHtml(input: ReceiptEmailInput): string {
@@ -249,7 +252,7 @@ export function buildReceiptHtml(input: ReceiptEmailInput): string {
     ? (TELEHEALTH_URL
         ? `Online &mdash; <a href="${TELEHEALTH_URL}" style="color:#4F8A68;text-decoration:none;font-weight:500;">${TELEHEALTH_URL.replace("https://", "")}</a>`
         : `Online (${TELEHEALTH_PLATFORM})`)
-    : `In Person &mdash; ${PRACTICE.address.streetAddress}, ${PRACTICE.address.addressLocality}`;
+    : `In Person &mdash; ${escapeHtml(input.inPersonAddress ?? `${PRACTICE.address.streetAddress}, ${PRACTICE.address.addressLocality}`)}`;
 
   return emailShell(`
     <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${firstName},</p>
@@ -324,8 +327,8 @@ export function paymentPromptLink(origin: string, sessionId: string, choice: str
 
 export function buildPaymentPromptDigestHtml(input: PaymentPromptDigestInput): string {
   const btn = (href: string, text: string, primary: boolean) =>
-    `<a href="${href}" style="display:inline-block;margin:0 8px 8px 0;padding:10px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:500;${primary
-      ? 'background-color:#C85A1A;color:#FFFFFF;border:1px solid #C85A1A;'
+    `<a href="${href}" style="display:block;margin:0 0 10px;padding:14px 18px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:500;text-align:center;${primary
+      ? 'background-color:#A64810;color:#FFFFFF;border:1px solid #A64810;'
       : 'background-color:#FFFFFF;color:#2A4D3C;border:1px solid #C3DDD0;'}">${text}</a>`;
 
   const rows = input.items.map(i => `
@@ -333,23 +336,23 @@ export function buildPaymentPromptDigestHtml(input: PaymentPromptDigestInput): s
       <p style="margin:0 0 12px;font-size:15px;color:#2A4D3C;line-height:1.5;">
         Did <strong>${escapeHtml(i.label)}</strong> pay for ${escapeHtml(i.when)} (&euro;${i.feeEuros})?
       </p>
-      ${btn(paymentPromptLink(input.origin, i.sessionId, 'paid_receipt'), 'Paid &ndash; email receipt', true)}
-      ${btn(paymentPromptLink(input.origin, i.sessionId, 'paid_no_receipt'), 'Paid &ndash; no receipt', false)}
-      ${btn(paymentPromptLink(input.origin, i.sessionId, 'remind_tomorrow'), 'Not yet &ndash; remind me tomorrow', false)}
+      ${btn(paymentPromptLink(input.origin, i.sessionId, 'paid_receipt'), 'Paid, email receipt', true)}
+      ${btn(paymentPromptLink(input.origin, i.sessionId, 'paid_no_receipt'), 'Paid, no receipt', false)}
+      ${btn(paymentPromptLink(input.origin, i.sessionId, 'remind_tomorrow'), 'Not yet, ask me tomorrow', false)}
     </div>`).join('');
 
   const more = input.moreCount > 0
-    ? `<p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">...and ${input.moreCount} more in the <a href="${input.origin}/admin/intake" style="color:#C85A1A;text-decoration:none;">dashboard</a>.</p>`
+    ? `<p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">And ${input.moreCount} more ${input.moreCount === 1 ? 'is' : 'are'} waiting in your <a href="${input.origin}/admin/intake" style="color:#A64810;text-decoration:underline;">dashboard</a>.</p>`
     : '';
 
   return emailShell(`
     <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${PRACTICE.practitionerFirstName},</p>
     <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 20px;">
-      A quick check on payments. Tap an answer and you&rsquo;ll be taken to your dashboard to confirm it &ndash; nothing is sent to anyone until you do.
+      A quick check on payments. Tap an answer and you&rsquo;ll be taken to your dashboard to confirm it. Nothing is sent to anyone until you do.
     </p>
     ${rows}
     ${more}
-    <p style="color:#999;font-size:12px;line-height:1.6;margin:22px 0 0;border-top:1px solid #EFE9DF;padding-top:16px;">
+    <p style="color:#666;font-size:12px;line-height:1.6;margin:22px 0 0;border-top:1px solid #EFE9DF;padding-top:16px;">
       This email only ever goes to you, never to a client.
     </p>`);
 }

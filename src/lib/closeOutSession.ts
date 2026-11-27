@@ -55,10 +55,15 @@ export async function closeOutSession(sessionId: string, opts: CloseOutOptions):
     const method = isLowCost ? 'cash' : 'manual';
     const paidAt = new Date().toISOString();
 
-    const { error: payErr } = await supabaseAdmin
+    // Conditional: only the request that flips unpaid -> paid logs the ledger
+    // row, so a double tap (or a Stripe webhook landing at the same moment)
+    // can never record the payment twice.
+    const { data: flipped, error: payErr } = await supabaseAdmin
       .from('sessions')
       .update({ payment_status: 'paid', paid_at: paidAt })
-      .eq('id', sessionId);
+      .eq('id', sessionId)
+      .eq('payment_status', 'unpaid')
+      .select('id');
 
     if (payErr) {
       console.error('[close-out] payment update error:', dbError(payErr));
@@ -68,19 +73,22 @@ export async function closeOutSession(sessionId: string, opts: CloseOutOptions):
         error: 'Marked attended, but recording the payment failed — mark it paid separately.',
       };
     }
+    // Either way the session is paid now (by us, or by whoever got there first).
     paid = true;
 
-    const { error: ledgerErr } = await supabaseAdmin.from('payments').insert({
-      session_id: sessionId,
-      client_id: session.client_id,
-      amount_cents: session.fee ?? 0,
-      currency: 'eur',
-      session_type: kind,
-      method,
-      paid_at: paidAt,
-    });
-    if (ledgerErr) {
-      console.warn('[close-out] Could not log payment (run the payments migration):', ledgerErr.message);
+    if (flipped && flipped.length > 0) {
+      const { error: ledgerErr } = await supabaseAdmin.from('payments').insert({
+        session_id: sessionId,
+        client_id: session.client_id,
+        amount_cents: session.fee ?? 0,
+        currency: 'eur',
+        session_type: kind,
+        method,
+        paid_at: paidAt,
+      });
+      if (ledgerErr) {
+        console.warn('[close-out] Could not log payment (run the payments migration):', ledgerErr.message);
+      }
     }
   }
 

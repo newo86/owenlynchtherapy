@@ -47,9 +47,11 @@ async function fetchPrompts(): Promise<PaymentPromptItem[] | null> {
 interface Props {
   /** Refresh the rest of the dashboard after a change. */
   onChanged: () => void;
+  /** Phone layout (compact rows + bottom sheet). */
+  compact?: boolean;
 }
 
-export function PaymentPromptsPanel({ onChanged }: Props) {
+export function PaymentPromptsPanel({ onChanged, compact = false }: Props) {
   const [prompts, setPrompts] = useState<PaymentPromptItem[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: 'ok' | 'alert'; text: string } | null>(null);
@@ -73,21 +75,35 @@ export function PaymentPromptsPanel({ onChanged }: Props) {
     const p = prompts?.find(x => x.session_id === sessionId);
     setBusy(sessionId); setMessage(null); setLinked(null); emailLink = null;
     try {
+      // A receipt that failed earlier is already paid: just retry the send
+      // (still only after the confirm the practitioner just tapped).
+      if (p?.receipt_failed) {
+        const res = await adminFetch('/api/admin/send-receipt', {
+          method: 'POST', body: JSON.stringify({ session_id: sessionId }),
+        });
+        const who = p.label;
+        if (res.ok) setMessage({ kind: 'ok', text: `The receipt for ${who} was emailed.` });
+        else if (res.status === 409) setMessage({ kind: 'ok', text: `The receipt for ${who} had already gone.` });
+        else setMessage({ kind: 'alert', text: `The receipt for ${who} didn't go out. It's still listed here, so you can try again.` });
+        await reload();
+        onChanged();
+        return;
+      }
       const res = await adminFetch('/api/admin/payment-prompts', {
         method: 'POST', body: JSON.stringify({ session_id: sessionId, choice }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) { setMessage({ kind: 'alert', text: json.error ?? 'That did not save. Nothing was changed.' }); return; }
+      if (!res.ok) { setMessage({ kind: 'alert', text: json.error ? `That didn't save. ${json.error}` : "That didn't save. Nothing was changed." }); return; }
       const who = p?.label ?? 'That session';
       if (json.alreadyPaid) setMessage({ kind: 'ok', text: `${who} was already marked paid. Nothing was sent.` });
       else if (json.outcome === 'snoozed') setMessage({ kind: 'ok', text: `OK, I'll ask again tomorrow morning about ${who}.` });
-      else if (json.receipt_requested && json.receipt_sent) setMessage({ kind: 'ok', text: `${who} marked paid, and the receipt was emailed.` });
-      else if (json.receipt_requested) setMessage({ kind: 'alert', text: `${who} marked paid, but the receipt was NOT sent (it may have gone already, or emails are off). Check the session.` });
-      else setMessage({ kind: 'ok', text: `${who} marked paid. No receipt sent.` });
+      else if (json.receipt_requested && json.receipt_sent) setMessage({ kind: 'ok', text: `${who} is marked paid, and the receipt was emailed.` });
+      else if (json.receipt_requested) setMessage({ kind: 'alert', text: `${who} is marked paid, but the receipt didn't go out (it may have gone already, or emails are paused). You can send it from the session.` });
+      else setMessage({ kind: 'ok', text: `${who} is marked paid. No receipt sent.` });
       await reload();
       onChanged();
     } catch {
-      setMessage({ kind: 'alert', text: 'No connection. Nothing was changed.' });
+      setMessage({ kind: 'alert', text: "That didn't save: no connection. Nothing was changed." });
     } finally {
       setBusy(null);
     }
@@ -107,6 +123,7 @@ export function PaymentPromptsPanel({ onChanged }: Props) {
           key={initial ? `link-${initial.sessionId}` : 'list'}
           prompts={prompts}
           busy={busy}
+          compact={compact}
           initialConfirm={initial}
           onChoose={(id, c) => void choose(id, c)}
         />

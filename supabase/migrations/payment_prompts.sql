@@ -5,7 +5,9 @@
 -- One row per session. The hourly cron claims a row (bumping prompt_count)
 -- BEFORE it emails the practitioner, so a session is prompted at most 5 times
 -- and never twice in one run. snoozed_until holds "remind me tomorrow";
--- resolved_at / resolution record how the practitioner answered.
+-- resolved_at / resolution record how the practitioner answered
+-- ('paid_receipt_failed' = marked paid and a receipt was asked for, but it
+-- didn't go out; the dashboard keeps offering "Send receipt" until it does).
 --
 -- Safe to re-run.
 
@@ -17,7 +19,7 @@ create table if not exists public.payment_prompts (
   prompt_count     int not null default 0,
   snoozed_until    timestamptz,
   resolved_at      timestamptz,
-  resolution       text check (resolution in ('paid_receipt', 'paid_no_receipt', 'already_paid')),
+  resolution       text check (resolution in ('paid_receipt', 'paid_receipt_failed', 'paid_no_receipt', 'already_paid')),
   created_at       timestamptz not null default now()
 );
 

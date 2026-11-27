@@ -2,6 +2,7 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import { PRACTICE } from '@/practice.config';
+import { inPersonAddressFor } from '@/lib/emailTemplates';
 
 // Branded receipt + statement PDFs for a client's sessions. Mirrors the look
 // of the intake PDF (same logo header, forest/gold palette). Admin-only; used
@@ -150,7 +151,7 @@ export async function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
 
     row('Date', dateOnly ? dublinDate(session.session_date) : `${dublinDate(session.session_date)} at ${dublinTime(session.session_date)}`);
     row('Service', `Psychotherapy Session (${PRACTICE.sessionMinutes} minutes)`);
-    row('Format', isOnline ? 'Online' : `In Person — ${PRACTICE.address.venue}, ${PRACTICE.address.streetAddress}, ${PRACTICE.address.addressLocality}`);
+    row('Format', isOnline ? 'Online' : `In Person — ${inPersonAddressFor(session.session_date)}`);
     row('Amount', euros(session.fee), true);
     const paid = session.payment_status === 'paid';
     const yStatus = doc.y;

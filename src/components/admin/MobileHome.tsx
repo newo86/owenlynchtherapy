@@ -157,8 +157,6 @@ export function MobileHome({ clients, todaySessions, onOpenSession, onBooked }: 
 
       {toast && <div className="admin-banner is-ok" role="status">{toast}</div>}
 
-      <PaymentPromptsPanel onChanged={onBooked} />
-
       <section className="m-today" aria-label="Today's clients">
         {todaySessions.length === 0 ? (
           <p className="admin-empty">No clients today.</p>
@@ -186,6 +184,8 @@ export function MobileHome({ clients, todaySessions, onOpenSession, onBooked }: 
       <button type="button" className="m-schedule" onClick={() => setSheet({})}>
         <CalendarPlus size={20} strokeWidth={1.8} aria-hidden /> Schedule a client
       </button>
+
+      <PaymentPromptsPanel onChanged={onBooked} compact />
 
       <section className="m-free" aria-label="Free times">
         <h2 className="admin-h2">Free times</h2>
