@@ -2590,3 +2590,29 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
   .cm-nav { gap: 6px; }
   .cm-nav .admin-link { padding: 0 6px; }
 }
+
+/* ── "Did they pay?" card ─────────────────────────────────────────────── */
+
+.pp-card { margin-bottom: 20px; }
+.pp-note { margin: -6px 0 14px; font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+.pp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.pp-row { padding: 14px 0 0; border-top: 1px solid var(--line); }
+.pp-row:first-child { padding-top: 0; border-top: none; }
+.pp-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-bottom: 10px; }
+.pp-who { font-size: 16px; font-weight: 500; color: var(--forest-deep); }
+.pp-when { font-size: 13px; color: var(--ink-muted); }
+.pp-amount { font-size: 14px; font-weight: 500; color: var(--forest-deep); }
+.pp-snoozed { font-size: 12px; color: var(--ink-muted); background: var(--cream); border-radius: 999px; padding: 2px 10px; }
+.pp-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pp-btn { min-height: 44px; justify-content: center; }
+.pp-confirm { background: var(--cream); border-radius: 14px; padding: 14px 16px; }
+.pp-confirm-text { margin: 0 0 12px; font-size: 14px; line-height: 1.55; color: var(--forest-deep); }
+@media (max-width: 768px) {
+  .pp-card { padding: 20px 18px; border-radius: 18px; }
+  .pp-actions { flex-direction: column; }
+  .pp-btn { width: 100%; }
+}
+/* Same phone layout inside a fixed-width frame (dev demo page). */
+.pp-phone .pp-card { padding: 20px 18px; border-radius: 18px; }
+.pp-phone .pp-actions { flex-direction: column; }
+.pp-phone .pp-btn { width: 100%; }

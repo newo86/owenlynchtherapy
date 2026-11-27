@@ -42,6 +42,19 @@ Anything else (unset/false) silently blocks every send.
   - A truncated Google fetch (page cap) disables drift detection and linking: a missing event is never read as a deletion.
 - **Which calendar events count as a client's session** (linking, difference detection and the reminder check all use `matchOneActiveClient`): the title must contain the client's full name, or a name part plus "session"/"client". "Walk Kate" or "Day off" never becomes a session; all-day events never do. Events that don't match show in the dashboard's unlinked-events queue to link by hand.
 
+## Payment prompts ("Did they pay?")
+
+Most clients pay by Revolut transfer to Owen's personal account, which no software can see. So after a session the app asks **Owen**, never the client.
+
+- **Hourly cron** `/api/admin/payment-prompts/run` at `15 * * * *` (`vercel.json`). Auth like the reminder run (`CRON_SECRET` bearer or admin cookie).
+- **A session is due** when: it ended (start + `PRACTICE.sessionMinutes`) 15+ minutes ago; it started in the last 7 days (no backlog flood); status is `scheduled` or `attended`; `payment_status` is `unpaid`; fee > 0; its `payment_prompts` row isn't resolved and isn't snoozed. Rules live in `src/lib/paymentPrompts.ts` (unit-tested).
+- **One digest email** to the practice address (`PRACTICE.email`) only, never a client. Subject has no names ("Did they pay? 2 sessions to check"). Each session has three links: Paid - email receipt / Paid - no receipt / Not yet - remind me tomorrow. The links go to `/admin/intake?payprompt=<session id>&choice=<choice>` and carry **no secret**: nothing happens until Owen is logged in and taps the confirm in the dashboard "Did they pay?" card.
+- **Safety rules:** quiet hours (nothing sent 22:00-08:00 Dublin); kill switch (`EMAILS_ENABLED` not `true` = nothing claimed or sent); each prompt row is **claimed before sending** and the claim is given back if the send fails; at most 10 sessions per email ("and N more in the dashboard"); at most 5 prompts per session, and an unanswered one is repeated no sooner than 18 hours later; "remind me tomorrow" snoozes to 09:00 Dublin next day.
+- **Answering** (`POST /api/admin/payment-prompts`): re-reads the session first. Already paid -> resolved as `already_paid`, nothing sent. Paid choices use the same close-out as "Session done" (`src/lib/closeOutSession.ts`, also used by `mark-attended`): mark attended, record the payment, and only for "email receipt" send the receipt. The dashboard card lists open prompts via `GET` (snoozed ones flagged).
+- **Read-only schedule snapshot** `GET /api/admin/schedule-snapshot?days=14` for the practice-manager agent. Bearer token **`SCHEDULE_READ_TOKEN`** only (unset = 503, wrong = 401; the admin cookie is not accepted). Returns only `{when, client: "Aoife E.", status, payment: "paid" | "not marked paid"}` for now minus/plus `days` (1-31). No emails, fees, notes or ids. Rate-limited, `no-store`.
+- **Migration needed:** `supabase/migrations/payment_prompts.sql` via `/db-migrate`. Until it is applied the cron fails closed (sends nothing) and the card stays empty.
+- Dev-only preview: `/admin-demo` (404 everywhere except `next dev`) renders the card with made-up data.
+
 ## In-person venue by weekday
 - Fridays in person are at 124 Baggot Street Lower, Dublin 2 (from 27 Nov
   2026); other days at Insight Matters, Capel Street. Set in
@@ -125,7 +138,8 @@ Anything else (unset/false) silently blocks every send.
 `INTAKE_ADMIN_SECRET` (admin login password only — never used as a signing
 key), optional `SESSION_SIGNING_KEY` (server-only secret for signing admin
 cookies/opt-out links; falls back to the Supabase service-role key — rotating
-either signs everyone out), `CRON_SECRET`,
+either signs everyone out), `CRON_SECRET`, `SCHEDULE_READ_TOKEN` (bearer
+token for the read-only `/api/admin/schedule-snapshot`; unset = route returns 503),
 `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY`, Google OAuth creds, Supabase
 service-role key. (The `NEXT_PUBLIC_SANITY_*` vars and the Sanity integration
 are obsolete since Jul 2026 and can be removed from Vercel.)
@@ -139,7 +153,7 @@ Applied in the Supabase SQL editor. Notably: `session_reminders.sql` +
 page storage), `admin_session_state.sql` (server-side sign-out: "Sign out"
 voids every admin session issued before it, on all devices — until this table
 exists, signing out only clears the current browser's cookie), `questionnaires.sql`
-(Analytics page: values worksheet and C–NIP–2 links and results). If a feature
+(Analytics page: values worksheet and C–NIP–2 links and results), `payment_prompts.sql` ("Did they pay?" prompts; without it nothing is prompted). If a feature
 "doesn't save", check its migration was run in production.
 
 ## Client questionnaires (Analytics page)

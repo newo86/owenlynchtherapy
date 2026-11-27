@@ -12,6 +12,7 @@ import { PRACTICE } from '@/practice.config';
 import { utcToDublinLocal } from '@/lib/dateUtils';
 import { adminFetch, startOfWeek, dedupeSessions } from './api';
 import { findFreeSlots, checkTime, CADENCE_LABEL, type Cadence, type FreeSlot, type OpeningHours } from './freeSlots';
+import { PaymentPromptsPanel } from './PaymentPromptsPanel';
 import type { CalendarEvent, ClientRow, SessionRow } from './types';
 
 const WEEKS_AHEAD = 8;
@@ -155,6 +156,8 @@ export function MobileHome({ clients, todaySessions, onOpenSession, onBooked }: 
       </header>
 
       {toast && <div className="admin-banner is-ok" role="status">{toast}</div>}
+
+      <PaymentPromptsPanel onChanged={onBooked} />
 
       <section className="m-today" aria-label="Today's clients">
         {todaySessions.length === 0 ? (

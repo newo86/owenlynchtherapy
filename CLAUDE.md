@@ -62,7 +62,12 @@ comes back poor, redo it one level up and log it under "Where the line is".
 - `src/lib/` logic: `resend.ts` (email + kill switch), `emailTemplates.ts`,
   `sendSessionReminder.ts`, `calendarSync.ts`/`calendarDrift.ts`/`calendarFix.ts`,
   `googleSessionEvents.ts`, `sessionSeries.ts`, `generateReceiptPDF.ts`,
-  `sendReceiptEmail.ts`, `signingKeys.ts`, `practiceSettings.ts`
+  `sendReceiptEmail.ts`, `closeOutSession.ts` (shared "Session done" close-out),
+  `paymentPrompts.ts` ("Did they pay?" rules), `signingKeys.ts`, `practiceSettings.ts`
+- "Did they pay?": `api/admin/payment-prompts` (+ `/run` cron), card
+  `PaymentPromptsCard.tsx` + `PaymentPromptsPanel.tsx`; read-only
+  `api/admin/schedule-snapshot` (bearer `SCHEDULE_READ_TOKEN`); dev-only
+  `(admin)/admin-demo` with `demoData.ts` (see docs/OPERATIONS.md)
 - `src/practice.config.ts` practice facts (overridden by Settings)
 - `vercel.json` crons · `supabase/migrations/` schema · tests are `*.test.ts` beside the code (vitest)
 - Docs: `docs/OPERATIONS.md` (how things run), `docs/SECURITY.md`,

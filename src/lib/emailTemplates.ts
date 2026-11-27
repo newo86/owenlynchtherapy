@@ -296,6 +296,64 @@ export function buildReceiptHtml(input: ReceiptEmailInput): string {
     <p style="color:#2A4D3C;font-size:14px;margin:0;font-weight:500;">${PRACTICE.practitionerFirstName}</p>`);
 }
 
+// ── "Did they pay?" digest (to the practitioner, never a client) ────────────
+
+export interface PaymentPromptDigestItem {
+  sessionId: string;
+  /** e.g. "Aoife E." */
+  label: string;
+  /** e.g. "Tue 2 Dec, 4:00pm" */
+  when: string;
+  feeEuros: number;
+}
+
+export interface PaymentPromptDigestInput {
+  items: PaymentPromptDigestItem[];
+  /** Sessions beyond the ones listed; mentioned as "and N more in the dashboard". */
+  moreCount: number;
+  /** Site origin, e.g. https://owenlynchtherapy.com (no trailing slash). */
+  origin: string;
+}
+
+/** Link into the dashboard. It carries no secret: the action only happens
+ *  after the practitioner is logged in and confirms on the dashboard. */
+export function paymentPromptLink(origin: string, sessionId: string, choice: string): string {
+  const q = new URLSearchParams({ payprompt: sessionId, choice });
+  return `${origin}/admin/intake?${q.toString()}`;
+}
+
+export function buildPaymentPromptDigestHtml(input: PaymentPromptDigestInput): string {
+  const btn = (href: string, text: string, primary: boolean) =>
+    `<a href="${href}" style="display:inline-block;margin:0 8px 8px 0;padding:10px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:500;${primary
+      ? 'background-color:#C85A1A;color:#FFFFFF;border:1px solid #C85A1A;'
+      : 'background-color:#FFFFFF;color:#2A4D3C;border:1px solid #C3DDD0;'}">${text}</a>`;
+
+  const rows = input.items.map(i => `
+    <div style="border:1px solid #E0D8CE;border-radius:8px;padding:18px 20px;background:#FAF7F2;margin:0 0 16px;">
+      <p style="margin:0 0 12px;font-size:15px;color:#2A4D3C;line-height:1.5;">
+        Did <strong>${escapeHtml(i.label)}</strong> pay for ${escapeHtml(i.when)} (&euro;${i.feeEuros})?
+      </p>
+      ${btn(paymentPromptLink(input.origin, i.sessionId, 'paid_receipt'), 'Paid &ndash; email receipt', true)}
+      ${btn(paymentPromptLink(input.origin, i.sessionId, 'paid_no_receipt'), 'Paid &ndash; no receipt', false)}
+      ${btn(paymentPromptLink(input.origin, i.sessionId, 'remind_tomorrow'), 'Not yet &ndash; remind me tomorrow', false)}
+    </div>`).join('');
+
+  const more = input.moreCount > 0
+    ? `<p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 16px;">...and ${input.moreCount} more in the <a href="${input.origin}/admin/intake" style="color:#C85A1A;text-decoration:none;">dashboard</a>.</p>`
+    : '';
+
+  return emailShell(`
+    <p style="color:#2A4D3C;font-size:16px;margin:0 0 16px;font-weight:400;">Hi ${PRACTICE.practitionerFirstName},</p>
+    <p style="color:#555;font-size:14px;line-height:1.7;margin:0 0 20px;">
+      A quick check on payments. Tap an answer and you&rsquo;ll be taken to your dashboard to confirm it &ndash; nothing is sent to anyone until you do.
+    </p>
+    ${rows}
+    ${more}
+    <p style="color:#999;font-size:12px;line-height:1.6;margin:22px 0 0;border-top:1px solid #EFE9DF;padding-top:16px;">
+      This email only ever goes to you, never to a client.
+    </p>`);
+}
+
 // ── Questionnaire link ──────────────────────────────────────────────────────
 
 export interface QuestionnaireEmailInput {

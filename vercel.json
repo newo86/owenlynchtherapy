@@ -17,6 +17,10 @@
       "schedule": "30 6 * * *"
     },
     {
+      "path": "/api/admin/payment-prompts/run",
+      "schedule": "15 * * * *"
+    },
+    {
       "path": "/api/admin/maintenance/purge-tokens",
       "schedule": "0 3 * * *"
     },

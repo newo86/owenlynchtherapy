@@ -40,6 +40,7 @@ docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
 - Do NOT rename or remove existing API routes (generate-token, submit,
   download-pdf, mark-attended, send-receipt, send-reminder, reminders/run,
   receipts, receipts/statement, mark-paid, reminders/unsubscribe, webhooks/stripe,
+  payment-prompts, payment-prompts/run, schedule-snapshot,
   auth/google, admin/calendar)
 - Supabase tables clients, sessions, intake_submissions, intake_tokens already
   exist — don't recreate them
