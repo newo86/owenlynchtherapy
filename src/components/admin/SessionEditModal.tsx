@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Check } from 'lucide-react';
 import { adminFetch } from './api';
 import type { ClientRow, SessionRow } from './types';
+import { SessionQuickActions } from './SessionQuickActions';
 
 interface Props {
   session: SessionRow;
@@ -250,6 +251,8 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
             <X size={20} strokeWidth={1.8} />
           </button>
         </div>
+
+        <SessionQuickActions session={session} client={client} onChanged={onSuccess} />
 
         {/* Form */}
         <form onSubmit={save} style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 18 }}>

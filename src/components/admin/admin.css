@@ -2590,3 +2590,35 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
   .cm-nav { gap: 6px; }
   .cm-nav .admin-link { padding: 0 6px; }
 }
+
+/* ── Session quick actions (top of the session pop-up) ───────────────────
+   Reminder, payment and receipt status in words, then one row of buttons.
+   SessionQuickActions.tsx. */
+.sqa {
+  padding: 18px 28px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sqa-status {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+  color: var(--ink-muted);
+}
+.sqa-status li { display: flex; align-items: center; gap: 8px; }
+.sqa-status li.is-ok { color: var(--ink); }
+.sqa-status li.is-ok svg { color: var(--sage); }
+.sqa-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sqa-actions .admin-btn-secondary { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+.sqa-msg { margin: 0; font-size: 14px; }
+.sqa-msg.is-ok { color: var(--sage); }
+.sqa-msg.is-error { color: #b3261e; }
+@media (max-width: 768px) {
+  .sqa { padding: 16px 20px 0; }
+  .sqa-actions .admin-btn-secondary { flex: 1 1 calc(50% - 4px); justify-content: center; white-space: nowrap; padding-left: 10px; padding-right: 10px; font-size: 15px; }
+}
