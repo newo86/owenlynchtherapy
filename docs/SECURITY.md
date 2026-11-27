@@ -61,15 +61,15 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
   email and web pages. Scope the agent with its `tools` list: prompt wording
   is not a control. (A calendar-invite prompt injection leaked data through
   Gemini in Jan 2026.) The practice-manager agent therefore has WebFetch
-  only (no Bash, no Calendar tools). It is not limited to one URL: the
-  snapshot is auto-allowed for owenlynchtherapy.com, and every other fetch
+  only (no Bash, no Calendar tools). It is not limited to one URL, and no
+  WebFetch allow rule exists, so every fetch, including the snapshot,
   prompts Owen. The environment network secret is added to every request to
   owenlynchtherapy.com from any process in the session, which is acceptable
   only because the snapshot is read-only and minimal.
 - **The ask-list in `.claude/settings.json` only slows a session down.** The
   real controls are branch protection on `main` and the security-gate hook.
-- **WebFetch agents are scoped by domain and never run in bypass/auto mode
-  when reading text others wrote** (CVE-2026-54316, CVE-2026-24052).
+- **WebFetch agents need Owen's OK per fetch (or a narrow domain allow rule)
+  and never run in bypass/auto mode when reading text others wrote** (CVE-2026-54316, CVE-2026-24052).
 - **Resend idempotency keys are 1-256 characters.** Hash multi-id keys
   (`paymentPromptIdempotencyKey`). An `invalid_idempotency_key` error alerts
   Owen; it is never just retried.

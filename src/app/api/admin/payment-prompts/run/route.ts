@@ -54,8 +54,10 @@ export async function POST(req: NextRequest) {
 
 // Same pattern as the reminders' abort alert: best-effort, via getResend().
 async function sendDigestBrokenAlert(): Promise<void> {
+  // At most one alert per Dublin day, however many hourly runs hit the fault.
+  const day = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Dublin' });
   try {
-    await getResend().emails.send({
+    const result = await getResend().emails.send({
       from: EMAIL_FROM,
       to: CONTACT_EMAIL,
       subject: "Heads-up: the 'Did they pay?' emails have stopped",
@@ -63,7 +65,11 @@ async function sendDigestBrokenAlert(): Promise<void> {
         <p>The hourly "Did they pay?" email was rejected by the email service as invalid, so nothing was sent. This is a fault in the website, not something you did, and retrying will not fix it.</p>
         <p>You can still tick off payments in the dashboard: <a href="${SITE_URL}/admin/intake">${SITE_URL.replace('https://', '')}/admin/intake</a></p>
       </div>`,
-    });
+    }, { idempotencyKey: `payprompt-digest-broken:${day}` });
+    const err = result.error as { statusCode?: number | null } | null;
+    if (err && err.statusCode !== 409) {
+      console.error('[payment-prompts] broken-digest alert was rejected:', JSON.stringify(result.error));
+    }
   } catch (err) {
     console.error('[payment-prompts] failed to send broken-digest alert:', err instanceof Error ? err.message : String(err));
   }
@@ -189,8 +195,11 @@ async function run(): Promise<NextResponse> {
       failed = Boolean(err);
       // A 4xx validation error (bad idempotency key, bad payload) is a code bug
       // that retrying can never fix: tell the practitioner instead of failing silently.
+      // Rate limits and quota clear by themselves, so they just retry next hour.
       const status = err?.statusCode ?? 0;
-      if (err && (err.name === 'invalid_idempotency_key' || (status >= 400 && status < 500))) codeBug = true;
+      const transient = status === 429
+        || err?.name === 'rate_limit_exceeded' || err?.name === 'daily_quota_exceeded';
+      if (err && !transient && (err.name === 'invalid_idempotency_key' || (status >= 400 && status < 500))) codeBug = true;
     }
     if (failed) console.error('[payment-prompts] Resend error:', JSON.stringify(result.error));
   } catch (err) {
