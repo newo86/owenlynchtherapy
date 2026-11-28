@@ -28,15 +28,25 @@ const NAV: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> =
 // sign out live in the profile menu (the OL button) instead.
 const SETTINGS = { id: 'settings' as AdminSection, label: 'Settings', Icon: Settings };
 
-// Phone tab bar: the four places used between sessions, plus More for the rest.
-// Labels matter on a phone (icons alone are guesswork at arm's length).
+// Phone tab bar: the three places used between sessions, plus More for the
+// rest (Owen, Nov 2026: like the Sage Diary prototype). Labels matter on a
+// phone (icons alone are guesswork at arm's length).
 const TABS: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> = [
   { id: 'dashboard', label: 'Today',    Icon: LayoutGrid },
   { id: 'sessions',  label: 'Calendar', Icon: CalendarDays },
   { id: 'clients',   label: 'Clients',  Icon: UserRound },
-  { id: 'revenue',   label: 'Money',    Icon: TrendingUp },
 ];
-const MORE = [...NAV.filter(n => !TABS.some(t => t.id === n.id)), SETTINGS];
+// More: Money, Forms, Analytics, Waitlist and Settings. Hours lives inside
+// Settings on the phone (AdminShell links to it from the Settings page).
+const MORE: Array<{ id: AdminSection; label: string; Icon: typeof LayoutGrid }> = [
+  { id: 'revenue',   label: 'Money',     Icon: TrendingUp },
+  { id: 'forms',     label: 'Forms',     Icon: FileText },
+  { id: 'analytics', label: 'Analytics', Icon: ChartColumn },
+  { id: 'waitlist',  label: 'Waitlist',  Icon: Hourglass },
+  SETTINGS,
+];
+/** Sections that light up the More tab (Hours is reached through Settings). */
+const MORE_SECTIONS: AdminSection[] = [...MORE.map(m => m.id), 'hours'];
 
 export function Sidebar(props: Props) {
   return (
@@ -49,7 +59,7 @@ export function Sidebar(props: Props) {
 
 function MobileTabBar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onTogglePrivacy }: Props) {
   const [moreOpen, setMoreOpen] = useState(false);
-  const moreActive = MORE.some(m => m.id === active);
+  const moreActive = MORE_SECTIONS.includes(active);
   const go = (id: AdminSection) => { setMoreOpen(false); onNavigate(id); };
 
   useEffect(() => {

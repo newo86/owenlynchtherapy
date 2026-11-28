@@ -372,7 +372,12 @@ export function AdminShell() {
                 />
               )}
 
-              {section === 'hours' && <HoursPage clients={clients} />}
+              {section === 'hours' && (
+                <>
+                  <button type="button" className="admin-link settings-back" onClick={() => setSection('settings')}>‹ Settings</button>
+                  <HoursPage clients={clients} />
+                </>
+              )}
 
               {section === 'revenue' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -394,7 +399,16 @@ export function AdminShell() {
                 <Waitlist waitlist={waitlist} onReload={reload} />
               )}
 
-              {section === 'settings' && <SettingsPanel />}
+              {section === 'settings' && (
+                <>
+                  {/* On the phone, Hours lives inside Settings (the tab bar has no Hours). */}
+                  <button type="button" className="admin-card settings-hours-link" onClick={() => setSection('hours')}>
+                    <span><b>Accreditation hours</b><span>Client, supervision and CPD hours towards your target</span></span>
+                    <span aria-hidden>›</span>
+                  </button>
+                  <SettingsPanel />
+                </>
+              )}
             </>
           )}
 
