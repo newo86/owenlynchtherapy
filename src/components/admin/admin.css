@@ -1577,6 +1577,7 @@
 }
 /* Owen's circle signature, in gold, tucked into the corner. */
 .admin-nextup::after {
+  display: none; /* no corner circles (Owen, 28 Nov 2026) */
   content: '';
   position: absolute;
   right: -60px; bottom: -90px;
@@ -1782,30 +1783,23 @@
 .admin-blob-4 { opacity: 0.65; }
 .admin-blob-5 { opacity: 0.6; }
 
-/* Glass surfaces. The corner circle is painted in the background so nothing
-   inside a card (pop-ups, previews) is ever clipped. */
+/* Flat Sage Diary cards (28 Nov 2026): Owen approved removing the corner
+   circles and glass blur so the header's split circle is the only shape on a
+   screen, as in docs/design/prototypes. */
 .admin-card,
 .admin-stat,
 .admin-client-card,
 .admin-hours-attention {
-  background:
-    radial-gradient(circle at calc(100% + 30px) calc(100% + 40px), var(--circle) 0 100px, transparent 101px),
-    var(--glass);
-  border: 1px solid var(--glass-edge);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
-  backdrop-filter: blur(16px) saturate(140%);
-  box-shadow: var(--glass-shadow);
+  background: var(--sd-card);
+  border: 1px solid var(--sd-line);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
 }
-.admin-card:nth-of-type(3n+2) { --circle: rgba(243, 223, 168, 0.75); }
-.admin-card:nth-of-type(3n)   { --circle: rgba(241, 217, 197, 0.8); }
-.admin-hours-attention { --circle: rgba(243, 223, 168, 0.8); }
 .admin-hours-attention::after, .admin-stat-blob { display: none; }
 .admin-session-row { background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(255, 255, 255, 0.7); }
 .admin-status-pill, .admin-segmented, .admin-input, .admin-input-icon-wrap input {
   background-color: rgba(255, 255, 255, 0.7);
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .admin-card, .admin-stat, .admin-client-card, .admin-hours-attention { background-color: #fff; }
 }
 
 /* Sentence case everywhere: no forced capitals or tracking. */
