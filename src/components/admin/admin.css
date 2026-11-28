@@ -2627,3 +2627,37 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
   .pp-note, .pp-when, .pp-snoozed, .pp-failed, .pp-quiet, .pp-saving { font-size: 14px; }
   .pp-confirm-text, .pp-amount { font-size: 16px; }
 }
+
+/* "Followed from Google" card (FollowedFromGoogleCard.tsx) */
+.fg-card { margin-bottom: 20px; }
+.fg-note { margin: -6px 0 12px; font-size: 14px; color: var(--forest-deep); line-height: 1.5; }
+.fg-done { margin: 0 0 10px; font-size: 14px; color: #2D5A42; line-height: 1.5; }
+.fg-problem { margin: 0 0 10px; font-size: 14px; color: #A04714; line-height: 1.5; }
+.fg-list { list-style: none; margin: 0; padding: 0; }
+.fg-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.fg-item:first-child { border-top: 0; padding-top: 0; }
+.fg-line { flex: 1; min-width: 0; margin: 0; font-size: 15px; line-height: 1.4; color: var(--forest-deep); }
+.fg-btn { flex: none; min-height: 44px; min-width: 88px; justify-content: center; }
+@media (max-width: 768px) {
+  .fg-card { padding: 20px 18px; border-radius: 18px; }
+  .fg-item { flex-direction: column; align-items: stretch; gap: 8px; }
+  .fg-btn { width: 100%; }
+  .fg-line { font-size: 16px; }
+}
+
+/* "How often" in the client record (SeriesFrequency.tsx) */
+.sf-box { background: white; border: 1px solid var(--line); border-radius: 12px; padding: 12px 15px; }
+.sf-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sf-label { margin: 0; font-size: 14px; font-weight: 500; color: var(--forest-deep); }
+.sf-options .admin-segmented-btn { min-height: 44px; }
+.sf-confirm { margin-top: 12px; background: var(--cream); border-radius: 12px; padding: 12px 14px; }
+.sf-confirm-text { margin: 0 0 12px; font-size: 14px; line-height: 1.55; color: var(--forest-deep); }
+.sf-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sf-actions > button { min-height: 44px; justify-content: center; }
+.sf-msg { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: #2D5A42; }
+.sf-msg.is-alert { color: #A04714; }
+@media (max-width: 768px) {
+  .sf-actions { flex-direction: column; }
+  .sf-actions > button { width: 100%; }
+  .sf-confirm-text, .sf-msg { font-size: 16px; }
+}

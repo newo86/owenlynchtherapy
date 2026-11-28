@@ -1,15 +1,18 @@
 import { supabaseAdmin } from '@/lib/supabase';
 import { utcToDublinLocal } from '@/lib/dateUtils';
 import { matchOneActiveClient, type MappedEvent } from '@/lib/calendarSync';
+import { hideFollowedDrift } from '@/lib/followGoogle';
+import { recentFollowedChanges } from '@/lib/followGoogleStore';
 
 /**
  * Where the app and Google Calendar disagree.
  *
  * The app is the source of truth for the schedule (Nov 2026); Google is a
- * mirror of it. So a difference is never "fixed" silently in either direction.
- * This module only FINDS differences; the practitioner picks what to do with
- * each one (see calendarFix.ts), apart from one safe automatic retry: a
- * session booked in the app in the last week whose Google write failed.
+ * mirror of it. This module only FINDS differences; the practitioner picks
+ * what to do with each one (see calendarFix.ts), apart from two automatic
+ * paths: a session booked in the app in the last week whose Google write
+ * failed is retried, and deletions / repeat changes made in Google to
+ * sessions linked by id are followed by src/lib/followGoogle.ts (27 Nov 2026).
  *
  * Pure (no network) so every rule is unit-tested; loadDrift() is the thin
  * database wrapper.
@@ -175,7 +178,9 @@ export function findCalendarDrift(input: {
 
 /** Drift for the live database. Null when it can't be judged: a truncated
  *  Google fetch (a missing event must never read as a deletion) or a query
- *  error. */
+ *  error. Differences already covered by a change the app followed from
+ *  Google (src/lib/followGoogle.ts) are left out: the "Followed from Google"
+ *  card shows those, with Undo. */
 export async function loadDrift(
   events: MappedEvent[],
   truncated: boolean,
@@ -193,5 +198,6 @@ export async function loadDrift(
     supabaseAdmin.from('clients').select('id, full_name').eq('status', 'active'),
   ]);
   if (sErr || cErr || !sessions || !clients) return null;
-  return findCalendarDrift({ sessions: sessions as DriftSession[], events, clients, now, timeMax });
+  const items = findCalendarDrift({ sessions: sessions as DriftSession[], events, clients, now, timeMax });
+  return hideFollowedDrift(items, await recentFollowedChanges(now));
 }

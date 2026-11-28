@@ -13,6 +13,7 @@ import { utcToDublinLocal } from '@/lib/dateUtils';
 import { adminFetch, startOfWeek, dedupeSessions } from './api';
 import { findFreeSlots, checkTime, CADENCE_LABEL, type Cadence, type FreeSlot, type OpeningHours } from './freeSlots';
 import { PaymentPromptsPanel } from './PaymentPromptsPanel';
+import { FollowedFromGooglePanel } from './FollowedFromGooglePanel';
 import type { CalendarEvent, ClientRow, SessionRow } from './types';
 
 const WEEKS_AHEAD = 8;
@@ -186,6 +187,8 @@ export function MobileHome({ clients, todaySessions, onOpenSession, onBooked }: 
       </button>
 
       <PaymentPromptsPanel onChanged={onBooked} compact />
+
+      <FollowedFromGooglePanel onChanged={onBooked} />
 
       <section className="m-free" aria-label="Free times">
         <h2 className="admin-h2">Free times</h2>

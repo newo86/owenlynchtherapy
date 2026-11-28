@@ -23,6 +23,8 @@ const TABLES = [
   'waitlist',
   'practice_settings',
   'payment_prompts',
+  'session_series',
+  'calendar_followed_changes',
 ] as const;
 
 async function fetchAll(table: string): Promise<unknown[]> {

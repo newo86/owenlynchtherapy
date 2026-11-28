@@ -36,11 +36,93 @@ Anything else (unset/false) silently blocks every send.
 - **The app is the source of truth for the schedule; Google Calendar is its mirror (since 19 Nov 2026).** Before that, a job every 5 minutes (`/api/admin/calendar/sync`) made Google the master: it imported, cancelled and moved sessions to match Google, guessing from event titles, so edits in Google only "sometimes" appeared and stale rows lingered (a client moved Mon→Tue in Google kept a second weekly series in the dashboard for months). Now:
   - `reconcileCalendar()` only **reads** Google and **links** sessions to the event they already match (client + same Dublin time). It never changes a session's date, status or existence.
   - **App → Google:** booking, moving, editing and cancelling in the app write to Google, **one session's event only** (`src/lib/googleSessionEvents.ts`). A session booked as a repeating series stores the *series* id; the id is first resolved to that slot's occurrence, so moving or cancelling one session no longer moves or deletes the whole series in Google. Session routes return `calendar: ok | failed | not_connected`.
-  - **Google → app is never automatic.** `src/lib/calendarDrift.ts` finds differences (not in Google / moved in Google / cancelled but still in Google / in Google for a client but not in the app) and the dashboard's "Google Calendar doesn't match the app" card lists them with two buttons each (`/api/admin/calendar/fix`, applied by `src/lib/calendarFix.ts`). The server recomputes the differences and acts on the matching key, so the browser can't name an arbitrary event. Nothing changes until the owner taps.
+  - **Google → app is automatic only for deletions and repeat changes on sessions linked by id** (since 27 Nov 2026, see "Following Google" below). Everything else stays a tap: `src/lib/calendarDrift.ts` finds differences (not in Google / moved in Google / cancelled but still in Google / in Google for a client but not in the app) and the dashboard's "Google Calendar doesn't match the app" card lists them with two buttons each (`/api/admin/calendar/fix`, applied by `src/lib/calendarFix.ts`). The server recomputes the differences and acts on the matching key, so the browser can't name an arbitrary event. Nothing changes until the owner taps.
   - **One automatic retry:** the 5-minute job re-creates the Google event for a session made in the app in the last 7 days that still has no Google id (a failed write), max 10 per run. Old unlinked rows, deleted events and moved events are only ever shown for a decision.
   - **Reminders are slot-strict:** a session is reminded only if Google has an event for it at the *same* time. A session moved in Google (and not yet resolved) is held back, not reminded at the app's time.
   - A truncated Google fetch (page cap) disables drift detection and linking: a missing event is never read as a deletion.
 - **Which calendar events count as a client's session** (linking, difference detection and the reminder check all use `matchOneActiveClient`): the title must contain the client's full name, or a name part plus "session"/"client". "Walk Kate" or "Day off" never becomes a session; all-day events never do. Events that don't match show in the dashboard's unlinked-events queue to link by hand.
+
+## Following Google (deletions and "every 2 weeks")
+
+**Why this changed (27 Nov 2026):** Owen edits his diary in Google Calendar.
+"When I delete in Google Calendar it doesn't update in my dashboard, or I
+change things to every two weeks and it doesn't update." Since 19 Nov the app
+had ignored every Google change until he tapped a button on the differences
+card, and the app had no way to change a series' frequency at all. So the
+rule is now: the app is still the diary, but it follows **two** kinds of
+change made in Google, by itself, safely.
+
+**What is followed** (`src/lib/followGoogle.ts`, run by the 5-minute
+`/api/admin/calendar/sync` job right after it reads the calendar window):
+1. **One occurrence deleted in Google** → that session is cancelled in the app.
+2. **A whole repeating series deleted in Google** (or ended with "delete this
+   and following") → its later sessions are cancelled and its
+   `session_series` row is switched off.
+3. **A series' repeat changed in Google** between weekly and every 2, 3 or 4
+   weeks (for all events, or "this and following") → `interval_weeks` and
+   `anchor_at` follow, sessions that no longer fall on a Google date are
+   cancelled, and when it gets more frequent the new in-between weeks are
+   added (gap fill, once). The daily top-up then carries on at the new
+   interval from the new anchor.
+
+**Safety rails:**
+- Only sessions tied to Google **by id** (their own event id, or the series id
+  resolved to that slot's occurrence through `recurringEventId` +
+  `originalStartTime`). Never by title or name: "Walk Kate" can't touch a session.
+- Only **future** sessions with status `scheduled`. Past, attended, paid or
+  already-cancelled sessions are never changed.
+- A deletion needs explicit evidence: Google reports the event or occurrence
+  as `cancelled` (or 410 Gone), or a complete, untruncated instance list has
+  nothing on a date the repeat rule generates. A 404, any Google error, a
+  truncated read or Google not connected → **no actions** that run.
+- **Moves are not followed.** An occurrence dragged to another time, or a
+  repeat moved to another weekday/time, stays on the "doesn't match" card.
+  So does any rule the app can't read (monthly, several weekdays, 5+ weeks,
+  a repeat not on Irish time).
+- **Cap:** if one run would cancel more than **10** sessions in the next ~10
+  weeks (the window the dashboard and reminders look at), or touch more than
+  80 sessions in all, it applies **none**, emails the practice address once per
+  Dublin day (via `getResend()`, so the kill switch applies; idempotency key
+  `follow-google-held:<date>`), and the sessions stay on the differences card.
+  (A whole weekly series is ~10 sessions in that window; sessions further out
+  in an ended or changed series are cancelled with it, inside the 80.)
+- The follow step **never writes to Google, never emails a client, never
+  sends a reminder.**
+- **Recorded and undoable:** every change is a row in
+  `calendar_followed_changes`. The dashboard's "Followed from Google" card
+  (desktop below today's sessions; phone below "Did they pay?") lists the last
+  7 days with **Undo** (`/api/admin/calendar/followed`). Undo only changes the
+  app; Google still shows the change, so the card says to fix it there or it
+  will show as a difference. An undone change is never re-applied.
+- Differences already covered by a followed change are left off the "doesn't
+  match" card (`hideFollowedDrift`).
+- Idempotent: a second run finds nothing left to do.
+- **Until the migration is applied, nothing is followed** (the job checks the
+  table first).
+
+**Changing how often in the app:** the client record shows "How often:
+Weekly / Every 2 weeks" for a client with an active series.
+Picking the other rhythm shows exactly what changes first ("From Tue 9 Dec,
+every 2 weeks. Cancels 4 sessions: … Google Calendar will be updated. Your
+client isn't emailed."), via `POST /api/admin/sessions/series/interval`
+(preview without `confirm`, apply with `confirm: true`). The change starts
+from the client's next session. Google is updated to match
+(`src/lib/seriesInterval.ts`): the old repeating event is ended the day before
+("this and following") and a new one starts on the new rhythm, so past
+occurrences in Google stay exactly as they were. If Google isn't connected or
+refuses, nothing changes in the app either (otherwise the 5-minute job would
+follow Google's old rhythm straight back). Sessions moved by hand keep their
+time and get their own one-off event.
+
+**Test bench:** `src/lib/testing/fakeGoogleCalendar.ts` (Google's id formats,
+deleted occurrences, splits, paging, outages) and `memoryFollowStore.ts`;
+scenarios in `src/lib/followGoogle.test.ts` (deletions, series deleted/ended,
+weekly ↔ fortnightly both ways, moves not followed, app writes only one
+occurrence, both clock-change weekends, truncated reads, Google down, the cap,
+"Walk Kate", all-day events, re-runs, undo).
+
+**Migration needed:** `supabase/migrations/calendar_followed_changes.sql` via
+`/db-migrate` (needs `session_series.sql` applied first, for its foreign key).
 
 ## Payment prompts ("Did they pay?")
 
@@ -76,9 +158,12 @@ Most clients pay by Revolut transfer to Owen's personal account, which no softwa
   batch of rows. When the batch ran out, the dashboard flagged each new Google
   date as "in Google Calendar, not in the app", one per week (Nov 2026).
 - To end it, mark the client Completed (that switches their series off), or
-  set the row's `active = false`. Cancelling one session (a holiday) doesn't
-  end it. It reads only the database and never imports from Google; ending a
-  client's repeating Google event is still done in Google.
+  set the row's `active = false`, or delete the repeating event in Google
+  (followed, see "Following Google"). Cancelling one session (a holiday)
+  doesn't end it. The daily top-up reads only the database and never imports
+  from Google. Change the rhythm with "How often" in the client record, or in
+  Google (followed); either way `anchor_at` moves to the first date of the new
+  rhythm.
 
 ## Accreditation hours (Hours page)
 
@@ -154,7 +239,7 @@ Applied in the Supabase SQL editor. Notably: `session_reminders.sql` +
 page storage), `admin_session_state.sql` (server-side sign-out: "Sign out"
 voids every admin session issued before it, on all devices — until this table
 exists, signing out only clears the current browser's cookie), `questionnaires.sql`
-(Analytics page: values worksheet and C–NIP–2 links and results), `payment_prompts.sql` ("Did they pay?" prompts; without it nothing is prompted). If a feature
+(Analytics page: values worksheet and C–NIP–2 links and results), `payment_prompts.sql` ("Did they pay?" prompts; without it nothing is prompted), `calendar_followed_changes.sql` (following Google deletions / repeat changes; without it nothing is followed). If a feature
 "doesn't save", check its migration was run in production.
 
 ## Client questionnaires (Analytics page)

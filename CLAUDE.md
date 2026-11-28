@@ -61,13 +61,21 @@ comes back poor, redo it one level up and log it under "Where the line is".
 - `src/app/api/admin/*` dashboard API (auth: `requireAdmin`; crons: `CRON_SECRET` bearer)
 - `src/lib/` logic: `resend.ts` (email + kill switch), `emailTemplates.ts`,
   `sendSessionReminder.ts`, `calendarSync.ts`/`calendarDrift.ts`/`calendarFix.ts`,
-  `googleSessionEvents.ts`, `sessionSeries.ts`, `generateReceiptPDF.ts`,
+  `googleSessionEvents.ts`, `sessionSeries.ts`, `followGoogle.ts` (+ store
+  `followGoogleStore.ts`: Google deletions / repeat changes the app follows),
+  `seriesInterval.ts` ("How often" change), `generateReceiptPDF.ts`,
   `sendReceiptEmail.ts`, `closeOutSession.ts` (shared "Session done" close-out),
   `paymentPrompts.ts` ("Did they pay?" rules), `signingKeys.ts`, `practiceSettings.ts`
 - "Did they pay?": `api/admin/payment-prompts` (+ `/run` cron), card
   `PaymentPromptsCard.tsx` + `PaymentPromptsPanel.tsx`; read-only
   `api/admin/schedule-snapshot` (bearer `SCHEDULE_READ_TOKEN`); dev-only
   `(admin)/admin-demo` with `demoData.ts` (see docs/OPERATIONS.md)
+- Calendar: `api/admin/calendar/sync` (5-min cron: link, follow Google,
+  retry), `api/admin/calendar/followed` (list + undo; card
+  `FollowedFromGoogleCard.tsx` + `FollowedFromGooglePanel.tsx`),
+  `api/admin/sessions/series` (+ `/interval`; `SeriesFrequency.tsx` in
+  ClientDetail). Test bench: `src/lib/testing/fakeGoogleCalendar.ts` +
+  `memoryFollowStore.ts`, scenarios in `src/lib/followGoogle.test.ts`
 - `src/practice.config.ts` practice facts (overridden by Settings)
 - `vercel.json` crons · `supabase/migrations/` schema · tests are `*.test.ts` beside the code (vitest)
 - Docs: `docs/OPERATIONS.md` (how things run), `docs/SECURITY.md`,
