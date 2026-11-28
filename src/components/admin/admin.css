@@ -61,21 +61,71 @@
   --cream:         #F5F0E8;
   --cream-warm:    #efe6d6;
   --peach:         #F1D9C5;
-  --ink:           #2a4d3c;
-  --ink-muted:     #6e7d72;
+  --ink:           var(--sd-ink);
+  --ink-muted:     var(--sd-ink-soft);   /* was #6e7d72 (3.9:1 on the page); now 6.5:1 */
   --line:          rgba(42, 77, 60, 0.10);
   --line-soft:     rgba(42, 77, 60, 0.04);
   --shadow-card:   0 4px 16px rgba(42, 77, 60, 0.06);
   --shadow-card-hover: 0 8px 24px rgba(42, 77, 60, 0.10);
 
+  /* ── Sage Diary tokens (Nov 2026) ─────────────────────────────────────
+     The dashboard's palette, from docs/design/prototypes. Mirrored in
+     theme.ts (`sageDiary`). Use these for anything new; the older names
+     above stay so existing screens keep working. See docs/design/prototypes/IMPLEMENTATION.md. */
+  --sd-page:        #EEF3EF;   /* light sage page */
+  --sd-card:        #FAFCFA;   /* cards, rows */
+  --sd-header:      #4F8A68;   /* website sage: the header band */
+  --sd-on-header:   #FFFFFF;   /* LARGE bold text only on the band (4.1:1) */
+  --sd-rail:        #2F5A44;   /* deep sage: side rail and phone tab bar */
+  --sd-on-rail:     #DDE9E1;   /* nav text at rest (6.3:1 on the rail) */
+  --sd-ink:         #1F2B24;   /* body text */
+  --sd-ink-soft:    #4B5A51;   /* secondary text (6.5:1 on the page) */
+  --sd-pill:        #DCE8E0;   /* chips, tags, secondary buttons */
+  --sd-line:        #E1E9E3;   /* dividers inside cards */
+  --sd-paid:        #CFE3D6;   /* "Paid" tag */
+  --sd-action:      #F6CB52;   /* soft yellow: the ONE primary button per screen */
+  --sd-action-hover:  #F2BE2E; /* ink on it: 8.5:1 */
+  --sd-action-active: #E8B21F; /* ink on it: 7.6:1 */
+  --sd-on-action:   #1F2B24;   /* text on yellow is always dark (9.5:1) */
+  --sd-action-soft: color-mix(in srgb, var(--sd-action) 20%, var(--sd-card)); /* hover on light rows */
+  --sd-danger:      #B3261E;
+  --sd-danger-soft: #F8E3E1;
+  --sd-art-blue:    #AFC3DE;   /* split circle: powder blue */
+  --sd-art-yellow:  #FBB807;   /* split circle: af Klint yellow (art only, never a button) */
+  --sd-art-cream:   #FAF6EC;
+  --sd-art-dot:     #A8C8B5;
+  --sd-scrim:       rgba(20, 32, 26, 0.28);
+  --sd-shadow:      0 1px 2px rgba(31, 43, 36, 0.06), 0 8px 24px rgba(31, 43, 36, 0.08);
+  --sd-rail-hover:  rgba(0, 0, 0, 0.16);  /* darker, not lighter: keeps yellow text at 4.5:1+ */
+  --sd-rail-selected: rgba(0, 0, 0, 0.26);
+  --sd-radius-card: 18px;
+  --sd-radius-btn:  14px;
+  --sd-radius-tile: 12px;
+
+  /* Dashboard type is Inter (loaded in the admin layout only). The older
+     Poppins/Montserrat names resolve to it inside the dashboard, so every
+     existing rule picks it up without being edited. */
+  --font-sans: var(--font-inter), Inter, -apple-system, 'SF Pro Text', system-ui, sans-serif;
+  --font-poppins: var(--font-sans);
+  --font-montserrat: var(--font-sans);
+
+  /* Where the page gutters are, so the header band can run edge to edge. */
+  --sd-pt: 28px;
+  --sd-pl: 36px;
+  --sd-pr: 36px;
+
   position: relative;
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--cream);
+  background: var(--sd-page);
   color: var(--ink);
-  font-family: var(--font-poppins), system-ui, sans-serif;
-  font-weight: 300;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
 }
+
+/* The old warm blobs fight the calm sage page; the header band replaces them. */
+.admin-bg-shapes { display: none; }
 
 /* ── Organic blob background ──────────────────────────────────────────── */
 
@@ -140,7 +190,7 @@
 }
 
 .admin-main {
-  padding: 28px 36px 56px;
+  padding: var(--sd-pt) var(--sd-pr) 56px var(--sd-pl);
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
@@ -150,7 +200,7 @@
 /* ── Sidebar ──────────────────────────────────────────────────────────── */
 
 .admin-sidebar {
-  background: var(--forest-deep);
+  background: var(--sd-rail);
   width: 84px;
   display: flex;
   flex-direction: column;
@@ -164,7 +214,10 @@
 
 .admin-sidebar-logo {
   margin-bottom: 18px;
+  border-radius: 50%;
 }
+.admin-sidebar-logo:focus-visible { outline: 2px solid var(--sd-action); outline-offset: 3px; }
+.admin-sidebar-logo-art { display: block; width: 44px; height: 44px; }
 
 .admin-sidebar-nav {
   display: flex;
@@ -185,33 +238,35 @@
   justify-content: center;
   background: transparent;
   border: none;
-  color: #cfd9d0;
+  color: var(--sd-on-rail);
   cursor: pointer;
-  transition: background 180ms ease, color 180ms ease, box-shadow 220ms ease;
+  transition: background 150ms ease, color 150ms ease;
 }
 
+/* Nav items turn yellow on hover and when selected (Sage Diary). The
+   background goes darker, not lighter, so yellow stays above 4.5:1. */
 @media (hover: hover) {
   .admin-nav-btn:hover:not(.is-active) {
-  background: rgba(255, 255, 255, 0.06);
-  color: white;
+  background: var(--sd-rail-hover);
+  color: var(--sd-action);
 }
 }
+.admin-nav-btn:focus-visible { outline: 2px solid var(--sd-action); outline-offset: 2px; }
 
 .admin-nav-btn.is-active {
-  background: white;
-  color: var(--terracotta);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  background: var(--sd-rail-selected);
+  color: var(--sd-action);
 }
 
 .admin-nav-btn.is-active::before {
   content: '';
   position: absolute;
-  left: -12px;
+  left: -16px;
   top: 50%;
   transform: translateY(-50%);
   width: 4px;
   height: 24px;
-  background: var(--terracotta);
+  background: var(--sd-action);
   border-radius: 0 4px 4px 0;
 }
 
@@ -219,14 +274,14 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--cream);
-  color: var(--forest-deep);
-  border: 2px solid var(--terracotta);
+  background: var(--sd-card);
+  color: var(--sd-rail);
+  border: 2px solid var(--sd-action);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-montserrat), Avenir, sans-serif;
-  font-weight: 300;
+  font-family: var(--font-sans);
+  font-weight: 700;
   font-size: 14px;
   letter-spacing: 0;
 }
@@ -256,14 +311,14 @@
   background: transparent; color: var(--forest-deep); font-size: 14px; text-align: left; cursor: pointer;
 }
 @media (hover: hover) {
-  .admin-profile-menu .admin-more-item:hover { background: rgba(79, 138, 104, 0.08); }
+  .admin-profile-menu .admin-more-item:hover { background: var(--sd-action-soft); }
 }
-.admin-profile-menu .admin-more-item.is-active { background: rgba(79, 138, 104, 0.12); }
+.admin-profile-menu .admin-more-item.is-active { background: var(--sd-action-soft); font-weight: 600; }
 .admin-profile-menu .admin-more-divider { height: 1px; margin: 6px 10px; background: var(--line); }
 .admin-profile-badge {
   position: absolute; right: -4px; top: -4px;
   width: 18px; height: 18px; border-radius: 50%;
-  background: var(--terracotta); color: white;
+  background: var(--sd-action); color: var(--sd-on-action);
   display: flex; align-items: center; justify-content: center;
 }
 
@@ -275,35 +330,35 @@
   font-weight: 500;
   letter-spacing: 0;
   text-transform: uppercase;
-  color: var(--terracotta);
+  color: var(--sd-ink-soft);
   margin: 0;
 }
 
 .admin-h1 {
-  font-family: var(--font-montserrat), Avenir, 'Avenir Next', sans-serif;
-  font-weight: 300;
+  font-family: var(--font-sans);
+  font-weight: 700;
   font-size: 44px;
-  letter-spacing: 0;
-  color: var(--forest-deep);
+  letter-spacing: -0.01em;
+  color: var(--sd-ink);
   margin: 6px 0 2px;
   line-height: 1.05;
 }
 
 .admin-h2 {
-  font-family: var(--font-montserrat), Avenir, 'Avenir Next', sans-serif;
-  font-weight: 300;
+  font-family: var(--font-sans);
+  font-weight: 700;
   font-size: 26px;
-  letter-spacing: 0;
-  color: var(--forest-deep);
+  letter-spacing: -0.01em;
+  color: var(--sd-ink);
   margin: 4px 0 0;
 }
 
 .admin-h3 {
-  font-family: var(--font-montserrat), Avenir, 'Avenir Next', sans-serif;
-  font-weight: 300;
+  font-family: var(--font-sans);
+  font-weight: 600;
   font-size: 18px;
   letter-spacing: 0;
-  color: var(--forest-deep);
+  color: var(--sd-ink);
   margin: 6px 0 0;
 }
 
@@ -319,7 +374,7 @@
   font-weight: 500;
   letter-spacing: 0;
   text-transform: uppercase;
-  color: var(--terracotta);
+  color: var(--sd-rail);
   text-decoration: none;
   background: none;
   border: none;
@@ -328,13 +383,13 @@
 }
 
 @media (hover: hover) {
-  .admin-link:hover { color: #a04714; }
+  .admin-link:hover { color: var(--sd-ink); text-decoration: underline; }
 }
 
 /* ── Cards ────────────────────────────────────────────────────────────── */
 
 .admin-card {
-  background: white;
+  background: var(--sd-card);
   border-radius: 22px;
   padding: 28px 30px;
   box-shadow: var(--shadow-card);
@@ -396,34 +451,34 @@
   align-items: center;
   gap: 6px;
   padding: 13px 22px;
-  /* #B04E16 = 5.3:1 with white (WCAG AA); the brand terracotta #C85A1A is 4.3:1. Dashboard only. */
-  background: #B04E16;
-  color: white;
+  /* Soft yellow with dark text (9.5:1). The ONE primary button per screen. */
+  background: var(--sd-action);
+  color: var(--sd-on-action);
   border: none;
-  border-radius: 12px;
-  font-family: var(--font-poppins), sans-serif;
-  font-size: 11px;
-  font-weight: 500;
+  border-radius: var(--sd-radius-btn);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
   letter-spacing: 0;
-  text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(176, 78, 22, 0.28);
+  box-shadow: 0 2px 8px rgba(31, 43, 36, 0.14);
   transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
 }
 
 @media (hover: hover) {
   .admin-btn-primary:hover:not(:disabled) {
-  background: #9C4413;
+  background: var(--sd-action-hover);
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(176, 78, 22, 0.34);
+  box-shadow: 0 6px 16px rgba(31, 43, 36, 0.18);
 }
 }
 
 .admin-btn-primary:active:not(:disabled) {
-  background: #8A3B10;
+  background: var(--sd-action-active);
   transform: translateY(0);
-  box-shadow: 0 3px 8px rgba(176, 78, 22, 0.28);
+  box-shadow: 0 1px 4px rgba(31, 43, 36, 0.16);
 }
+.admin-btn-primary:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
 
 .admin-btn-primary:disabled {
   opacity: 0.5;
@@ -436,13 +491,13 @@
   align-items: center;
   gap: 6px;
   padding: 11px 18px;
-  background: white;
-  color: var(--forest-deep);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  font-family: var(--font-poppins), sans-serif;
-  font-size: 10px;
-  font-weight: 500;
+  background: var(--sd-pill);
+  color: var(--sd-ink);
+  border: 1px solid transparent;
+  border-radius: var(--sd-radius-btn);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0;
   text-transform: uppercase;
   cursor: pointer;
@@ -451,8 +506,9 @@
 
 @media (hover: hover) {
   .admin-btn-secondary:hover:not(:disabled) {
-  border-color: var(--terracotta);
-  color: var(--terracotta);
+  background: var(--sd-action-soft);
+  border-color: var(--sd-rail);
+  color: var(--sd-ink);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(42, 77, 60, 0.08);
 }
@@ -461,9 +517,9 @@
 .admin-btn-secondary:disabled { opacity: 0.5; cursor: default; }
 
 .admin-btn-secondary.is-filled {
-  background: var(--forest-deep);
+  background: var(--sd-rail);
   color: white;
-  border-color: var(--forest-deep);
+  border-color: var(--sd-rail);
 }
 
 @media (hover: hover) {
@@ -1315,7 +1371,8 @@
   .admin-shell { grid-template-columns: minmax(0, 1fr); }
   .admin-sidebar { display: none; }
 
-  .admin-main { padding: calc(16px + env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-left, 0px)) calc(96px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-right, 0px)); }
+  .admin-root { --sd-pt: calc(16px + env(safe-area-inset-top, 0px)); --sd-pl: max(14px, env(safe-area-inset-left, 0px)); --sd-pr: max(14px, env(safe-area-inset-right, 0px)); }
+  .admin-main { padding: var(--sd-pt) var(--sd-pr) calc(96px + env(safe-area-inset-bottom, 0px)) var(--sd-pl); }
 
   /* Headings scale down */
   .admin-h1 { font-size: 24px; }
@@ -1437,20 +1494,19 @@
     left: 0; right: 0; bottom: 0;
     z-index: 90;
     padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
-    background: rgba(42, 77, 60, 0.94);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    backdrop-filter: blur(16px) saturate(140%);
+    background: var(--sd-rail);
     box-shadow: 0 -8px 24px rgba(42, 77, 60, 0.16);
   }
   .admin-tab {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
     min-height: 54px;
     border: none; border-radius: 14px; background: transparent;
-    color: #cfd9d0; font-family: inherit; font-size: 11px; font-weight: 500;
-    cursor: pointer;
+    color: var(--sd-on-rail); font-family: inherit; font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: color 150ms ease, background 150ms ease;
   }
-  .admin-tab.is-active { background: rgba(255, 255, 255, 0.14); color: #fff; }
-  .admin-tab:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .admin-tab:hover { color: var(--sd-action); }
+  .admin-tab.is-active { background: var(--sd-rail-selected); color: var(--sd-action); font-weight: 700; }
+  .admin-tab:focus-visible { outline: 2px solid var(--sd-action); outline-offset: 2px; }
   .admin-more-scrim {
     position: fixed; inset: 0; z-index: 89;
     background: rgba(42, 77, 60, 0.18);
@@ -1473,10 +1529,11 @@
     display: flex; align-items: center; gap: 12px;
     min-height: 48px; padding: 0 14px;
     border: none; border-radius: 12px; background: transparent;
-    color: var(--forest-deep); font-family: inherit; font-size: 15px; text-align: left;
+    color: var(--sd-ink); font-family: inherit; font-size: 15px; text-align: left;
     cursor: pointer;
   }
-  .admin-more-item.is-active { background: rgba(79, 138, 104, 0.12); }
+  .admin-more-item.is-active { background: var(--sd-action-soft); font-weight: 600; }
+  .admin-more-item:hover { background: var(--sd-action-soft); }
   .admin-more-divider { height: 1px; margin: 6px 10px; background: var(--line); }
 }
 
@@ -2089,8 +2146,6 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
    End-of-session screen: today, one Schedule button, free times. Thumb-sized
    targets (min 48px), one column, nothing that isn't about booking. */
 .m-home { display: flex; flex-direction: column; gap: 20px; }
-.m-head .admin-h1 { font-size: 36px; }
-.m-head .admin-subline { margin-top: 2px; }
 
 .m-today { display: flex; flex-direction: column; gap: 10px; }
 .m-today-row {
@@ -2107,18 +2162,21 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
 .m-meta { font-size: 13px; color: var(--ink-muted); }
 .m-book-next {
   flex: none; min-height: 44px; padding: 0 16px; border-radius: 12px;
-  border: 1px solid var(--terracotta); background: #fff; color: var(--terracotta);
-  font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+  border: 1px solid transparent; background: var(--sd-pill); color: var(--sd-ink);
+  font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background 150ms ease;
 }
+@media (hover: hover) { .m-book-next:hover { background: var(--sd-action-soft); } }
 
 .m-schedule, .m-book {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   width: 100%; min-height: 56px; border: 0; border-radius: 16px;
-  background: var(--terracotta); color: #fff;
-  font-family: inherit; font-size: 17px; font-weight: 500; cursor: pointer;
-  box-shadow: 0 4px 14px rgba(200, 90, 27, 0.22);
+  background: var(--sd-action); color: var(--sd-on-action);
+  font-family: inherit; font-size: 17px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(31, 43, 36, 0.14);
 }
-.m-book:disabled { background: var(--terracotta-soft); box-shadow: none; cursor: not-allowed; }
+.m-schedule:active, .m-book:active { background: var(--sd-action-active); }
+.m-book:disabled { background: var(--sd-pill); color: var(--sd-ink-soft); box-shadow: none; cursor: not-allowed; }
 
 .m-free .admin-h2 { margin: 0; }
 .m-note { margin: 4px 0 12px; font-size: 13px; color: var(--ink-muted); }
@@ -2300,7 +2358,8 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
   .admin-show-phone { display: inline; }
 
   /* One gutter and one rhythm: 16 page gutter, 12 between neighbours, 24 between groups. */
-  .admin-main { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .admin-root { --sd-pl: max(16px, env(safe-area-inset-left, 0px)); --sd-pr: max(16px, env(safe-area-inset-right, 0px)); }
+  .admin-main { padding-left: var(--sd-pl); padding-right: var(--sd-pr); }
 
   /* Segmented controls span the width (iOS), buttons share it equally. */
   .admin-segmented:not(.admin-cal-view) { display: flex; width: 100%; box-sizing: border-box; }

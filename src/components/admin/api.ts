@@ -1,4 +1,5 @@
 import { startOfWeek, utcToDublinLocal } from '@/lib/dateUtils';
+import { isDemoAllowed } from './demoGate';
 import type { SessionRow, ClientRow, SubmissionRow } from './types';
 
 // Re-exported from the single source of truth in lib/dateUtils so admin
@@ -83,7 +84,24 @@ export async function logout(): Promise<void> {
   }
 }
 
+// Dev-only demo hook (see demoGate.ts / DemoProvider.tsx): on /admin-demo the
+// dashboard answers from fake data instead of the network. `setDemoHandler`
+// refuses unless NODE_ENV is 'development' AND the page is under /admin-demo,
+// and adminFetch re-checks NODE_ENV, so a production build can never use it.
+type DemoHandler = (url: string, init: RequestInit) => Response | Promise<Response>;
+let demoHandler: DemoHandler | null = null;
+
+export function setDemoHandler(
+  handler: DemoHandler | null,
+  pathname: string | undefined = typeof window === 'undefined' ? undefined : window.location.pathname,
+): boolean {
+  if (handler && !isDemoAllowed(process.env.NODE_ENV, pathname)) return false;
+  demoHandler = handler;
+  return true;
+}
+
 export async function adminFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  if (process.env.NODE_ENV === 'development' && demoHandler) return demoHandler(input, init);
   const headers = new Headers(init.headers);
   if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   return fetch(input, { ...init, headers, cache: 'no-store', credentials: 'same-origin' });

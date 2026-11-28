@@ -1,6 +1,17 @@
 import type { Metadata, Viewport } from 'next';
 import '@/components/admin/admin.css';
+import '@/components/admin/sage/sage.css';
+import { Inter } from 'next/font/google';
 import { PRACTICE } from '@/practice.config';
+
+// Dashboard type is Inter (the public site keeps its own fonts: this is loaded
+// here, in the admin layout only).
+const inter = Inter({
+  variable: '--font-inter',
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+});
 
 // "OL Diary": short enough to sit under the icon unclipped.
 const APP_SHORT_NAME = `${PRACTICE.practitionerName.split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase()).join('')} Diary`;
@@ -28,9 +39,10 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#2A4D3C',
+  themeColor: '#4F8A68',
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  // display: contents so the wrapper adds no box; it only carries the font variable.
+  return <div className={inter.variable} style={{ display: 'contents' }}>{children}</div>;
 }

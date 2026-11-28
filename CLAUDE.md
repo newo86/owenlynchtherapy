@@ -76,6 +76,13 @@ comes back poor, redo it one level up and log it under "Where the line is".
   `api/admin/sessions/series` (+ `/interval`; `SeriesFrequency.tsx` in
   ClientDetail). Test bench: `src/lib/testing/fakeGoogleCalendar.ts` +
   `memoryFollowStore.ts`, scenarios in `src/lib/followGoogle.test.ts`
+- Sage Diary look (Nov 2026): tokens `--sd-*` in `admin.css` + `sageDiary` in
+  `theme.ts`; shared pieces in `src/components/admin/sage/` (SageHeaderBand,
+  SageButton, SageNavItem, SageOptionTile, SplitCircle, `sage.css`); Inter via
+  `(admin)/layout.tsx`. Dev-only demo harness: `/admin-demo` runs the real
+  AdminShell on fake data (`DemoProvider.tsx`, `demoWorld.ts`, `demoGate.ts`,
+  `demoClock.ts`; single cards at `/admin-demo/parts`). Notes and stage
+  ownership: docs/design/prototypes/IMPLEMENTATION.md
 - `src/practice.config.ts` practice facts (overridden by Settings)
 - `vercel.json` crons · `supabase/migrations/` schema · tests are `*.test.ts` beside the code (vitest)
 - Docs: `docs/OPERATIONS.md` (how things run), `docs/SECURITY.md`,

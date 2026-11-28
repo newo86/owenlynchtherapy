@@ -20,6 +20,7 @@ import type { DriftItem } from '@/lib/calendarDrift';
 import { SessionEditModal } from './SessionEditModal';
 import { GcalEventEditModal } from './GcalEventEditModal';
 import { MfaModal } from './MfaModal';
+import { SageHeaderBand } from './sage';
 import { adminFetch, logout } from './api';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
@@ -302,31 +303,30 @@ export function AdminShell() {
 
           {section !== 'dashboard' && (
             <>
-              <header className="admin-topbar">
-                <div>
-                  <p className="admin-eyebrow">{SECTION_TITLES[section]}</p>
-                  <h1 className="admin-h1">{SECTION_TITLES[section]}</h1>
-                  <p className="admin-subline">{dateLine()}</p>
-                </div>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                  {calStatus?.connected && (
-                    <button
-                      onClick={disconnectCalendar}
-                      className="admin-status-pill"
-                      style={{ cursor: 'pointer' }}
-                      title={calStatus.email ? `Connected as ${calStatus.email}` : 'Connected'}
-                    >
-                      <span className="admin-status-dot" />
-                      Calendar connected
-                    </button>
-                  )}
-                  {section !== 'clients' && section !== 'sessions' && section !== 'settings' && section !== 'analytics' && (
-                    <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
-                      + Add client
-                    </button>
-                  )}
-                </div>
-              </header>
+              <SageHeaderBand
+                title={SECTION_TITLES[section]}
+                subtitle={dateLine()}
+                action={(
+                  <>
+                    {calStatus?.connected && (
+                      <button
+                        onClick={disconnectCalendar}
+                        className="admin-status-pill"
+                        style={{ cursor: 'pointer' }}
+                        title={calStatus.email ? `Connected as ${calStatus.email}` : 'Connected'}
+                      >
+                        <span className="admin-status-dot" />
+                        Calendar connected
+                      </button>
+                    )}
+                    {section !== 'clients' && section !== 'sessions' && section !== 'settings' && section !== 'analytics' && (
+                      <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
+                        + Add client
+                      </button>
+                    )}
+                  </>
+                )}
+              />
 
               {flash && (
                 <div style={{

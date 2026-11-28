@@ -1,16 +1,17 @@
 import { notFound } from 'next/navigation';
-import { PaymentPromptsDemo } from '@/components/admin/PaymentPromptsDemo';
-import { FollowedFromGoogleDemo } from '@/components/admin/FollowedFromGoogleDemo';
+import { AdminShell } from '@/components/admin/AdminShell';
+import { DemoProvider } from '@/components/admin/DemoProvider';
 
-// Dev-only: lets the UI be previewed with made-up data without logging in or
-// touching the database. Returns 404 in every deployment (NODE_ENV is
-// 'production' on Vercel previews and production), so it never exists live.
+// Dev-only: the REAL dashboard (AdminShell, Dashboard, MobileHome, every
+// section) running on made-up data, with no login and no database. Returns 404
+// in every deployment (NODE_ENV is 'production' on Vercel previews and
+// production), so it never exists live. The layout follows the window: open it
+// at 390px wide for the phone version. Single cards: /admin-demo/parts.
 export default function AdminDemoPage() {
   if (process.env.NODE_ENV !== 'development') notFound();
   return (
-    <>
-      <PaymentPromptsDemo />
-      <FollowedFromGoogleDemo />
-    </>
+    <DemoProvider>
+      <AdminShell />
+    </DemoProvider>
   );
 }

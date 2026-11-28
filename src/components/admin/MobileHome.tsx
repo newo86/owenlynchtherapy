@@ -147,15 +147,8 @@ export function MobileHome({ clients, todaySessions, onOpenSession, onBooked }: 
     .filter(s => s.status === 'scheduled' && new Date(s.session_date).getTime() > Math.max(nowMs, new Date(after).getTime()))
     .sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime())[0];
 
-  const today = new Date().toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Dublin' });
-
   return (
     <div className="m-home">
-      <header className="m-head">
-        <h1 className="admin-h1">Today</h1>
-        <p className="admin-subline">{today}</p>
-      </header>
-
       {toast && <div className="admin-banner is-ok" role="status">{toast}</div>}
 
       <section className="m-today" aria-label="Today's clients">
