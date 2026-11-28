@@ -95,6 +95,12 @@ Format: date · task · agent → caught by · why.
   feature, but `designer` (opus) found 7 must-fixes against TASTE.md and
   `security-guardian` found a race in "mark paid". Expected: that's what the
   review steps are for, not a reason to move the build to opus.
+- 28 Nov 2026 · calendar "follow Google" build · `developer` run on opus
+  (tests passing on a fake Google) → a separate read-only opus correctness
+  review found 11 real bugs (moves read as deletions, undo disabling
+  following, race on frequency change). For calendar sync, always add a
+  dedicated correctness review on top of security and design; the fake
+  calendar must mimic real Google closely or tests give false comfort.
 
 ## End of every session
 
