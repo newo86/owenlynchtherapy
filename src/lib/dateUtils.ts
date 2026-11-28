@@ -58,19 +58,31 @@ export function localDublinToUtcIso(wallClock: string): string {
 }
 
 /**
- * "Tue 24 Nov, 4:00pm" in Europe/Dublin. Built from parts so the server and
- * every browser print exactly the same text (Intl's own punctuation and am/pm
- * spelling differ between engines, which caused a hydration mismatch).
+ * "Tue 24 Nov, 16:00" in Europe/Dublin, on the 24-hour clock Owen's dashboard
+ * and the emails he receives use (client-facing emails keep their own 12-hour
+ * format and do not use this). Built from parts so the server and every
+ * browser print exactly the same text (Intl's own punctuation differs between
+ * engines, which caused a hydration mismatch).
  */
 export function formatShortWhen(iso: string): string {
   const parts = new Intl.DateTimeFormat('en-IE', {
     timeZone: 'Europe/Dublin',
     weekday: 'short', day: 'numeric', month: 'short',
-    hour: 'numeric', minute: '2-digit', hour12: true,
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   }).formatToParts(new Date(iso));
   const v = (t: string) => parts.find(p => p.type === t)?.value ?? '';
-  const period = v('dayPeriod').replace(/[.\s]/g, '').toLowerCase();
-  return `${v('weekday')} ${v('day')} ${v('month')}, ${v('hour')}:${v('minute')}${period}`;
+  const hour = v('hour') === '24' ? '00' : v('hour');
+  return `${v('weekday')} ${v('day')} ${v('month')}, ${hour}:${v('minute')}`;
+}
+
+/** "16:00" in Europe/Dublin: the 24-hour clock for the dashboard and for emails
+ *  Owen receives (never for emails to clients). */
+export function formatClock24(iso: string | Date): string {
+  const parts = new Intl.DateTimeFormat('en-IE', {
+    timeZone: 'Europe/Dublin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(typeof iso === 'string' ? new Date(iso) : iso);
+  const v = (t: string) => parts.find(p => p.type === t)?.value ?? '';
+  return `${v('hour') === '24' ? '00' : v('hour')}:${v('minute')}`;
 }
 
 /** "Tue 24 Nov": the day part of formatShortWhen. */

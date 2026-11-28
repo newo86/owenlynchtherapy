@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildPaymentPromptDigestHtml } from './emailTemplates';
 
-const base = { sessionId: 's1', label: 'Aoife E.', when: 'Tue 24 Nov, 4:00pm' };
+const base = { sessionId: 's1', label: 'Aoife E.', when: 'Tue 24 Nov, 16:00' };
 const build = (item: Record<string, unknown>) =>
   buildPaymentPromptDigestHtml({ origin: 'https://example.test', moreCount: 0, items: [{ ...base, ...item } as never] });
 

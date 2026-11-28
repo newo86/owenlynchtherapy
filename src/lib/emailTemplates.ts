@@ -305,7 +305,7 @@ export interface PaymentPromptDigestItem {
   sessionId: string;
   /** e.g. "Aoife E." */
   label: string;
-  /** e.g. "Tue 2 Dec, 4:00pm" */
+  /** e.g. "Tue 2 Dec, 16:00" */
   when: string;
   /** An email address is on file and no receipt has gone yet. */
   canEmailReceipt: boolean;

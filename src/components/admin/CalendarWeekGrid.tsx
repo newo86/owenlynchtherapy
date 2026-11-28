@@ -60,7 +60,7 @@ function lastReminderAt(s: SessionRow): string | null {
  *  green = a reminder was sent · orange = not sent yet, on a future day (the
  *  6 a.m. cron will send it) · red = it's today and nothing went out (a miss —
  *  send one by hand). No dot for past untracked sessions or opted-out clients. */
-function reminderDot(s: SessionRow, c: ClientRow, h23 = false): { color: string; title: string } | null {
+function reminderDot(s: SessionRow, c: ClientRow, h23 = true): { color: string; title: string } | null {
   if (c.reminders_opted_out) return null;
   const sent = lastReminderAt(s);
   if (sent) {
@@ -105,7 +105,7 @@ export interface MergedEvent {
 /** Everything on one day: sessions (de-duplicated) plus Google events that
  *  aren't a session's own copy. Shared by the week and month views so they
  *  always agree. */
-export function mergedEventsForDay(clients: ClientRow[], events: CalendarEvent[], day: Date, h23 = false): MergedEvent[] {
+export function mergedEventsForDay(clients: ClientRow[], events: CalendarEvent[], day: Date, h23 = true): MergedEvent[] {
   const matched = new Set<string>();
   const out: MergedEvent[] = [];
 
@@ -494,7 +494,7 @@ export function CalendarWeekGrid({
     minH = Math.max(0, minH); maxH = Math.min(24, Math.max(maxH, minH + 1));
     const height = (maxH - minH) * PX;
     const hours = Array.from({ length: maxH - minH }, (_, k) => minH + k);
-    const hourLabel = (h: number) => `${h % 12 === 0 ? 12 : h % 12}${h < 12 ? 'am' : 'pm'}`;
+    const hourLabel = (h: number) => (h23 ? `${String(h).padStart(2, '0')}:00` : `${h % 12 === 0 ? 12 : h % 12}${h < 12 ? 'am' : 'pm'}`);
 
     // Side-by-side lanes for overlapping events within a day.
     function place(evs: MergedEvent[]) {

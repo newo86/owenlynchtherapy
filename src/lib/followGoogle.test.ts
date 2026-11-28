@@ -127,7 +127,7 @@ describe('follow Google: whole series deleted', () => {
     expect(store.series[0].active).toBe(false);
     expect(store.changes).toHaveLength(1);
     expect(store.changes[0].kind).toBe('series_ended');
-    expect(followedLine(store.changes[0], 'Aoife E.')).toBe('Cancelled Aoife E.’s 20 sessions from Tue 1 Dec, 4:00pm. The series was deleted in Google.');
+    expect(followedLine(store.changes[0], 'Aoife E.')).toBe('Cancelled Aoife E.’s 20 sessions from Tue 1 Dec, 16:00. The series was deleted in Google.');
   });
 
   it('"delete this and following" in Google ends the series from that date', async () => {
@@ -533,7 +533,7 @@ describe('pieces', () => {
     ];
     const items = toFollowedItems(rows, id => (id === AOIFE.id ? 'Aoife E.' : 'Test C.'), NOW);
     expect(items.map(i => i.line)).toEqual([
-      'Cancelled Aoife E.’s Tue 1 Dec, 4:00pm session. Deleted in Google.',
+      'Cancelled Aoife E.’s Tue 1 Dec, 16:00 session. Deleted in Google.',
       'Test C. now every 2 weeks (was weekly). Changed in Google; cancelled 1 session that no longer fit.',
     ]);
     expect(items.every(i => !i.line.includes('€') && !i.line.includes('—'))).toBe(true);

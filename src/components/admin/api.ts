@@ -187,8 +187,8 @@ export function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-/** `h23`: 24-hour clock (the desktop Sage Diary pages); default is the 12-hour clock. */
-export function formatDateTime(iso: string, h23 = false): string {
+/** Dashboard times are on the 24-hour clock (Owen, Nov 2026). `h23 = false` is the old 12-hour form, kept only for callers that must show a client's view. */
+export function formatDateTime(iso: string, h23 = true): string {
   return new Date(iso).toLocaleString('en-IE', {
     weekday: 'short',
     day: 'numeric',
@@ -201,7 +201,7 @@ export function formatDateTime(iso: string, h23 = false): string {
   });
 }
 
-export function formatTime(iso: string, h23 = false): string {
+export function formatTime(iso: string, h23 = true): string {
   return new Date(iso).toLocaleTimeString('en-IE', {
     hour: 'numeric',
     minute: '2-digit',

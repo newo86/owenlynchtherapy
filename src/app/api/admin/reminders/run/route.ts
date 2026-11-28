@@ -5,7 +5,7 @@ import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { sendSessionReminder } from '@/lib/sendSessionReminder';
 import { getAuthorizedClient } from '@/lib/googleOAuth';
 import { reconcileCalendar, buildCalendarPresence, partitionByCalendarPresence, type MappedEvent } from '@/lib/calendarSync';
-import { localDublinToUtcIso } from '@/lib/dateUtils';
+import { localDublinToUtcIso, formatClock24 } from '@/lib/dateUtils';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 import { SITE_URL } from '@/practice.config';
@@ -103,9 +103,7 @@ async function sendHeldAlert(items: Array<{ session_date: string; client_id: str
       .in('id', items.map(i => i.client_id));
     const nameOf = new Map((clients ?? []).map(c => [c.id as string, c.full_name as string]));
     const rows = items.map(i => {
-      const when = new Date(i.session_date).toLocaleTimeString('en-IE', {
-        hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
-      });
+      const when = formatClock24(i.session_date); // to Owen: 24-hour
       return `<li style="margin:0 0 8px"><strong>${escapeHtml(nameOf.get(i.client_id) ?? 'A client')}</strong>, ${when}: ${escapeHtml(i.reason)}</li>`;
     }).join('');
     await getResend().emails.send({

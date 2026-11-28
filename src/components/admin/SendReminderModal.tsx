@@ -82,7 +82,7 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
       if (res.status === 409) {
         const when = json.already_sent_at
           ? new Date(json.already_sent_at).toLocaleString('en-IE', {
-              day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true,
+              day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
               timeZone: 'Europe/Dublin',
             })
           : 'earlier';
@@ -141,7 +141,7 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
       const json = await res.json().catch(() => ({}));
       if (res.status === 409 && json.already_sent_at) {
         const when = new Date(json.already_sent_at).toLocaleString('en-IE', {
-          day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true,
+          day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
           timeZone: 'Europe/Dublin',
         });
         if (confirm(`A receipt for this session was already emailed on ${when}. Send it again?`)) {

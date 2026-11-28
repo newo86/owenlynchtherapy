@@ -23,17 +23,9 @@ interface Props {
 const DAY3: Record<string, string> = { Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat', Sunday: 'Sun' };
 const ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-/** "16:00" -> "4pm", "09:30" -> "9:30am". */
-function clock(hhmm: string): string {
-  const [h, m] = hhmm.split(':').map(Number);
-  const hh = h % 12 || 12;
-  return `${hh}${m ? ':' + String(m).padStart(2, '0') : ''}${h < 12 ? 'am' : 'pm'}`;
-}
-/** "16:00","20:00" -> "4–8pm"; "09:30","12:00" -> "9:30am–12pm". */
+/** "16:00","20:00" -> "16:00–20:00" (24-hour clock, like the rest of the dashboard). */
 function range(a: string, b: string): string {
-  const sameHalf = (Number(a.slice(0, 2)) < 12) === (Number(b.slice(0, 2)) < 12);
-  const first = clock(a);
-  return `${sameHalf ? first.replace(/(am|pm)$/, '') : first}–${clock(b)}`;
+  return `${a.slice(0, 5)}–${b.slice(0, 5)}`;
 }
 const euro = (cents: number) => `€${Math.round(cents / 100)}`;
 const round1 = (n: number) => Math.round(n * 10) / 10;

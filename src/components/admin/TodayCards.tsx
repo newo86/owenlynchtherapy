@@ -9,7 +9,7 @@ import type { ClientRow, SessionRow } from './types';
 
 const DUBLIN = 'Europe/Dublin';
 const timeOf = (iso: string) =>
-  new Date(iso).toLocaleTimeString('en-IE', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: DUBLIN });
+  new Date(iso).toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: DUBLIN });
 const dayKey = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: DUBLIN });
 
 /** "in 25 minutes", "now", "tomorrow at 4:00 p.m.", "Tue at 4:00 p.m." */

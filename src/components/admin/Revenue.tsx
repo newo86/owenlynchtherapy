@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { TrendingUp, Video, MapPin, Wallet, X, Send, Download, AlertCircle, GraduationCap } from 'lucide-react';
 import { startOfWeek, formatDateTime, adminFetch, dedupeSessions } from './api';
+import { formatClock24 } from '@/lib/dateUtils';
 import { useAccreditationSettings, useAccreditationHours } from './accreditation';
 import type { ClientRow, SessionRow } from './types';
 import { PRACTICE } from '@/practice.config';
@@ -211,7 +212,7 @@ export function Revenue({ clients }: Props) {
       ['Date', 'Time', 'Client', 'Format', 'Fee (EUR)', 'Payment', 'Paid on'].join(','),
       ...rows.map(({ s, c }) => [
         dublinDay(s.session_date),
-        new Date(s.session_date).toLocaleTimeString('en-IE', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin' }).replace(',', ''),
+        formatClock24(s.session_date),
         esc(c.full_name),
         s.session_format === 'online' ? 'Online' : 'In person',
         ((s.fee ?? 0) / 100).toFixed(2),

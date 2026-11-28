@@ -54,7 +54,7 @@ interface Props {
   limit?: number;
 }
 
-/** "Tue 2 Dec, 4:00pm" in Dublin time (same text on server and browser). */
+/** "Tue 2 Dec, 16:00" in Dublin time (same text on server and browser). */
 export const promptWhen = formatShortWhen;
 
 const canReceiptFor = (p: PaymentPromptItem) => !p.receipt_sent_at && !!p.client_email;

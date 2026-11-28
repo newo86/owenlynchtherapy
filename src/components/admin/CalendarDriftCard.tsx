@@ -19,7 +19,7 @@ function when(iso?: string): string {
   const [y, m, d] = local.slice(0, 10).split('-').map(Number);
   const day = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
   const [h, min] = local.slice(11, 16).split(':').map(Number);
-  const t = `${h % 12 || 12}${min ? ':' + String(min).padStart(2, '0') : ''}${h < 12 ? 'am' : 'pm'}`;
+  const t = `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
   return `${day}, ${t}`;
 }
 

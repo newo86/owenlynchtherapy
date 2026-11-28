@@ -4,6 +4,7 @@ import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 import { SITE_URL } from '@/practice.config';
+import { formatClock24 } from '@/lib/dateUtils';
 
 // Called by Vercel Cron every Saturday at 08:00 UTC (≈ 09:00 IST / 08:00 GMT).
 // Also callable manually with the INTAKE_ADMIN_SECRET for testing.
@@ -136,9 +137,7 @@ type Entry = {
 function fmt(d: Date) {
   return d.toLocaleDateString('en-IE', {
     weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/Dublin',
-  }) + ' · ' + d.toLocaleTimeString('en-IE', {
-    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
-  });
+  }) + ' · ' + formatClock24(d); // to Owen: 24-hour
 }
 
 function euro(cents: number) {

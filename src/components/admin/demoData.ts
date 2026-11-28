@@ -38,7 +38,7 @@ export const demoPrompts: PaymentPromptItem[] = [
 export const demoFollowed: FollowedItem[] = [
   {
     id: 'demo-f1', kind: 'cancelled_occurrence', label: 'Aoife E.',
-    line: 'Cancelled Aoife E.’s Tue 2 Dec, 4:00pm session. Deleted in Google.',
+    line: 'Cancelled Aoife E.’s Tue 2 Dec, 16:00 session. Deleted in Google.',
     appliedAt: '2026-11-28T09:10:00.000Z', undone: false, canUndo: true,
   },
   {
@@ -48,7 +48,7 @@ export const demoFollowed: FollowedItem[] = [
   },
   {
     id: 'demo-f3', kind: 'series_ended', label: 'Sam T.',
-    line: 'Cancelled Sam T.’s 6 sessions from Fri 5 Dec, 3:00pm. The series was deleted in Google.',
+    line: 'Cancelled Sam T.’s 6 sessions from Fri 5 Dec, 15:00. The series was deleted in Google.',
     appliedAt: '2026-11-26T12:05:00.000Z', undone: false, canUndo: true,
   },
 ];

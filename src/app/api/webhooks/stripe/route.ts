@@ -11,6 +11,7 @@ import {
   STRIPE_LINK_IN_PERSON,
   STRIPE_LINK_ONLINE, EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 import { escapeHtml } from '@/lib/sanitise';
+import { formatClock24 } from '@/lib/dateUtils';
 
 // Must be force-dynamic so Next.js never pre-renders or caches this route.
 // A cached response would consume request.body before Stripe's raw-body
@@ -318,10 +319,10 @@ async function matchSession(checkout: Stripe.Checkout.Session): Promise<SessionR
  *  a failed alert must never fail the webhook (Stripe would retry forever). */
 async function alertShortPayment(session: SessionRecord, amountPaid: number): Promise<void> {
   const euros = (cents: number) => `€${(cents / 100).toFixed(2)}`;
-  const when = new Date(session.session_date).toLocaleString('en-IE', {
-    weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit', hour12: true,
-    timeZone: 'Europe/Dublin',
-  });
+  // This alert goes to Owen (not a client), so it uses the 24-hour clock.
+  const when = `${new Date(session.session_date).toLocaleDateString('en-IE', {
+    weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Dublin',
+  })}, ${formatClock24(session.session_date)}`;
   const name = escapeHtml(session.clients?.full_name ?? 'A client');
   try {
     await getResend().emails.send({

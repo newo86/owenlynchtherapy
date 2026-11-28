@@ -1004,7 +1004,7 @@ export interface FollowedItem {
   kind: FollowedKind;
   /** "Aoife E." */
   label: string;
-  /** Plain-English line, e.g. "Cancelled Aoife E.'s Tue 2 Dec, 4:00pm session. Deleted in Google." */
+  /** Plain-English line, e.g. "Cancelled Aoife E.'s Tue 2 Dec, 16:00 session. Deleted in Google." */
   line: string;
   appliedAt: string;
   undone: boolean;
