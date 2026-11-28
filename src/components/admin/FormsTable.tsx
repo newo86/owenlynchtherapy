@@ -163,9 +163,9 @@ export function FormsTable({ submissions, tokens, initialTab }: Props) {
               return (
                 <tr key={row.id}>
                   <td>
-                    <div style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{row.client_name ?? 'Not given'}</div>
+                    <div className="pii" style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{row.client_name ?? 'Not given'}</div>
                     {row.client_email && (
-                      <div style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{row.client_email}</div>
+                      <div className="pii" style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{row.client_email}</div>
                     )}
                   </td>
                   <td data-label="Created" style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(row.created_at)}</td>
