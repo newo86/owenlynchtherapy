@@ -94,7 +94,7 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
       } else if (!res.ok) {
         setFeedback({ kind: 'error', msg: json.error ?? 'Failed to send reminder.' });
       } else {
-        setFeedback({ kind: 'success', msg: `Reminder sent to ${json.email ?? client.email}` });
+        setFeedback({ kind: 'success', msg: 'Reminder sent.' }); // no address: it would show unblurred in privacy mode
       }
     } catch {
       setFeedback({ kind: 'error', msg: 'Network error — please try again.' });
