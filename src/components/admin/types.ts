@@ -14,6 +14,8 @@ export interface SessionRow {
   stripe_payment_link_id?: string | null;
   stripe_payment_intent_id?: string | null;
   paid_at?: string | null;
+  /** How it was paid: revolut | cash | card | stripe | other. From the payments ledger; absent on older rows. */
+  paid_via?: string | null;
   receipt_sent_at: string | null;
   notes: string | null;
   gcal_event_id?: string | null;

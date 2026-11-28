@@ -1,6 +1,7 @@
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { sessionKind } from '@/lib/emailTemplates';
 import { sendReceiptEmail } from '@/lib/sendReceiptEmail';
+import { insertPaymentRow, type PaidVia } from '@/lib/paidVia';
 
 // Shared "Session done" close-out, used by /api/admin/mark-attended and the
 // "Did they pay?" prompt (/api/admin/payment-prompts). One implementation so
@@ -15,6 +16,8 @@ import { sendReceiptEmail } from '@/lib/sendReceiptEmail';
 export interface CloseOutOptions {
   record_payment?: boolean;
   send_receipt?: boolean;
+  /** How they paid (already validated by the caller); stored on the ledger row. */
+  paid_via?: PaidVia;
 }
 
 export type CloseOutResult =
@@ -87,7 +90,7 @@ export async function closeOutSession(sessionId: string, opts: CloseOutOptions):
     }
 
     if (weFlipped) {
-      const { error: ledgerErr } = await supabaseAdmin.from('payments').insert({
+      const ledgerErr = await insertPaymentRow({
         session_id: sessionId,
         client_id: session.client_id,
         amount_cents: session.fee ?? 0,
@@ -95,7 +98,7 @@ export async function closeOutSession(sessionId: string, opts: CloseOutOptions):
         session_type: kind,
         method,
         paid_at: paidAt,
-      });
+      }, opts.paid_via);
       if (ledgerErr) {
         console.warn('[close-out] Could not log payment (run the payments migration):', ledgerErr.message);
       }

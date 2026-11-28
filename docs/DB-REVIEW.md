@@ -27,7 +27,9 @@ urgent.
   (`check (id = 1)`).
 - **A real payments ledger** — payments are their own table with CHECK
   constraints and sensible `on delete set null` FKs, instead of flags on
-  sessions.
+  sessions. `method` (`stripe | cash | manual`) is the ledger category;
+  `paid_via` (`revolut | cash | card | stripe | other`, nullable, added by
+  `payments_paid_via.sql`) is how the client actually paid.
 - **Fail-safe cron bookkeeping** — `reminder_runs` logs every run;
   `session_reminders` is claimed *before* sending (the flood-proof design).
 - **Retention is enforced by the schema's crons** (token purge, 7-year

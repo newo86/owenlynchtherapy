@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { sessionKind } from '@/lib/emailTemplates';
+import { insertPaymentRow, parsePaidVia } from '@/lib/paidVia';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -13,12 +14,16 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 // action: 'unmark' reverses a manual mark: sets the session back to unpaid
 // and removes its cash/manual ledger rows. Stripe ledger rows are never
 // touched — a webhook-confirmed payment can't be undone from here.
+//
+// paid_via (optional): 'revolut' | 'cash' | 'card' | 'stripe' | 'other', how the
+// client actually paid. Stored on the ledger row; anything else is a 400. Absent
+// = unchanged behaviour. The `method` column keeps its old meaning.
 
 export async function POST(req: NextRequest) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
 
-  let body: { session_id: string; action?: 'mark' | 'unmark' };
+  let body: { session_id: string; action?: 'mark' | 'unmark'; paid_via?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -28,6 +33,10 @@ export async function POST(req: NextRequest) {
   const { session_id } = body;
   if (!session_id) {
     return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
+  }
+  const via = parsePaidVia(body.paid_via);
+  if (!via.ok) {
+    return NextResponse.json({ error: 'paid_via must be one of revolut, cash, card, stripe, other' }, { status: 400 });
   }
 
   const { data: session, error: fetchErr } = await supabaseAdmin
@@ -111,7 +120,7 @@ export async function POST(req: NextRequest) {
   if (flipped && flipped.length > 0) {
     // Log in the finance ledger. Graceful — if the payments table hasn't been
     // created yet the session is already marked paid; we just skip the log.
-    const { error: ledgerErr } = await supabaseAdmin.from('payments').insert({
+    const ledgerErr = await insertPaymentRow({
       session_id,
       client_id: session.client_id,
       amount_cents: session.fee ?? 0,
@@ -119,12 +128,12 @@ export async function POST(req: NextRequest) {
       session_type: kind,
       method,
       paid_at: paidAt,
-    });
+    }, via.value);
     if (ledgerErr) {
       console.warn('[mark-paid] Could not log payment (run the payments migration):', ledgerErr.message);
     }
   }
 
   console.log(`[mark-paid] Session ${session_id} marked paid (${method}, ${kind})`);
-  return NextResponse.json({ success: true, method, session_type: kind }, { headers: noCache });
+  return NextResponse.json({ success: true, method, session_type: kind, paid_via: via.value ?? null }, { headers: noCache });
 }

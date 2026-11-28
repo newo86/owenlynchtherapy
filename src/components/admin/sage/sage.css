@@ -130,3 +130,16 @@
   font-family: inherit; font-size: 15px; font-weight: 600; line-height: 1.35; text-align: left; cursor: pointer;
 }
 .admin-root .sd-notice:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+
+/* ── Segmented choice (prototype .seg): Revolut / Cash / Card, In person / Online ── */
+.admin-root .sd-seg-wrap { display: flex; flex-direction: column; gap: 8px; }
+.admin-root .sd-seg-label { margin: 0; font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .sd-seg { display: flex; background: var(--sd-page); border-radius: 12px; padding: 3px; }
+.admin-root .sd-seg button {
+  flex: 1; min-height: 44px; border: 0; border-radius: 10px; background: transparent; color: var(--sd-ink);
+  cursor: pointer; font: inherit; font-size: 15px;
+}
+.admin-root .sd-seg button[aria-checked="true"], .admin-root .sd-seg button[aria-pressed="true"] { background: var(--sd-pill); font-weight: 700; }
+.admin-root .sd-seg button:hover:not(:disabled) { background: var(--sd-action-soft); }
+.admin-root .sd-seg button:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 1px; }
+.admin-root .sd-seg button:disabled { opacity: 0.5; cursor: default; }

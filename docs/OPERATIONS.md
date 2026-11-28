@@ -185,6 +185,14 @@ Most clients pay by Revolut transfer to Owen's personal account, which no softwa
 - **Migration needed:** `supabase/migrations/payment_prompts.sql` via `/db-migrate`. Until it is applied the cron fails closed (sends nothing) and the card stays empty.
 - Dev-only preview: `/admin-demo` (404 everywhere except `next dev`) renders the card with made-up data.
 
+## How a client paid (Revolut / Cash / Card)
+
+When Owen marks a session paid (desktop session panel, phone session page) he picks **Revolut, Cash or Card** (starts on Revolut, or Cash for a low-cost client). `POST /api/admin/mark-paid` and `POST /api/admin/mark-attended` (via `closeOutSession`) take an optional `paid_via` (`revolut | cash | card | stripe | other`; anything else is a 400) and store it on the `payments` ledger row. The old `method` column (`stripe | cash | manual`) is unchanged. Stripe payments stay automatic and show as "Card (Stripe)". `GET /api/admin/clients` adds `paid_via` to each session that has one; Money's "How people paid" uses it and falls back to the old derivation (Stripe intent = card, low-cost = cash, else Revolut or bank transfer) for sessions without. **Migration `supabase/migrations/payments_paid_via.sql` via `/db-migrate`; optional:** until it is applied the app detects the missing column, records the payment without it, and keeps working.
+
+## Times are 24-hour
+
+Everything Owen reads (the dashboard on desktop and phone, the "Did they pay?" digest, held-reminder alerts, the weekly report, the short-Stripe-payment alert, the income CSV) shows `16:00`, not `4:00pm` (`formatShortWhen`/`formatClock24` in `src/lib/dateUtils.ts`; `formatTime`/`formatDateTime` in `components/admin/api.ts`; `Clock24Context` defaults to true). Emails and PDFs to **clients** (reminders, receipts incl. the receipt PDF and test receipt, the welcome email, questionnaire links) keep their 12-hour format on purpose; `src/lib/clientEmailTimes.test.ts` pins that. The public site's availability slots (Settings > Available slots) are free text and are also left as typed.
+
 ## In-person venue by weekday
 - Fridays in person are at 124 Baggot Street Lower, Dublin 2 (from 27 Nov
   2026); other days at Insight Matters, Capel Street. Set in
@@ -286,7 +294,7 @@ Applied in the Supabase SQL editor. Notably: `session_reminders.sql` +
 page storage), `admin_session_state.sql` (server-side sign-out: "Sign out"
 voids every admin session issued before it, on all devices — until this table
 exists, signing out only clears the current browser's cookie), `questionnaires.sql`
-(Analytics page: values worksheet and C–NIP–2 links and results), `payment_prompts.sql` ("Did they pay?" prompts; without it nothing is prompted), `calendar_followed_changes.sql` (following Google deletions / repeat changes; without it nothing is followed), `session_series_change.sql` ("How often" lock + one-transaction change; without it "How often" refuses). If a feature
+(Analytics page: values worksheet and C–NIP–2 links and results), `payment_prompts.sql` ("Did they pay?" prompts; without it nothing is prompted), `calendar_followed_changes.sql` (following Google deletions / repeat changes; without it nothing is followed), `session_series_change.sql` ("How often" lock + one-transaction change; without it "How often" refuses), `payments_paid_via.sql` (`payments.paid_via`: how a client paid, Revolut / Cash / Card; **optional**: without it the app records payments as before and Money falls back to its old derivation, so it can ship before the migration is applied). If a feature
 "doesn't save", check its migration was run in production.
 
 ## Client questionnaires (Analytics page)

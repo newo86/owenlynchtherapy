@@ -27,7 +27,6 @@ interface Props {
 
 export function DesktopSessionRow({ s, c, selected, onOpen, onEdit, onOpenClient, meta = 'cadence', quick: showQuick = true }: Props) {
   const paid = s.payment_status === 'paid';
-  const lowCost = Boolean(c.is_low_cost);
   const how = s.session_format === 'online' ? 'Online' : 'In person';
   const time = clockTime(s.session_date);
   const quick = (label: string, icon: ReactNode, go: () => void) => (
@@ -48,7 +47,7 @@ export function DesktopSessionRow({ s, c, selected, onOpen, onEdit, onOpenClient
       {showQuick && <span className="dt-quick"><span className="dt-quick-in">
         {s.status === 'scheduled' && quick('Session done', <IconDone />, () => onOpen('done'))}
         {quick('Move or edit', <IconMove />, onEdit)}
-        {!paid && quick(lowCost ? 'Cash received' : 'Mark as paid', <IconMoney />, () => onOpen('paid'))}
+        {!paid && quick('Mark as paid', <IconMoney />, () => onOpen('paid'))}
         {quick(`Open ${firstName(c.full_name)}'s page`, <IconChart />, onOpenClient)}
       </span></span>}
       {paid ? <span className="dt-tag is-paid">Paid</span> : <span className="dt-tag">{how}</span>}

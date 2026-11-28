@@ -5,7 +5,8 @@
 // payment), and "How people paid". Methods come from the sessions themselves:
 // Stripe when a card payment is recorded, Cash for low-cost clients, anything
 // else is a bank transfer or similar (what the payments ledger calls
-// "manual"). There is no year-statement PDF in the app (statements are per
+// "manual"). Since the "how did they pay?" choice (Revolut, Cash, Card), the
+// recorded `paid_via` wins when a session has one (paymentMethods.ts). There is no year-statement PDF in the app (statements are per
 // client, on each client's record), so the right column points to the
 // existing income report and accountant CSV, which stay in full underneath
 // together with the monthly chart and the Revolut statement import.
@@ -15,6 +16,7 @@ import { dedupeSessions } from './api';
 import { DesktopPage } from './DesktopPage';
 import { DtDisclosure } from './DtDisclosure';
 import { clockTime, dublinYmd, shortDay } from './desktopToday';
+import { paidByMethod } from './paymentMethods';
 import type { PanelOption } from './SessionPanel';
 import type { ClientRow, SessionRow } from './types';
 
@@ -53,11 +55,8 @@ export function DesktopMoney({ clients, onOpenPanel, fullMoney }: Props) {
     .sort((a, b) => new Date(b.s.session_date).getTime() - new Date(a.s.session_date).getTime());
   const unpaidCents = unpaid.reduce((n, { s }) => n + (s.fee ?? 0), 0);
 
-  const methods = [
-    { label: 'Cash', cents: paidNow.filter(({ s, c }) => !s.stripe_payment_intent_id && c.is_low_cost).reduce((n, { s }) => n + s.fee, 0) },
-    { label: 'Card (Stripe)', cents: paidNow.filter(({ s }) => s.stripe_payment_intent_id).reduce((n, { s }) => n + s.fee, 0) },
-    { label: 'Revolut or bank transfer', cents: paidNow.filter(({ s, c }) => !s.stripe_payment_intent_id && !c.is_low_cost).reduce((n, { s }) => n + s.fee, 0) },
-  ].filter(m => m.cents > 0);
+  // Uses how it was paid when that was recorded, else the old derivation.
+  const methods = paidByMethod(paidNow);
   const total = methods.reduce((n, m) => n + m.cents, 0) || 1;
   const rows = showAll ? unpaid : unpaid.slice(0, FIRST_ROWS);
 

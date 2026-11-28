@@ -19,11 +19,15 @@ import { PRACTICE } from '@/practice.config';
 import { adminFetch, displayFee } from './api';
 import { SessionDoneOptions, type SessionDoneChoice } from './SessionDoneOptions';
 import { SendReminderModal } from './SendReminderModal';
+import { PayHow } from './PayHow';
+import { defaultPayChoice, type PayChoice } from './paymentMethods';
 import { IconChart, IconClose, IconDone, IconMail, IconMoney, IconMove } from './sage';
 import { clockTime, dublinYmd, firstName, shortDay } from './desktopToday';
 import type { ClientRow, SessionRow } from './types';
 
 export type PanelOption = 'done' | 'paid' | 'receipt';
+
+const PAY_LABEL: Record<PayChoice, string> = { revolut: 'Revolut', cash: 'Cash', card: 'Card' };
 
 interface Props {
   session: SessionRow;
@@ -70,12 +74,13 @@ export function SessionPanel({ session, client, initialOption, onClose, onEdit, 
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [reminderOpen, setReminderOpen] = useState(false);
   const reminderTile = useRef<HTMLButtonElement>(null);
+  // How they paid: Revolut, or Cash for a low-cost client.
+  const [payVia, setPayVia] = useState<PayChoice>(() => defaultPayChoice(client));
 
   const paid = session.payment_status === 'paid';
   const viaStripe = paid && Boolean(session.stripe_payment_intent_id);
   const scheduled = session.status === 'scheduled';
   const attended = session.status === 'attended';
-  const lowCost = Boolean(client.is_low_cost);
   const online = session.session_format === 'online';
   const first = firstName(client.full_name);
   const firstReminder = session.session_reminders?.map(r => r.sent_at).sort()[0] ?? null;
@@ -128,7 +133,9 @@ export function SessionPanel({ session, client, initialOption, onClose, onEdit, 
   async function done(choice: SessionDoneChoice) {
     setBusy(true); setMsg(null);
     try {
-      const { res, json } = await post('/api/admin/mark-attended', { session_id: session.id, ...choice });
+      const { res, json } = await post('/api/admin/mark-attended', {
+        session_id: session.id, ...choice, ...(choice.record_payment && !paid ? { paid_via: payVia } : {}),
+      });
       if (!res.ok) { setMsg({ ok: false, text: (json.error as string) ?? 'That did not work. Nothing was changed.' }); return; }
       const parts = ['Marked attended'];
       if (choice.record_payment && json.paid) parts.push('payment recorded');
@@ -143,9 +150,9 @@ export function SessionPanel({ session, client, initialOption, onClose, onEdit, 
   async function markPaid() {
     setBusy(true); setMsg(null);
     try {
-      const { res, json } = await post('/api/admin/mark-paid', { session_id: session.id });
+      const { res, json } = await post('/api/admin/mark-paid', { session_id: session.id, paid_via: payVia });
       if (!res.ok) { setMsg({ ok: false, text: (json.error as string) ?? 'That did not work. Nothing was changed.' }); return; }
-      setMsg({ ok: true, text: lowCost ? 'Cash payment recorded. No receipt was emailed.' : 'Marked paid. No receipt was emailed.' });
+      setMsg({ ok: true, text: `Marked paid (${PAY_LABEL[payVia]}). No receipt was emailed.` });
       setOpenOpt(null);
       onChanged();
     } catch { setMsg({ ok: false, text: 'No connection. Nothing was changed.' }); }
@@ -225,6 +232,7 @@ export function SessionPanel({ session, client, initialOption, onClose, onEdit, 
           {scheduled && (
             <Opt id="done" icon={<IconDone />} title="Session done" sub="Then choose payment and receipt"
               open={openOpt === 'done'} onToggle={() => toggle('done')} optRef={reg('done')}>
+              {!paid && <PayHow value={payVia} onChange={setPayVia} disabled={busy} label="If they paid, how?" />}
               <SessionDoneOptions variant="panel" session={session} client={client} busy={busy}
                 onChoose={c => void done(c)} onCancel={() => setOpenOpt(null)} />
             </Opt>
@@ -240,11 +248,12 @@ export function SessionPanel({ session, client, initialOption, onClose, onEdit, 
           )}
 
           {!paid && session.status !== 'cancelled' && (
-            <Opt id="paid" icon={<IconMoney />} title={lowCost ? 'Cash received' : 'Mark as paid'} sub={`${displayFee(session.fee)} · no receipt is emailed`}
+            <Opt id="paid" icon={<IconMoney />} title="Mark as paid" sub={`${displayFee(session.fee)} · no receipt is emailed`}
               open={openOpt === 'paid'} onToggle={() => toggle('paid')} optRef={reg('paid')}>
-              <p className="dt-hint">{lowCost ? 'Records the cash you were given.' : 'Records that this session was paid.'} No email goes to <span className="pii">{first}</span>.</p>
+              <PayHow value={payVia} onChange={setPayVia} disabled={busy} />
+              <p className="dt-hint">Records that this session was paid. No email goes to <span className="pii">{first}</span>.</p>
               <button type="button" className="dt-btn is-main" disabled={busy} onClick={() => void markPaid()}>
-                {busy ? 'Saving…' : lowCost ? 'Cash received' : 'Mark as paid'}
+                {busy ? 'Saving…' : `Mark ${displayFee(session.fee)} as paid`}
               </button>
             </Opt>
           )}

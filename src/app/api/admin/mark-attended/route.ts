@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { closeOutSession } from '@/lib/closeOutSession';
+import { parsePaidVia } from '@/lib/paidVia';
 
 const noCache = { 'Cache-Control': 'no-store, no-cache' };
 
@@ -10,6 +11,8 @@ const noCache = { 'Cache-Control': 'no-store, no-cache' };
 //   - record_payment: also mark paid + log to the payments ledger
 //     ('cash' for low-cost clients, 'manual' otherwise), exactly like the
 //     mark-paid route
+//   - paid_via (optional): revolut | cash | card | stripe | other, stored on the
+//     ledger row; anything else is a 400
 //   - send_receipt: also email the receipt (only if the session ends up paid
 //     and none was sent before)
 //
@@ -22,7 +25,7 @@ export async function POST(req: NextRequest) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
 
-  let body: { session_id: string; record_payment?: boolean; send_receipt?: boolean };
+  let body: { session_id: string; record_payment?: boolean; send_receipt?: boolean; paid_via?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -34,9 +37,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'session_id is required' }, { status: 400 });
   }
 
+  const via = parsePaidVia(body.paid_via);
+  if (!via.ok) {
+    return NextResponse.json({ error: 'paid_via must be one of revolut, cash, card, stripe, other' }, { status: 400 });
+  }
+
   const result = await closeOutSession(session_id, {
     record_payment: body.record_payment,
     send_receipt: body.send_receipt,
+    paid_via: via.value,
   });
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });

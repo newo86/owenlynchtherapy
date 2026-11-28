@@ -54,6 +54,14 @@ describe('closeOutSession: paid is recorded once', () => {
     expect(b.ok && b.paid).toBe(true);
   });
 
+  it('stores how they paid on the ledger row, and leaves it out when not given', async () => {
+    await closeOutSession('s1', { record_payment: true, paid_via: 'cash' });
+    expect(db.ledger[0]).toMatchObject({ method: 'manual', paid_via: 'cash' });
+    db.payment_status = 'unpaid'; db.ledger = [];
+    await closeOutSession('s1', { record_payment: true });
+    expect('paid_via' in (db.ledger[0] as object)).toBe(false);
+  });
+
   it('a refunded session is not reported paid and gets no receipt', async () => {
     db.payment_status = 'refunded';
     const r = await closeOutSession('s1', { record_payment: true, send_receipt: true });
