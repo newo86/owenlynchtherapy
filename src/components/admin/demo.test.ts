@@ -100,7 +100,7 @@ describe('demo world', () => {
     expect(keys).toEqual(['unpaid', 'receipts', 'forms', 'unlinked']);
     const labels = moneySummary(world.clients, new Date(now)).methods.map(m => m.label);
     expect(labels).toContain('Revolut');                    // recorded paid_via
-    expect(labels).toContain('Revolut or bank transfer');   // old derivation for the rest
+    expect(labels).toContain('Not recorded');   // old derivation for the rest
   });
   it('answers the phone booking and forms sends like the real routes', () => {
     expect(demoRoute(world, 'POST', '/api/admin/sessions').body).toMatchObject({ calendarAdded: true });

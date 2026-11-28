@@ -6,6 +6,7 @@ import { X, Mail, Phone, Receipt, Check } from 'lucide-react';
 import { adminFetch, displayFee, formatDateTime } from './api';
 import type { SessionRow, ClientRow } from './types';
 import { PRACTICE } from '@/practice.config';
+import { inPersonAddressFor } from '@/lib/emailTemplates';
 
 interface Props {
   session: SessionRow;
@@ -52,10 +53,10 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
     ? 'your Revolut payment link (with a small "pay by card" option underneath)'
     : 'the Stripe payment link';
   const contents = client.is_low_cost
-    ? 'Includes the Insight Matters address and a note that payment is cash on the day — no payment link.'
+    ? `Includes the address (${inPersonAddressFor(session.session_date)}) and a note that payment is cash on the day, with no payment link.`
     : session.session_format === 'online'
       ? `Reminds them the video link is in their calendar invite, plus ${payment}.`
-      : `Includes the Insight Matters address and ${payment}.`;
+      : `Includes the address (${inPersonAddressFor(session.session_date)}) and ${payment}.`;
   const canSend = session.status === 'scheduled' && formatConfirmed;
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: 'success' | 'error'; msg: string } | null>(null);
@@ -239,7 +240,7 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
             <p style={{ margin: '4px 0 0', fontSize: 22, fontWeight: 600, color: 'var(--forest-deep)', letterSpacing: '0.02em' }}>
               {session.session_format === 'online' ? 'ONLINE' : 'IN PERSON'}
               {session.session_format !== 'online' && (
-                <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: 'var(--ink-muted)', letterSpacing: 0 }}>at Insight Matters, Capel Street</span>
+                <span style={{ display: 'block', fontSize: 13, fontWeight: 400, color: 'var(--ink-muted)', letterSpacing: 0 }}>at {inPersonAddressFor(session.session_date)}</span>
               )}
             </p>
           </div>

@@ -81,7 +81,7 @@ async function sendAbortAlert(reason: string, detail: string): Promise<void> {
       to: CONTACT_EMAIL,
       subject: "Heads-up: today's session reminders were held back",
       html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
-        <p>This morning's automatic reminder run did <strong>not</strong> send any emails — a safety check stopped it.</p>
+        <p>This morning's automatic reminder run did <strong>not</strong> send any emails. A safety check stopped it.</p>
         <p><strong>Reason:</strong> ${reason}</p>
         <p>${detail}</p>
         <p>No client received a reminder this morning. Please review today's sessions and send any needed reminders by hand from the dashboard:

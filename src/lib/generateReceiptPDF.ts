@@ -1,4 +1,5 @@
 import PDFDocument from 'pdfkit';
+import { formatClientTime } from '@/lib/dateUtils';
 import fs from 'fs';
 import path from 'path';
 import { PRACTICE } from '@/practice.config';
@@ -64,9 +65,7 @@ function dublinDateShort(iso: string): string {
   });
 }
 function dublinTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-IE', {
-    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
-  });
+  return formatClientTime(new Date(iso));
 }
 const euros = (cents: number) => `€${Math.round((cents ?? 0) / 100)}`;
 

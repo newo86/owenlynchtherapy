@@ -7,7 +7,7 @@
 
 .admin-root .ph-app { position: relative; min-height: 100vh; min-height: 100dvh; color: var(--sd-ink); font-size: 16px; line-height: 1.45; }
 .admin-root .ph-app :focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
-.admin-root .ph-app button { font-family: inherit; color: inherit; }
+:where(.admin-root .ph-app) button { font-family: inherit; color: inherit; }
 
 /* ── Screens ──────────────────────────────────────────────────────────── */
 .admin-root .ph-screen { padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)); }
@@ -96,7 +96,7 @@
 }
 .admin-root .ph-tab svg { width: 22px; height: 22px; }
 .admin-root .ph-tab:hover { color: var(--sd-action); }
-.admin-root .ph-tab[aria-current="page"] { background: rgba(255, 255, 255, 0.12); color: var(--sd-action); font-weight: 700; }
+.admin-root .ph-tab[aria-current="page"] { background: var(--sd-rail-selected); color: var(--sd-action); font-weight: 700; }
 .admin-root .ph-tabs .ph-tab:focus-visible { outline: 2px solid var(--sd-action); }
 
 /* ── Calendar ─────────────────────────────────────────────────────────── */
@@ -199,7 +199,7 @@
 .admin-root .ph-soft { font-size: 14px; color: var(--sd-ink-soft); }
 .admin-root .ph-privacy { display: flex; align-items: center; gap: 14px; padding: 14px 16px; min-height: 64px; }
 .admin-root .ph-switch { min-width: 76px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--sd-pill); color: var(--sd-ink); font-weight: 700; cursor: pointer; }
-.admin-root .ph-switch[aria-pressed="true"] { background: var(--sd-header); color: #fff; }
+.admin-root .ph-switch[aria-checked="true"] { background: var(--sd-header); color: #fff; }
 
 /* The existing desktop pieces, reused inside a phone sub-page */
 .admin-root .ph-layer-body .dt-bar-row { font-size: 16px; }
@@ -258,3 +258,13 @@
 .admin-root .ph-layer-body .sd-account-row { flex-wrap: wrap; }
 .admin-root .ph-layer-body .sd-account-row > div { flex: 1 1 170px; min-width: 0; }
 .admin-root .ph-layer-body .sd-account-row .admin-btn-secondary { white-space: nowrap; flex: none; min-height: 44px; }
+
+/* "Did they pay?" inside Needs a decision: no card of its own on the phone either. */
+.admin-root .ph-app .pp-card.is-bare { padding: 0; border: 0; background: none; box-shadow: none; }
+
+/* Book sheet: the Book button stays in view while the sheet scrolls; a ring of card colour hides what passes under it. */
+.admin-root .ph-sheet .ph-do { position: sticky; bottom: 0; box-shadow: 0 0 0 10px var(--sd-card); }
+.admin-root .ph-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.admin-root .ph-sheet-head .ph-quiet { text-decoration: none; font-weight: 600; color: var(--sd-ink); padding: 0 8px; }
+.admin-root .ph-rowwrap .ph-row { z-index: 1; }
+.admin-root .ph-rowactions { z-index: 0; }

@@ -48,6 +48,9 @@ interface ToastState { text: string; undo?: () => void | Promise<void>; error?: 
 /** Kept out of the component: reading the clock is for event handlers, not rendering. */
 const currentTimeMs = () => Date.now();
 
+/** Back labels that are places, not people; anything else is a client's first name and is blurred in privacy mode. */
+const GENERIC_BACK = new Set(['More', 'Clients', 'Settings', 'Back']);
+
 const MAIN: Record<Tab, string | null> = { today: 'Book next session', calendar: 'Book a session', clients: 'Add a client', more: null };
 
 interface Props {
@@ -271,7 +274,7 @@ export function PhoneApp(p: Props) {
       {page && frame && (
         <section className="ph-layer is-page" aria-labelledby="ph-page-title" inert={Boolean(sessionOpen || sheet)}>
           <div className="ph-layer-head ph-page-head">
-            <button type="button" className="ph-back" onClick={back} autoFocus><IconChevronLeft /><span>{page.back}</span></button>
+            <button type="button" className="ph-back" onClick={back} autoFocus><IconChevronLeft /><span className={GENERIC_BACK.has(page.back) ? undefined : 'pii'}>{page.back}</span></button>
             <h2 id="ph-page-title" className={frame.titleClass}>{frame.title}</h2>
             {frame.sub && <p>{frame.sub}</p>}
           </div>

@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   const via = parsePaidVia(body.paid_via);
   if (!via.ok) {
-    return NextResponse.json({ error: 'paid_via must be one of revolut, cash, card, stripe, other' }, { status: 400 });
+    return NextResponse.json({ error: 'paid_via must be one of revolut, cash, card, other' }, { status: 400 });
   }
 
   const result = await closeOutSession(session_id, {

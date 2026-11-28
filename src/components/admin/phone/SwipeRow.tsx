@@ -85,15 +85,6 @@ export function SwipeRow({ s, c, open, onOpenChange, onOpen, meta = 'cadence' }:
 
   return (
     <div className="ph-rowwrap" data-session-row={s.id}>
-      <div className="ph-rowactions" aria-hidden={!open}>
-        {ACTIONS.map(a => (
-          <button key={a.opt} type="button" tabIndex={open ? 0 : -1} className={a.cls}
-            aria-label={`${a.label}: ${first}`}
-            onClick={() => { onOpenChange(false); onOpen(a.opt); }}>
-            {a.icon}{a.label}
-          </button>
-        ))}
-      </div>
       <button ref={rowRef} type="button" className="ph-row" style={{ transform: rest || undefined }}
         aria-label={`${c.full_name}, ${time}. Open options`}
         onPointerDown={down} onPointerMove={move} onPointerUp={end} onPointerCancel={end}
@@ -106,6 +97,15 @@ export function SwipeRow({ s, c, open, onOpenChange, onOpen, meta = 'cadence' }:
         </span>
         {paid ? <span className="ph-tag is-paid">Paid</span> : <span className="ph-tag">{how}</span>}
       </button>
+      <div className="ph-rowactions" aria-hidden={!open}>
+        {ACTIONS.map(a => (
+          <button key={a.opt} type="button" tabIndex={open ? 0 : -1} className={a.cls}
+            aria-label={`${a.label}: ${first}`}
+            onClick={() => { onOpenChange(false); onOpen(a.opt); }}>
+            {a.icon}{a.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

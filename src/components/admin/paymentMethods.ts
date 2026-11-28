@@ -1,10 +1,9 @@
 // "How people paid" (Money, desktop and phone). Uses the recorded `paid_via`
 // when a session has one; otherwise the old derivation from the session itself
-// (a Stripe payment = card, a low-cost client = cash, anything else = Revolut
-// or a bank transfer). Pure, so it is unit tested.
+// (a Stripe payment = card, a low-cost client = cash, anything else = "Not recorded"). Pure, so it is unit tested.
 import type { ClientRow, SessionRow } from './types';
 
-export type PayLabel = 'Revolut' | 'Cash' | 'Card' | 'Card (Stripe)' | 'Other' | 'Revolut or bank transfer';
+export type PayLabel = 'Revolut' | 'Cash' | 'Card' | 'Card (Stripe)' | 'Other' | 'Not recorded';
 
 const BY_VIA: Record<string, PayLabel> = {
   revolut: 'Revolut', cash: 'Cash', card: 'Card', stripe: 'Card (Stripe)', other: 'Other',
@@ -16,10 +15,10 @@ export function howPaid(s: Pick<SessionRow, 'paid_via' | 'stripe_payment_intent_
   if (recorded) return recorded;
   if (s.stripe_payment_intent_id) return 'Card (Stripe)';
   if (c.is_low_cost) return 'Cash';
-  return 'Revolut or bank transfer';
+  return 'Not recorded';
 }
 
-const ORDER: PayLabel[] = ['Revolut', 'Revolut or bank transfer', 'Cash', 'Card', 'Card (Stripe)', 'Other'];
+const ORDER: PayLabel[] = ['Revolut', 'Cash', 'Card', 'Card (Stripe)', 'Other', 'Not recorded'];
 
 /** Cents per label for the given paid sessions, biggest groups in a steady order, zero groups left out. */
 export function paidByMethod(paid: Array<{ s: SessionRow; c: ClientRow }>): Array<{ label: PayLabel; cents: number }> {

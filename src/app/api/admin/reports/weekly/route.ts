@@ -4,6 +4,7 @@ import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { getResend } from '@/lib/resend';
 import { EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 import { SITE_URL } from '@/practice.config';
+import { escapeHtml } from '@/lib/sanitise';
 import { formatClock24 } from '@/lib/dateUtils';
 
 // Called by Vercel Cron every Saturday at 08:00 UTC (≈ 09:00 IST / 08:00 GMT).
@@ -110,7 +111,7 @@ export async function GET(req: NextRequest) {
   const emailResult = await getResend().emails.send({
     from: EMAIL_FROM,
     to: CONTACT_EMAIL,
-    subject: `Weekly Payment Report — ${weekLabel}`,
+    subject: `Weekly Payment Report: ${weekLabel}`,
     html,
   });
 
@@ -167,7 +168,7 @@ function buildReportHtml(
     const leftBorder = owed ? 'border-left:3px solid #C85A1A;' : '';
     return `
       <tr style="background:${bg};${leftBorder}">
-        <td style="padding:10px 14px;font-size:13px;color:#2A4D3C;font-weight:500;">${e.clientName}</td>
+        <td style="padding:10px 14px;font-size:13px;color:#2A4D3C;font-weight:500;">${escapeHtml(e.clientName)}</td>
         <td style="padding:10px 14px;font-size:12px;color:#555;">${fmt(e.sessionDate)}</td>
         <td style="padding:10px 14px;font-size:12px;color:#555;">${e.format === 'online' ? 'Online' : 'In Person'}</td>
         <td style="padding:10px 14px;font-size:12px;color:#555;">${attendedLabel}</td>
@@ -186,7 +187,7 @@ function buildReportHtml(
         <p style="margin:0;font-size:14px;color:#333;">${outstandingCount} session${outstandingCount === 1 ? '' : 's'} totalling <strong>${euro(totalOutstandingCents)}</strong> still unpaid this week.</p>
       </div>`
     : `<div style="background:#EEF6F0;border:1px solid #C3DDD0;border-left:4px solid #4F8A68;border-radius:6px;padding:16px 20px;margin-bottom:24px;">
-        <p style="margin:0;font-size:14px;color:#2A6B47;font-weight:500;">All sessions paid — great week!</p>
+        <p style="margin:0;font-size:14px;color:#2A6B47;font-weight:500;">All sessions paid. Great week!</p>
       </div>`;
 
   return `

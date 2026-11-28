@@ -10,16 +10,19 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const PAID_VIA = ['revolut', 'cash', 'card', 'stripe', 'other'] as const;
 export type PaidVia = (typeof PAID_VIA)[number];
+/** What a person can choose by hand. 'stripe' is written only by the webhook (and stays valid in the DB column). */
+export const MANUAL_PAID_VIA = ['revolut', 'cash', 'card', 'other'] as const;
 
 export function isPaidVia(v: unknown): v is PaidVia {
   return typeof v === 'string' && (PAID_VIA as readonly string[]).includes(v);
 }
 
 /** Validate an optional `paid_via` from a request body. Absent (undefined or
- *  null) is fine and means "default unchanged"; anything else must be listed. */
+ *  null) is fine and means "default unchanged"; anything else must be one of the manual choices
+ *  (revolut, cash, card, other). 'stripe' is refused: a hand-recorded payment can't claim to be Stripe's. */
 export function parsePaidVia(v: unknown): { ok: true; value: PaidVia | undefined } | { ok: false } {
   if (v === undefined || v === null) return { ok: true, value: undefined };
-  return isPaidVia(v) ? { ok: true, value: v } : { ok: false };
+  return typeof v === 'string' && (MANUAL_PAID_VIA as readonly string[]).includes(v) ? { ok: true, value: v as PaidVia } : { ok: false };
 }
 
 /** True when a database error says the `paid_via` column does not exist yet

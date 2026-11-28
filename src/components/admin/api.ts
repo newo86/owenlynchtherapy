@@ -194,7 +194,7 @@ export function formatDateTime(iso: string, h23 = true): string {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-    hour: 'numeric',
+    hour: h23 ? '2-digit' : 'numeric',
     minute: '2-digit',
     ...(h23 ? { hourCycle: 'h23' as const } : { hour12: true }),
     timeZone: 'Europe/Dublin',
@@ -203,7 +203,7 @@ export function formatDateTime(iso: string, h23 = true): string {
 
 export function formatTime(iso: string, h23 = true): string {
   return new Date(iso).toLocaleTimeString('en-IE', {
-    hour: 'numeric',
+    hour: h23 ? '2-digit' : 'numeric',
     minute: '2-digit',
     ...(h23 ? { hourCycle: 'h23' as const } : { hour12: true }),
     timeZone: 'Europe/Dublin',

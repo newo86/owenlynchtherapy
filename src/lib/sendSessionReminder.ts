@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase';
+import { formatClientTime } from '@/lib/dateUtils';
 import { getResend } from '@/lib/resend';
 import { buildReminderHtml, paymentLinkFor, sessionKind, EMAIL_FROM, inPersonAddressFor } from '@/lib/emailTemplates';
 import { reminderOptOutUrl } from '@/lib/reminderOptOut';
@@ -161,9 +162,7 @@ export async function sendSessionReminder(
   const firstName = client.full_name.split(' ')[0];
   const sessionDate = new Date(session.session_date as string);
 
-  const formattedTime = sessionDate.toLocaleTimeString('en-IE', {
-    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
-  });
+  const formattedTime = formatClientTime(sessionDate);
   const isToday = sessionDate.toLocaleDateString('en-IE', { timeZone: 'Europe/Dublin' })
     === new Date().toLocaleDateString('en-IE', { timeZone: 'Europe/Dublin' });
   const dayPhrase = isToday

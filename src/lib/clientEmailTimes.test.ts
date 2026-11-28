@@ -41,7 +41,7 @@ vi.mock('@/lib/googleOAuth', () => ({ getAuthorizedClient: async () => null }));
 
 import { sendSessionReminder } from './sendSessionReminder';
 import { sendReceiptEmail } from './sendReceiptEmail';
-import { formatShortWhen, formatClock24 } from './dateUtils';
+import { formatShortWhen, formatClock24, formatClientTime } from './dateUtils';
 
 describe('client emails keep the 12-hour clock', () => {
   beforeEach(() => {
@@ -54,7 +54,8 @@ describe('client emails keep the 12-hour clock', () => {
   it('the session reminder still says 6:00 pm, not 18:00', async () => {
     const r = await sendSessionReminder('s1');
     expect(r.success).toBe(true);
-    expect(captured.reminderTime).toMatch(/^6:00\s?pm$/i);
+    expect(captured.reminderTime).toBe('6:00 pm');
+    expect(captured.reminderTime).not.toMatch(/18:/);
   });
 
   it('the receipt email still says 6:00 pm, not 18:00', async () => {
@@ -63,7 +64,17 @@ describe('client emails keep the 12-hour clock', () => {
       { full_name: 'Test Client', email: 'test.client@example.com' },
     );
     expect(r).toBe('sent');
-    expect(captured.receiptTime).toMatch(/^6:00\s?pm$/i);
+    expect(captured.receiptTime).toBe('6:00 pm');
+    expect(captured.receiptTime).not.toMatch(/18:/);
+  });
+});
+
+describe('formatClientTime is exactly what clients have always seen', () => {
+  it('winter and summer, 12-hour with am/pm', () => {
+    expect(formatClientTime(new Date('2026-11-10T18:00:00Z'))).toBe('6:00 pm');
+    expect(formatClientTime(new Date('2026-07-07T07:05:00Z'))).toBe('8:05 am');
+    expect(formatClientTime(new Date('2026-11-10T18:00:00Z'))).not.toMatch(/18:|08:05/);
+    expect(formatClientTime(new Date('2026-07-07T07:05:00Z'))).not.toMatch(/18:|08:05/);
   });
 });
 

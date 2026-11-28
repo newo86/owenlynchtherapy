@@ -18,11 +18,11 @@ describe('howPaid', () => {
   it('falls back to the old derivation when there is no paid_via (column not applied yet)', () => {
     expect(howPaid(sess({ stripe_payment_intent_id: 'pi_test' }), client())).toBe('Card (Stripe)');
     expect(howPaid(sess({}), client(true))).toBe('Cash');
-    expect(howPaid(sess({}), client())).toBe('Revolut or bank transfer');
-    expect(howPaid(sess({ paid_via: null }), client())).toBe('Revolut or bank transfer');
+    expect(howPaid(sess({}), client())).toBe('Not recorded');
+    expect(howPaid(sess({ paid_via: null }), client())).toBe('Not recorded');
   });
   it('an unknown stored value falls back rather than showing nothing', () => {
-    expect(howPaid(sess({ paid_via: 'something-new' }), client())).toBe('Revolut or bank transfer');
+    expect(howPaid(sess({ paid_via: 'something-new' }), client())).toBe('Not recorded');
   });
 });
 
@@ -36,8 +36,8 @@ describe('paidByMethod', () => {
     ];
     expect(paidByMethod(rows)).toEqual([
       { label: 'Revolut', cents: 13000 },
-      { label: 'Revolut or bank transfer', cents: 8000 },
       { label: 'Cash', cents: 8000 },
+      { label: 'Not recorded', cents: 8000 },
     ]);
   });
 });

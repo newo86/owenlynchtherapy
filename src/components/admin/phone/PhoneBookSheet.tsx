@@ -106,15 +106,18 @@ export function PhoneBookSheet({ clients, free, title, initialClientId, initialS
   const chips = free.slots.slice(0, MAX_CHIPS);
   const shown = slot && !chips.some(c => c.local === slot.local) ? [slot, ...chips] : chips;
   const bookLabel = !slot ? 'Book'
-    : repeat === 'once' ? `Book ${shortDay(slot.local)}, ${slot.local.slice(11, 16)}`
-      : `Book ${REPEAT_WORDS[repeat]} from ${shortDay(slot.local)}, ${slot.local.slice(11, 16)}`;
+    : repeat === 'once' ? `Book ${shortDay(slot.local)}`
+      : `Book ${REPEAT_WORDS[repeat]} from ${shortDay(slot.local)}`;
 
   return (
     <>
       <button type="button" className="ph-scrim" aria-label="Close the booking sheet" onClick={onClose} tabIndex={-1} />
       <div className="ph-sheet" role="dialog" aria-modal="true" aria-labelledby="ph-book-title">
         <div className="ph-grab" aria-hidden />
-        <h2 id="ph-book-title">{title}</h2>
+        <div className="ph-sheet-head">
+          <h2 id="ph-book-title">{title}</h2>
+          <button type="button" className="ph-quiet" onClick={onClose}>Close</button>
+        </div>
 
         <label className="ph-field"><span className="ph-hint">Client</span>
           <select className="ph-select pii" ref={firstField} value={clientId} onChange={e => pickClient(e.target.value)}>

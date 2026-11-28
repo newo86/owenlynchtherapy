@@ -75,6 +75,15 @@ export function formatShortWhen(iso: string): string {
   return `${v('weekday')} ${v('day')} ${v('month')}, ${hour}:${v('minute')}`;
 }
 
+/** The time as CLIENTS see it in emails and receipts ("6:00 pm"). Deliberately the
+ *  12-hour form and exactly these options: do not change what clients receive.
+ *  Owen's own screens and emails use the 24-hour formatClock24 instead. */
+export function formatClientTime(date: Date): string {
+  return date.toLocaleTimeString('en-IE', {
+    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
+  });
+}
+
 /** "16:00" in Europe/Dublin: the 24-hour clock for the dashboard and for emails
  *  Owen receives (never for emails to clients). */
 export function formatClock24(iso: string | Date): string {

@@ -11,7 +11,7 @@ import {
   STRIPE_LINK_IN_PERSON,
   STRIPE_LINK_ONLINE, EMAIL_FROM, CONTACT_EMAIL } from '@/lib/emailTemplates';
 import { escapeHtml } from '@/lib/sanitise';
-import { formatClock24 } from '@/lib/dateUtils';
+import { formatClock24, formatClientTime } from '@/lib/dateUtils';
 
 // Must be force-dynamic so Next.js never pre-renders or caches this route.
 // A cached response would consume request.body before Stripe's raw-body
@@ -328,7 +328,7 @@ async function alertShortPayment(session: SessionRecord, amountPaid: number): Pr
     await getResend().emails.send({
       from: EMAIL_FROM,
       to: CONTACT_EMAIL,
-      subject: 'Payment below the session fee — please review',
+      subject: 'Payment below the session fee: please review',
       html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;line-height:1.7;max-width:560px;">
         <p>A Stripe payment came in for less than the session fee, so the session was <strong>not</strong> marked paid and no receipt was sent.</p>
         <p><strong>Client:</strong> ${name}<br>
@@ -353,9 +353,7 @@ async function sendReceipt(
   const formattedDate = sessionDate.toLocaleDateString('en-IE', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Dublin',
   });
-  const formattedTime = sessionDate.toLocaleTimeString('en-IE', {
-    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
-  });
+  const formattedTime = formatClientTime(sessionDate);
 
   // Kill switch: the disabled-send stub returns no error, which would look like
   // a successful send and leave receipt_sent_at stamped for an unsent receipt.

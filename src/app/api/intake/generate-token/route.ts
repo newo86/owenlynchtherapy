@@ -1,4 +1,5 @@
 import { escapeHtml } from '@/lib/sanitise';
+import { formatClientTime } from '@/lib/dateUtils';
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { randomUUID, randomBytes } from 'node:crypto';
@@ -136,9 +137,7 @@ export async function POST(req: NextRequest) {
   const formattedDate = sessionDateObj.toLocaleDateString('en-IE', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Dublin',
   });
-  const formattedTime = sessionDateObj.toLocaleTimeString('en-IE', {
-    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
-  });
+  const formattedTime = formatClientTime(sessionDateObj);
   const location = session_format === 'in_person'
     ? inPersonAddressFor(sessionUtcIso)
     : "I'll send you a link to join shortly before your session.";

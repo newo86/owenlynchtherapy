@@ -11,7 +11,7 @@ import { clockTime, dublinYmd, shortDay } from '../desktopToday';
 import { DtDisclosure } from '../DtDisclosure';
 import { moneySummary } from '../moneySummary';
 import { howPaid } from '../paymentMethods';
-import { IconChevronRight, IconForms, IconGear, IconMoney, IconWait } from '../sage';
+import { IconChevronRight, IconCog, IconForms, IconMoney, IconWait } from '../sage';
 import type { ClientRow } from '../types';
 import { PhoneBand } from './PhoneBand';
 
@@ -45,13 +45,13 @@ export function PhoneMore({ clients, waiting, privacy, onTogglePrivacy, onOpenPa
           {row('money', <IconMoney />, 'Money', `${eur(m.paidCents)} paid this month · ${m.unpaid.length} unpaid`)}
           {row('forms', <IconForms />, 'Forms', `${FORM_COUNT} forms to send or download`)}
           {row('waitlist', <IconWait />, 'Waitlist', waiting === 0 ? 'Nobody waiting' : `${waiting} ${waiting === 1 ? 'person' : 'people'} waiting`)}
-          {row('settings', <IconGear />, 'Settings', 'Hours, fees, links, calendar')}
+          {row('settings', <IconCog />, 'Settings', 'Hours, fees, links, calendar')}
         </div>
         <div className="ph-card">
           <div className="ph-privacy">
             <span className="ph-ic" aria-hidden>{privacy ? <EyeOff /> : <Eye />}</span>
             <span className="ph-txt" id="ph-privacy-l"><b>Privacy mode</b><span>{privacy ? 'On: client names and emails are blurred' : 'Blurs client names and emails'}</span></span>
-            <button type="button" className="ph-switch" aria-pressed={privacy} aria-labelledby="ph-privacy-l" onClick={onTogglePrivacy}>{privacy ? 'On' : 'Off'}</button>
+            <button type="button" role="switch" className="ph-switch" aria-checked={privacy} aria-labelledby="ph-privacy-l" onClick={onTogglePrivacy}>{privacy ? 'On' : 'Off'}</button>
           </div>
         </div>
       </div>

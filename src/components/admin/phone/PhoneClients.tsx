@@ -6,11 +6,10 @@
 // "Details and records", which opens the existing client record.
 
 import { useMemo, useState } from 'react';
-import { formatShortWhen } from '@/lib/dateUtils';
 import { dedupeSessions, displayFee } from '../api';
 import { ClientQuestionnaireResults } from '../Analytics';
 import { OUTSTANDING_FLOOR } from '../moneySummary';
-import { cadenceLabel, dotColour } from '../desktopToday';
+import { cadenceLabel, clockTime, dotColour, dublinYmd, shortDay } from '../desktopToday';
 import { IconChevronRight, IconPeople } from '../sage';
 import type { ClientRow } from '../types';
 import { PhoneBand } from './PhoneBand';
@@ -47,7 +46,7 @@ export function PhoneClients({ clients, onOpenClientPage }: { clients: ClientRow
                   <span className="ph-dot" style={{ background: dotColour(c.id) }} aria-hidden />
                   <span className="ph-txt">
                     <b className="pii">{c.full_name}</b>
-                    <span>{next ? `Next: ${formatShortWhen(next.session_date)}` : 'Nothing booked'}</span>
+                    <span>{next ? `Next: ${shortDay(dublinYmd(next.session_date))}, ${clockTime(next.session_date)}` : 'Nothing booked'}</span>
                   </span>
                   <span className="ph-tag">{c.status === 'completed' ? 'Completed' : cadenceLabel(c)}</span>
                 </button>

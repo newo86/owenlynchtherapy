@@ -25,8 +25,12 @@ import { parsePaidVia, isMissingPaidViaColumn, insertPaymentRow, PAID_VIA } from
 const row = { session_id: 's1', client_id: 'c1', amount_cents: 8000, currency: 'eur', session_type: 'in_person', method: 'manual', paid_at: '2026-11-24T16:00:00Z' };
 
 describe('parsePaidVia (what the routes accept)', () => {
-  it('accepts every listed value', () => {
-    for (const v of PAID_VIA) expect(parsePaidVia(v)).toEqual({ ok: true, value: v });
+  it('accepts every manual value', () => {
+    for (const v of ['revolut', 'cash', 'card', 'other']) expect(parsePaidVia(v)).toEqual({ ok: true, value: v });
+  });
+  it("refuses 'stripe' (only the webhook may say that) though the DB column allows it", () => {
+    expect(parsePaidVia('stripe')).toEqual({ ok: false });
+    expect(PAID_VIA).toContain('stripe');
   });
   it('absent means "default unchanged"', () => {
     expect(parsePaidVia(undefined)).toEqual({ ok: true, value: undefined });

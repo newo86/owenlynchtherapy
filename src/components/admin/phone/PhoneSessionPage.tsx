@@ -199,7 +199,10 @@ export function PhoneSessionPage({ session, client, initialOption, free, onClose
       const { res, json } = await post('/api/admin/sessions/delete', { session_id: session.id });
       if (!res.ok) { fail(json, 'That did not work. The session is still booked.'); return; }
       onChanged();
-      onToast(`Cancelled ${first}’s ${shortDay(ymd)} session. The record is kept.`);
+      const inGoogle = json.calendar === 'ok' || json.calendar === undefined;
+      onToast(inGoogle
+        ? `Cancelled ${first}’s ${shortDay(ymd)} session. The record is kept.`
+        : 'Cancelled in the app. Google Calendar couldn’t be updated, so remove it there too.', undefined, !inGoogle);
       onClose();
     } catch { setMsg({ ok: false, text: 'No connection. The session is still booked.' }); } finally { setBusy(false); }
   }
@@ -277,7 +280,7 @@ export function PhoneSessionPage({ session, client, initialOption, free, onClose
                   </div>
                 ) : (
                   <button type="button" className="ph-do" disabled={formCount === 0} onClick={() => setConfirmForms(true)}>
-                    {formCount ? `Email ${formCount} form${formCount > 1 ? 's' : ''} to ${first}` : 'Choose a form'}
+                    {formCount ? <>Email {formCount} form{formCount > 1 ? 's' : ''} to <span className="pii">{first}</span></> : 'Choose a form'}
                   </button>
                 )}
             </PhoneOpt>
@@ -327,7 +330,7 @@ export function PhoneSessionPage({ session, client, initialOption, free, onClose
           {scheduled && (
             <PhoneOpt danger icon={<IconTrash />} title="Cancel session" sub="Removes it from your diary, keeps the record" open={openOpt === 'cancel'} onToggle={() => toggle('cancel')} headRef={reg('cancel')}>
               <p className="ph-note"><CancelText first={first} text={cancelSentence(client, session)} /></p>
-              <p className="ph-note">It is removed from Google Calendar too. No email goes to <span className="pii">{first}</span>.</p>
+              <p className="ph-note">It is also removed from Google Calendar; if that can’t be done you’ll be told. No email goes to <span className="pii">{first}</span>.</p>
               <button type="button" className="ph-do is-danger" disabled={busy} onClick={() => void cancelSession()}>{busy ? 'Cancelling…' : 'Cancel this session'}</button>
             </PhoneOpt>
           )}

@@ -2260,7 +2260,7 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
   .admin-root .admin-status-pill,
   .admin-root .admin-segmented-btn { min-height: 44px; }
   .admin-root .admin-link { display: inline-flex; align-items: center; min-height: 44px; }
-  .admin-root button:not(.admin-tab):not(.admin-client-card):not(.m-slot):not(.m-today-who):not(.m-client):not(.admin-more-item):has(> svg:only-child),
+  .admin-root button:not(.admin-tab):not(.admin-client-card):not(.m-slot):not(.m-today-who):not(.m-client):not(.admin-more-item):not(.ph-tab):has(> svg:only-child),
   .admin-root .admin-event-action-btn { min-width: 44px; min-height: 44px; }
 
   /* Tables → stacked cards. No sideways scrolling, every button reachable. */

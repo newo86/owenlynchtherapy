@@ -1,4 +1,5 @@
 import { supabaseAdmin, dbError } from '@/lib/supabase';
+import { formatClientTime } from '@/lib/dateUtils';
 import { getResend } from '@/lib/resend';
 import { buildReceiptHtml, inPersonAddressFor, EMAIL_FROM } from '@/lib/emailTemplates';
 import { PRACTICE } from '@/practice.config';
@@ -56,9 +57,7 @@ export async function sendReceiptEmail(
   const formattedDate = sessionDate.toLocaleDateString('en-IE', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Dublin',
   });
-  const formattedTime = sessionDate.toLocaleTimeString('en-IE', {
-    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
-  });
+  const formattedTime = formatClientTime(sessionDate);
 
   let emailResult;
   try {

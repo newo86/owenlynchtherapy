@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { formatClientTime } from '@/lib/dateUtils';
 import { requireAdmin } from '@/lib/adminAuth';
 import { getResend } from '@/lib/resend';
 import { buildReceiptHtml, EMAIL_FROM } from '@/lib/emailTemplates';
@@ -42,9 +43,7 @@ export async function POST(req: NextRequest) {
   const date = now.toLocaleDateString('en-IE', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Dublin',
   });
-  const time = now.toLocaleTimeString('en-IE', {
-    hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
-  });
+  const time = formatClientTime(now);
 
   let emailResult;
   try {
