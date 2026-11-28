@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { NAME_RE, isValidPhone, filenameSlug } from './intakeValidation';
 
 describe('intake name rule', () => {
-  it.each(['Jane Durnin', "O'Brien", 'O’Brien', 'Seán Ó Néill', 'Łukasz Kowalski', 'Mary St. John', 'Anne-Marie'])(
+  it.each(['Nora Invented', "O'Brien", 'O’Brien', 'Seán Ó Néill', 'Łukasz Kowalski', 'Mary St. John', 'Anne-Marie'])(
     'accepts %s', name => expect(NAME_RE.test(name)).toBe(true));
-  it.each(['J', 'Jane <script>', 'Jane123', 'a@b.com', 'Jane\nDurnin', 'Jane\u2028Durnin'])(
+  it.each(['J', 'Jane <script>', 'Jane123', 'a@b.com', 'Nora\nInvented', 'Nora\u2028Invented'])(
     'rejects %s', name => expect(NAME_RE.test(name)).toBe(false));
 });
 

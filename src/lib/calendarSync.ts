@@ -41,8 +41,8 @@ export interface ReconcileOutcome {
 type ActiveClient = { id: string; full_name: string };
 
 // Words that mark a calendar event as a client session. A bare first name is
-// NOT enough: "Walk Kate", "Claire coffee" or "Day off" must never be read as
-// a session for a client called Kate / Claire / Ann Day — that is how a
+// NOT enough: "Walk Orla", "Maeve coffee" or "Day off" must never be read as
+// a session for a client called Orla / Maeve / Rosa Day — that is how a
 // personal event became a scheduled session and emailed a client a reminder.
 const SESSION_WORDS = new Set(['session', 'sessions', 'client']);
 
@@ -53,8 +53,8 @@ const SESSION_WORDS = new Set(['session', 'sessions', 'client']);
  * to a client record (auto-import, auto-cancel, reminder confirmation).
  *
  * A title counts as a client's session when it contains EITHER
- *   - the client's full name ("Session — Jane Durnin", what the app writes), or
- *   - any part of their name plus "session"/"client" ("Philip client").
+ *   - the client's full name ("Session — Nora Invented", what the app writes), or
+ *   - any part of their name plus "session"/"client" ("Tom client").
  * Full-name hits win over part+keyword hits, so two clients sharing a first
  * name don't make an app-created title ambiguous.
  */

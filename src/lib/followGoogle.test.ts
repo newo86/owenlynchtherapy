@@ -20,8 +20,8 @@ const NOW = new Date('2026-11-28T12:00:00Z');           // Saturday
 const DAY = 86_400_000;
 const AOIFE = { id: 'c-aoife', full_name: 'Aoife Example' };
 const TEST = { id: 'c-test', full_name: 'Test Client' };
-const KATE = { id: 'c-kate', full_name: 'Kate Sample' };
-const CLIENTS = [AOIFE, TEST, KATE];
+const ORLA = { id: 'c-orla', full_name: 'Orla Sample' };
+const CLIENTS = [AOIFE, TEST, ORLA];
 
 let sid = 0;
 function session(client_id: string, local: string, gcal_event_id: string | null, over: Partial<FollowSession> = {}): FollowSession {
@@ -225,11 +225,11 @@ describe('follow Google: what is never followed', () => {
     expect(drift.map(d => d.kind)).toEqual(['moved_in_google']);
   });
 
-  it('a personal event "Walk Kate" is never touched, whatever happens to it', async () => {
+  it('a personal event "Walk Orla" is never touched, whatever happens to it', async () => {
     const cal = new FakeGoogleCalendar();
-    const b = book(cal, KATE, '2026-12-01T16:00', 1, 4);
-    const walk = cal.addOneOff({ summary: 'Walk Kate', startLocal: '2026-12-02T09:00' });
-    const unlinked = session(KATE.id, '2026-12-02T09:00', null);
+    const b = book(cal, ORLA, '2026-12-01T16:00', 1, 4);
+    const walk = cal.addOneOff({ summary: 'Walk Orla', startLocal: '2026-12-02T09:00' });
+    const unlinked = session(ORLA.id, '2026-12-02T09:00', null);
     const store = new MemoryFollowStore({ sessions: [...b.sessions, unlinked], series: b.series });
     cal.deleteEvent(walk);
     const { outcome } = await run(cal, store);

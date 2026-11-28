@@ -40,7 +40,7 @@ Anything else (unset/false) silently blocks every send.
   - **One automatic retry:** the 5-minute job re-creates the Google event for a session made in the app in the last 7 days that still has no Google id (a failed write), max 10 per run. Old unlinked rows, deleted events and moved events are only ever shown for a decision.
   - **Reminders are slot-strict:** a session is reminded only if Google has an event for it at the *same* time. A session moved in Google (and not yet resolved) is held back, not reminded at the app's time.
   - A truncated Google fetch (page cap) disables drift detection and linking: a missing event is never read as a deletion.
-- **Which calendar events count as a client's session** (linking, difference detection and the reminder check all use `matchOneActiveClient`): the title must contain the client's full name, or a name part plus "session"/"client". "Walk Kate" or "Day off" never becomes a session; all-day events never do. Events that don't match show in the dashboard's unlinked-events queue to link by hand.
+- **Which calendar events count as a client's session** (linking, difference detection and the reminder check all use `matchOneActiveClient`): the title must contain the client's full name, or a name part plus "session"/"client". "Walk Orla" or "Day off" never becomes a session; all-day events never do. Events that don't match show in the dashboard's unlinked-events queue to link by hand.
 
 ## Following Google (deletions and "every 2 weeks")
 
@@ -68,7 +68,7 @@ change made in Google, by itself, safely.
 **Safety rails:**
 - Only sessions tied to Google **by id** (their own event id, or the series id
   resolved to that slot's occurrence through `recurringEventId` +
-  `originalStartTime`). Never by title or name: "Walk Kate" can't touch a session.
+  `originalStartTime`). Never by title or name: "Walk Orla" can't touch a session.
 - Only **future** sessions with status `scheduled`. Past, attended, paid or
   already-cancelled sessions are never changed.
 - A deletion needs explicit evidence: Google reports the event or occurrence
@@ -119,7 +119,7 @@ deleted occurrences, splits, paging, outages) and `memoryFollowStore.ts`;
 scenarios in `src/lib/followGoogle.test.ts` (deletions, series deleted/ended,
 weekly ↔ fortnightly both ways, moves not followed, app writes only one
 occurrence, both clock-change weekends, truncated reads, Google down, the cap,
-"Walk Kate", all-day events, re-runs, undo).
+"Walk Orla", all-day events, re-runs, undo).
 
 **Migration needed:** `supabase/migrations/calendar_followed_changes.sql` via
 `/db-migrate` (needs `session_series.sql` applied first, for its foreign key).

@@ -115,9 +115,9 @@ Full detail in **docs/OPERATIONS.md**. The must-knows:
   "How often" in the client record changes the rhythm and updates Google
   (src/lib/seriesInterval.ts); a rhythm changed in Google is followed.
 - **Calendar → client matching is strict (Sep 2026):** an event is only tied to
-  a client if its title has their FULL name ("Session — Jane Durnin") or a name
-  part plus "session"/"client" ("Philip client"). A bare first name ("Walk
-  Kate") never matches, and all-day events are never sessions — loose matching
+  a client if its title has their FULL name ("Session — Nora Invented") or a name
+  part plus "session"/"client" ("Tom client"). A bare first name ("Walk
+  Orla") never matches, and all-day events are never sessions — loose matching
   once turned personal events into sessions that emailed clients. One matcher
   (`matchOneActiveClient`) serves linking, difference detection and reminder
   confirmation.

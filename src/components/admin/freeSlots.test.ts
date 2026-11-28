@@ -64,7 +64,7 @@ describe('findFreeSlots', () => {
   });
 
   it('spots the alternate week of a fortnightly client as "every 2 weeks"', () => {
-    // Tommy-style: fortnightly Fri 15:00 from 4 Dec; 20 Nov, 4 Dec... taken on
+    // Sam-style: fortnightly Fri 15:00 from 4 Dec; 20 Nov, 4 Dec... taken on
     // the even weeks, so 27 Nov 15:00 is free every 2 weeks.
     const slots = findFreeSlots({ ...base, sessions: fortnightly('2026-12-04T15:00'), events: [] });
     expect(slots.find(s => s.local === '2026-11-27T15:00')?.cadence).toBe('fortnightly');

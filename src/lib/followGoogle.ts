@@ -26,7 +26,7 @@ import { addDaysLocal, daysBetweenLocal, onRhythmLocal, NEAR_DAYS, MAX_GAP_FILL 
  * The rules that keep it safe:
  *   - Only sessions tied to Google BY ID (their own event id, or the series id
  *     resolved to that slot's occurrence). Never by title or client name, so a
- *     personal event like "Walk Kate" can never touch a session.
+ *     personal event like "Walk Orla" can never touch a session.
  *   - Only future (start > now) sessions with status 'scheduled'.
  *   - A deletion counts only on explicit evidence: Google reports the event or
  *     occurrence as cancelled (or 410 Gone), or a complete instance list has
