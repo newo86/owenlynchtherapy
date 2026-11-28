@@ -22,9 +22,11 @@ interface Props {
   /** Result of the last undo, shown above the list (and given focus). */
   message?: { kind: 'ok' | 'alert'; text: string } | null;
   compact?: boolean;
+  /** Desktop "Needs a decision": no card of its own, a smaller heading. */
+  bare?: boolean;
 }
 
-export function FollowedFromGoogleCard({ items, onUndo, busy = null, message = null, compact = false }: Props) {
+export function FollowedFromGoogleCard({ items, onUndo, busy = null, message = null, compact = false, bare = false }: Props) {
   const headingId = useId();
   const msgRef = useRef<HTMLParagraphElement>(null);
   const [all, setAll] = useState(false);
@@ -38,10 +40,14 @@ export function FollowedFromGoogleCard({ items, onUndo, busy = null, message = n
   const shown = compact && !all ? open.slice(0, COMPACT_ROWS) : open;
 
   return (
-    <section className={`admin-card fg-card${compact ? ' is-compact' : ''}`} aria-labelledby={headingId}>
-      <div className="admin-card-head">
-        <h2 className="admin-h2" id={headingId}>Followed from Google</h2>
-      </div>
+    <section className={`${bare ? 'is-bare' : 'admin-card'} fg-card${compact ? ' is-compact' : ''}`} aria-labelledby={headingId}>
+      {bare ? (
+        <h3 className="nd-sub" id={headingId}>Followed from Google</h3>
+      ) : (
+        <div className="admin-card-head">
+          <h2 className="admin-h2" id={headingId}>Followed from Google</h2>
+        </div>
+      )}
       <p className="fg-note">You changed these in Google Calendar, so the app did the same. No client was emailed.</p>
       {message && (
         <p

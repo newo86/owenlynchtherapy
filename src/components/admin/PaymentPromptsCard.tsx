@@ -46,6 +46,8 @@ interface Props {
   initialConfirm?: PendingChoice | null;
   /** Phone layout: one compact line per prompt, choices in a bottom sheet. */
   compact?: boolean;
+  /** Desktop "Needs a decision": no card of its own, a smaller heading. */
+  bare?: boolean;
 }
 
 /** "Tue 2 Dec, 4:00pm" in Dublin time (same text on server and browser). */
@@ -216,7 +218,7 @@ function PromptSheet({ p, root, onClose, children }: { p: PaymentPromptItem; roo
   );
 }
 
-export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConfirm = null, compact = false }: Props) {
+export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConfirm = null, compact = false, bare = false }: Props) {
   const [confirm, setConfirm] = useState<PendingChoice | null>(() => {
     if (!initialConfirm) return null;
     const p = prompts.find(x => x.session_id === initialConfirm.sessionId);
@@ -265,10 +267,14 @@ export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConf
   const sheetPrompt = sheetId ? prompts.find(p => p.session_id === sheetId) : undefined;
 
   return (
-    <section ref={sectionRef} className="admin-card pp-card" aria-labelledby="pp-heading">
-      <div className="admin-card-head">
-        <h2 className="admin-h2" id="pp-heading">Did they pay?</h2>
-      </div>
+    <section ref={sectionRef} className={bare ? 'pp-card is-bare' : 'admin-card pp-card'} aria-labelledby="pp-heading">
+      {bare ? (
+        <h3 className="nd-sub" id="pp-heading">Did they pay?</h3>
+      ) : (
+        <div className="admin-card-head">
+          <h2 className="admin-h2" id="pp-heading">Did they pay?</h2>
+        </div>
+      )}
       <p className="pp-note">Bank transfers don&apos;t show up here, so tick them off yourself. Nothing is sent to anyone unless you confirm.</p>
       <ul className="pp-list">
         {prompts.map(p => (

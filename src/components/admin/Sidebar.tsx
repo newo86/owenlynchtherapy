@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { LayoutGrid, UserRound, CalendarDays, FileText, TrendingUp, ShieldCheck, Eye, EyeOff, Hourglass, Settings, MoreHorizontal, LogOut, GraduationCap, ChartColumn } from 'lucide-react';
 import type { AdminSection } from './types';
-import { SplitCircle } from './sage';
+import { SplitCircle, IconToday, IconCalendar, IconPeople, IconMoney, IconForms, IconWait, IconGear } from './sage';
 
 interface Props {
   active: AdminSection;
@@ -111,100 +111,47 @@ function MobileTabBar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onTog
   );
 }
 
-function DesktopSidebar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onTogglePrivacy }: Props) {
+// Desktop rail: exactly the prototype (docs/design/prototypes/sage-diary-
+// desktop.html): these seven, in this order, Settings at the foot. Hours lives
+// inside Settings, so Settings stays lit on that page.
+const RAIL: Array<{ id: AdminSection; label: string; Icon: () => React.JSX.Element; also?: AdminSection[] }> = [
+  { id: 'dashboard', label: 'Today',    Icon: IconToday },
+  { id: 'sessions',  label: 'Calendar', Icon: IconCalendar },
+  { id: 'clients',   label: 'Clients',  Icon: IconPeople },
+  { id: 'revenue',   label: 'Money',    Icon: IconMoney },
+  { id: 'forms',     label: 'Forms',    Icon: IconForms, also: ['analytics'] },
+  { id: 'waitlist',  label: 'Waitlist', Icon: IconWait },
+  { id: 'settings',  label: 'Settings', Icon: IconGear, also: ['hours'] },
+];
+
+function DesktopSidebar({ active, onNavigate }: Props) {
   return (
-    <aside className="admin-sidebar" aria-label="Admin navigation">
+    <nav className="admin-sidebar" aria-label="Main">
       <button
+        type="button"
         className="admin-sidebar-logo"
         onClick={() => onNavigate('dashboard')}
-        title="Dashboard home"
-        aria-label="Go to dashboard"
-        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+        aria-label="Go to Today"
       >
         <SplitCircle className="admin-sidebar-logo-art" />
       </button>
-
-      <nav className="admin-sidebar-nav">
-        {NAV.map(({ id, label, Icon }) => (
-          <button
-            key={id}
-            onClick={() => onNavigate(id)}
-            className={`admin-nav-btn${active === id ? ' is-active' : ''}`}
-            title={label}
-            aria-label={label}
-          >
-            <Icon size={21} strokeWidth={1.6} aria-hidden />
-            <span className="admin-nav-label" aria-hidden>{label}</span>
-          </button>
-        ))}
-      </nav>
-
-      <ProfileMenu
-        active={active}
-        onNavigate={onNavigate}
-        onSignOut={onSignOut}
-        onOpenMfa={onOpenMfa}
-        privacy={privacy}
-        onTogglePrivacy={onTogglePrivacy}
-      />
-    </aside>
-  );
-}
-
-/** The OL button at the foot of the desktop sidebar: one place for Settings,
- *  privacy mode, two-factor and sign out. Privacy mode stays visible while on
- *  (an eye-off badge on the button), so it's never on by surprise. */
-function ProfileMenu({ active, onNavigate, onSignOut, onOpenMfa, privacy, onTogglePrivacy }: Props) {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
-
-  const item = (label: string, Icon: typeof LayoutGrid, onClick: () => void, extra?: { pressed?: boolean; current?: boolean }) => (
-    <button
-      type="button"
-      role={extra?.pressed === undefined ? 'menuitem' : 'menuitemcheckbox'}
-      className={`admin-more-item${extra?.current ? ' is-active' : ''}`}
-      aria-checked={extra?.pressed}
-      onClick={() => { setOpen(false); onClick(); }}
-    >
-      <Icon size={18} strokeWidth={1.6} aria-hidden />{label}
-    </button>
-  );
-
-  return (
-    <div className="admin-profile">
-      {open && <div className="admin-profile-scrim" onClick={() => setOpen(false)} />}
-      {open && (
-        <div className="admin-profile-menu" role="menu" aria-label="Profile">
-          {item('Settings', Settings, () => onNavigate('settings'), { current: active === 'settings' })}
-          {item(privacy ? 'Show client details' : 'Privacy mode', privacy ? EyeOff : Eye, onTogglePrivacy, { pressed: privacy })}
-          {item('Two-factor sign-in', ShieldCheck, onOpenMfa)}
-          <div className="admin-more-divider" />
-          {item('Sign out', LogOut, onSignOut)}
-        </div>
-      )}
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className={`admin-sidebar-avatar${active === 'settings' ? ' is-current' : ''}`}
-        title={privacy ? 'Profile and settings (privacy mode is on)' : 'Profile and settings'}
-        aria-label="Profile and settings"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        style={{ cursor: 'pointer', position: 'relative' }}
-      >
-        OL
-        {privacy && (
-          <span className="admin-profile-badge" aria-hidden>
-            <EyeOff size={11} strokeWidth={2} />
-          </span>
-        )}
-      </button>
-    </div>
+      {RAIL.map(({ id, label, Icon, also }) => {
+        const current = active === id || Boolean(also?.includes(active));
+        return (
+          <Fragment key={id}>
+            {id === 'settings' && <div className="admin-sidebar-spacer" />}
+            <button
+              type="button"
+              onClick={() => onNavigate(id)}
+              className="admin-nav-btn"
+              aria-current={current ? 'page' : undefined}
+            >
+              <Icon />
+              {label}
+            </button>
+          </Fragment>
+        );
+      })}
+    </nav>
   );
 }

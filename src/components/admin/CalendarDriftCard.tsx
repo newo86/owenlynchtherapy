@@ -52,9 +52,11 @@ interface Props {
   /** Phone: a one-line banner that opens on tap, so it never pushes today's
    *  clients off the first screen. */
   compact?: boolean;
+  /** Desktop "Needs a decision": no card of its own, a smaller heading. */
+  bare?: boolean;
 }
 
-export function CalendarDriftCard({ items, onResolved, compact = false }: Props) {
+export function CalendarDriftCard({ items, onResolved, compact = false, bare = false }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<{ key: string; msg: string } | null>(null);
   const [done, setDone] = useState<string | null>(null);
@@ -88,7 +90,7 @@ export function CalendarDriftCard({ items, onResolved, compact = false }: Props)
   }
 
   return (
-    <section className={`admin-card drift-card${collapsed ? ' is-collapsed' : ''}`} aria-label="Differences between the app and Google Calendar">
+    <section className={`${bare ? 'is-bare' : 'admin-card'} drift-card${collapsed ? ' is-collapsed' : ''}`} aria-label="Differences between the app and Google Calendar">
       {collapsed ? (
         <button type="button" className="drift-banner" onClick={() => setOpen(true)}>
           <span className="drift-banner-dot" aria-hidden />
@@ -97,9 +99,13 @@ export function CalendarDriftCard({ items, onResolved, compact = false }: Props)
         </button>
       ) : items.length > 0 && (
         <>
-          <div className="admin-card-head">
-            <h2 className="admin-h2">Google Calendar doesn&apos;t match the app</h2>
-          </div>
+          {bare ? (
+            <h3 className="nd-sub">Google Calendar doesn&apos;t match the app</h3>
+          ) : (
+            <div className="admin-card-head">
+              <h2 className="admin-h2">Google Calendar doesn&apos;t match the app</h2>
+            </div>
+          )}
           <p className="drift-note">
             The app is your diary. Choose what to do with each one; nothing changes until you tap.
           </p>

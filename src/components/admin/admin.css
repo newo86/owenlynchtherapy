@@ -192,7 +192,7 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 84px 1fr;
+  grid-template-columns: 96px 1fr;
   min-height: 100vh;
   min-height: 100dvh;
 }
@@ -209,73 +209,59 @@
 
 .admin-sidebar {
   background: var(--sd-rail);
-  width: 84px;
+  color: var(--sd-on-rail);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 0 22px;
   gap: 4px;
+  padding: 18px 8px;
   position: sticky;
   top: 0;
   height: 100vh;
+  box-sizing: border-box;
 }
+.admin-sidebar-spacer { flex: 1; }
 
 .admin-sidebar-logo {
-  margin-bottom: 18px;
+  width: 44px; height: 44px;
+  margin-bottom: 14px;
+  padding: 0; border: 0; background: none; cursor: pointer;
   border-radius: 50%;
+  flex: none;
 }
 .admin-sidebar-logo:focus-visible { outline: 2px solid var(--sd-action); outline-offset: 3px; }
 .admin-sidebar-logo-art { display: block; width: 44px; height: 44px; }
 
-.admin-sidebar-nav {
+/* Rail items (prototype: 80 x 60, 12px label, 22px icon). Yellow on hover and
+   when selected; the background goes DARKER, not lighter, so yellow stays
+   above 4.5:1 (the prototype's white wash drops it to about 4:1). */
+.admin-nav-btn {
+  width: 80px;
+  min-height: 60px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  width: 100%;
-  align-items: center;
-}
-
-.admin-nav-btn {
-  position: relative;
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
-  color: var(--sd-on-rail);
-  cursor: pointer;
-  transition: background 150ms ease, color 150ms ease;
+  gap: 4px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 150ms ease, background 150ms ease;
 }
-
-/* Nav items turn yellow on hover and when selected (Sage Diary). The
-   background goes darker, not lighter, so yellow stays above 4.5:1. */
+.admin-nav-btn svg { width: 22px; height: 22px; }
 @media (hover: hover) {
-  .admin-nav-btn:hover:not(.is-active) {
-  background: var(--sd-rail-hover);
-  color: var(--sd-action);
-}
+  .admin-nav-btn:hover { background: var(--sd-rail-hover); color: var(--sd-action); }
 }
 .admin-nav-btn:focus-visible { outline: 2px solid var(--sd-action); outline-offset: 2px; }
-
-.admin-nav-btn.is-active {
+.admin-nav-btn[aria-current="page"] {
   background: var(--sd-rail-selected);
   color: var(--sd-action);
-}
-
-.admin-nav-btn.is-active::before {
-  content: '';
-  position: absolute;
-  left: -16px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 4px;
-  height: 24px;
-  background: var(--sd-action);
-  border-radius: 0 4px 4px 0;
+  font-weight: 700;
 }
 
 .admin-sidebar-avatar {
@@ -1836,10 +1822,6 @@
 .admin-event-empty { font-size: 12px; }
 .admin-btn-compact { font-size: 12.5px; }
 
-/* Desktop sidebar: a small label under each icon. */
-.admin-nav-btn { flex-direction: column; gap: 3px; width: 64px; height: 58px; }
-.admin-nav-label { font-size: 10.5px; line-height: 1; letter-spacing: 0; }
-.admin-nav-btn.is-active::before { left: -10px; }
 
 /* ── Today page (restyle) ─────────────────────────────────────────────── */
 .admin-banner { display: flex; align-items: center; gap: 10px; margin: 0 0 22px; padding: 12px 18px; border-radius: 14px; font-size: 14px; border: 1px solid; }

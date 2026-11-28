@@ -17,10 +17,18 @@ async function fetchItems(): Promise<FollowedItem[] | null> {
   } catch { return null; }
 }
 
-export function FollowedFromGooglePanel({ onChanged, compact = false }: { onChanged: () => void; compact?: boolean }) {
+export function FollowedFromGooglePanel({ onChanged, compact = false, bare = false, onCount }: {
+  onChanged: () => void; compact?: boolean;
+  /** Desktop "Needs a decision": card without its own frame. */
+  bare?: boolean;
+  /** Tells the parent how many changes are open (for the count). */
+  onCount?: (n: number) => void;
+}) {
   const [items, setItems] = useState<FollowedItem[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: 'ok' | 'alert'; text: string } | null>(null);
+
+  useEffect(() => { onCount?.(items.filter(i => !i.undone).length); }, [items, onCount]);
 
   const reload = useCallback(async () => {
     const list = await fetchItems();
@@ -49,5 +57,5 @@ export function FollowedFromGooglePanel({ onChanged, compact = false }: { onChan
     }
   }
 
-  return <FollowedFromGoogleCard items={items} onUndo={id => void undo(id)} busy={busy} message={message} compact={compact} />;
+  return <FollowedFromGoogleCard items={items} onUndo={id => void undo(id)} busy={busy} message={message} compact={compact} bare={bare} />;
 }

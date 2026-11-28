@@ -49,14 +49,20 @@ interface Props {
   onChanged: () => void;
   /** Phone layout (compact rows + bottom sheet). */
   compact?: boolean;
+  /** Desktop "Needs a decision": card without its own frame. */
+  bare?: boolean;
+  /** Tells the parent how many prompts are open (for the count). */
+  onCount?: (n: number) => void;
 }
 
-export function PaymentPromptsPanel({ onChanged, compact = false }: Props) {
+export function PaymentPromptsPanel({ onChanged, compact = false, bare = false, onCount }: Props) {
   const [prompts, setPrompts] = useState<PaymentPromptItem[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: 'ok' | 'alert'; text: string } | null>(null);
   // The email link is read once (and taken off the address bar) on first render.
   const [linked, setLinked] = useState<PendingChoice | null>(() => takeEmailLink());
+
+  useEffect(() => { if (prompts) onCount?.(prompts.length); }, [prompts, onCount]);
 
   const reload = useCallback(async () => {
     const list = await fetchPrompts();
@@ -124,6 +130,7 @@ export function PaymentPromptsPanel({ onChanged, compact = false }: Props) {
           prompts={prompts}
           busy={busy}
           compact={compact}
+          bare={bare}
           initialConfirm={initial}
           onChoose={(id, c) => void choose(id, c)}
         />

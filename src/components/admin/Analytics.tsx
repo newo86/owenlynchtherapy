@@ -35,7 +35,9 @@ interface PendingRow {
   emailed_at: string | null;
 }
 
-export function Analytics({ clients }: { clients: ClientRow[] }) {
+/** `embedded`: inside the Forms page, where the sending tools come first and the
+ *  results follow under a "Questionnaire results" heading. */
+export function Analytics({ clients, embedded = false }: { clients: ClientRow[]; embedded?: boolean }) {
   const [responses, setResponses] = useState<ResponseRow[]>([]);
   const [pending, setPending] = useState<PendingRow[]>([]);
   const [loadState, setLoadState] = useState<'loading' | 'ok' | 'error' | 'missing'>('loading');
@@ -107,6 +109,8 @@ export function Analytics({ clients }: { clients: ClientRow[] }) {
           </ul>
         </section>
       )}
+
+      {embedded && <h2 className="admin-h2 admin-qa-resultshead">Questionnaire results</h2>}
 
       <div className="admin-qa-tabs" role="tablist" aria-label="Questionnaire">
         {(['cnip', 'values'] as Kind[]).map(k => (

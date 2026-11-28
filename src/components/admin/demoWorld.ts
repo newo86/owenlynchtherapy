@@ -27,7 +27,7 @@ const SPECS: Spec[] = [
   { id: 'demo-c3', name: 'Tom Placeholder', email: 'tom@example.com', day: 'tue', time: '18:00', every: 2, fee: 8000, format: 'in_person', status: 'active', from: -6, to: 4 },
   { id: 'demo-c4', name: 'Sam Tester', email: 'sam@example.com', day: 'fri', time: '15:00', every: 1, fee: 8000, format: 'in_person', status: 'active', unpaidWeeks: [-1], from: -6, to: 5 },
   { id: 'demo-c5', name: 'Nora Invented', email: 'nora@example.com', day: 'fri', time: '16:00', every: 2, fee: 8000, format: 'online', status: 'active', from: -6, to: 4 },
-  { id: 'demo-c6', name: 'Orla Fictional', email: 'orla@example.com', day: 'fri', time: '17:00', every: 1, fee: 8000, format: 'online', status: 'active', from: -6, to: 5 },
+  { id: 'demo-c6', name: 'Orla Fictional', email: 'orla@example.com', day: 'fri', time: '17:00', every: 1, fee: 8000, format: 'online', status: 'active', unpaidWeeks: [-2], from: -6, to: 5 },
   { id: 'demo-c7', name: 'Jamie Demo', email: 'jamie@example.com', day: 'fri', time: '18:00', every: 1, fee: 8000, format: 'in_person', status: 'active', from: -5, to: 5 },
   { id: 'demo-c8', name: 'Niamh Pretend', email: 'niamh@example.com', day: 'tue', time: '19:00', every: 1, fee: 8000, format: 'in_person', status: 'new', from: 1, to: 1 },
   { id: 'demo-c9', name: 'Declan Sample', email: 'declan@example.com', day: 'fri', time: '19:00', every: 1, fee: 8000, format: 'online', status: 'completed', from: -6, to: -3 },
@@ -159,6 +159,15 @@ export function buildDemoWorld(nowMs: number, opts: { calendarConnected?: boolea
     appStart: jamie.session_date,
     googleStart: new Date(new Date(jamie.session_date).getTime() + 60 * 60_000).toISOString(),
   }] : [];
+
+  const nora = sessions.find(s => s.client_id === 'demo-c5' && s.status === 'scheduled');
+  if (nora) {
+    drift.push({
+      key: `not_in_google:${nora.id}`,
+      kind: 'not_in_google', clientId: 'demo-c5', clientName: 'Nora Invented',
+      sessionId: nora.id, appStart: nora.session_date,
+    });
+  }
 
   const created = isoAt(nowMs, -1, 'tue', '10:00');
   return {

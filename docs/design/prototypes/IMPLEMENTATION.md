@@ -60,3 +60,40 @@ by Dashboard's phone branch). Layouts and navigation are unchanged.
   (`Revenue`, `FormsTable`/`FormLibrary`, `Waitlist`, `SettingsPanel`).
 - **Shared, change with care (tell the lead):** `admin.css` tokens block,
   `theme.ts`, `sage/*`, `demoWorld.ts` (append fixtures, don't reshape).
+
+## Stage 2 (desktop, built Nov 2026)
+Built to sage-diary-desktop.html (rail, band, two-column Today, session panel).
+- **Rail** (`Sidebar.tsx` `DesktopSidebar`, `.admin-nav-btn` in admin.css): the
+  seven prototype items only (Today, Calendar, Clients, Money, Forms, Waitlist,
+  Settings at the foot), prototype icons (`sage/icons.tsx`). Settings stays lit
+  on Hours. No profile menu any more. Rail hover/selected use the darker stage 1
+  wash (not the prototype's white wash) so yellow stays above 4.5:1.
+- **Today** (`Dashboard.tsx` desktop branch -> `DesktopToday.tsx`, styles in
+  `desktop.css`, helpers `desktopToday.ts` + tests, `useFreeTimes.ts`): band
+  "Today" + date + one yellow "Book next session" (the existing Schedule
+  session modal, via `onSchedule`). Left: Today's clients (hover quick actions
+  open the panel on that option), Free this week (chips book that time). Right:
+  Needs a decision (count) = pay prompts + Google differences + followed from
+  Google, each existing card in a `bare` variant with its own buttons/confirms;
+  Clinic days (next five working days from Settings hours, today outlined).
+- **Session panel** (`SessionPanel.tsx`): right-hand dialog with scrim, focus in,
+  Tab kept inside, Escape closes, focus returns to the row. Status (reminder,
+  paid, receipt), the client's page, Session done (`SessionDoneOptions`
+  `variant="panel"`), Send reminder (opens the existing `SendReminderModal`),
+  Mark as paid (no email), Email receipt (names the address; 409 re-send asks),
+  Move or edit (existing `SessionEditModal`). Existing routes only.
+- **Settings** (`SettingsHub.tsx`): tabs Practice | Hours | Account and privacy
+  (Google Calendar connect/disconnect, privacy mode, two-factor, sign out moved
+  here from the rail's profile menu). Tabs are hidden on a phone; the phone's
+  More menu still opens `settings` and `hours` directly.
+- **Forms** also holds the questionnaire tools and results (`Analytics`
+  `embedded`, heading "Questionnaire results"). There is no Analytics rail
+  item; the section id `analytics` remains only for the phone's More menu.
+- **Removed from the desktop Today** (not in the prototype): Next up card
+  (actions are row quick actions + panel), Accreditation card (Hours tab in
+  Settings), "Today" list card, "Needs attention" counts (unpaid past
+  sessions, receipts not sent, forms not returned, waitlist, unlinked events;
+  all still reachable via Money, Calendar filters, Forms, Waitlist), "This week"
+  summary. `TodayCards.tsx` is now unused on desktop.
+- Demo: Orla has an unpaid Friday and Nora a session missing from Google, so
+  Needs a decision shows several of each kind.
