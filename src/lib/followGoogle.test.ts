@@ -719,9 +719,12 @@ describe('C5: a series being changed in the app is left alone', () => {
 function intervalDb(
   series: { id: string; interval_weeks: number; gcal_event_id: string; anchor_at: string; active: boolean; change_lock_until?: string | null; change_lock_token?: string | null },
   sessions: FollowSession[],
-  opts: { failRun?: boolean; loseAnswer?: boolean; unreadable?: boolean } = {},
+  opts: { failRun?: boolean; loseAnswer?: boolean; unreadable?: boolean; commitOnRelease?: boolean; changedByOther?: boolean } = {},
 ) {
   let seq = 0;
+  // commitOnRelease: the RPC call errors on the client while the transaction is
+  // still running; it commits while release() waits on the row lock.
+  let pending: (() => void) | null = null;
   // Same checks as apply_series_interval_change() and the route's claim.
   const db: IntervalDb & { runs: number } = {
     runs: 0,
@@ -733,6 +736,8 @@ function intervalDb(
       return { status: 'ok', token };
     },
     async release(_id, token) {
+      if (pending) { pending(); pending = null; }
+      if (opts.changedByOther) Object.assign(series, { interval_weeks: 3, gcal_event_id: 'someone-elses-repeat' });
       if (series.change_lock_token === token) Object.assign(series, { change_lock_until: null, change_lock_token: null });
     },
     async runChange(p) {
@@ -740,6 +745,10 @@ function intervalDb(
       if (opts.failRun) return { ok: false };
       if (series.change_lock_token !== p.token) return { ok: false };
       if (series.interval_weeks !== p.expect.interval_weeks || series.gcal_event_id !== p.expect.gcal_event_id) return { ok: false };
+      if (opts.commitOnRelease) {
+        pending = () => Object.assign(series, { interval_weeks: p.interval, anchor_at: p.anchor, gcal_event_id: p.newGcal, change_lock_until: null, change_lock_token: null });
+        return { ok: false };
+      }
       for (const s of sessions) {
         if (p.cancel.includes(s.id) && s.status === 'scheduled') s.status = 'cancelled';
         if (p.relink.includes(s.id)) s.gcal_event_id = p.newGcal;
@@ -760,7 +769,7 @@ function intervalDb(
   return db;
 }
 
-async function changeSetup(opts: { failRun?: boolean; loseAnswer?: boolean; unreadable?: boolean; first?: string } = {}) {
+async function changeSetup(opts: { failRun?: boolean; loseAnswer?: boolean; unreadable?: boolean; commitOnRelease?: boolean; changedByOther?: boolean; first?: string } = {}) {
   const cal = new FakeGoogleCalendar();
   const b = book(cal, AOIFE, opts.first ?? '2026-11-17T16:00', 1, 10);
   const row = { ...b.series[0], gcal_event_id: b.gid, change_lock_until: null as string | null, change_lock_token: null as string | null };
@@ -994,6 +1003,23 @@ describe('N1: the change saved but its answer was lost', () => {
     const { cal, b, go } = await changeSetup({ failRun: true, unreadable: true });
     const res = await go();
     expect(res).toMatchObject({ ok: false, status: 500 });
+    expect(cal.calls.some(c => c.op === 'delete')).toBe(false);
+    expect(cal.rawEvent(b.gid)!.recurrence).toEqual(['RRULE:FREQ=WEEKLY']);
+  });
+
+  it('a save still running on the server is waited for, not rolled back', async () => {
+    const { cal, b, row, go } = await changeSetup({ commitOnRelease: true });
+    const res = await go();
+    expect(res.ok).toBe(true);
+    expect(row.interval_weeks).toBe(2);
+    expect(cal.calls.some(c => c.op === 'delete')).toBe(false);                     // new repeat kept
+    expect(cal.rawEvent(b.gid)!.recurrence![0]).toContain('UNTIL=');                // old repeat ended
+  });
+
+  it('if something else changed the series meanwhile, Google is left alone', async () => {
+    const { cal, b, go } = await changeSetup({ failRun: true, changedByOther: true });
+    const res = await go();
+    expect(res).toMatchObject({ ok: false, status: 409 });
     expect(cal.calls.some(c => c.op === 'delete')).toBe(false);
     expect(cal.rawEvent(b.gid)!.recurrence).toEqual(['RRULE:FREQ=WEEKLY']);
   });

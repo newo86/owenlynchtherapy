@@ -221,10 +221,16 @@ export async function changeSeriesInterval(
       fee: template.fee,
     })) : [],
   });
+  let oldStillThere = false;
   if (!saved.ok) {
-    // The answer may have been lost after the transaction committed. Look
-    // before rolling back: deleting the new repeat while the app already
-    // points at it would make the next sync end the series.
+    // The answer may have been lost after the transaction committed, or the
+    // transaction may still be running on the server. Release the lock first:
+    // the release waits on the transaction's row lock, and once it has cleared
+    // the token a transaction that hasn't started yet can't commit. Only then
+    // read, and only roll Google back if the row still shows the old rhythm.
+    // (Deleting the new repeat while the app points at it would make the next
+    // sync end the series.)
+    await db.release(series.id, token);
     const nowRow = await db.readSeries(series.id);
     if (nowRow === null) {
       console.error('[seriesInterval] change outcome unknown; Google left as it is');
@@ -236,7 +242,18 @@ export async function changeSeriesInterval(
     if (nowRow.interval_weeks === weeks && nowRow.gcal_event_id === started.id
         && new Date(nowRow.anchor_at).getTime() === new Date(plan.effectiveFrom).getTime()) {
       saved = { ok: true, added: -1 };                     // it did save; carry on
+    } else if (nowRow.interval_weeks === expect.interval_weeks && nowRow.gcal_event_id === expect.gcal_event_id) {
+      oldStillThere = true;
     }
+  }
+  if (!saved.ok && !oldStillThere) {
+    // Something else changed the series meanwhile: leave Google alone rather
+    // than undo someone else's change.
+    console.error('[seriesInterval] series changed by something else during the change; Google left as it is');
+    return {
+      ok: false, status: 409,
+      message: 'This client’s repeat was changed by something else at the same time, so nothing more was done. Check this client’s sessions: Google Calendar may show an extra repeat for now.',
+    };
   }
   if (!saved.ok) {
     // Put Google back so both stay as they were.
