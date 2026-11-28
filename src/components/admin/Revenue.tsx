@@ -352,7 +352,7 @@ export function Revenue({ clients }: Props) {
           <div className="admin-stat-blob" style={{ background: '#d8e8de' }} aria-hidden />
           <div className="admin-stat-top">
             <div className="admin-stat-label">Accreditation hours</div>
-            <div className="admin-stat-icontile" style={{ background: 'rgba(79,138,104,0.14)', color: 'var(--sage)' }}>
+            <div className="admin-stat-icontile" style={{ background: 'rgba(79,138,104,0.14)', color: 'var(--sd-rail)' }}>
               <GraduationCap size={20} strokeWidth={1.7} aria-hidden />
             </div>
           </div>
@@ -593,7 +593,7 @@ function RevenueCard({ label, accent, totals, subtext, Icon, emphasised, grossNo
       </div>
       <div className="admin-stat-foot" style={{ marginTop: 10 }}>{subtext}</div>
       {onClick && (
-        <div style={{ marginTop: 10, fontSize: 11, color: 'var(--sage)', fontWeight: 500 }}>
+        <div style={{ marginTop: 10, fontSize: 11, color: 'var(--sd-rail)', fontWeight: 500 }}>
           View sessions ↗
         </div>
       )}

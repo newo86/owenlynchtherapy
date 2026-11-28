@@ -82,6 +82,11 @@ describe('demo world', () => {
     expect(world.sessions.filter(s => s.session_date.startsWith('2026-11-24') && s.status === 'scheduled').length).toBeGreaterThan(0);
     expect(world.prompts.length).toBeGreaterThan(0);
   });
+  it('can show the calendar-not-connected warning', () => {
+    const off = buildDemoWorld(now, { calendarConnected: false });
+    expect(demoRoute(off, 'GET', '/api/auth/google/status').body).toEqual({ connected: false });
+    expect(demoRoute(world, 'GET', '/api/auth/google/status').body).toMatchObject({ connected: true });
+  });
   it('answers reads and ignores writes; unknown paths are a 404, never the network', () => {
     expect(demoRoute(world, 'GET', '/api/admin/clients').status).toBe(200);
     expect(demoRoute(world, 'GET', '/api/admin/calendar?weekOffset=0&weeks=4').status).toBe(200);

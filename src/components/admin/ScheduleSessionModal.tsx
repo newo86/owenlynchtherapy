@@ -275,7 +275,7 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
 
           {done && (
             <p style={{
-              margin: 0, fontSize: 13, color: 'var(--sage)',
+              margin: 0, fontSize: 13, color: 'var(--sd-rail)',
               display: 'inline-flex', alignItems: 'center', gap: 6,
             }}>
               <Check size={14} strokeWidth={2.4} /> Scheduled.

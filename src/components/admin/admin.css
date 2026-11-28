@@ -52,7 +52,7 @@
   --sage-soft:     #a8c8b5;
   --gold:          #D4A843;
   --gold-soft:     #ebd28a;
-  --gold-dark:     #a3801a;
+  --gold-dark:     #7A5E12;
   --lilac:         #a87cb9;
   --lilac-soft:    #dfceea;
   --lilac-dark:    #7c5a8e;
@@ -638,7 +638,7 @@
   font-family: var(--font-poppins), sans-serif;
   font-size: 12px;
   font-weight: 500;
-  color: var(--sage);
+  color: var(--sd-rail);
   letter-spacing: 0.5px;
 }
 
@@ -653,7 +653,7 @@
   z-index: 1;
 }
 
-.admin-stat-foot.ok { color: var(--sage); }
+.admin-stat-foot.ok { color: var(--sd-rail); }
 .admin-stat-foot.warn { color: var(--sd-danger); }
 
 /* ── Two-column row (sessions + quick actions) ───────────────────────── */
@@ -736,14 +736,14 @@
 }
 
 .admin-tag-intake    { background: rgba(212, 168, 67, 0.18); color: #a3801a; }
-.admin-tag-session   { background: rgba(79, 138, 104, 0.18); color: var(--sage); }
+.admin-tag-session   { background: rgba(79, 138, 104, 0.18); color: var(--sd-rail); }
 .admin-tag-online    { background: rgba(168, 124, 185, 0.16); color: var(--lilac-dark); }
 .admin-tag-inperson  { background: var(--sd-pill);  color: var(--sd-ink); }
-.admin-tag-paid      { background: rgba(79, 138, 104, 0.18); color: var(--sage); }
+.admin-tag-paid      { background: rgba(79, 138, 104, 0.18); color: var(--sd-rail); }
 .admin-tag-unpaid    { background: rgba(179, 38, 30, 0.16);  color: var(--sd-danger); }
 .admin-tag-scheduled { background: rgba(110, 125, 114, 0.16); color: var(--ink-muted); }
 .admin-tag-attended  { background: rgba(212, 168, 67, 0.18); color: var(--gold-dark); }
-.admin-tag-active    { background: rgba(79, 138, 104, 0.16); color: var(--sage); }
+.admin-tag-active    { background: rgba(79, 138, 104, 0.16); color: var(--sd-rail); }
 .admin-tag-new       { background: rgba(212, 168, 67, 0.18); color: var(--gold-dark); }
 .admin-tag-pause     { background: rgba(110, 125, 114, 0.18); color: var(--ink-muted); }
 
@@ -789,7 +789,7 @@
 }
 
 .admin-task.warn  .admin-task-eyebrow { color: var(--sd-danger); }
-.admin-task.info  .admin-task-eyebrow { color: var(--sage); }
+.admin-task.info  .admin-task-eyebrow { color: var(--sd-rail); }
 .admin-task.gold  .admin-task-eyebrow { color: var(--gold-dark); }
 .admin-task.lilac .admin-task-eyebrow { color: var(--lilac-dark); }
 
@@ -923,7 +923,7 @@
 
 .admin-event-time {
   font-family: var(--font-poppins), sans-serif;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--ink-muted);
 }
@@ -938,7 +938,7 @@
 }
 
 .admin-event.e-sage  { background: rgba(79, 138, 104, 0.08);  border-left-color: var(--sage); }
-.admin-event.e-sage  .admin-event-time { color: var(--sage); }
+.admin-event.e-sage  .admin-event-time { color: var(--sd-rail); }
 .admin-event.e-terra { background: rgba(251, 184, 7, 0.12);   border-left-color: var(--sd-art-yellow); }
 .admin-event.e-terra .admin-event-time { color: var(--sd-ink); }
 .admin-event.e-gold  { background: rgba(212, 168, 67, 0.10);  border-left-color: var(--gold); }
@@ -1016,7 +1016,7 @@
 /* Quick-pay tick — filled white pill with a sage check once paid. */
 .admin-event-action-btn.is-paid {
   background: white;
-  color: var(--sage);
+  color: var(--sd-rail);
 }
 
 @media (hover: hover) {
@@ -1081,7 +1081,7 @@
 
 .admin-revenue-delta {
   font-size: 12px;
-  color: var(--sage);
+  color: var(--sd-rail);
   font-weight: 500;
   margin-left: 8px;
 }
@@ -1488,7 +1488,7 @@
 /* ── Session row parts (Dashboard → Today) ───────────────────────────── */
 .admin-session-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; min-width: 0; }
 .admin-session-tags, .admin-session-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-.admin-session-sent { font-size: 10px; color: var(--sage); font-weight: 500; text-align: right; }
+.admin-session-sent { font-size: 10px; color: var(--sd-rail); font-weight: 500; text-align: right; }
 
 /* ── Phone tab bar + More sheet ──────────────────────────────────────── */
 .admin-tabbar { display: none; }
@@ -1713,7 +1713,7 @@
   background: white; font-family: inherit; font-size: 15px; color: var(--forest-deep);
 }
 .admin-hours-form button[type="submit"] { align-self: flex-start; min-height: 44px; }
-.admin-hours-msg { margin: 0; font-size: 13px; color: var(--sage); }
+.admin-hours-msg { margin: 0; font-size: 13px; color: var(--sd-rail); }
 .admin-hours-msg.is-error { color: var(--sd-danger); }
 .admin-hours-subhead { margin: 22px 0 8px; font-size: 14px; font-weight: 500; color: var(--forest-deep); }
 .admin-hours-note { margin: 0; font-size: 13px; color: var(--ink-muted); }
@@ -1753,7 +1753,7 @@
 .admin-formlib-list { list-style: none; margin: 0; padding: 0; }
 .admin-formlib-list li { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); }
 .admin-formlib-list li:first-child { border-top: 0; }
-.admin-formlib-icon { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(79, 138, 104, 0.12); color: var(--sage); }
+.admin-formlib-icon { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(79, 138, 104, 0.12); color: var(--sd-rail); }
 .admin-formlib-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .admin-formlib-text b { font-weight: 500; font-size: 15px; color: var(--forest-deep); }
 .admin-formlib-text span { font-size: 13px; color: var(--ink-muted); }
@@ -1891,10 +1891,10 @@
 .admin-session-who { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .admin-session-row .admin-session-name { background: none; border: 0; padding: 0; text-align: left; cursor: pointer; font-family: inherit; font-size: 15px; font-weight: 500; color: var(--forest-deep); }
 .admin-session-row .admin-session-meta { font-size: 13px; color: var(--ink-muted); }
-.admin-session-meta .is-paid { color: var(--sage); }
+.admin-session-meta .is-paid { color: var(--sd-rail); }
 .admin-session-meta .is-unpaid { color: var(--sd-danger); }
-.admin-session-room { font-size: 12px; color: var(--sage); }
-.admin-session-feedback { font-size: 12px; color: var(--sage); }
+.admin-session-room { font-size: 12px; color: var(--sd-rail); }
+.admin-session-feedback { font-size: 12px; color: var(--sd-rail); }
 @media (max-width: 768px) {
   .admin-session-row { grid-template-columns: auto 4px minmax(0, 1fr); gap: 8px 12px; }
   .admin-session-row .admin-session-time { font-size: 16px; }
@@ -2022,7 +2022,7 @@
 .admin-qa-bulklist li:first-child { border-top: 0; }
 .admin-qa-bulklist label { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; cursor: pointer; width: 100%; min-height: 28px; }
 .admin-qa-bulklist input { width: 18px; height: 18px; accent-color: var(--forest-deep); }
-.admin-qa-bulklist li.is-sent span:last-child { color: var(--sage); font-weight: 500; }
+.admin-qa-bulklist li.is-sent span:last-child { color: var(--sd-rail); font-weight: 500; }
 .admin-qa-bulklist li.is-failed span:last-child, .admin-qa-bulklist li.is-emails_off span:last-child { color: var(--sd-danger); }
 .admin-qa-bulklist li[class*="is-skipped"] span:last-child { color: var(--ink-muted); }
 .admin-qa-bulksummary { margin: 0; font-size: 15px; color: var(--forest-deep); }

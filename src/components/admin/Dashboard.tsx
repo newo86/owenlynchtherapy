@@ -337,6 +337,13 @@ export function Dashboard({
           title="Today"
           subtitle={new Date().toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Dublin' })}
         />
+        {/* The calm "Calendar connected" pill is hidden on phones (small text can't sit on the band),
+            but "not connected" is a warning Owen must see, so it gets its own row. */}
+        {calendarStatus && !calendarStatus.connected && (
+          <button type="button" className="sd-notice" onClick={onConnectCalendar}>
+            Google Calendar isn&apos;t connected. Tap to reconnect.
+          </button>
+        )}
         {strip && strip.tone !== 'ok' && (
           <div className={`admin-banner is-${strip.tone}`} role="alert">
             <span className="admin-banner-dot" aria-hidden />{strip.msg}

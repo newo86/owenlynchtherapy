@@ -132,7 +132,7 @@ export function ClientsList({ clients, submissions, onOpen, onNewClient, onSched
                 >
                   <CalendarDays size={13} strokeWidth={1.8} aria-hidden style={{ color: up ? 'var(--sage)' : 'var(--ink-muted)', flexShrink: 0 }} />
                   {up
-                    ? <span><span style={{ color: 'var(--sage)', fontWeight: 500 }}>Next</span>&nbsp; {formatDate(up.session_date)}, {formatTime(up.session_date)}</span>
+                    ? <span><span style={{ color: 'var(--sd-rail)', fontWeight: 500 }}>Next</span>&nbsp; {formatDate(up.session_date)}, {formatTime(up.session_date)}</span>
                     : <span>No upcoming session</span>}
                 </div>
               </button>

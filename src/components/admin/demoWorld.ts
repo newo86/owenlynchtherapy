@@ -44,6 +44,8 @@ export interface DemoWorld {
   waitlist: WaitlistRow[];
   prompts: Array<Record<string, unknown>>;
   settings: PracticeSettings;
+  /** false shows the "Calendar not connected" warning (demo: add ?calendar=off to the URL). */
+  calendarConnected: boolean;
 }
 
 function dublinDate(nowMs: number): { y: number; m: number; d: number } {
@@ -93,7 +95,7 @@ function demoSettings(): PracticeSettings {
 }
 
 /** Build the whole fake practice around `nowMs` (a Tuesday 15:20, Dublin). */
-export function buildDemoWorld(nowMs: number): DemoWorld {
+export function buildDemoWorld(nowMs: number, opts: { calendarConnected?: boolean } = {}): DemoWorld {
   const sessions: SessionRow[] = [];
   const clients: ClientRow[] = [];
   const events: CalendarEvent[] = [];
@@ -174,6 +176,7 @@ export function buildDemoWorld(nowMs: number): DemoWorld {
       { id: 'demo-w2', full_name: 'Maeve Notreal', email: 'maeve@example.com', phone: null, reason: null, status: 'waiting', created_at: created, contacted_at: null, format_preference: 'either' },
     ],
     settings: demoSettings(),
+    calendarConnected: opts.calendarConnected ?? true,
   };
 }
 
@@ -199,7 +202,7 @@ export function demoRoute(world: DemoWorld, method: string, rawUrl: string): Dem
     case '/api/admin/clients': return ok({ clients: world.clients });
     case '/api/intake/tokens': return ok({ tokens: world.tokens });
     case '/api/intake/submissions': return ok({ submissions: world.submissions });
-    case '/api/auth/google/status': return ok({ connected: true, email: 'diary@example.com' });
+    case '/api/auth/google/status': return ok(world.calendarConnected ? { connected: true, email: 'diary@example.com' } : { connected: false });
     case '/api/admin/reminders/status':
       return ok({
         lastRun: { ran_at: new Date(world.nowMs - 9 * 3600_000).toISOString(), outcome: 'completed', candidates: 3, sent: 3, skipped: 0, failed: 0, detail: null },

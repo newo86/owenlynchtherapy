@@ -500,7 +500,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
             <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-danger)' }}>{error}</p>
           )}
           {saved && (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--sage)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-rail)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <Check size={14} strokeWidth={2.4} /> Saved.
             </p>
           )}

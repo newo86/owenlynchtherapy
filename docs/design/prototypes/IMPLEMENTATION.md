@@ -40,6 +40,7 @@ by Dashboard's phone branch). Layouts and navigation are unchanged.
   settings, router `demoRoute`) + `demoData.ts`. Add an endpoint by adding a
   `case` in `demoRoute`. Unknown endpoints return 404 (never the network);
   writes are accepted and ignored.
+- `/admin-demo?calendar=off` shows the "Google Calendar isn't connected" warning.
 - "Now" is shifted to Tuesday 15:20 of the current week (`demoClock.ts`), so
   Today has three clients and Friday is later this week.
 - Gate: `demoGate.ts` `isDemoAllowed` = NODE_ENV development AND path under

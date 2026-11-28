@@ -169,7 +169,7 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
             <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: 0 }}>
               {client.full_name} · {formatDateTime(session.session_date)}
             </p>
-            <p style={{ fontSize: 12, color: 'var(--sage)', margin: '8px 0 0', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 12, color: 'var(--sd-rail)', margin: '8px 0 0', lineHeight: 1.5 }}>
               {contents}
             </p>
             {(session.session_reminders?.length ?? 0) > 0 && (

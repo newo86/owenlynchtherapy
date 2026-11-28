@@ -319,7 +319,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                       href={PRACTICE.telehealthUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ display: 'block', fontSize: 11, color: 'var(--sage)', textDecoration: 'underline', textUnderlineOffset: 2, marginTop: 2 }}
+                      style={{ display: 'block', fontSize: 11, color: 'var(--sd-rail)', textDecoration: 'underline', textUnderlineOffset: 2, marginTop: 2 }}
                     >Open video room ↗</a>
                   )}
                 </td>
@@ -337,7 +337,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     </span>
                   )}
                   {s.receipt_sent_at && (
-                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sage)', marginTop: 3, fontWeight: 500 }}>
+                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sd-rail)', marginTop: 3, fontWeight: 500 }}>
                       ✓ Receipt sent {shortWhen(s.receipt_sent_at)}
                     </span>
                   )}
@@ -345,7 +345,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                 <td className="st-status" data-label="Status">
                   <span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span>
                   {lastReminderAt(s) && (
-                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sage)', marginTop: 3, fontWeight: 500 }}>
+                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sd-rail)', marginTop: 3, fontWeight: 500 }}>
                       ✓ Reminder sent {shortWhen(lastReminderAt(s)!)}
                     </span>
                   )}
@@ -393,7 +393,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   {feedback?.id === s.id && (
                     <div style={{
                       marginTop: 8, fontSize: 11,
-                      color: feedback.kind === 'ok' ? 'var(--sage)' : 'var(--sd-danger)',
+                      color: feedback.kind === 'ok' ? 'var(--sd-rail)' : 'var(--sd-danger)',
                     }}>
                       {feedback.msg}
                     </div>

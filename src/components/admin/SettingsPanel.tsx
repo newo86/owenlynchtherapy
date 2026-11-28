@@ -402,7 +402,7 @@ export function SettingsPanel() {
         {feedback && (
           <span role="status" style={{
             fontSize: 13,
-            color: feedback.kind === 'ok' ? 'var(--sage)' : 'var(--sd-danger)',
+            color: feedback.kind === 'ok' ? 'var(--sd-rail)' : 'var(--sd-danger)',
           }}>
             {feedback.msg}
           </span>
@@ -423,7 +423,7 @@ export function SettingsPanel() {
           {backupNote && (
             <span role="status" style={{
               fontSize: 13,
-              color: backupNote.kind === 'ok' ? 'var(--sage)' : 'var(--sd-danger)',
+              color: backupNote.kind === 'ok' ? 'var(--sd-rail)' : 'var(--sd-danger)',
             }}>
               {backupNote.msg}
             </span>
@@ -457,7 +457,7 @@ export function SettingsPanel() {
           {testNote && (
             <span role="status" style={{
               fontSize: 13,
-              color: testNote.kind === 'ok' ? 'var(--sage)' : 'var(--sd-danger)',
+              color: testNote.kind === 'ok' ? 'var(--sd-rail)' : 'var(--sd-danger)',
             }}>
               {testNote.msg}
             </span>

@@ -217,7 +217,7 @@ export function StatementImport({ clients, onReload }: Props) {
           )}
 
           {result && (
-            <p style={{ fontSize: 13, color: 'var(--sage)', margin: 0, fontWeight: 500 }}>{result}</p>
+            <p style={{ fontSize: 13, color: 'var(--sd-rail)', margin: 0, fontWeight: 500 }}>{result}</p>
           )}
 
           {!parseError && !result && matches.length === 0 && unmatched.length === 0 && (

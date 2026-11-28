@@ -343,7 +343,7 @@ export function CalendarWeekGrid({
             <dt>Time</dt><dd>{ev.time} · {PRACTICE.sessionMinutes} min</dd>
             <dt>Type</dt><dd>{TYPE_LABEL[ev.accent]}</dd>
             <dt>Session</dt><dd>Number {n}</dd>
-            <dt>Fee</dt><dd>€{Math.round(s.fee / 100)} · <span style={{ color: paid ? 'var(--sage)' : isOwed(s) ? 'var(--sd-danger)' : 'var(--ink-muted)' }}>{paid ? 'paid' : isOwed(s) ? 'not paid' : 'not due yet'}</span></dd>
+            <dt>Fee</dt><dd>€{Math.round(s.fee / 100)} · <span style={{ color: paid ? 'var(--sd-rail)' : isOwed(s) ? 'var(--sd-danger)' : 'var(--ink-muted)' }}>{paid ? 'paid' : isOwed(s) ? 'not paid' : 'not due yet'}</span></dd>
             <dt>Reminder</dt><dd>{c.reminders_opted_out ? 'Client opted out' : dot ? dot.title.split(' — ')[0] : 'None'}</dd>
           </dl>
         </div>

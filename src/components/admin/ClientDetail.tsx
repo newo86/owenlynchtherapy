@@ -549,7 +549,7 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
                     <p className="admin-eyebrow" style={{ margin: 0 }}>Contact details</p>
                     {!editingContact ? (
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        {contactSaved && <span style={{ fontSize: 11, color: 'var(--sage)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={11} /> Saved</span>}
+                        {contactSaved && <span style={{ fontSize: 11, color: 'var(--sd-rail)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={11} /> Saved</span>}
                         {canFillFromIntake && (
                           <button
                             type="button"
@@ -568,7 +568,7 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
                       </div>
                     ) : (
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        {contactSaved && <span style={{ fontSize: 11, color: 'var(--sage)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={11} /> Saved</span>}
+                        {contactSaved && <span style={{ fontSize: 11, color: 'var(--sd-rail)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Check size={11} /> Saved</span>}
                         <button type="button" onClick={() => { setEditingContact(false); setContactFields(toContactFields(client)); }} className="admin-btn-secondary" style={{ padding: '6px 12px', fontSize: 11 }}>Cancel</button>
                         <button type="button" onClick={saveContact} disabled={contactSaving} className="admin-btn-primary" style={{ padding: '6px 14px', fontSize: 11 }}>
                           {contactSaving ? 'Saving…' : 'Save'}

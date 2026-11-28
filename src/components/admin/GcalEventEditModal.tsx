@@ -268,7 +268,7 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
                         </div>
                       </div>
                       {selectedId === c.id && (
-                        <span style={{ color: 'var(--sage)', fontSize: 13, fontWeight: 600 }}>✓</span>
+                        <span style={{ color: 'var(--sd-rail)', fontSize: 13, fontWeight: 600 }}>✓</span>
                       )}
                     </button>
                   ))
@@ -297,7 +297,7 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
             <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-danger)' }}>{error}</p>
           )}
           {saved && (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--sage)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-rail)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <Check size={14} strokeWidth={2.4} /> Saved.
             </p>
           )}

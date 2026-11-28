@@ -121,3 +121,12 @@
 .admin-root .sd-option.is-danger .sd-option-title { color: var(--sd-danger); }
 .admin-root .sd-option.is-danger:hover { background: var(--sd-danger-soft); }
 .admin-root .sd-option.is-danger:hover .sd-option-icon { background: var(--sd-danger); color: #fff; }
+
+/* ── Notice row: a warning that must be seen (danger text on danger-soft, 5.3:1) ── */
+.admin-root .sd-notice {
+  display: flex; align-items: center; width: 100%; min-height: 44px; padding: 10px 14px; margin: 0 0 16px;
+  border: 0; border-radius: var(--sd-radius-tile);
+  background: var(--sd-danger-soft); color: var(--sd-danger);
+  font-family: inherit; font-size: 15px; font-weight: 600; line-height: 1.35; text-align: left; cursor: pointer;
+}
+.admin-root .sd-notice:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }

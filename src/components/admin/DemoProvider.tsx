@@ -17,7 +17,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isDemoAllowed(process.env.NODE_ENV, window.location.pathname)) return;
     const restoreClock = installDemoClock(demoNowMs(Date.now()));
-    const world = buildDemoWorld(Date.now());
+    const world = buildDemoWorld(Date.now(), { calendarConnected: new URLSearchParams(window.location.search).get('calendar') !== 'off' });
     const installed = setDemoHandler((url, init) => {
       const { status, body } = demoRoute(world, init.method ?? 'GET', url);
       return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
