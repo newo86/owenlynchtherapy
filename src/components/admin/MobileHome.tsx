@@ -188,7 +188,7 @@ export function MobileHome({ clients, todaySessions, onOpenSession, onBooked }: 
 
       <PaymentPromptsPanel onChanged={onBooked} compact />
 
-      <FollowedFromGooglePanel onChanged={onBooked} />
+      <FollowedFromGooglePanel onChanged={onBooked} compact />
 
       <section className="m-free" aria-label="Free times">
         <h2 className="admin-h2">Free times</h2>

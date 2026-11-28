@@ -5,9 +5,17 @@
 // exceptions (moved or deleted). It answers the four calls the app makes
 // (list with singleEvents, get, instances, patch/delete/insert) with the same
 // shapes and quirks that matter here:
-//   - instance ids are `<base>_<UTC stamp>Z`, also for a split series
-//     (`<base>_R<stamp>` masters), as seen in production
-//   - list and instances leave deleted occurrences out unless showDeleted
+//   - instance ids are `<part id>_<UTC stamp>Z`: `<base>_<stamp>Z` for the
+//     original series, `<base>_R<split stamp>_<stamp>Z` for the part made by
+//     "this and following" (`<base>_R<split stamp>`); exceptions are kept per
+//     part
+//   - list and instances leave deleted occurrences out unless showDeleted;
+//     a deleted occurrence comes back with only id, status, recurringEventId
+//     and originalStartTime (no start/end), like Google's
+//   - an "all events" rule change drops the series' exceptions (moves and
+//     deletions), as Google does
+//   - EXDATE dates simply don't exist: not listed, even with showDeleted, and
+//     get on their id is a 404
 //   - get on a deleted event returns it with status 'cancelled'; a purged or
 //     unknown id is a 404; deleting twice is a 410
 //   - list and instances page by maxResults (or a smaller `pageSize`)
@@ -108,9 +116,20 @@ export class FakeGoogleCalendar {
     return id;
   }
 
+  /** The part of a series (original or a "this and following" split) whose
+   *  rule generates `originalLocal`. */
+  partFor(seriesId: string, originalLocal: string): string {
+    const ms = new Date(isoOf(originalLocal)).getTime();
+    for (const id of this.familyIds(seriesId)) {
+      const m = this.events.get(id)!;
+      if (this.ruleDates(m).includes(ms)) return id;
+    }
+    return seriesId;
+  }
+
   /** The instance id Google gives the occurrence a series put at `originalLocal`. */
   instanceId(seriesId: string, originalLocal: string): string {
-    return `${baseOf(seriesId)}_${utcStamp(new Date(isoOf(originalLocal)).getTime())}Z`;
+    return `${this.partFor(seriesId, originalLocal)}_${utcStamp(new Date(isoOf(originalLocal)).getTime())}Z`;
   }
 
   /** "Delete this event" on one occurrence. */
@@ -121,9 +140,15 @@ export class FakeGoogleCalendar {
 
   /** Drag one occurrence to another time. */
   moveOccurrence(seriesId: string, originalLocal: string, newLocal: string): void {
-    const m = this.events.get(seriesId)!;
     const iid = this.instanceId(seriesId, originalLocal);
+    const m = this.events.get(partOf(iid))!;
     this.exceptions.set(iid, { status: 'confirmed', start: dt(newLocal), end: dt(addMinutes(newLocal, minutesBetween(m.start, m.end))) });
+  }
+
+  /** Remove one date from the rule itself (an EXDATE line). */
+  excludeDate(seriesId: string, originalLocal: string): void {
+    const m = this.events.get(this.partFor(seriesId, originalLocal))!;
+    m.recurrence = [...(m.recurrence ?? []), `EXDATE:${utcStamp(new Date(isoOf(originalLocal)).getTime())}Z`];
   }
 
   /** "Delete all events" on a series (or delete a one-off). */
@@ -132,8 +157,12 @@ export class FakeGoogleCalendar {
   /** The event vanishes completely (get → 404). */
   purge(id: string): void { this.events.get(id)!.purged = true; }
 
-  /** Edit the repeat for "all events" (same first date). */
-  setRule(id: string, rrule: string): void { this.events.get(id)!.recurrence = [rrule]; }
+  /** Edit the repeat for "all events" (same first date). Google drops the
+   *  series' moved and deleted occurrences when the rule changes. */
+  setRule(id: string, rrule: string): void {
+    this.events.get(id)!.recurrence = [rrule];
+    for (const k of [...this.exceptions.keys()]) if (partOf(k) === id) this.exceptions.delete(k);
+  }
 
   /** "This and following events" with a new repeat rule: the old series ends
    *  the day before, a new `<base>_R<stamp>` series starts at `fromLocal`. */
@@ -168,30 +197,45 @@ export class FakeGoogleCalendar {
 
   // ── Expansion ────────────────────────────────────────────────────────────
 
-  private expand(m: StoredEvent, fromMs: number, toMs: number, showDeleted: boolean): EventLike[] {
-    if (m.status === 'cancelled' && !showDeleted) return [];
+  /** Every date (UTC ms) the rule generates, EXDATEs removed (capped). */
+  private ruleDates(m: StoredEvent, limitMs = Infinity): number[] {
     if (!m.recurrence?.length) return [];
     const rr = parseRrule(m.recurrence);
     if (!rr) return [];
+    const ex = exdates(m.recurrence);
     const startLocal = localOf(m.start);
-    const minutes = minutesBetween(m.start, m.end);
     const step = rr.freq === 'DAILY' ? rr.interval : 7 * rr.interval;
-    const out: EventLike[] = [];
-    for (let k = 0; k < 2000; k++) {
+    const out: number[] = [];
+    for (let k = 0; k < 600; k++) {
       if (rr.count !== undefined && k >= rr.count) break;
-      const local = addDaysLocal(startLocal, step * k);
-      const ms = new Date(isoOf(local)).getTime();
+      const ms = new Date(isoOf(addDaysLocal(startLocal, step * k))).getTime();
       if (rr.untilMs !== undefined && ms > rr.untilMs) break;
-      if (ms > toMs + 7 * 86_400_000 * 5) break;
-      const iid = `${baseOf(m.id)}_${utcStamp(ms)}Z`;
+      if (ms > limitMs) break;
+      if (!ex.has(ms)) out.push(ms);
+    }
+    return out;
+  }
+
+  private expand(m: StoredEvent, fromMs: number, toMs: number, showDeleted: boolean): EventLike[] {
+    if (m.status === 'cancelled' && !showDeleted) return [];
+    const minutes = minutesBetween(m.start, m.end);
+    const out: EventLike[] = [];
+    for (const ms of this.ruleDates(m, toMs + 7 * 86_400_000 * 10)) {
+      const local = utcToDublinLocal(new Date(ms).toISOString());
+      const iid = `${m.id}_${utcStamp(ms)}Z`;
       const ex = this.exceptions.get(iid);
       const status = m.status === 'cancelled' ? 'cancelled' : ex?.status ?? 'confirmed';
       const start = ex?.start ?? dt(local);
       const end = ex?.end ?? dt(addMinutes(local, minutes));
-      const sMs = new Date(start.dateTime!).getTime();
-      const eMs = new Date(end.dateTime!).getTime();
+      // A deleted occurrence is placed by where the rule put it.
+      const sMs = status === 'cancelled' ? ms : new Date(start.dateTime!).getTime();
+      const eMs = status === 'cancelled' ? ms + minutes * 60_000 : new Date(end.dateTime!).getTime();
       if (eMs <= fromMs || sMs >= toMs) continue;
-      if (status === 'cancelled' && !showDeleted) continue;
+      if (status === 'cancelled') {
+        if (!showDeleted) continue;
+        out.push({ id: iid, status, recurringEventId: m.id, originalStartTime: dt(local) });
+        continue;
+      }
       out.push({
         id: iid, status, summary: ex?.summary ?? m.summary, location: ex?.location ?? m.location,
         recurringEventId: m.id, start, end, originalStartTime: dt(local),
@@ -205,11 +249,11 @@ export class FakeGoogleCalendar {
   }
 
   private findInstance(iid: string): EventLike | null {
-    const base = baseOf(iid);
     const stamp = /_(\d{8}T\d{6})Z$/.exec(iid)?.[1];
-    if (!stamp) return null;
+    const m = this.events.get(partOf(iid));
+    if (!stamp || !m || m.purged) return null;
     const ms = Date.UTC(+stamp.slice(0, 4), +stamp.slice(4, 6) - 1, +stamp.slice(6, 8), +stamp.slice(9, 11), +stamp.slice(11, 13));
-    return this.expandFamily(base, ms - 60 * 86_400_000, ms + 60 * 86_400_000, true).find(e => e.id === iid) ?? null;
+    return this.expand(m, ms - 60 * 86_400_000, ms + 60 * 86_400_000, true).find(e => e.id === iid) ?? null;
   }
 
   private check(op: string, eventId?: string, body?: Record<string, unknown>) {
@@ -325,6 +369,25 @@ export class FakeGoogleCalendar {
       },
     };
   }
+}
+
+/** The series part an instance id belongs to (its id minus `_<stamp>Z`). */
+function partOf(iid: string): string { return iid.replace(/_\d{8}T\d{6}Z$/, ''); }
+
+/** EXDATE lines (UTC `…Z` or `TZID=Europe/Dublin:` local) as UTC ms. */
+function exdates(recurrence: string[]): Set<number> {
+  const out = new Set<number>();
+  for (const line of recurrence) {
+    const m = /^EXDATE(;TZID=[^:]+)?:(.+)$/i.exec(line);
+    if (!m) continue;
+    for (const v of m[2].split(',')) {
+      const x = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z?)$/.exec(v.trim());
+      if (!x) continue;
+      const [, y, mo, d, h, mi, , z] = x;
+      out.add(z ? Date.UTC(+y, +mo - 1, +d, +h, +mi) : new Date(isoOf(`${y}-${mo}-${d}T${h}:${mi}`)).getTime());
+    }
+  }
+  return out;
 }
 
 /** The app sends Dublin wall-clock dateTimes; store them as UTC like Google returns. */

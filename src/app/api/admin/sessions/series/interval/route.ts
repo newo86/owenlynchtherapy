@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
-import { utcToDublinLocal } from '@/lib/dateUtils';
+import { google } from 'googleapis';
+import { getAuthorizedClient } from '@/lib/googleOAuth';
 import { inPersonAddressFor } from '@/lib/emailTemplates';
-import { planIntervalChange, type IntervalSession } from '@/lib/sessionSeries';
-import { withGoogle, resolveEventId, insertSessionEvent, deleteEvent } from '@/lib/googleSessionEvents';
-import { sessionEventFields } from '@/lib/calendarFix';
-import { readRepeat, startNewRepeat, endOldRepeat, describeIntervalPlan, freqLabel } from '@/lib/seriesInterval';
-import { formatShortDay } from '@/lib/dateUtils';
+import { planIntervalChange } from '@/lib/sessionSeries';
+import type { CalLike } from '@/lib/googleSessionEvents';
+import { changeSeriesInterval, describeIntervalPlan, type IntervalDb, type SeriesSessionRow } from '@/lib/seriesInterval';
 
 // Change how often an ongoing client comes (client record → "How often").
 //
@@ -16,11 +15,13 @@ import { formatShortDay } from '@/lib/dateUtils';
 //   POST { series_id, interval_weeks, confirm: true } → do it
 //
 // The app is the source here, so Google is updated to match
-// (src/lib/seriesInterval.ts): the old repeating event ends the day before,
-// and a new one starts on the first date of the new rhythm. Sessions that no
-// longer fit are cancelled in the app; getting more frequent adds the new
-// in-between weeks. If Google isn't connected or refuses the change, nothing
-// is changed in the app either (otherwise the 5-minute job would see Google's
+// (src/lib/seriesInterval.ts, changeSeriesInterval): the series row is
+// claimed first (a short lock: a double tap, a second tab or the 5-minute job
+// can't act at the same time; a refused claim → 409 and nothing done), the
+// new repeat is started in Google, every database step runs in ONE
+// transaction, and only then is the old repeat ended. If the database step
+// fails, Google is put back. If Google isn't connected or refuses, nothing is
+// changed in the app either (otherwise the 5-minute job would see Google's
 // old rhythm and follow it straight back). Nothing emails the client.
 // Admin session required.
 
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
   const denied = await requireAdmin(req);
   if (denied) return denied;
 
-  let body: { series_id?: unknown; interval_weeks?: unknown; confirm?: unknown };
+  let body: { series_id?: unknown; interval_weeks?: unknown; from_weeks?: unknown; confirm?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -47,7 +48,12 @@ export async function POST(req: NextRequest) {
   const { data: series } = await supabaseAdmin.from('session_series')
     .select('id, client_id, interval_weeks, gcal_event_id, anchor_at, active').eq('id', seriesId).maybeSingle();
   if (!series || !series.active || !series.gcal_event_id) {
+    // (The preview never locks; the change itself claims the row first.)
     return NextResponse.json({ ok: false, message: 'This client has no ongoing series to change.' }, { status: 409, headers: noCache });
+  }
+  // The rhythm the page showed: if it has changed since, do nothing.
+  if (body.from_weeks !== undefined && Number(body.from_weeks) !== series.interval_weeks) {
+    return NextResponse.json({ ok: false, message: 'This changed meanwhile, so nothing was done. Close the record and open it again.' }, { status: 409, headers: noCache });
   }
   const now = new Date();
   const base = baseOf(series.gcal_event_id as string);
@@ -62,7 +68,7 @@ export async function POST(req: NextRequest) {
   if (e1 || e2 || !mine || !clientRows) {
     return NextResponse.json({ ok: false, message: "Couldn't read the sessions just now. Nothing was changed." }, { status: 503, headers: noCache });
   }
-  const upcoming = (mine as (IntervalSession & { session_format: string; location: string | null; fee: number; format_confirmed: boolean | null })[])
+  const upcoming = (mine as SeriesSessionRow[])
     .filter(s => s.gcal_event_id && baseOf(s.gcal_event_id) === base);
   const plan = planIntervalChange(series, upcoming, clientRows, weeks, now);
   if ('error' in plan) return NextResponse.json({ ok: false, message: plan.error }, { status: 409, headers: noCache });
@@ -72,79 +78,51 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, preview: true, summary, cancels: plan.cancel.length, adds: plan.add.length }, { headers: noCache });
   }
 
-  const fromLocal = utcToDublinLocal(plan.effectiveFrom);
-  const clientName = (client?.full_name as string | undefined) ?? 'Client';
-
-  // 1. Google first: start the new repeat (harmless on its own).
-  const started = await withGoogle(async cal => {
-    const repeat = await readRepeat(cal, series.gcal_event_id as string);
-    if ('error' in repeat) return { error: repeat.error } as const;
-    const { id, inPlace } = await startNewRepeat(cal, repeat, fromLocal, weeks);
-    return { repeat, id, inPlace } as const;
+  const auth = await getAuthorizedClient();
+  const cal = auth ? (google.calendar({ version: 'v3', auth }) as unknown as CalLike) : null;
+  const res = await changeSeriesInterval(cal, supabaseIntervalDb, {
+    series: { id: series.id as string, interval_weeks: series.interval_weeks as number, gcal_event_id: series.gcal_event_id as string },
+    plan, weeks,
+    clientName: (client?.full_name as string | undefined) ?? 'Client',
+    upcoming,
+    now,
+    addressFor: inPersonAddressFor,
   });
-  if (!started.ok) {
-    const message = started.reason === 'not_connected'
-      ? 'Google Calendar isn’t connected, so nothing was changed. Connect it and try again.'
-      : 'Google Calendar didn’t accept the change, so nothing was changed. Try again in a moment.';
-    return NextResponse.json({ ok: false, message }, { status: 502, headers: noCache });
-  }
-  if ('error' in started.value) return NextResponse.json({ ok: false, message: started.value.error }, { status: 409, headers: noCache });
-  const { repeat, id: newId, inPlace } = started.value;
-
-  // 2. The app.
-  const problems: string[] = [];
-  if (plan.cancel.length) {
-    const { error } = await supabaseAdmin.from('sessions').update({ status: 'cancelled' })
-      .in('id', plan.cancel.map(c => c.id)).eq('status', 'scheduled');
-    if (error) problems.push('cancel');
-  }
-  if (!inPlace && plan.keep.length) {
-    const { error } = await supabaseAdmin.from('sessions').update({ gcal_event_id: newId })
-      .in('id', plan.keep.map(k => k.id)).eq('status', 'scheduled');
-    if (error) problems.push('relink');
-  }
-  const template = upcoming.find(s => plan.keep.some(k => k.id === s.id)) ?? upcoming[0];
-  let added = 0;
-  for (const d of plan.add) {
-    const { error } = await supabaseAdmin.from('sessions').insert({
-      client_id: series.client_id, session_date: d,
-      session_format: template.session_format, format_confirmed: template.format_confirmed ?? true,
-      location: template.session_format === 'in_person' ? inPersonAddressFor(d) : template.location,
-      fee: template.fee, status: 'scheduled', payment_status: 'unpaid', gcal_event_id: newId,
-    });
-    if (error) console.warn('[series/interval] add skipped:', dbError(error).message); else added++;
-  }
-  const { error: sErr } = await supabaseAdmin.from('session_series')
-    .update({ interval_weeks: weeks, anchor_at: plan.effectiveFrom, gcal_event_id: newId }).eq('id', series.id);
-  if (sErr) problems.push('series');
-
-  // 3. Google again: end the old repeat; give sessions moved by hand their
-  //    own event first, since their occurrence goes with the old repeat.
-  let googleOk = true;
-  if (!inPlace) {
-    const ended = await withGoogle(async cal => {
-      for (const m of plan.moved) {
-        if (new Date(m.session_date).getTime() < new Date(plan.effectiveFrom).getTime()) continue;
-        const row = upcoming.find(u => u.id === m.id);
-        if (!row?.gcal_event_id) continue;
-        const old = await resolveEventId(cal, row.gcal_event_id, utcToDublinLocal(row.session_date));
-        const one = await insertSessionEvent(cal, sessionEventFields(row, clientName));
-        await supabaseAdmin.from('sessions').update({ gcal_event_id: one }).eq('id', row.id).eq('status', 'scheduled');
-        if (old) await deleteEvent(cal, old);
-      }
-      await endOldRepeat(cal, repeat, fromLocal);
-    });
-    googleOk = ended.ok;
-    if (!ended.ok) console.error('[series/interval] old repeat not ended:', ended.reason, ended.message ?? '');
-  }
-
-  if (problems.length) console.error('[series/interval] database steps failed:', problems);
-  const parts = [`Now ${freqLabel(weeks)} from ${formatShortDay(plan.effectiveFrom)}.`];
-  if (plan.cancel.length) parts.push(`Cancelled ${plan.cancel.length} session${plan.cancel.length === 1 ? '' : 's'}.`);
-  if (added) parts.push(`Added ${added}.`);
-  parts.push(googleOk
-    ? 'Google Calendar updated.'
-    : `Google Calendar still shows the old repeat from ${formatShortDay(plan.effectiveFrom)}: delete those in Google ("this and following").`);
-  if (problems.length) parts.push('Some sessions may not have changed in the app: check the list.');
-  return NextResponse.json({ ok: problems.length === 0, message: parts.join(' '), calendar: googleOk ? 'ok' : 'failed' }, { headers: noCache });
+  console.log('[series/interval]', res.ok ? `changed to every ${weeks} week(s)` : `refused (${res.status})`);
+  if (!res.ok) return NextResponse.json({ ok: false, message: res.message }, { status: res.status, headers: noCache });
+  return NextResponse.json(res, { headers: noCache });
 }
+
+// The database side, on Supabase: the lock claim is a conditional update; the
+// change itself is one transaction (apply_series_interval_change, migration
+// session_series_change.sql).
+const supabaseIntervalDb: IntervalDb = {
+  async claim(seriesId, expect, until) {
+    const nowIso = new Date().toISOString();
+    const { data, error } = await supabaseAdmin.from('session_series')
+      .update({ change_lock_until: until.toISOString() })
+      .eq('id', seriesId).eq('active', true)
+      .eq('interval_weeks', expect.interval_weeks).eq('gcal_event_id', expect.gcal_event_id)
+      .or(`change_lock_until.is.null,change_lock_until.lt.${nowIso}`)
+      .select('id');
+    if (error) {
+      console.error('[series/interval] claim failed (migration session_series_change.sql applied?):', dbError(error).message);
+      return 'unavailable';
+    }
+    return data?.length ? 'ok' : 'conflict';
+  },
+  async release(seriesId) {
+    await supabaseAdmin.from('session_series').update({ change_lock_until: null }).eq('id', seriesId);
+  },
+  async runChange(p) {
+    const { data, error } = await supabaseAdmin.rpc('apply_series_interval_change', {
+      p_series_id: p.seriesId, p_interval: p.interval, p_anchor: p.anchor, p_new_gcal: p.newGcal,
+      p_cancel: p.cancel, p_relink: p.relink, p_adds: p.adds,
+    });
+    if (error) { console.error('[series/interval] change not saved:', dbError(error).message); return { ok: false }; }
+    return { ok: true, added: Number((data as { added?: number } | null)?.added ?? 0) };
+  },
+  async setSessionEvent(sessionId, gcal) {
+    await supabaseAdmin.from('sessions').update({ gcal_event_id: gcal }).eq('id', sessionId).eq('status', 'scheduled');
+  },
+};

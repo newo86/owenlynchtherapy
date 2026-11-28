@@ -38,6 +38,8 @@ export interface SeriesRow {
   gcal_event_id: string | null;
   anchor_at: string;             // UTC ISO of a session on the series' rhythm
   active: boolean;
+  /** Set while "How often" is changing the series: hands off until then. */
+  change_lock_until?: string | null;
 }
 
 export interface SeriesSession {
@@ -177,6 +179,7 @@ export function planExtension(
   clientActive: boolean,
 ): string[] {
   if (!series.active || !clientActive || !series.gcal_event_id) return [];
+  if (series.change_lock_until && new Date(series.change_lock_until).getTime() > now.getTime()) return [];
   if (!(series.interval_weeks >= 1 && series.interval_weeks <= 4)) return [];
   if (!seriesSessions.length) return [];
 
@@ -203,9 +206,10 @@ export interface ExtendOutcome { series: number; added: number; errors: string[]
 
 /** Top up every active series. Safe to run any number of times. */
 export async function extendAllSeries(now = new Date()): Promise<ExtendOutcome> {
+  // '*' so change_lock_until is read once its migration is applied.
   const { data: series, error } = await supabaseAdmin
     .from('session_series')
-    .select('id, client_id, interval_weeks, gcal_event_id, anchor_at, active')
+    .select('*')
     .eq('active', true);
   if (error) return { series: 0, added: 0, errors: [dbError(error).message ?? 'error'] };
   if (!series?.length) return { series: 0, added: 0, errors: [] };
@@ -246,6 +250,10 @@ export async function extendAllSeries(now = new Date()): Promise<ExtendOutcome> 
 
   let added = 0;
   for (const { s, template, dates } of planned) {
+    // The 5-minute job or "How often" may have changed the series since it
+    // was read: only add if its rhythm is exactly what this plan used.
+    const { data: now2, error: reErr } = await supabaseAdmin.from('session_series').select('*').eq('id', s.id).maybeSingle();
+    if (reErr || !now2 || !sameRhythm(s, now2 as SeriesRow, now)) { errors.push(`${s.id}: changed while planning; skipped`); continue; }
     const rows = dates.map(d => ({
       client_id: s.client_id,
       session_date: d,
@@ -262,6 +270,14 @@ export async function extendAllSeries(now = new Date()): Promise<ExtendOutcome> 
     added += data?.length ?? 0;
   }
   return { series: series.length, added, errors };
+}
+
+/** True when the series still has the rhythm the plan was made for. */
+export function sameRhythm(planned: SeriesRow, current: SeriesRow, now: Date): boolean {
+  const locked = current.change_lock_until && new Date(current.change_lock_until).getTime() > now.getTime();
+  return !locked && current.active && current.interval_weeks === planned.interval_weeks
+    && current.gcal_event_id === planned.gcal_event_id
+    && new Date(current.anchor_at).getTime() === new Date(planned.anchor_at).getTime();
 }
 
 /** End a client's ongoing series (the client was marked Completed). */

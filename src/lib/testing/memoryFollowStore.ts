@@ -5,7 +5,7 @@
 import type {
   FollowStore, FollowSession, FollowSeries, FollowedChangeRow, NewFollowedChange, NewSessionRow, SeriesPatch, SessionRef,
 } from '@/lib/followGoogle';
-import { undoneMarks, UNDO_DAYS } from '@/lib/followGoogle';
+import { undoneMarks, cancelledInWindow, UNDO_DAYS } from '@/lib/followGoogle';
 
 export class MemoryFollowStore implements FollowStore {
   sessions: FollowSession[] = [];
@@ -35,6 +35,19 @@ export class MemoryFollowStore implements FollowStore {
       series: series.map(s => ({ ...s })),
       undone: undoneMarks(this.changes),
     };
+  }
+
+  async cancelledLast24h(now: Date) {
+    return cancelledInWindow(this.changes.filter(c => new Date(c.applied_at).getTime() >= now.getTime() - 86_400_000));
+  }
+
+  async relinkSessions(moves: { id: string; from: string; to: string }[]) {
+    const out: string[] = [];
+    for (const mv of moves) {
+      const s = this.session(mv.id);
+      if (s && s.status === 'scheduled' && s.gcal_event_id === mv.from) { s.gcal_event_id = mv.to; out.push(s.id); }
+    }
+    return out;
   }
 
   async cancelSessions(ids: string[]) {

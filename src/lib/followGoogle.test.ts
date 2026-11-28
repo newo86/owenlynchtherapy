@@ -5,12 +5,16 @@ import {
   followGoogle, undoFollowedChange, parseRrule, hideFollowedDrift, followedLine, toFollowedItems,
   MAX_CANCEL_PER_RUN, type FollowSession, type FollowSeries,
 } from './followGoogle';
-import { listCalendarEvents } from './calendarSync';
+import { listCalendarEvents, planLinks } from './calendarSync';
+import vercelJson from '../../vercel.json';
 import { findCalendarDrift } from './calendarDrift';
 import { resolveEventId, patchEvent, deleteEvent } from './googleSessionEvents';
 import { localDublinToUtcIso, utcToDublinLocal } from './dateUtils';
-import { addDaysLocal, planExtension, planIntervalChange, type SeriesSession } from './sessionSeries';
-import { readRepeat, startNewRepeat, endOldRepeat, describeIntervalPlan, withUntil } from './seriesInterval';
+import { addDaysLocal, planExtension, planIntervalChange, sameRhythm, type SeriesSession } from './sessionSeries';
+import {
+  readRepeat, startNewRepeat, endOldRepeat, describeIntervalPlan, withUntil, changeSeriesInterval,
+  type IntervalDb, type SeriesSessionRow,
+} from './seriesInterval';
 
 // The calendar test bench: a fake Google Calendar (with Google's id formats,
 // deleted-occurrence behaviour and paging) plus an in-memory database, driven
@@ -82,6 +86,7 @@ describe('follow Google: one occurrence deleted', () => {
     cal.deleteEvent(gid);
     await run(cal, store);
     expect(store.statusOf(s.id)).toBe('cancelled');
+    expect(store.changes.map(c => c.kind)).toEqual(['cancelled_occurrence']);   // C9: not "series ended"
   });
 
   it('a session stored with an INSTANCE id is followed too', async () => {
@@ -122,7 +127,7 @@ describe('follow Google: whole series deleted', () => {
     expect(store.series[0].active).toBe(false);
     expect(store.changes).toHaveLength(1);
     expect(store.changes[0].kind).toBe('series_ended');
-    expect(followedLine(store.changes[0], 'Aoife E.')).toBe('Cancelled Aoife E.’s 20 sessions from Tue 1 Dec, 4:00pm — the series was deleted in Google');
+    expect(followedLine(store.changes[0], 'Aoife E.')).toBe('Cancelled Aoife E.’s 20 sessions from Tue 1 Dec, 4:00pm. The series was deleted in Google.');
   });
 
   it('"delete this and following" in Google ends the series from that date', async () => {
@@ -351,9 +356,10 @@ describe('follow Google: undo', () => {
     const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
     cal.deleteOccurrence(b.gid, '2026-12-08T16:00');
     await run(cal, store);
-    const res = await undoFollowedChange(store, store.changes[0].id, new Date(NOW.getTime() + DAY));
+    const res = await undoFollowedChange(store, store.changes[0].id, new Date(NOW.getTime() + DAY), () => 'Aoife E.');
     expect(res.ok).toBe(true);
-    expect(res.message).toContain('Google still shows it as deleted');
+    expect(res.message).toBe('Aoife E.’s Tue 8 Dec session is back in the app. Google Calendar still shows it as deleted: add it back there, or it will show under “Google Calendar doesn’t match the app”.');
+    expect(res.message).not.toContain('—');
     expect(store.statusOf(b.sessions[1].id)).toBe('scheduled');
     await run(cal, store, new Date(NOW.getTime() + DAY));
     expect(store.statusOf(b.sessions[1].id)).toBe('scheduled');
@@ -457,7 +463,7 @@ describe('change how often in the app (Google side)', () => {
     expect(utcToDublinLocal(plan.effectiveFrom)).toBe('2026-12-01T16:00');
     expect(plan.cancel.map(s => utcToDublinLocal(s.session_date))).toEqual(['2026-12-08T16:00', '2026-12-22T16:00', '2027-01-05T16:00', '2027-01-19T16:00']);
     expect(describeIntervalPlan(plan, 2)).toBe(
-      'From Tue 1 Dec, every 2 weeks. Cancels 4 sessions: Tue 8 Dec, Tue 22 Dec, Tue 5 Jan and Tue 19 Jan. Google Calendar will be updated. Your client isn’t emailed.',
+      'From Tue 1 Dec, every 2 weeks. Cancels 4 sessions: Tue 8 Dec, Tue 22 Dec, Tue 5 Jan and Tue 19 Jan. Google Calendar will be updated. Your client won’t be emailed, so let them know yourself.',
     );
 
     const repeat = await readRepeat(cal.api, b.gid);
@@ -503,18 +509,20 @@ describe('pieces', () => {
     expect(parseRrule(null)).toBeNull();
   });
 
-  it('hides differences a followed change already covers, but not undone ones', () => {
+  it('C7: hides only what a followed change covers; never "cancelled, still in Google"; not undone ones', () => {
     const items = [
       { key: 'a', kind: 'not_in_google' as const, clientId: 'c', clientName: 'x', sessionId: 's1' },
-      { key: 'b', kind: 'only_in_google' as const, clientId: 'c', clientName: 'x', eventId: 'base1_20261211T150000Z' },
+      { key: 'b', kind: 'only_in_google' as const, clientId: 'c', clientName: 'x', eventId: 'base1_20261211T150000Z', googleStart: '2026-12-11T15:00:00.000Z' },
+      { key: 'b2', kind: 'only_in_google' as const, clientId: 'c', clientName: 'x', eventId: 'base1_20261218T150000Z', googleStart: '2026-12-18T15:00:00.000Z' },
       { key: 'c', kind: 'not_in_google' as const, clientId: 'c', clientName: 'x', sessionId: 's9' },
+      { key: 'd', kind: 'cancelled_still_in_google' as const, clientId: 'c', clientName: 'x', sessionId: 's1' },
     ];
     const changes = [
       { kind: 'cancelled_occurrence' as const, session_id: 's1', before: {}, after: {}, undone_at: null },
-      { kind: 'interval_changed' as const, session_id: null, before: { base: 'base1' }, after: {}, undone_at: null },
+      { kind: 'interval_changed' as const, session_id: null, before: { base: 'base1' }, after: { added: [{ id: 'n1', session_date: '2026-12-11T15:00:00.000Z' }] }, undone_at: null },
       { kind: 'cancelled_occurrence' as const, session_id: 's9', before: {}, after: {}, undone_at: '2026-11-28T00:00:00Z' },
     ];
-    expect(hideFollowedDrift(items, changes).map(i => i.key)).toEqual(['c']);
+    expect(hideFollowedDrift(items, changes).map(i => i.key)).toEqual(['b2', 'c', 'd']);
   });
 
   it('lists the last 7 days with first name + initial and no amounts', () => {
@@ -525,9 +533,348 @@ describe('pieces', () => {
     ];
     const items = toFollowedItems(rows, id => (id === AOIFE.id ? 'Aoife E.' : 'Test C.'), NOW);
     expect(items.map(i => i.line)).toEqual([
-      'Cancelled Aoife E.’s Tue 1 Dec, 4:00pm session — deleted in Google',
-      'Test C. now every 2 weeks (was weekly) — changed in Google; cancelled 1 session that no longer fit',
+      'Cancelled Aoife E.’s Tue 1 Dec, 4:00pm session. Deleted in Google.',
+      'Test C. now every 2 weeks (was weekly). Changed in Google; cancelled 1 session that no longer fit.',
     ]);
-    expect(items.every(i => !i.line.includes('€'))).toBe(true);
+    expect(items.every(i => !i.line.includes('€') && !i.line.includes('—'))).toBe(true);
+  });
+});
+
+// ── Review fixes (28 Nov 2026): one test per behaviour ─────────────────────
+
+describe('fake calendar fidelity', () => {
+  it('split parts have their own instance ids `<base>_R<split>_<stamp>Z`', async () => {
+    const cal = new FakeGoogleCalendar();
+    const gid = cal.addSeries({ summary: 'Session — Aoife Example', startLocal: '2026-12-01T16:00', rrule: 'RRULE:FREQ=WEEKLY' });
+    const split = cal.splitSeries(gid, '2026-12-15T16:00', 'RRULE:FREQ=WEEKLY;INTERVAL=2');
+    expect(split).toMatch(new RegExp(`^${gid}_R\\d{8}T\\d{6}$`));
+    expect(cal.instanceId(gid, '2026-12-29T16:00')).toBe(`${split}_20261229T160000Z`);
+    expect(cal.instanceId(gid, '2026-12-08T16:00')).toBe(`${gid}_20261208T160000Z`);
+    const { events } = await listCalendarEvents(cal.api, '2026-12-01T00:00:00Z', '2027-01-01T00:00:00Z');
+    expect(events.map(e => e.id)).toContain(`${split}_20261215T160000Z`);
+  });
+
+  it('a deleted occurrence comes back with only id, status, recurringEventId and originalStartTime', async () => {
+    const cal = new FakeGoogleCalendar();
+    const gid = cal.addSeries({ summary: 'Session — Aoife Example', startLocal: '2026-12-01T16:00', rrule: 'RRULE:FREQ=WEEKLY' });
+    cal.deleteOccurrence(gid, '2026-12-08T16:00');
+    const { data } = await cal.api.events.instances({ calendarId: 'primary', eventId: gid, timeMin: '2026-12-01T00:00:00Z', timeMax: '2026-12-20T00:00:00Z', showDeleted: true });
+    const gone = data.items!.find(i => i.status === 'cancelled')!;
+    expect(Object.keys(gone).sort()).toEqual(['id', 'originalStartTime', 'recurringEventId', 'status']);
+  });
+
+  it('an "all events" rule change drops moved and deleted occurrences', () => {
+    const cal = new FakeGoogleCalendar();
+    const gid = cal.addSeries({ summary: 'S', startLocal: '2026-12-01T16:00', rrule: 'RRULE:FREQ=WEEKLY' });
+    cal.moveOccurrence(gid, '2026-12-08T16:00', '2026-12-09T10:00');
+    cal.deleteOccurrence(gid, '2026-12-15T16:00');
+    cal.setRule(gid, 'RRULE:FREQ=WEEKLY');
+    expect(cal.occurrences(gid, '2026-12-01T00:00', '2026-12-20T00:00')).toEqual(['2026-12-01T16:00', '2026-12-08T16:00', '2026-12-15T16:00']);
+  });
+
+  it('an EXDATE date does not exist at all (not listed, get is a 404)', async () => {
+    const cal = new FakeGoogleCalendar();
+    const gid = cal.addSeries({ summary: 'S', startLocal: '2026-12-01T16:00', rrule: 'RRULE:FREQ=WEEKLY' });
+    cal.excludeDate(gid, '2026-12-08T16:00');
+    const { data } = await cal.api.events.instances({ calendarId: 'primary', eventId: gid, timeMin: '2026-12-01T00:00:00Z', timeMax: '2026-12-20T00:00:00Z', showDeleted: true });
+    expect(data.items!.map(i => i.id)).toEqual([`${gid}_20261201T160000Z`, `${gid}_20261215T160000Z`]);
+    await expect(cal.api.events.get({ calendarId: 'primary', eventId: `${gid}_20261208T160000Z` })).rejects.toMatchObject({ code: 404 });
+  });
+});
+
+describe('C2: moves are never read as deletions', () => {
+  it('an occurrence moved weeks later (inside the wider read) is not cancelled', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 4);          // last one 22 Dec
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    cal.moveOccurrence(b.gid, '2026-12-22T16:00', '2027-01-12T16:00');
+    expect((await run(cal, store)).outcome.status).toBe('nothing');
+    expect(scheduled(store)).toHaveLength(4);
+  });
+
+  it('an occurrence moved beyond the read is looked up by id: live = moved, not cancelled', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 4);
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    cal.moveOccurrence(b.gid, '2026-12-22T16:00', '2027-03-02T16:00');
+    expect((await run(cal, store)).outcome.status).toBe('nothing');
+    expect(scheduled(store)).toHaveLength(4);
+    expect(cal.calls.some(c => c.op === 'get' && c.eventId === `${b.gid}_20261222T160000Z`)).toBe(true);
+  });
+
+  it('a date simply missing (EXDATE, get 404) is unknown, so not followed', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 4);
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    cal.excludeDate(b.gid, '2026-12-08T16:00');
+    expect((await run(cal, store)).outcome.status).toBe('nothing');
+    expect(scheduled(store)).toHaveLength(4);
+  });
+});
+
+describe('C3 + C8: following a "this and following" split', () => {
+  it('ties later sessions to the new part, and deleting that part later ends the series', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 8);
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    const split = cal.splitSeries(b.gid, '2026-12-15T16:00', 'RRULE:FREQ=WEEKLY;INTERVAL=2');
+    await run(cal, store);
+    const after = scheduled(store).filter(s => new Date(s.session_date) >= new Date(localDublinToUtcIso('2026-12-15T16:00')));
+    expect(after.length).toBeGreaterThan(0);
+    expect(after.every(s => s.gcal_event_id === split)).toBe(true);                 // C8
+
+    // An app cancel now finds the occurrence through the new part (C8).
+    const iid = await resolveEventId(cal.api, split, '2026-12-29T16:00');
+    expect(iid).toBe(`${split}_20261229T160000Z`);
+
+    cal.deleteEvent(split);                                                          // C3
+    await run(cal, store);
+    expect(scheduled(store).map(s => utcToDublinLocal(s.session_date))).toEqual(['2026-12-01T16:00', '2026-12-08T16:00']);
+    expect(store.series[0].active).toBe(false);
+    expect(store.changes.map(c => c.kind)).toEqual(['interval_changed', 'series_ended']);
+  });
+
+  it('undoing the followed split puts the sessions back on the old event', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 6);
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    cal.splitSeries(b.gid, '2026-12-15T16:00', 'RRULE:FREQ=WEEKLY;INTERVAL=2');
+    await run(cal, store);
+    await undoFollowedChange(store, store.changes[0].id, NOW);
+    expect(store.sessions.every(s => s.gcal_event_id === b.gid)).toBe(true);
+    expect(scheduled(store)).toHaveLength(6);
+  });
+});
+
+describe('C4: an undo or a skip never switches following off for the series', () => {
+  it('after undoing weekly → 2 weeks, a DIFFERENT later change in Google is followed', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 9);
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    cal.setRule(b.gid, 'RRULE:FREQ=WEEKLY;INTERVAL=2');
+    await run(cal, store);
+    await undoFollowedChange(store, store.changes[0].id, NOW);
+    await run(cal, store);
+    expect(store.series[0].interval_weeks).toBe(1);                                  // same state: not again
+    cal.setRule(b.gid, 'RRULE:FREQ=WEEKLY;INTERVAL=3');
+    await run(cal, store);
+    expect(store.series[0].interval_weeks).toBe(3);
+  });
+
+  it('when the repeat change can not be followed, an explicit deletion still is', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 6);
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    cal.splitSeries(b.gid, '2026-12-16T16:00', 'RRULE:FREQ=WEEKLY;INTERVAL=2');     // moved to Wednesdays: not followed
+    cal.deleteOccurrence(b.gid, '2026-12-08T16:00');
+    await run(cal, store);
+    expect(store.sessions.filter(s => s.status === 'cancelled').map(s => s.id)).toEqual([b.sessions[1].id]);
+    expect(store.series[0].interval_weeks).toBe(1);
+  });
+
+  it('after undoing an ending, a later single deletion is still followed', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 8);
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    cal.endBefore(b.gid, '2026-12-22T16:00');
+    await run(cal, store);
+    await undoFollowedChange(store, store.changes[0].id, NOW);
+    await run(cal, store);
+    expect(scheduled(store)).toHaveLength(8);                                         // the ending isn't re-applied
+    cal.deleteOccurrence(b.gid, '2026-12-08T16:00');
+    await run(cal, store);
+    expect(store.statusOf(b.sessions[1].id)).toBe('cancelled');
+  });
+});
+
+describe('C5: a series being changed in the app is left alone', () => {
+  it('the follow step skips a locked series', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 6);
+    b.series[0].change_lock_until = new Date(NOW.getTime() + 60_000).toISOString();
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    cal.setRule(b.gid, 'RRULE:FREQ=WEEKLY;INTERVAL=2');
+    expect((await run(cal, store)).outcome.status).toBe('nothing');
+    expect(store.series[0].interval_weeks).toBe(1);
+  });
+
+  it('the daily top-up skips a locked series and re-checks the rhythm before adding', () => {
+    const series = { id: 'x', client_id: 'c', interval_weeks: 1, gcal_event_id: 'g', anchor_at: '2026-12-01T16:00:00.000Z', active: true };
+    const rows = [{ client_id: 'c', session_date: '2026-12-01T16:00:00.000Z', status: 'scheduled', gcal_event_id: 'g', session_format: 'in_person', location: null, fee: 8000 }];
+    expect(planExtension({ ...series, change_lock_until: new Date(NOW.getTime() + 60_000).toISOString() }, rows, new Set(), NOW, true)).toEqual([]);
+    expect(sameRhythm(series, { ...series }, NOW)).toBe(true);
+    expect(sameRhythm(series, { ...series, interval_weeks: 2 }, NOW)).toBe(false);
+    expect(sameRhythm(series, { ...series, anchor_at: '2026-12-15T16:00:00.000Z' }, NOW)).toBe(false);
+    expect(sameRhythm(series, { ...series, change_lock_until: new Date(NOW.getTime() + 60_000).toISOString() }, NOW)).toBe(false);
+  });
+
+  it('C11: the daily top-up cron is not on the 5-minute sync grid', () => {
+    const crons = (vercelJson as { crons: { path: string; schedule: string }[] }).crons;
+    const minute = Number(crons.find(c => c.path === '/api/admin/sessions/extend')!.schedule.split(' ')[0]);
+    expect(minute % 5).not.toBe(0);
+  });
+});
+
+// A tiny in-memory IntervalDb with the same claim rules as the Supabase one.
+function intervalDb(series: { id: string; interval_weeks: number; gcal_event_id: string; anchor_at: string; active: boolean; change_lock_until?: string | null }, sessions: FollowSession[], opts: { failRun?: boolean } = {}) {
+  const db: IntervalDb & { runs: number } = {
+    runs: 0,
+    async claim(id, expect, until) {
+      const locked = series.change_lock_until && new Date(series.change_lock_until).getTime() > NOW.getTime();
+      if (id !== series.id || !series.active || locked || series.interval_weeks !== expect.interval_weeks || series.gcal_event_id !== expect.gcal_event_id) return 'conflict';
+      series.change_lock_until = until.toISOString();
+      return 'ok';
+    },
+    async release() { series.change_lock_until = null; },
+    async runChange(p) {
+      db.runs++;
+      if (opts.failRun) return { ok: false };
+      for (const s of sessions) {
+        if (p.cancel.includes(s.id) && s.status === 'scheduled') s.status = 'cancelled';
+        if (p.relink.includes(s.id)) s.gcal_event_id = p.newGcal;
+      }
+      Object.assign(series, { interval_weeks: p.interval, anchor_at: p.anchor, gcal_event_id: p.newGcal, change_lock_until: null });
+      return { ok: true, added: p.adds.length };
+    },
+    async setSessionEvent(id, gcal) { const s = sessions.find(x => x.id === id); if (s) s.gcal_event_id = gcal; },
+  };
+  return db;
+}
+
+async function changeSetup(opts: { failRun?: boolean; first?: string } = {}) {
+  const cal = new FakeGoogleCalendar();
+  const b = book(cal, AOIFE, opts.first ?? '2026-11-17T16:00', 1, 10);
+  const row = { ...b.series[0], gcal_event_id: b.gid, change_lock_until: null as string | null };
+  const upcoming = b.sessions.filter(s => new Date(s.session_date) > NOW) as SeriesSessionRow[];
+  const plan = planIntervalChange(row, upcoming, b.sessions, 2, NOW);
+  if ('error' in plan) throw new Error(plan.error);
+  const db = intervalDb(row, b.sessions, opts);
+  const go = () => changeSeriesInterval(cal.api, db, {
+    series: { id: row.id, interval_weeks: 1, gcal_event_id: b.gid }, plan, weeks: 2,
+    clientName: AOIFE.full_name, upcoming, now: NOW, addressFor: () => null,
+  });
+  return { cal, b, row, db, go };
+}
+
+describe('C1 + C5: "How often" change, in order and once', () => {
+  it('success: new repeat, app changed in one step, then the old repeat ended', async () => {
+    const { cal, b, row, go } = await changeSetup();
+    const res = await go();
+    expect(res.ok).toBe(true);
+    expect(row).toMatchObject({ interval_weeks: 2, change_lock_until: null });
+    expect(row.gcal_event_id).not.toBe(b.gid);
+    expect(cal.rawEvent(b.gid)!.recurrence![0]).toContain('UNTIL=');
+  });
+
+  it('a database failure ends nothing in Google and deletes the new repeat', async () => {
+    const { cal, b, row, go } = await changeSetup({ failRun: true });
+    const res = await go();
+    expect(res).toMatchObject({ ok: false, status: 500 });
+    expect(cal.rawEvent(b.gid)!.recurrence).toEqual(['RRULE:FREQ=WEEKLY']);         // B1 untouched
+    const inserted = cal.calls.find(c => c.op === 'insert')!;
+    expect(inserted).toBeTruthy();
+    expect(cal.calls.filter(c => c.op === 'delete')).toHaveLength(1);               // B2 deleted
+    expect(row).toMatchObject({ interval_weeks: 1, gcal_event_id: b.gid, change_lock_until: null });
+    expect(b.sessions.every(s => s.status === 'scheduled' && s.gcal_event_id === b.gid)).toBe(true);   // app untouched
+  });
+
+  it('an in-place change (from the first date) is put back if the database step fails', async () => {
+    const { cal, b, go } = await changeSetup({ failRun: true, first: '2026-12-01T16:00' });
+    const res = await go();
+    expect(res.ok).toBe(false);
+    expect(cal.rawEvent(b.gid)!.recurrence).toEqual(['RRULE:FREQ=WEEKLY']);
+    expect(cal.calls.some(c => c.op === 'insert')).toBe(false);
+  });
+
+  it('a refused claim touches nothing in Google', async () => {
+    const { cal, row, go } = await changeSetup();
+    row.change_lock_until = new Date(NOW.getTime() + 60_000).toISOString();
+    const res = await go();
+    expect(res).toMatchObject({ ok: false, status: 409, message: 'This changed meanwhile, so nothing was done. Close the record and open it again.' });
+    expect(writes(cal)).toEqual([]);
+  });
+
+  it('a double submit changes it once', async () => {
+    const { cal, db, go } = await changeSetup();
+    const [a, b2] = await Promise.all([go(), go()]);
+    expect([a.ok, b2.ok].sort()).toEqual([false, true]);
+    expect(db.runs).toBe(1);
+    expect(cal.calls.filter(c => c.op === 'insert')).toHaveLength(1);
+  });
+});
+
+describe('S2: undo checks the state first', () => {
+  it('refuses, and touches no session, when the series changed since', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 6);
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    cal.setRule(b.gid, 'RRULE:FREQ=WEEKLY;INTERVAL=2');
+    await run(cal, store);
+    store.series[0].interval_weeks = 3;                                              // changed since
+    const res = await undoFollowedChange(store, store.changes[0].id, NOW, () => 'Aoife E.');
+    expect(res).toEqual({ ok: false, message: 'Aoife E.’s repeat has changed since, so nothing was undone.' });
+    expect(scheduled(store)).toHaveLength(3);
+    expect(store.changes[0].undone_at).toBeNull();
+  });
+
+  it('an older series change can not be undone once a newer one exists', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 9);
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    cal.setRule(b.gid, 'RRULE:FREQ=WEEKLY;INTERVAL=2');
+    await run(cal, store);
+    cal.setRule(b.gid, 'RRULE:FREQ=WEEKLY;INTERVAL=3');
+    await run(cal, store, new Date(NOW.getTime() + 60_000));
+    expect(store.changes).toHaveLength(2);
+    const items = toFollowedItems(store.changes, () => 'Aoife E.', new Date(NOW.getTime() + 120_000));
+    expect(items.map(i => i.canUndo)).toEqual([true, false]);                       // newest first
+    const res = await undoFollowedChange(store, store.changes[0].id, NOW, () => 'Aoife E.');
+    expect(res.ok).toBe(false);
+  });
+});
+
+describe('S3: only events Owen organised', () => {
+  it('an invitation from someone else, deleted, never cancels a session', async () => {
+    const cal = new FakeGoogleCalendar();
+    const gid = cal.addOneOff({ summary: 'Session — Test Client', startLocal: '2026-12-04T15:00', foreign: true });
+    const s = session(TEST.id, '2026-12-04T15:00', gid);
+    const store = new MemoryFollowStore({ sessions: [s] });
+    cal.deleteEvent(gid);
+    await run(cal, store);
+    expect(store.statusOf(s.id)).toBe('scheduled');
+  });
+
+  it('planLinks never ties a session to an invitation', () => {
+    const s = { id: 's', client_id: TEST.id, session_date: '2026-12-04T15:00:00.000Z', gcal_event_id: null };
+    const ev = { id: 'inv1', title: 'Session — Test Client', start: '2026-12-04T15:00:00.000Z', end: '2026-12-04T15:50:00.000Z', foreign: true };
+    expect(planLinks([s], [ev], CLIENTS, NOW).link).toEqual([]);
+    expect(planLinks([s], [{ ...ev, foreign: false }], CLIENTS, NOW).link).toHaveLength(1);
+  });
+});
+
+describe('S4: the cap counts a rolling 24 hours from the database', () => {
+  it('holds back when today’s earlier cancellations plus this run pass 15', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 6);
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    store.changes.push({ id: 'old', kind: 'series_ended', client_id: TEST.id, session_id: null, series_id: null,
+      before: {}, after: { cancelled_in_window: 10 }, applied_at: new Date(NOW.getTime() - 3 * 3_600_000).toISOString(), undone_at: null });
+    cal.deleteEvent(b.gid);                                                          // 6 more
+    const { outcome, alerts } = await run(cal, store);
+    expect(outcome).toMatchObject({ status: 'held', wouldCancel: 6, last24h: 10 });
+    expect(alerts).toEqual([6]);
+    expect(scheduled(store)).toHaveLength(6);
+  });
+
+  it('cancellations older than 24 hours, or undone, do not count', async () => {
+    const cal = new FakeGoogleCalendar();
+    const b = book(cal, AOIFE, '2026-12-01T16:00', 1, 6);
+    const store = new MemoryFollowStore({ sessions: b.sessions, series: b.series });
+    store.changes.push(
+      { id: 'a', kind: 'series_ended', client_id: TEST.id, session_id: null, series_id: null, before: {}, after: { cancelled_in_window: 10 }, applied_at: new Date(NOW.getTime() - 25 * 3_600_000).toISOString(), undone_at: null },
+      { id: 'b', kind: 'series_ended', client_id: TEST.id, session_id: null, series_id: null, before: {}, after: { cancelled_in_window: 10 }, applied_at: new Date(NOW.getTime() - 3_600_000).toISOString(), undone_at: NOW.toISOString() },
+    );
+    cal.deleteEvent(b.gid);
+    expect((await run(cal, store)).outcome.status).toBe('applied');
   });
 });

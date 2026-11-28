@@ -58,8 +58,9 @@ docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
   weeks added). Nothing else: never by title or name, never a past or
   non-scheduled session, never a move, never a new client or session from
   Google, never a write back to Google, never an email to a client. A
-  truncated or failed read does nothing; more than 10 cancellations in one run
-  does nothing and alerts info@; every change is recorded in
+  truncated or failed read does nothing; only events Owen organised count;
+  more than 10 cancellations in one run, or 15 in a rolling 24 hours, does
+  nothing and alerts info@; every change is recorded in
   `calendar_followed_changes` and can be undone for 7 days. All other
   differences are found by src/lib/calendarDrift.ts and shown on the
   dashboard for the owner to resolve with a tap (src/lib/calendarFix.ts); a

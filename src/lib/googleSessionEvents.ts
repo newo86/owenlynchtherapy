@@ -31,6 +31,8 @@ export interface EventLike {
   start?: EventTime | null;
   end?: EventTime | null;
   originalStartTime?: EventTime | null;
+  /** Who organised it; `self` is true for the practice's own events. */
+  organizer?: { self?: boolean | null } | null;
 }
 
 /** The slice of the Google Calendar client used here, so tests can fake it

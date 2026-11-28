@@ -178,7 +178,9 @@ export function planLinks(
   clients: ActiveClient[],
   now: Date,
 ): LinkPlan {
-  const timed = events.filter(e => !e.allDay);
+  // All-day items are never sessions; an invitation from someone else is
+  // never the practice's own session to tie a booking to.
+  const timed = events.filter(e => !e.allDay && !e.foreign);
   const eventIds = new Set(timed.map(e => e.id));
   const seriesBases = new Set(timed.map(e => (e.recurringEventId ?? e.id).split('_')[0]));
   const isLinked = (gid: string | null) =>

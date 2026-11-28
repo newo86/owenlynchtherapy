@@ -17,7 +17,7 @@ async function fetchItems(): Promise<FollowedItem[] | null> {
   } catch { return null; }
 }
 
-export function FollowedFromGooglePanel({ onChanged }: { onChanged: () => void }) {
+export function FollowedFromGooglePanel({ onChanged, compact = false }: { onChanged: () => void; compact?: boolean }) {
   const [items, setItems] = useState<FollowedItem[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: 'ok' | 'alert'; text: string } | null>(null);
@@ -49,5 +49,5 @@ export function FollowedFromGooglePanel({ onChanged }: { onChanged: () => void }
     }
   }
 
-  return <FollowedFromGoogleCard items={items} onUndo={id => void undo(id)} busy={busy} message={message} />;
+  return <FollowedFromGoogleCard items={items} onUndo={id => void undo(id)} busy={busy} message={message} compact={compact} />;
 }

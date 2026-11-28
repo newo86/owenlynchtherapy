@@ -43,7 +43,12 @@ export async function POST(req: NextRequest) {
   }
   const id = typeof body.id === 'string' && /^[0-9a-f-]{36}$/i.test(body.id) ? body.id : null;
   if (!id || body.action !== 'undo') return NextResponse.json({ error: 'id and action "undo" are required' }, { status: 400 });
-  const res = await undoFollowedChange(supabaseFollowStore, id, new Date());
+  const { data: row } = await supabaseAdmin.from('calendar_followed_changes').select('client_id').eq('id', id).maybeSingle();
+  const { data: client } = row?.client_id
+    ? await supabaseAdmin.from('clients').select('full_name').eq('id', row.client_id).maybeSingle()
+    : { data: null };
+  const label = promptLabel({ full_name: (client?.full_name as string | undefined) ?? '' });
+  const res = await undoFollowedChange(supabaseFollowStore, id, new Date(), () => label);
   console.log('[calendar/followed] undo', res.ok ? 'ok' : 'declined');
   return NextResponse.json(res, { status: res.ok ? 200 : 409, headers: noCache });
 }

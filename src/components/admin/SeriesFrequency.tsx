@@ -3,10 +3,14 @@
 // "How often" for a client with an ongoing series (client record). Picking
 // the other rhythm first asks the server what exactly would change and shows
 // it ("From Tue 9 Dec, every 2 weeks. Cancels 4 sessions: …"); nothing is
-// saved until "Change it". Google Calendar is updated to match; the client
-// isn't emailed. SeriesFrequencyView is presentational (used on /admin-demo).
+// saved until "Change to every 2 weeks". Google Calendar is updated to match;
+// the client isn't emailed. SeriesFrequencyView is presentational (used on
+// /admin-demo).
+//
+// Focus: the confirm box takes focus when it opens; "Keep …" returns it to
+// the option that was picked; after a change it moves to the result line.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { adminFetch } from './api';
 
 interface ViewProps {
@@ -20,22 +24,39 @@ interface ViewProps {
 }
 
 const label = (n: number) => (n === 1 ? 'Weekly' : `Every ${n} weeks`);
+const lower = (n: number) => (n === 1 ? 'weekly' : `every ${n} weeks`);
 
 export function SeriesFrequencyView({ interval, pending, busy, message, onPick, onConfirm, onCancel }: ViewProps) {
+  const labelId = useId();
   const options = [...new Set([1, 2, interval])].sort((a, b) => a - b);
+  const optionRefs = useRef(new Map<number, HTMLButtonElement>());
+  const confirmRef = useRef<HTMLDivElement>(null);
+  const msgRef = useRef<HTMLParagraphElement>(null);
+  const picked = useRef<number | null>(null);
+
+  useEffect(() => { if (pending) confirmRef.current?.focus(); }, [pending]);
+  useEffect(() => { if (message) msgRef.current?.focus(); }, [message]);
+
+  const keep = () => {
+    const back = picked.current;
+    onCancel();
+    if (back !== null) window.setTimeout(() => optionRefs.current.get(back)?.focus(), 0);
+  };
+
   return (
     <div className="sf-box">
       <div className="sf-head">
-        <p className="sf-label" id="sf-label">How often</p>
-        <div className="admin-segmented sf-options" role="group" aria-labelledby="sf-label">
+        <p className="sf-label" id={labelId}>How often</p>
+        <div className="admin-segmented sf-options" role="group" aria-labelledby={labelId}>
           {options.map(n => (
             <button
               key={n}
+              ref={el => { if (el) optionRefs.current.set(n, el); else optionRefs.current.delete(n); }}
               type="button"
               className={`admin-segmented-btn${n === interval ? ' is-active' : ''}`}
               aria-pressed={n === interval}
               disabled={busy}
-              onClick={() => { if (n !== interval) onPick(n); }}
+              onClick={() => { if (n !== interval) { picked.current = n; onPick(n); } }}
             >
               {label(n)}
             </button>
@@ -43,17 +64,21 @@ export function SeriesFrequencyView({ interval, pending, busy, message, onPick, 
         </div>
       </div>
       {pending && (
-        <div className="sf-confirm" role="group" aria-label={`Change to ${label(pending.to).toLowerCase()}`}>
+        <div ref={confirmRef} tabIndex={-1} className="sf-confirm" role="group" aria-label={`Change to ${lower(pending.to)}`}>
           <p className="sf-confirm-text">{pending.summary}</p>
           <div className="sf-actions">
             <button type="button" className="admin-btn-primary" disabled={busy} onClick={onConfirm}>
-              {busy ? 'Changing…' : 'Change it'}
+              {busy ? 'Changing…' : `Change to ${lower(pending.to)}`}
             </button>
-            <button type="button" className="admin-btn-secondary" disabled={busy} onClick={onCancel}>Keep as is</button>
+            <button type="button" className="admin-btn-secondary" disabled={busy} onClick={keep}>Keep {lower(interval)}</button>
           </div>
         </div>
       )}
-      {message && <p className={`sf-msg${message.kind === 'alert' ? ' is-alert' : ''}`} role={message.kind === 'ok' ? 'status' : 'alert'}>{message.text}</p>}
+      {message && (
+        <p ref={msgRef} tabIndex={-1} className={`sf-msg${message.kind === 'alert' ? ' is-alert' : ''}`} role={message.kind === 'ok' ? 'status' : 'alert'}>
+          {message.text}
+        </p>
+      )}
     </div>
   );
 }
@@ -82,7 +107,7 @@ export function SeriesFrequency({ clientId, onChanged }: { clientId: string; onC
     try {
       const res = await adminFetch('/api/admin/sessions/series/interval', {
         method: 'POST',
-        body: JSON.stringify({ series_id: series.id, interval_weeks: to, confirm }),
+        body: JSON.stringify({ series_id: series.id, interval_weeks: to, from_weeks: series.interval_weeks, confirm }),
       });
       const json = await res.json().catch(() => ({}));
       if (!confirm) {

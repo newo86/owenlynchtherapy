@@ -54,10 +54,12 @@ change made in Google, by itself, safely.
 
 **What is followed** (`src/lib/followGoogle.ts`, run by the 5-minute
 `/api/admin/calendar/sync` job right after it reads the calendar window):
-1. **One occurrence deleted in Google** → that session is cancelled in the app.
+1. **One occurrence deleted in Google** (or a one-off event deleted) → that
+   session is cancelled in the app.
 2. **A whole repeating series deleted in Google** (or ended with "delete this
-   and following") → its later sessions are cancelled and its
-   `session_series` row is switched off.
+   and following", or the newer half of an earlier "this and following" edit
+   deleted) → its later sessions are cancelled and its `session_series` row
+   is switched off.
 3. **A series' repeat changed in Google** between weekly and every 2, 3 or 4
    weeks (for all events, or "this and following") → `interval_weeks` and
    `anchor_at` follow, sessions that no longer fall on a Google date are
@@ -71,19 +73,31 @@ change made in Google, by itself, safely.
   `originalStartTime`). Never by title or name: "Walk Orla" can't touch a session.
 - Only **future** sessions with status `scheduled`. Past, attended, paid or
   already-cancelled sessions are never changed.
+- Only events Owen organised: an invitation from someone else is never acted on.
 - A deletion needs explicit evidence: Google reports the event or occurrence
-  as `cancelled` (or 410 Gone), or a complete, untruncated instance list has
-  nothing on a date the repeat rule generates. A 404, any Google error, a
-  truncated read or Google not connected → **no actions** that run.
+  as `cancelled` (or 410 Gone). Occurrences are read from five weeks before
+  now to five weeks after the series' last session; a session whose
+  occurrence still isn't in that list is looked up by its occurrence id:
+  live means it was moved (not followed), cancelled means deleted, 404 means
+  unknown (not followed). Any Google error, a truncated read or Google not
+  connected → **no actions** that run.
+- **Endings far out wait.** A repeat that now ends (UNTIL) is only believed
+  once its last date is about four weeks inside the ten-week read window,
+  i.e. within roughly six weeks of today, so a "this and following"
+  continuation can't be missed. An ending further out is followed once it
+  comes within range; until then its later sessions show as differences.
 - **Moves are not followed.** An occurrence dragged to another time, or a
   repeat moved to another weekday/time, stays on the "doesn't match" card.
   So does any rule the app can't read (monthly, several weekdays, 5+ weeks,
   a repeat not on Irish time).
-- **Cap:** if one run would cancel more than **10** sessions in the next ~10
-  weeks (the window the dashboard and reminders look at), or touch more than
-  80 sessions in all, it applies **none**, emails the practice address once per
-  Dublin day (via `getResend()`, so the kill switch applies; idempotency key
-  `follow-google-held:<date>`), and the sessions stay on the differences card.
+- **Caps:** if one run would cancel more than **10** sessions in the next ~10
+  weeks (the window the dashboard and reminders look at), or that plus the
+  cancellations already followed in the **last 24 hours** (counted from
+  `calendar_followed_changes`, undone ones excluded) would pass **15**, or it
+  would touch more than 80 sessions in all, it applies **none**, emails the
+  practice address once per Dublin day (via `getResend()`, so the kill switch
+  applies; idempotency key `follow-google-held:<date>`), and the sessions stay
+  on the differences card.
   (A whole weekly series is ~10 sessions in that window; sessions further out
   in an ended or changed series are cancelled with it, inside the 80.)
 - The follow step **never writes to Google, never emails a client, never
@@ -93,7 +107,12 @@ change made in Google, by itself, safely.
   (desktop below today's sessions; phone below "Did they pay?") lists the last
   7 days with **Undo** (`/api/admin/calendar/followed`). Undo only changes the
   app; Google still shows the change, so the card says to fix it there or it
-  will show as a difference. An undone change is never re-applied.
+  will show as a difference. An undone change is not re-applied for the same
+  Google state (a later, different change in Google is followed as usual).
+  Undo first checks the series is still as the change left it, and an older
+  change can't be undone once a newer one exists for the same series.
+- A series being changed from the app ("How often", below) is locked for a
+  few minutes and left alone by both the follow step and the daily top-up.
 - Differences already covered by a followed change are left off the "doesn't
   match" card (`hideFollowedDrift`).
 - Idempotent: a second run finds nothing left to do.
@@ -106,7 +125,13 @@ Picking the other rhythm shows exactly what changes first ("From Tue 9 Dec,
 every 2 weeks. Cancels 4 sessions: … Google Calendar will be updated. Your
 client isn't emailed."), via `POST /api/admin/sessions/series/interval`
 (preview without `confirm`, apply with `confirm: true`). The change starts
-from the client's next session. Google is updated to match
+from the client's next session. The series row is claimed first with a
+short lock (`change_lock_until`): a double tap, a second tab or the
+background jobs can't act on it at the same time, and a refused claim says
+"This changed meanwhile, so nothing was done". All the database steps run in
+one transaction (`apply_series_interval_change`); if that fails, the new
+Google repeat is deleted (or an in-place rule edit put back) and nothing has
+changed. Google is updated to match
 (`src/lib/seriesInterval.ts`): the old repeating event is ended the day before
 ("this and following") and a new one starts on the new rhythm, so past
 occurrences in Google stay exactly as they were. If Google isn't connected or
@@ -121,8 +146,11 @@ weekly ↔ fortnightly both ways, moves not followed, app writes only one
 occurrence, both clock-change weekends, truncated reads, Google down, the cap,
 "Walk Orla", all-day events, re-runs, undo).
 
-**Migration needed:** `supabase/migrations/calendar_followed_changes.sql` via
-`/db-migrate` (needs `session_series.sql` applied first, for its foreign key).
+**Migrations needed:** `supabase/migrations/calendar_followed_changes.sql`
+(needs `session_series.sql` first, for its foreign key; until applied nothing
+is followed) and `supabase/migrations/session_series_change.sql` (the lock
+column and the transaction function; until applied "How often" refuses with
+"needs a one-off database update"), both via `/db-migrate`.
 
 ## Payment prompts ("Did they pay?")
 
@@ -148,7 +176,7 @@ Most clients pay by Revolut transfer to Owen's personal account, which no softwa
 
 ## Ongoing clients (sessions keep coming)
 - A client booked "ongoing" weekly or every 2 weeks gets a `session_series`
-  row. A daily cron (`/api/admin/sessions/extend`, 05:30 UTC,
+  row. A daily cron (`/api/admin/sessions/extend`, 05:32 UTC, off the 5-minute sync grid,
   `src/lib/sessionSeries.ts`) keeps about 16 weeks of sessions booked ahead,
   after the client's latest session in that series, on the series' own weekday
   and Dublin time (`anchor_at`), with the latest session's format, place and
@@ -239,7 +267,7 @@ Applied in the Supabase SQL editor. Notably: `session_reminders.sql` +
 page storage), `admin_session_state.sql` (server-side sign-out: "Sign out"
 voids every admin session issued before it, on all devices — until this table
 exists, signing out only clears the current browser's cookie), `questionnaires.sql`
-(Analytics page: values worksheet and C–NIP–2 links and results), `payment_prompts.sql` ("Did they pay?" prompts; without it nothing is prompted), `calendar_followed_changes.sql` (following Google deletions / repeat changes; without it nothing is followed). If a feature
+(Analytics page: values worksheet and C–NIP–2 links and results), `payment_prompts.sql` ("Did they pay?" prompts; without it nothing is prompted), `calendar_followed_changes.sql` (following Google deletions / repeat changes; without it nothing is followed), `session_series_change.sql` ("How often" lock + one-transaction change; without it "How often" refuses). If a feature
 "doesn't save", check its migration was run in production.
 
 ## Client questionnaires (Analytics page)
