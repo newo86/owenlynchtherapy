@@ -1,11 +1,38 @@
 import type { CSSProperties } from 'react';
 
+/**
+ * Sage Diary palette (Nov 2026). Mirrors the --sd-* variables on .admin-root in
+ * admin.css: change both together. Prefer the CSS variables in stylesheets and
+ * these constants in inline styles. See docs/design/prototypes/IMPLEMENTATION.md.
+ */
+export const sageDiary = {
+  page: '#EEF3EF',        // light sage page
+  card: '#FAFCFA',
+  header: '#4F8A68',      // website sage: header band (white text only if large + bold)
+  onHeader: '#FFFFFF',
+  rail: '#2F5A44',        // deep sage: rail + phone tab bar
+  onRail: '#DDE9E1',
+  ink: '#1F2B24',
+  inkSoft: '#4B5A51',
+  pill: '#DCE8E0',
+  line: '#E1E9E3',
+  paid: '#CFE3D6',
+  action: '#F6CB52',      // the ONE primary button per screen
+  actionHover: '#F2BE2E',
+  actionActive: '#E8B21F',
+  onAction: '#1F2B24',    // text on yellow is always dark
+  danger: '#B3261E',
+  dangerSoft: '#F8E3E1',
+  artBlue: '#AFC3DE',
+  artYellow: '#FBB807',   // art only, never a button
+  artCream: '#FAF6EC',
+  artDot: '#A8C8B5',
+} as const;
+
 export const colors = {
   forest: '#2A4D3C',
   forestDark: '#1F3A2D',
   forestLight: '#3A6450',
-  terracotta: '#C85A1A',
-  terracottaDark: '#A64810',
   gold: '#D4A843',
   goldDark: '#8B6914',
   sage: '#4F8A68',
@@ -14,15 +41,17 @@ export const colors = {
   linenDeep: '#EDE5D6',
   cream: '#FAF7F2',
   border: '#E0D8CE',
-  text: '#1a1a1a',
-  textMuted: '#666',
+  text: '#1F2B24',
+  textMuted: '#4B5A51',
   textFaint: '#999',
   white: '#FFFFFF',
 } as const;
 
+// The dashboard is Inter throughout (loaded in the admin layout). `display`
+// is kept as a name so older components still compile.
 export const fonts = {
-  display: 'var(--font-montserrat), Montserrat, Avenir, "Helvetica Neue", sans-serif',
-  sans: 'var(--font-poppins), Poppins, system-ui, sans-serif',
+  display: 'var(--font-inter), Inter, -apple-system, system-ui, sans-serif',
+  sans: 'var(--font-inter), Inter, -apple-system, system-ui, sans-serif',
   mono: '"SF Mono", Menlo, monospace',
 } as const;
 
@@ -32,7 +61,7 @@ export const shadows = {
   md: '0 4px 12px rgba(42,77,60,0.08), 0 2px 4px rgba(42,77,60,0.05)',
   lg: '0 8px 24px rgba(42,77,60,0.12), 0 4px 8px rgba(42,77,60,0.06)',
   xl: '0 16px 40px rgba(42,77,60,0.14), 0 8px 16px rgba(42,77,60,0.08)',
-  glowTerracotta: '0 0 0 1px rgba(200,90,26,0.3), 0 4px 16px rgba(200,90,26,0.12)',
+  
   glowForest: '0 0 0 1px rgba(42,77,60,0.3), 0 4px 16px rgba(42,77,60,0.12)',
   glowGold: '0 0 0 1px rgba(212,168,67,0.4), 0 4px 16px rgba(212,168,67,0.15)',
   // Back-compat aliases used by the older components
@@ -61,7 +90,7 @@ export const eyebrow: CSSProperties = {
   fontFamily: fonts.sans,
   fontSize: 11,
   fontWeight: 500,
-  color: colors.terracotta,
+  color: sageDiary.inkSoft,
   letterSpacing: '3px',
   textTransform: 'uppercase',
   margin: 0,
@@ -132,15 +161,14 @@ export const btnPrimary: CSSProperties = {
   alignItems: 'center',
   gap: 8,
   padding: '10px 20px',
-  background: colors.terracotta,
-  color: colors.white,
+  background: sageDiary.action,
+  color: sageDiary.onAction,
   fontFamily: fonts.sans,
-  fontSize: 12,
-  fontWeight: 500,
-  letterSpacing: '1.5px',
-  textTransform: 'uppercase',
+  fontSize: 13,
+  fontWeight: 700,
+  letterSpacing: 0,
   border: 'none',
-  borderRadius: 6,
+  borderRadius: 12,
   cursor: 'pointer',
   transition: 'background 150ms ease, transform 150ms ease',
 };

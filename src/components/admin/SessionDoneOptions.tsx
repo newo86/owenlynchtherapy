@@ -69,22 +69,22 @@ export function SessionDoneOptions({ session, client, busy, onChoose, onCancel }
             onClick={() => onChoose({ record_payment: true, send_receipt: true })}
           >
             {isLowCost
-              ? `Done — cash received (${fee}) + email receipt`
-              : `Done — paid ${fee} + email receipt`}
+              ? `Done, cash received (${fee}) + email receipt`
+              : `Done, paid ${fee} + email receipt`}
           </button>
           <button
             style={btnMuted}
             disabled={busy}
             onClick={() => onChoose({ record_payment: true, send_receipt: false })}
           >
-            {isLowCost ? 'Done — cash received, no receipt' : 'Done — paid, no receipt'}
+            {isLowCost ? 'Done, cash received, no receipt' : 'Done, paid, no receipt'}
           </button>
           <button
             style={btnMuted}
             disabled={busy}
             onClick={() => onChoose({ record_payment: false, send_receipt: false })}
           >
-            Done — not paid yet
+            Done, not paid yet
           </button>
         </>
       )}

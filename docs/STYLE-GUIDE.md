@@ -79,3 +79,42 @@ Colour tokens live in the `@theme` block in `src/app/globals.css`
 
 Warm, honest, human. No wellness buzzwords, no overclaiming, no promising
 outcomes. Stigma-free, non-deficit language throughout.
+
+## Sage Diary (dashboard)
+
+The admin dashboard (not the public site) uses the "Sage Diary" look Owen
+approved in Nov 2026. Spec: `docs/design/prototypes/`. Build notes and file
+ownership: `docs/design/prototypes/IMPLEMENTATION.md`.
+
+- **Tokens** are `--sd-*` CSS variables on `.admin-root` (src/components/admin/admin.css),
+  mirrored in `sageDiary` (src/components/admin/theme.ts). Change both together.
+- **Type:** Inter (next/font in `src/app/(admin)/layout.tsx` only). Inside the
+  dashboard the old `--font-poppins` / `--font-montserrat` names resolve to Inter.
+  Titles 700, body 400.
+- **One primary button per screen**: soft yellow `--sd-action` with dark text
+  (`--sd-on-action`). Never yellow text on a light card. Secondary = pale sage
+  pill (`--sd-pill`). Destructive = `--sd-danger`.
+- **Header band:** website sage `--sd-header` with the wave and split circle.
+  White on it is 4.1:1, so only large bold text (19px+ bold or 24px+) goes on
+  the band; small text goes in a pill or below it.
+- **Nav (deep sage `--sd-rail`):** text `--sd-on-rail`; yellow on hover and when
+  selected, selected is also bold. Hover/selected backgrounds are *darker*
+  overlays (`--sd-rail-hover/-selected`), not lighter, to keep yellow at 4.5:1+.
+- **Light rows and option tiles:** hover = soft yellow row (`--sd-action-soft`)
+  and a full-yellow icon square; text stays dark.
+- **No terracotta/orange anywhere in the dashboard** (Owen's TASTE.md). Needs
+  attention = a soft-yellow dot (`--sd-art-yellow`) or `--sd-danger` text/tint;
+  today = an ink ring, not a fill; unpaid tags and errors use `--sd-danger`.
+  Checkboxes and radios are deep sage. Calendar quick-action bars are soft yellow
+  for every event type. The one exception is the waiting-list email preview,
+  which mirrors the real email's own button colour.
+- **One yellow button per screen.** Everything else is `admin-btn-secondary`.
+  Add-client style actions on pages that have their own main action (Hours,
+  Waitlist) are not shown in the band.
+- **Pop-ups** (`.admin-sheet`): deep-sage header, no eyebrow line, bold title.
+- **Contrast checked (WCAG 2.1 AA):** ink on yellow 9.5 / hover 8.5 / active 7.6;
+  rail text 6.3; yellow on rail 5.1, on rail hover 6.2, selected 7.1; ink-soft on
+  page 6.5, on card 7.1, on soft-yellow row 6.5; ink on page 13.1; white on band
+  4.1 (large text only); danger on card 6.3, white on danger 6.5. Adjusted: old
+  muted `#6e7d72` (3.9) is now `#4B5A51`; prototype's light-overlay nav states
+  (yellow 4.1 / 3.7) became dark overlays.

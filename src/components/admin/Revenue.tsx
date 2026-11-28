@@ -323,7 +323,7 @@ export function Revenue({ clients }: Props) {
         />
         <RevenueCard
           label="Outstanding"
-          accent="terracotta"
+          accent="attention"
           totals={{ sessions: outstandingTotals.sessions, gross: outstandingTotals.gross, net: outstandingTotals.gross }}
           grossNote="Owed for sessions already held"
           subtext={outstanding.length > 0
@@ -334,7 +334,7 @@ export function Revenue({ clients }: Props) {
         />
         <RevenueCard
           label="Yearly pace"
-          accent="terracotta"
+          accent="attention"
           totals={{
             sessions: projection.last4wSessions,
             gross: projection.projectedGross,
@@ -352,7 +352,7 @@ export function Revenue({ clients }: Props) {
           <div className="admin-stat-blob" style={{ background: '#d8e8de' }} aria-hidden />
           <div className="admin-stat-top">
             <div className="admin-stat-label">Accreditation hours</div>
-            <div className="admin-stat-icontile" style={{ background: 'rgba(79,138,104,0.14)', color: 'var(--sage)' }}>
+            <div className="admin-stat-icontile" style={{ background: 'rgba(79,138,104,0.14)', color: 'var(--sd-rail)' }}>
               <GraduationCap size={20} strokeWidth={1.7} aria-hidden />
             </div>
           </div>
@@ -454,7 +454,7 @@ function DrillDownModal({ title, rows, onClose }: { title: string; rows: DrillRo
           position: 'sticky', top: 0, zIndex: 1,
         }}>
           <div>
-            <p style={{ margin: 0, fontSize: 10, fontWeight: 500, letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--terracotta-soft)' }}>
+            <p style={{ margin: 0, fontSize: 10, fontWeight: 500, letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--sd-danger-soft)' }}>
               Revenue breakdown
             </p>
             <h2 style={{ margin: '4px 0 0', fontFamily: 'var(--font-montserrat), Avenir, sans-serif', fontWeight: 300, fontSize: 20, color: 'white' }}>
@@ -533,7 +533,7 @@ function DrillDownModal({ title, rows, onClose }: { title: string; rows: DrillRo
 
 interface RevenueCardProps {
   label: string;
-  accent: 'sage' | 'lilac' | 'terracotta' | 'gold';
+  accent: 'sage' | 'lilac' | 'attention' | 'gold';
   totals: Totals;
   subtext: string;
   Icon: typeof TrendingUp;
@@ -547,7 +547,7 @@ function RevenueCard({ label, accent, totals, subtext, Icon, emphasised, grossNo
   const palette = {
     sage:       { strip: 'var(--sage)',       blob: '#d8e8de', iconBg: 'rgba(79,138,104,0.14)', iconFg: 'var(--sage)' },
     lilac:      { strip: 'var(--lilac)',      blob: '#e3d3eb', iconBg: 'rgba(168,124,185,0.16)', iconFg: 'var(--lilac-dark)' },
-    terracotta: { strip: 'var(--terracotta)', blob: '#f6dfd0', iconBg: 'rgba(200,90,27,0.12)', iconFg: 'var(--terracotta)' },
+    attention: { strip: 'var(--sd-art-yellow)', blob: 'transparent', iconBg: 'var(--sd-action-soft)', iconFg: 'var(--sd-ink)' },
     gold:       { strip: 'var(--gold)',       blob: '#f6e9c2', iconBg: 'rgba(212,168,67,0.18)', iconFg: 'var(--gold-dark)' },
   }[accent];
 
@@ -593,7 +593,7 @@ function RevenueCard({ label, accent, totals, subtext, Icon, emphasised, grossNo
       </div>
       <div className="admin-stat-foot" style={{ marginTop: 10 }}>{subtext}</div>
       {onClick && (
-        <div style={{ marginTop: 10, fontSize: 11, color: 'var(--sage)', fontWeight: 500 }}>
+        <div style={{ marginTop: 10, fontSize: 11, color: 'var(--sd-rail)', fontWeight: 500 }}>
           View sessions ↗
         </div>
       )}
@@ -755,8 +755,8 @@ function MonthlyChart({
             </div>
             <div style={{
               fontSize: 10,
-              color: isCurrent ? 'var(--terracotta)' : 'var(--ink-muted)',
-              fontWeight: isCurrent ? 600 : 400,
+              color: isCurrent ? 'var(--sd-ink)' : 'var(--ink-muted)',
+              fontWeight: isCurrent ? 700 : 400,
             }}>{m.label}</div>
           </div>
         );

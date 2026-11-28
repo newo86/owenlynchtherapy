@@ -140,12 +140,12 @@ export function Waitlist({ waitlist, onReload }: Props) {
                     {w.status === 'contacted' ? 'Contacted' : 'Waiting'}
                   </span>
                   {w.contacted_at && (
-                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sage)', marginTop: 3 }}>
+                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sd-rail)', marginTop: 3 }}>
                       {joinedWhen(w.contacted_at)}
                     </span>
                   )}
                   {w.last_emailed_at && (
-                    <span style={{ display: 'block', fontSize: 11, marginTop: 4, color: w.response === 'yes' ? 'var(--sage)' : 'var(--ink-muted)' }}>
+                    <span style={{ display: 'block', fontSize: 11, marginTop: 4, color: w.response === 'yes' ? 'var(--sd-rail)' : 'var(--ink-muted)' }}>
                       Emailed {joinedWhen(w.last_emailed_at)}
                       {' · '}
                       {w.response === 'yes'
@@ -157,7 +157,7 @@ export function Waitlist({ waitlist, onReload }: Props) {
                 <td style={{ textAlign: 'right' as const }}>
                   <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {w.status === 'waiting' ? (
-                      <button onClick={() => act(w.id, 'contacted')} disabled={busyId === w.id} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
+                      <button onClick={() => act(w.id, 'contacted')} disabled={busyId === w.id} className="admin-btn-secondary">
                         Mark contacted
                       </button>
                     ) : (
@@ -175,7 +175,7 @@ export function Waitlist({ waitlist, onReload }: Props) {
                   {feedback?.id === w.id && (
                     <div style={{
                       marginTop: 8, fontSize: 11,
-                      color: feedback.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)',
+                      color: feedback.kind === 'ok' ? 'var(--sd-rail)' : 'var(--sd-danger)',
                     }}>
                       {feedback.msg}
                     </div>
@@ -210,7 +210,7 @@ export function Waitlist({ waitlist, onReload }: Props) {
                   <button onClick={() => act(w.id, 'delete')} disabled={busyId === w.id} className="admin-btn-secondary">Remove</button>
                 </div>
                 {feedback?.id === w.id && (
-                  <div style={{ width: '100%', fontSize: 11, color: feedback.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)' }}>{feedback.msg}</div>
+                  <div style={{ width: '100%', fontSize: 11, color: feedback.kind === 'ok' ? 'var(--sd-rail)' : 'var(--sd-danger)' }}>{feedback.msg}</div>
                 )}
               </div>
             ))}
@@ -241,7 +241,7 @@ export function Waitlist({ waitlist, onReload }: Props) {
                   </div>
                 )}
                 {feedback?.id === w.id && (
-                  <div style={{ marginTop: 6, fontSize: 11, color: feedback.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)' }}>{feedback.msg}</div>
+                  <div style={{ marginTop: 6, fontSize: 11, color: feedback.kind === 'ok' ? 'var(--sd-rail)' : 'var(--sd-danger)' }}>{feedback.msg}</div>
                 )}
               </div>
             ))}

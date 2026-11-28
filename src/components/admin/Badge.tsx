@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { colors, fonts } from './theme';
+import { colors, fonts, sageDiary } from './theme';
 
 export type BadgeKind =
   | 'paid' | 'unpaid' | 'refunded'
@@ -10,7 +10,7 @@ export type BadgeKind =
 
 const STYLES: Record<BadgeKind, { bg: string; fg: string; border: string; label: string }> = {
   paid:       { bg: `${colors.sage}20`, fg: colors.sageDark, border: colors.sage, label: 'Paid' },
-  unpaid:     { bg: `${colors.terracotta}20`, fg: colors.terracottaDark, border: colors.terracotta, label: 'Unpaid' },
+  unpaid:     { bg: `${sageDiary.danger}20`, fg: sageDiary.danger, border: sageDiary.danger, label: 'Unpaid' },
   refunded:   { bg: '#9999991A', fg: '#666', border: '#999', label: 'Refunded' },
   in_person:  { bg: `${colors.forest}15`, fg: colors.forest, border: 'transparent', label: 'In person' },
   online:     { bg: `${colors.sage}15`, fg: colors.sageDark, border: 'transparent', label: 'Online' },
@@ -19,7 +19,7 @@ const STYLES: Record<BadgeKind, { bg: string; fg: string; border: string; label:
   cancelled:  { bg: '#9999991A', fg: '#666', border: '#bbb', label: 'Cancelled' },
   no_show:    { bg: '#9999991A', fg: '#666', border: '#bbb', label: 'No show' },
   scheduled:  { bg: `${colors.forest}12`, fg: colors.forest, border: 'transparent', label: 'Scheduled' },
-  pending:    { bg: `${colors.terracotta}20`, fg: colors.terracottaDark, border: colors.terracotta, label: 'Pending' },
+  pending:    { bg: `${sageDiary.danger}20`, fg: sageDiary.danger, border: sageDiary.danger, label: 'Pending' },
   expired:    { bg: '#9999991A', fg: '#999', border: '#bbb', label: 'Expired' },
   submitted:  { bg: `${colors.sage}20`, fg: colors.sageDark, border: colors.sage, label: 'Submitted' },
   calendar:   { bg: `${colors.sage}1A`, fg: colors.sageDark, border: colors.sage, label: 'Calendar' },

@@ -109,7 +109,7 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
             <p className="admin-sheet-eyebrow" style={{
               margin: 0, fontSize: 10, fontWeight: 500,
               letterSpacing: '4px', textTransform: 'uppercase',
-              color: 'var(--terracotta-soft)',
+              color: 'var(--sd-danger-soft)',
             }}>Schedule</p>
             <h2 className="admin-sheet-title" style={{
               margin: '4px 0 0',
@@ -202,7 +202,7 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
                     value={v}
                     checked={sessionFormat === v}
                     onChange={() => setSessionFormat(v)}
-                    style={{ accentColor: 'var(--terracotta)' }}
+                    style={{ accentColor: 'var(--sd-rail)' }}
                   />
                   {v === 'in_person' ? 'In person' : 'Online'}
                 </label>
@@ -270,12 +270,12 @@ export function ScheduleSessionModal({ clients, initialIsoDate, onClose, onSucce
           )}
 
           {error && (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-danger)' }}>{error}</p>
           )}
 
           {done && (
             <p style={{
-              margin: 0, fontSize: 13, color: 'var(--sage)',
+              margin: 0, fontSize: 13, color: 'var(--sd-rail)',
               display: 'inline-flex', alignItems: 'center', gap: 6,
             }}>
               <Check size={14} strokeWidth={2.4} /> Scheduled.

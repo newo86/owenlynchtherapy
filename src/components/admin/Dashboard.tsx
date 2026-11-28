@@ -6,6 +6,7 @@ import { adminFetch, displayFee, isSameDay, startOfWeek, dedupeSessions } from '
 import { SessionDoneOptions, type SessionDoneChoice } from './SessionDoneOptions';
 import { NextUpCard, AccreditationMiniCard, findNextUp } from './TodayCards';
 import { MobileHome } from './MobileHome';
+import { SageHeaderBand } from './sage';
 import { CalendarDriftCard } from './CalendarDriftCard';
 import { PaymentPromptsPanel } from './PaymentPromptsPanel';
 import { FollowedFromGooglePanel } from './FollowedFromGooglePanel';
@@ -235,7 +236,7 @@ export function Dashboard({
       const parts = ['Marked attended'];
       if (choice.record_payment && json.paid) parts.push('payment recorded');
       if (json.receipt_sent) parts.push('receipt emailed');
-      setFeedback({ id: sessionId, msg: parts.join(' — ') + '.' });
+      setFeedback({ id: sessionId, msg: parts.join(', ') + '.' });
       onReload();
     } catch { setFeedback({ id: sessionId, msg: 'Network error.' }); }
     finally { setBusyId(null); }
@@ -332,6 +333,17 @@ export function Dashboard({
   if (isPhone) {
     return (
       <>
+        <SageHeaderBand
+          title="Today"
+          subtitle={new Date().toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Dublin' })}
+        />
+        {/* The calm "Calendar connected" pill is hidden on phones (small text can't sit on the band),
+            but "not connected" is a warning Owen must see, so it gets its own row. */}
+        {calendarStatus && !calendarStatus.connected && (
+          <button type="button" className="sd-notice" onClick={onConnectCalendar}>
+            Google Calendar isn&apos;t connected. Tap to reconnect.
+          </button>
+        )}
         {strip && strip.tone !== 'ok' && (
           <div className={`admin-banner is-${strip.tone}`} role="alert">
             <span className="admin-banner-dot" aria-hidden />{strip.msg}
@@ -350,24 +362,24 @@ export function Dashboard({
 
   return (
     <>
-      <header className="admin-topbar">
-        <div>
-          <h1 className="admin-h1">{greeting}, {PRACTICE.practitionerFirstName}</h1>
-          <p className="admin-subline">{dateLine} · {todaySessions.length === 0 ? 'no sessions today' : `${todaySessions.length} session${todaySessions.length === 1 ? '' : 's'} today`}</p>
-        </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button
-            onClick={calendarStatus?.connected ? onDisconnectCalendar : onConnectCalendar}
-            className="admin-status-pill"
-            style={{ cursor: 'pointer' }}
-            title={calendarStatus?.connected ? (calendarStatus.email ? `Connected as ${calendarStatus.email}` : 'Connected') : 'Connect Google Calendar'}
-          >
-            <span className={`admin-status-dot${calendarStatus?.connected ? '' : ' is-off'}`} />
-            {calendarStatus?.connected ? 'Calendar connected' : 'Calendar not connected'}
-          </button>
-          <button onClick={onNewClient} className="admin-btn-primary">+ Add client</button>
-        </div>
-      </header>
+      <SageHeaderBand
+        title={`${greeting}, ${PRACTICE.practitionerFirstName}`}
+        subtitle={`${dateLine} · ${todaySessions.length === 0 ? 'no sessions today' : `${todaySessions.length} session${todaySessions.length === 1 ? '' : 's'} today`}`}
+        action={(
+          <>
+            <button
+              onClick={calendarStatus?.connected ? onDisconnectCalendar : onConnectCalendar}
+              className="admin-status-pill"
+              style={{ cursor: 'pointer' }}
+              title={calendarStatus?.connected ? (calendarStatus.email ? `Connected as ${calendarStatus.email}` : 'Connected') : 'Connect Google Calendar'}
+            >
+              <span className={`admin-status-dot${calendarStatus?.connected ? '' : ' is-off'}`} />
+              {calendarStatus?.connected ? 'Calendar connected' : 'Calendar not connected'}
+            </button>
+            <button onClick={onNewClient} className="admin-btn-secondary">+ Add client</button>
+          </>
+        )}
+      />
 
       {flash && (
         <div className={`admin-banner is-${flash.kind === 'success' ? 'ok' : 'alert'}`} role="status">{flash.msg}</div>
@@ -553,7 +565,7 @@ function SessionRow({
       <div className="admin-session-side">
         <div className="admin-session-btns">
           {session.status === 'scheduled' && onSessionDone && (
-            <button onClick={onSessionDone} disabled={busy} className="admin-btn-primary admin-btn-compact">Session done</button>
+            <button onClick={onSessionDone} disabled={busy} className="admin-btn-secondary admin-btn-compact">Session done</button>
           )}
           {!paid && session.status !== 'cancelled' && onMarkPaid && (
             <button onClick={onMarkPaid} disabled={busy} className="admin-btn-secondary"

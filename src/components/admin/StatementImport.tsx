@@ -213,11 +213,11 @@ export function StatementImport({ clients, onReload }: Props) {
       {open && (
         <div style={{ marginTop: 16, borderTop: '1px solid var(--line)', paddingTop: 16 }}>
           {parseError && (
-            <p style={{ fontSize: 13, color: 'var(--terracotta)', margin: 0 }}>{parseError}</p>
+            <p style={{ fontSize: 13, color: 'var(--sd-danger)', margin: 0 }}>{parseError}</p>
           )}
 
           {result && (
-            <p style={{ fontSize: 13, color: 'var(--sage)', margin: 0, fontWeight: 500 }}>{result}</p>
+            <p style={{ fontSize: 13, color: 'var(--sd-rail)', margin: 0, fontWeight: 500 }}>{result}</p>
           )}
 
           {!parseError && !result && matches.length === 0 && unmatched.length === 0 && (

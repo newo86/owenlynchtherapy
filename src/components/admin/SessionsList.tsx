@@ -310,7 +310,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   {FORMAT_LABELS[s.session_format] ?? s.session_format}
                   {s.format_confirmed === false && s.status === 'scheduled' && (
                     <span
-                      style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--terracotta)', marginTop: 2 }}
+                      style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--sd-danger)', marginTop: 2 }}
                       title="Imported from your calendar without a clear format. Reminders are held until you set it (Edit or Remind)."
                     >Format not confirmed</span>
                   )}
@@ -319,7 +319,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                       href={PRACTICE.telehealthUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ display: 'block', fontSize: 11, color: 'var(--sage)', textDecoration: 'underline', textUnderlineOffset: 2, marginTop: 2 }}
+                      style={{ display: 'block', fontSize: 11, color: 'var(--sd-rail)', textDecoration: 'underline', textUnderlineOffset: 2, marginTop: 2 }}
                     >Open video room ↗</a>
                   )}
                 </td>
@@ -337,7 +337,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     </span>
                   )}
                   {s.receipt_sent_at && (
-                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sage)', marginTop: 3, fontWeight: 500 }}>
+                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sd-rail)', marginTop: 3, fontWeight: 500 }}>
                       ✓ Receipt sent {shortWhen(s.receipt_sent_at)}
                     </span>
                   )}
@@ -345,7 +345,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                 <td className="st-status" data-label="Status">
                   <span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span>
                   {lastReminderAt(s) && (
-                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sage)', marginTop: 3, fontWeight: 500 }}>
+                    <span style={{ display: 'block', fontSize: 10, color: 'var(--sd-rail)', marginTop: 3, fontWeight: 500 }}>
                       ✓ Reminder sent {shortWhen(lastReminderAt(s)!)}
                     </span>
                   )}
@@ -358,7 +358,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                       </button>
                     )}
                     {s.status === 'scheduled' && (
-                      <button onClick={() => sessionDone(s)} disabled={busyId === s.id} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
+                      <button onClick={() => sessionDone(s)} disabled={busyId === s.id} className="admin-btn-secondary">
                         Session done
                       </button>
                     )}
@@ -393,7 +393,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   {feedback?.id === s.id && (
                     <div style={{
                       marginTop: 8, fontSize: 11,
-                      color: feedback.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)',
+                      color: feedback.kind === 'ok' ? 'var(--sd-rail)' : 'var(--sd-danger)',
                     }}>
                       {feedback.msg}
                     </div>

@@ -101,7 +101,7 @@ export function WaitlistEmailModal({ recipientCount, onClose, onSent }: Props) {
               <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--forest-deep)', margin: '0 0 14px' }}>{subject || '(no subject)'}</p>
               {preview.map((b, i) => b.kind === 'buttons' ? (
                 <div key={i} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '4px 0 14px' }}>
-                  <span style={{ background: 'var(--terracotta)', color: 'white', padding: '8px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>Yes, keep me on the list</span>
+                  <span style={{ background: '#C85A1A' /* matches the email's own button, not the dashboard */, color: 'white', padding: '8px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>Yes, keep me on the list</span>
                   <span style={{ border: '1px solid var(--forest-deep)', color: 'var(--forest-deep)', padding: '8px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>No, please take me off</span>
                 </div>
               ) : (
@@ -117,9 +117,9 @@ export function WaitlistEmailModal({ recipientCount, onClose, onSent }: Props) {
         {result && (
           <div style={{
             marginTop: 18, padding: '12px 16px', borderRadius: 10, fontSize: 13,
-            background: result.kind === 'ok' ? 'rgba(79,138,104,0.10)' : 'rgba(200,90,27,0.10)',
-            border: `1px solid ${result.kind === 'ok' ? 'rgba(79,138,104,0.35)' : 'rgba(200,90,27,0.4)'}`,
-            color: result.kind === 'ok' ? '#2D5A42' : '#A04714',
+            background: result.kind === 'ok' ? 'rgba(79,138,104,0.10)' : 'rgba(179, 38, 30, 0.10)',
+            border: `1px solid ${result.kind === 'ok' ? 'rgba(79,138,104,0.35)' : 'rgba(179, 38, 30, 0.4)'}`,
+            color: result.kind === 'ok' ? '#2D5A42' : 'var(--sd-danger)',
           }}>{result.msg}</div>
         )}
 

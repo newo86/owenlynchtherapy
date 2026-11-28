@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { LayoutGrid, UserRound, CalendarDays, FileText, TrendingUp, ShieldCheck, Eye, EyeOff, Hourglass, Settings, MoreHorizontal, LogOut, GraduationCap, ChartColumn } from 'lucide-react';
 import type { AdminSection } from './types';
+import { SplitCircle } from './sage';
 
 interface Props {
   active: AdminSection;
@@ -120,15 +121,7 @@ function DesktopSidebar({ active, onNavigate, onSignOut, onOpenMfa, privacy, onT
         aria-label="Go to dashboard"
         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
       >
-        <svg viewBox="0 0 200 200" width="44" height="44" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="100" cy="100" r="78" fill="none" stroke="#C85A1B" strokeWidth="10"
-                  strokeLinecap="round" strokeDasharray="312.8 157.5" transform="rotate(70,100,100)"/>
-          <circle cx="100" cy="100" r="46" fill="none" stroke="#ffffff" strokeWidth="6"
-                  strokeLinecap="round" strokeDasharray="184.5 92.9" transform="rotate(70,100,100)"/>
-          <text x="100" y="106" fontFamily="Avenir,'Avenir Next',Montserrat,sans-serif"
-                fontSize="42" fontWeight="300" fill="#ffffff"
-                textAnchor="middle" dominantBaseline="middle">OL</text>
-        </svg>
+        <SplitCircle className="admin-sidebar-logo-art" />
       </button>
 
       <nav className="admin-sidebar-nav">

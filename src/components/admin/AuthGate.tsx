@@ -104,7 +104,7 @@ export function AuthGate({ children }: Props) {
               />
             )}
             {error && (
-              <p style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>
+              <p style={{ margin: '10px 0 0', fontSize: 13, color: 'var(--sd-danger)' }}>{error}</p>
             )}
             <button type="submit" disabled={busy} className="admin-btn-primary" style={{ marginTop: 18, width: '100%', justifyContent: 'center' }}>
               {busy ? (mfaStep ? 'Verifying…' : 'Signing in…') : (mfaStep ? 'Verify' : 'Continue')}

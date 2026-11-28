@@ -72,7 +72,7 @@ export function SettingsPanel() {
         setSettings(json.settings as PracticeSettings);
         setStorageUnavailable(Boolean(json.storage_unavailable));
       } catch {
-        setFeedback({ kind: 'error', msg: 'Could not load settings — refresh to try again.' });
+        setFeedback({ kind: 'error', msg: 'Could not load settings, refresh to try again.' });
       } finally {
         setLoading(false);
       }
@@ -105,7 +105,7 @@ export function SettingsPanel() {
       }
       setFeedback({ kind: 'ok', msg: 'Saved. The website, receipts and emails now use these details.' });
     } catch {
-      setFeedback({ kind: 'error', msg: 'Network error — nothing was saved.' });
+      setFeedback({ kind: 'error', msg: 'Network error. Nothing was saved.' });
     } finally {
       setSaving(false);
     }
@@ -126,7 +126,7 @@ export function SettingsPanel() {
       }
       setTestNote({ kind: 'ok', msg: `Test receipt sent to ${testEmail}. Check your inbox (and spam) in a moment.` });
     } catch {
-      setTestNote({ kind: 'error', msg: 'Network error — no test receipt was sent.' });
+      setTestNote({ kind: 'error', msg: 'Network error. No test receipt was sent.' });
     } finally {
       setTestBusy(false);
     }
@@ -139,7 +139,7 @@ export function SettingsPanel() {
       const res = await adminFetch('/api/admin/backup');
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
-        setBackupNote({ kind: 'error', msg: json.error ?? 'Backup failed — try again.' });
+        setBackupNote({ kind: 'error', msg: json.error ?? 'Backup failed, try again.' });
         return;
       }
       const blob = await res.blob();
@@ -149,9 +149,9 @@ export function SettingsPanel() {
       a.download = `practice-backup-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      setBackupNote({ kind: 'ok', msg: 'Backup downloaded — store it somewhere safe, it contains client information.' });
+      setBackupNote({ kind: 'ok', msg: 'Backup downloaded. Store it somewhere safe, it contains client information.' });
     } catch {
-      setBackupNote({ kind: 'error', msg: 'Network error — no backup was downloaded.' });
+      setBackupNote({ kind: 'error', msg: 'Network error. No backup was downloaded.' });
     } finally {
       setBackupBusy(false);
     }
@@ -162,7 +162,7 @@ export function SettingsPanel() {
   }
   if (!settings) {
     return (
-      <p style={{ color: 'var(--terracotta)', fontSize: 13 }}>
+      <p style={{ color: 'var(--sd-danger)', fontSize: 13 }}>
         {feedback?.msg ?? 'Could not load settings.'}
       </p>
     );
@@ -174,7 +174,7 @@ export function SettingsPanel() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 860 }}>
       <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: 0, maxWidth: 640 }}>
         These details feed the public website, receipts and client emails. Change something,
-        press <strong>Save</strong>, and it goes live — nothing saves until you do.
+        press <strong>Save</strong>, and it goes live. Nothing saves until you do.
       </p>
 
       {storageUnavailable && (
@@ -196,7 +196,7 @@ export function SettingsPanel() {
         <Field label="Job title" value={s.jobTitle} onChange={v => set('jobTitle', v)} />
       </Card>
 
-      <Card title="Accreditation" sub="Printed on every receipt — keep this exactly right.">
+      <Card title="Accreditation" sub="Printed on every receipt. Keep this exactly right.">
         <Field label="Body (short)" value={s.accreditation.bodyAbbrev}
           onChange={v => setIn('accreditation', 'bodyAbbrev', v)} placeholder="IAHIP" />
         <Field label="Body (full name)" value={s.accreditation.bodyName}
@@ -210,7 +210,7 @@ export function SettingsPanel() {
           hint="The accreditation milestone you're working towards (e.g. 500)." />
         <Field label="Hours before the count started" type="number" value={String(s.accreditation.hoursBaseline)}
           onChange={v => setIn('accreditation', 'hoursBaseline', Number(v || '0'))}
-          hint="Client hours accrued before the dashboard's records begin — added to the automatic count." />
+          hint="Client hours accrued before the dashboard's records begin, added to the automatic count." />
         <Field label="Count sessions from" type="date" value={s.accreditation.hoursCountFrom}
           onChange={v => setIn('accreditation', 'hoursCountFrom', v)}
           hint="Sessions in the dashboard on/after this date are counted automatically." />
@@ -219,7 +219,7 @@ export function SettingsPanel() {
       <Card title="Contact & location" sub="Your public contact details (they also drive local-SEO data).">
         <Field label="Contact email" type="email" value={s.email} onChange={v => set('email', v)} />
         <Field label="Phone (international)" value={s.telephone} onChange={v => set('telephone', v)}
-          placeholder="+353851471689" hint="Digits only with country code — used in tel: links." />
+          placeholder="+353851471689" hint="Digits only with country code, used in tel: links." />
         <Field label="Phone (as displayed)" value={s.telephoneDisplay} onChange={v => set('telephoneDisplay', v)}
           placeholder="085 147 1689" />
         <Field label="Service area" value={s.serviceArea} onChange={v => set('serviceArea', v)}
@@ -260,7 +260,7 @@ export function SettingsPanel() {
       <section className="admin-card" style={{ padding: 24 }}>
         <h2 className="admin-h2" style={{ marginBottom: 4 }}>Practice hours</h2>
         <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '0 0 16px' }}>
-          The days and times you see clients — Google shows these as your opening hours.
+          The days and times you see clients. Google shows these as your opening hours.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {s.openingHours.map((h, i) => (
@@ -307,8 +307,8 @@ export function SettingsPanel() {
             style={{ width: 18, height: 18 }}
           />
           {s.acceptingNewClients
-            ? 'Currently accepting new clients — slots are shown on the contact page'
-            : 'Not taking new clients — the contact page shows the waiting list'}
+            ? 'Currently accepting new clients. Slots are shown on the contact page'
+            : 'Not taking new clients. The contact page shows the waiting list'}
         </label>
         {!s.acceptingNewClients && (
           <div style={{ marginTop: 16 }}>
@@ -319,7 +319,7 @@ export function SettingsPanel() {
               maxLength={500}
               value={s.waitlistNotice}
               onChange={e => set('waitlistNotice', e.target.value)}
-              placeholder="e.g. I'm not taking new clients right now — join the waiting list and I'll be in touch when a space opens up."
+              placeholder="e.g. I'm not taking new clients right now. Join the waiting list and I'll be in touch when a space opens up."
             />
           </div>
         )}
@@ -352,7 +352,7 @@ export function SettingsPanel() {
             </div>
           ))}
           {s.availability.length === 0 && (
-            <p style={{ fontSize: 12, color: 'var(--terracotta)', margin: 0 }}>
+            <p style={{ fontSize: 12, color: 'var(--sd-danger)', margin: 0 }}>
               No open slots — the contact page will say you&apos;re currently full and offer the waiting list.
             </p>
           )}
@@ -402,7 +402,7 @@ export function SettingsPanel() {
         {feedback && (
           <span role="status" style={{
             fontSize: 13,
-            color: feedback.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)',
+            color: feedback.kind === 'ok' ? 'var(--sd-rail)' : 'var(--sd-danger)',
           }}>
             {feedback.msg}
           </span>
@@ -423,7 +423,7 @@ export function SettingsPanel() {
           {backupNote && (
             <span role="status" style={{
               fontSize: 13,
-              color: backupNote.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)',
+              color: backupNote.kind === 'ok' ? 'var(--sd-rail)' : 'var(--sd-danger)',
             }}>
               {backupNote.msg}
             </span>
@@ -457,7 +457,7 @@ export function SettingsPanel() {
           {testNote && (
             <span role="status" style={{
               fontSize: 13,
-              color: testNote.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)',
+              color: testNote.kind === 'ok' ? 'var(--sd-rail)' : 'var(--sd-danger)',
             }}>
               {testNote.msg}
             </span>
