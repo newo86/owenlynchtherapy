@@ -8,7 +8,7 @@
 // changes followed from Google. A warning row shows when Google Calendar is not
 // connected, and the morning reminder run shouts only when it went wrong.
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { dedupeSessions } from '../api';
 import { dublinYmd, longDay, shortDay, slotsNextWeek } from '../desktopToday';
 import { reminderStripState } from '../Dashboard';
@@ -20,6 +20,9 @@ import type { CalendarEvent, CalendarStatus, ClientRow, ReminderHealth, SessionR
 import { PhoneBand } from './PhoneBand';
 import { SwipeRow, type PhoneOption } from './SwipeRow';
 import { useOpenRow } from './useOpenRow';
+
+/** The one-time peek that shows the first row can be swiped (once per page load). */
+let peeked = false;
 
 interface Props {
   clients: ClientRow[];
@@ -45,6 +48,7 @@ export function PhoneToday({
   onOpenSession, onBook, onReload, onConnectCalendar, onNavigate,
 }: Props) {
   const rows = useOpenRow();
+  const listRef = useRef<HTMLDivElement>(null);
   const todayYmd = dublinYmd(new Date().toISOString());
   const today = useMemo(() => {
     const out: Array<{ s: SessionRow; c: ClientRow }> = [];
@@ -55,6 +59,20 @@ export function PhoneToday({
   }, [clients, todayYmd]);
   const weekSlots = useMemo(() => slotsNextWeek(free.slots, todayYmd).slice(0, 6), [free.slots, todayYmd]);
   const strip = reminderStripState(reminderHealth);
+
+  // A one-time peek so the swipe is discoverable (skipped with reduced motion).
+  useEffect(() => {
+    if (peeked || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let hide: number | undefined;
+    const show = window.setTimeout(() => {
+      const row = listRef.current?.querySelector<HTMLElement>('.ph-row');
+      if (!row) return;
+      peeked = true;
+      row.style.transform = 'translateX(-88px)';
+      hide = window.setTimeout(() => { if (row.style.transform === 'translateX(-88px)') row.style.transform = ''; }, 900);
+    }, 700);
+    return () => { window.clearTimeout(show); window.clearTimeout(hide); };
+  }, []);
 
   return (
     <>
@@ -80,7 +98,7 @@ export function PhoneToday({
         )}
 
         <div className="ph-group">
-          <div className="ph-card" role="list" aria-label="Today's clients">
+          <div className="ph-card" role="list" aria-label="Today's clients" ref={listRef}>
             {today.length === 0 && <p className="ph-empty">No clients today.</p>}
             {today.map(({ s, c }) => (
               <div key={s.id} role="listitem">
