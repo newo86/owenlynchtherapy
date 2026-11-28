@@ -12,7 +12,7 @@ foundation; stages 2-4 build on it in parallel. Rules and contrast figures:
   rail-selected, radius-card/btn/tile). Font: `--font-sans` (Inter).
 - TS: `sageDiary` in `src/components/admin/theme.ts` (same names, camelCase) for
   inline styles. `btnPrimary` there is now yellow.
-- Old names (`--sage`, `--cream`, `--terracotta` ...) still exist so current
+- Old names (`--sage`, `--cream` ...) still exist; `--terracotta` is gone (warnings use `--sd-danger` / `--sd-art-yellow`) so current
   screens work; `--ink` / `--ink-muted` now point at the new ink tokens.
 - No dark mode yet (prototype has one; not in scope).
 

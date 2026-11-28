@@ -234,7 +234,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
             <p className="admin-sheet-eyebrow" style={{
               margin: 0, fontSize: 10, fontWeight: 500,
               letterSpacing: '4px', textTransform: 'uppercase',
-              color: 'var(--terracotta-soft)',
+              color: 'var(--sd-danger-soft)',
             }}>Session</p>
             <h2 className="admin-sheet-title" style={{
               margin: '4px 0 0',
@@ -296,7 +296,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                   type="checkbox"
                   checked={isLowCost}
                   onChange={e => setIsLowCost(e.target.checked)}
-                  style={{ accentColor: 'var(--terracotta)', width: 15, height: 15 }}
+                  style={{ accentColor: 'var(--sd-rail)', width: 15, height: 15 }}
                 />
                 Low cost session
               </label>
@@ -333,7 +333,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
           <div>
             <label className="admin-label">Format</label>
             {!formatWasConfirmed && !formatPicked && (
-              <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--terracotta)' }}>
+              <p style={{ margin: '4px 0 0', fontSize: 12, fontWeight: 600, color: 'var(--sd-danger)' }}>
                 Not confirmed: your calendar event didn&rsquo;t say. Pick one. Reminders are held until you do.
               </p>
             )}
@@ -349,7 +349,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                     value={v}
                     checked={(formatWasConfirmed || formatPicked) && format === v}
                     onChange={() => { setFormat(v); setFormatPicked(true); }}
-                    style={{ accentColor: 'var(--terracotta)' }}
+                    style={{ accentColor: 'var(--sd-rail)' }}
                   />
                   {v === 'in_person' ? 'In person' : 'Online'}
                 </label>
@@ -364,7 +364,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                   type="checkbox"
                   checked={applyFormatToAll}
                   onChange={e => setApplyFormatToAll(e.target.checked)}
-                  style={{ accentColor: 'var(--terracotta)', width: 15, height: 15 }}
+                  style={{ accentColor: 'var(--sd-rail)', width: 15, height: 15 }}
                 />
                 Apply format change to all of {clientName.split(' ')[0]}&apos;s sessions
               </label>
@@ -497,7 +497,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
           </div>
 
           {error && (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-danger)' }}>{error}</p>
           )}
           {saved && (
             <p style={{ margin: 0, fontSize: 13, color: 'var(--sage)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -524,13 +524,13 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
 
           {/* Delete this session */}
           <div style={{
-            borderTop: '1px solid rgba(200,90,26,0.15)',
+            borderTop: '1px solid rgba(179,38,30,0.15)',
             paddingTop: 16,
             marginTop: 4,
           }}>
             {confirmDeleteSession ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)', fontWeight: 500 }}>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-danger)', fontWeight: 500 }}>
                   Delete this single session? This cannot be undone.
                 </p>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -539,7 +539,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                     disabled={deletingSession}
                     onClick={deleteSession}
                     style={{
-                      background: 'var(--terracotta)', color: 'white',
+                      background: 'var(--sd-danger)', color: 'white',
                       border: 'none', borderRadius: 8, padding: '8px 16px',
                       fontSize: 13, fontWeight: 600, cursor: deletingSession ? 'wait' : 'pointer',
                     }}
@@ -561,9 +561,9 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                 type="button"
                 onClick={() => setConfirmDeleteSession(true)}
                 style={{
-                  background: 'none', border: '1px solid rgba(200,90,26,0.35)',
+                  background: 'none', border: '1px solid rgba(179,38,30,0.35)',
                   borderRadius: 8, padding: '7px 14px',
-                  fontSize: 12, color: 'var(--terracotta)',
+                  fontSize: 12, color: 'var(--sd-danger)',
                   cursor: 'pointer', letterSpacing: '0.3px',
                 }}
               >
@@ -574,13 +574,13 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
 
           {/* Delete client */}
           <div style={{
-            borderTop: '1px solid rgba(200,90,26,0.15)',
+            borderTop: '1px solid rgba(179,38,30,0.15)',
             paddingTop: 16,
             marginTop: 4,
           }}>
             {confirmDelete ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)', fontWeight: 500 }}>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-danger)', fontWeight: 500 }}>
                   Permanently delete {clientName.trim()} and all their sessions? This cannot be undone.
                 </p>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -589,7 +589,7 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                     disabled={deleting}
                     onClick={deleteClient}
                     style={{
-                      background: 'var(--terracotta)', color: 'white',
+                      background: 'var(--sd-danger)', color: 'white',
                       border: 'none', borderRadius: 8, padding: '8px 16px',
                       fontSize: 13, fontWeight: 600, cursor: deleting ? 'wait' : 'pointer',
                     }}
@@ -611,9 +611,9 @@ export function SessionEditModal({ session, client, onClose, onSuccess }: Props)
                 type="button"
                 onClick={() => setConfirmDelete(true)}
                 style={{
-                  background: 'none', border: '1px solid rgba(200,90,26,0.35)',
+                  background: 'none', border: '1px solid rgba(179,38,30,0.35)',
                   borderRadius: 8, padding: '7px 14px',
-                  fontSize: 12, color: 'var(--terracotta)',
+                  fontSize: 12, color: 'var(--sd-danger)',
                   cursor: 'pointer', letterSpacing: '0.3px',
                 }}
               >

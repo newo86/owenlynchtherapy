@@ -680,7 +680,7 @@ function Caseload({ responses }: { responses: ResponseRow[] }) {
         {neg.length > 0 && (
           <div>
             <h3 className="admin-h3">Most often feeling neglected</h3>
-            <ul className="admin-qa-tally is-terracotta">
+            <ul className="admin-qa-tally is-attention">
               {neg.map(([id, n]) => <li key={id}><span>{name(id)}</span><i style={{ width: `${(n / max) * 100}%` }} /><b>{n}</b></li>)}
             </ul>
           </div>

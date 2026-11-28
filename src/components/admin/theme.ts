@@ -33,8 +33,6 @@ export const colors = {
   forest: '#2A4D3C',
   forestDark: '#1F3A2D',
   forestLight: '#3A6450',
-  terracotta: '#C85A1A',
-  terracottaDark: '#A64810',
   gold: '#D4A843',
   goldDark: '#8B6914',
   sage: '#4F8A68',
@@ -63,7 +61,7 @@ export const shadows = {
   md: '0 4px 12px rgba(42,77,60,0.08), 0 2px 4px rgba(42,77,60,0.05)',
   lg: '0 8px 24px rgba(42,77,60,0.12), 0 4px 8px rgba(42,77,60,0.06)',
   xl: '0 16px 40px rgba(42,77,60,0.14), 0 8px 16px rgba(42,77,60,0.08)',
-  glowTerracotta: '0 0 0 1px rgba(200,90,26,0.3), 0 4px 16px rgba(200,90,26,0.12)',
+  
   glowForest: '0 0 0 1px rgba(42,77,60,0.3), 0 4px 16px rgba(42,77,60,0.12)',
   glowGold: '0 0 0 1px rgba(212,168,67,0.4), 0 4px 16px rgba(212,168,67,0.15)',
   // Back-compat aliases used by the older components

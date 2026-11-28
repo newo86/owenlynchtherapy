@@ -41,7 +41,7 @@ export function CalendarLegend() {
       <span><i className="sw e-gold" />Low cost</span>
       <span><i className="sw e-lilac" />Other calendar events</span>
       <span><i className="dot" style={{ background: '#4F8A68' }} />Reminder sent</span>
-      <span><i className="dot" style={{ background: 'var(--terracotta)' }} />Not paid</span>
+      <span><i className="dot" style={{ background: 'var(--sd-art-yellow)' }} />Not paid</span>
     </div>
     </>
   );
@@ -343,7 +343,7 @@ export function CalendarWeekGrid({
             <dt>Time</dt><dd>{ev.time} · {PRACTICE.sessionMinutes} min</dd>
             <dt>Type</dt><dd>{TYPE_LABEL[ev.accent]}</dd>
             <dt>Session</dt><dd>Number {n}</dd>
-            <dt>Fee</dt><dd>€{Math.round(s.fee / 100)} · <span style={{ color: paid ? 'var(--sage)' : isOwed(s) ? 'var(--terracotta)' : 'var(--ink-muted)' }}>{paid ? 'paid' : isOwed(s) ? 'not paid' : 'not due yet'}</span></dd>
+            <dt>Fee</dt><dd>€{Math.round(s.fee / 100)} · <span style={{ color: paid ? 'var(--sage)' : isOwed(s) ? 'var(--sd-danger)' : 'var(--ink-muted)' }}>{paid ? 'paid' : isOwed(s) ? 'not paid' : 'not due yet'}</span></dd>
             <dt>Reminder</dt><dd>{c.reminders_opted_out ? 'Client opted out' : dot ? dot.title.split(' — ')[0] : 'None'}</dd>
           </dl>
         </div>
@@ -391,7 +391,7 @@ export function CalendarWeekGrid({
                       const owed = isOwed(e.session!) && !isPaid(e.session!);
                       return (dot || owed) ? (
                         <span className="admin-event-dots">
-                          {owed && <span title="Not paid" style={{ background: 'var(--terracotta)' }} />}
+                          {owed && <span title="Not paid" style={{ background: 'var(--sd-art-yellow)' }} />}
                           {dot && <span title={dot.title} style={{ background: dot.color }} />}
                         </span>
                       ) : null;

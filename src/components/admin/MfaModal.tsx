@@ -120,7 +120,7 @@ export function MfaModal({ onClose }: Props) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '18px 18px 0 0',
         }}>
           <div>
-            <p className="admin-sheet-eyebrow" style={{ margin: 0, fontSize: 10, fontWeight: 500, letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--terracotta-soft)' }}>Security</p>
+            <p className="admin-sheet-eyebrow" style={{ margin: 0, fontSize: 10, fontWeight: 500, letterSpacing: '4px', textTransform: 'uppercase', color: 'var(--sd-danger-soft)' }}>Security</p>
             <h2 className="admin-sheet-title" style={{ margin: '4px 0 0', fontFamily: 'var(--font-montserrat), Avenir, sans-serif', fontWeight: 300, fontSize: 22, color: 'white' }}>Two-factor authentication</h2>
           </div>
           <button onClick={onClose} aria-label="Close" style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', padding: 6 }}>
@@ -147,7 +147,7 @@ export function MfaModal({ onClose }: Props) {
                     To turn it off, enter a current 6-digit code from your authenticator.
                   </p>
                   {codeInput}
-                  {error && <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>}
+                  {error && <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-danger)' }}>{error}</p>}
                   <button onClick={disable} disabled={busy} className="admin-btn-secondary" style={{ alignSelf: 'flex-start' }}>
                     {busy ? 'Turning off…' : 'Turn off two-factor'}
                   </button>
@@ -158,7 +158,7 @@ export function MfaModal({ onClose }: Props) {
                     Add a second step to admin sign-in using an authenticator app
                     (Google Authenticator, Authy, 1Password, etc.).
                   </p>
-                  {error && <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>}
+                  {error && <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-danger)' }}>{error}</p>}
                   <button onClick={beginSetup} disabled={busy} className="admin-btn-primary" style={{ alignSelf: 'flex-start' }}>
                     {busy ? 'Preparing…' : 'Set up two-factor'}
                   </button>
@@ -195,7 +195,7 @@ export function MfaModal({ onClose }: Props) {
                 <strong>2.</strong> Enter the 6-digit code it shows:
               </p>
               {codeInput}
-              {error && <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>}
+              {error && <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-danger)' }}>{error}</p>}
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={confirmEnable} disabled={busy || code.length !== 6} className="admin-btn-primary">
                   {busy ? 'Verifying…' : 'Enable'}

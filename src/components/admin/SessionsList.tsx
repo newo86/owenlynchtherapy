@@ -310,7 +310,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   {FORMAT_LABELS[s.session_format] ?? s.session_format}
                   {s.format_confirmed === false && s.status === 'scheduled' && (
                     <span
-                      style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--terracotta)', marginTop: 2 }}
+                      style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--sd-danger)', marginTop: 2 }}
                       title="Imported from your calendar without a clear format. Reminders are held until you set it (Edit or Remind)."
                     >Format not confirmed</span>
                   )}
@@ -358,7 +358,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                       </button>
                     )}
                     {s.status === 'scheduled' && (
-                      <button onClick={() => sessionDone(s)} disabled={busyId === s.id} className="admin-btn-primary" style={{ padding: '8px 14px', fontSize: 10 }}>
+                      <button onClick={() => sessionDone(s)} disabled={busyId === s.id} className="admin-btn-secondary">
                         Session done
                       </button>
                     )}
@@ -393,7 +393,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   {feedback?.id === s.id && (
                     <div style={{
                       marginTop: 8, fontSize: 11,
-                      color: feedback.kind === 'ok' ? 'var(--sage)' : 'var(--terracotta)',
+                      color: feedback.kind === 'ok' ? 'var(--sage)' : 'var(--sd-danger)',
                     }}>
                       {feedback.msg}
                     </div>

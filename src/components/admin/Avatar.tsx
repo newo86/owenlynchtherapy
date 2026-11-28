@@ -3,11 +3,11 @@ import { initials } from './api';
 // Rotate avatar colour based on the name so the same person stays in the same
 // hue across the dashboard.
 const PALETTE = [
-  { bg: '#4F8A68', fg: '#FFFFFF' }, // sage
-  { bg: '#C85A1B', fg: '#FFFFFF' }, // terracotta
-  { bg: '#a87cb9', fg: '#FFFFFF' }, // lilac
-  { bg: '#a3801a', fg: '#FFFFFF' }, // gold-dark
-  { bg: '#2A4D3C', fg: '#FFFFFF' }, // forest
+  { bg: '#2F5A44', fg: '#FFFFFF' },
+  { bg: '#AFC3DE', fg: '#1F2B24' },
+  { bg: '#DCE8E0', fg: '#1F2B24' },
+  { bg: '#A8C8B5', fg: '#1F2B24' },
+  { bg: '#1F2B24', fg: '#FAF6EC' },
 ];
 
 function tone(name: string) {
@@ -31,7 +31,7 @@ export function Avatar({ name, size = 38 }: { name: string; size?: number }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontFamily: 'var(--font-poppins), Poppins, sans-serif',
+        fontFamily: 'var(--font-sans)',
         fontWeight: 500,
         fontSize: Math.round(size * 0.36),
         letterSpacing: '0.4px',

@@ -296,7 +296,7 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
 
   const action = nextAction(client);
   const actionPalette = {
-    warn: { bg: 'rgba(200,90,27,0.10)', border: 'rgba(200,90,27,0.4)', fg: '#A04714' },
+    warn: { bg: 'rgba(179, 38, 30, 0.10)', border: 'rgba(179, 38, 30, 0.4)', fg: 'var(--sd-danger)' },
     info: { bg: 'rgba(212,168,67,0.12)', border: 'rgba(212,168,67,0.4)', fg: '#7a611f' },
     ok:   { bg: 'rgba(79,138,104,0.10)', border: 'rgba(79,138,104,0.35)', fg: '#2D5A42' },
   }[action.kind];

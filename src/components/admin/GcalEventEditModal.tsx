@@ -127,7 +127,7 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
             <div style={{ width: 66, height: 66, borderRadius: '50%', background: 'rgba(79,138,104,0.14)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Check size={36} strokeWidth={2.4} color="var(--sage)" />
             </div>
-            <h2 style={{ margin: 0, fontFamily: 'var(--font-montserrat), Avenir, sans-serif', fontWeight: 300, fontSize: 26, color: 'var(--forest-deep)' }}>
+            <h2 className="admin-sheet-title" style={{ margin: 0, fontFamily: 'var(--font-montserrat), Avenir, sans-serif', fontWeight: 300, fontSize: 26, color: 'var(--forest-deep)' }}>
               {linkedClient ? 'Client added' : 'Saved'}
             </h2>
             <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-muted)', maxWidth: 320, lineHeight: 1.6 }}>
@@ -151,7 +151,7 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
             <p className="admin-sheet-eyebrow" style={{
               margin: 0, fontSize: 10, fontWeight: 500,
               letterSpacing: '4px', textTransform: 'uppercase',
-              color: 'var(--terracotta-soft)',
+              color: 'var(--sd-danger-soft)',
             }}>Google Calendar</p>
             <h2 className="admin-sheet-title" style={{
               margin: '4px 0 0',
@@ -209,7 +209,7 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
                       value={v}
                       checked={format === v}
                       onChange={() => setFormat(v)}
-                      style={{ accentColor: 'var(--terracotta)' }}
+                      style={{ accentColor: 'var(--sd-rail)' }}
                     />
                     {v === 'in_person' ? 'In person' : 'Online'}
                   </label>
@@ -294,7 +294,7 @@ export function GcalEventEditModal({ gcalEvent, clients, onClose, onSuccess }: P
           )}
 
           {error && (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-danger)' }}>{error}</p>
           )}
           {saved && (
             <p style={{ margin: 0, fontSize: 13, color: 'var(--sage)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>

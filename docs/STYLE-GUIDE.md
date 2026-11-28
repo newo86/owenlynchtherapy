@@ -102,8 +102,16 @@ ownership: `docs/design/prototypes/IMPLEMENTATION.md`.
   overlays (`--sd-rail-hover/-selected`), not lighter, to keep yellow at 4.5:1+.
 - **Light rows and option tiles:** hover = soft yellow row (`--sd-action-soft`)
   and a full-yellow icon square; text stays dark.
-- **Terracotta** is no longer a button colour in the dashboard; it remains only
-  as a "needs attention" accent (unpaid dots, drift banners).
+- **No terracotta/orange anywhere in the dashboard** (Owen's TASTE.md). Needs
+  attention = a soft-yellow dot (`--sd-art-yellow`) or `--sd-danger` text/tint;
+  today = an ink ring, not a fill; unpaid tags and errors use `--sd-danger`.
+  Checkboxes and radios are deep sage. Calendar quick-action bars are soft yellow
+  for every event type. The one exception is the waiting-list email preview,
+  which mirrors the real email's own button colour.
+- **One yellow button per screen.** Everything else is `admin-btn-secondary`.
+  Add-client style actions on pages that have their own main action (Hours,
+  Waitlist) are not shown in the band.
+- **Pop-ups** (`.admin-sheet`): deep-sage header, no eyebrow line, bold title.
 - **Contrast checked (WCAG 2.1 AA):** ink on yellow 9.5 / hover 8.5 / active 7.6;
   rail text 6.3; yellow on rail 5.1, on rail hover 6.2, selected 7.1; ink-soft on
   page 6.5, on card 7.1, on soft-yellow row 6.5; ink on page 13.1; white on band

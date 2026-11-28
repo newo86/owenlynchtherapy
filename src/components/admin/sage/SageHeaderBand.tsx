@@ -17,7 +17,7 @@ export function SageHeaderBand({ title, subtitle, action }: Props) {
     <header className="sd-band">
       <svg className="sd-band-wave" viewBox="0 0 1200 210" preserveAspectRatio="none" aria-hidden="true" focusable="false">
         <path d="M0 0H1200V170C1000 205 800 160 600 178C400 196 200 196 0 174Z" fill="var(--sd-header)" />
-        <path d="M-20 80C200 40 380 120 620 76S1000 30 1220 60" fill="none" stroke="var(--sd-art-cream)" strokeWidth="1.6" strokeOpacity=".6" />
+        <path d="M-20 160C200 144 380 172 620 158S1000 140 1220 154" fill="none" stroke="var(--sd-art-cream)" strokeWidth="1.6" strokeOpacity=".6" />
       </svg>
       <SplitCircle className="sd-band-circle" />
       <div className="sd-band-inner">

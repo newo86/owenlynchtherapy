@@ -262,8 +262,8 @@ export function AdminShell() {
               role="alert"
               style={{
                 margin: '0 0 18px', padding: '12px 18px', borderRadius: 12,
-                background: 'rgba(200,90,27,0.12)', border: '1px solid rgba(200,90,27,0.4)',
-                color: '#A04714', fontSize: 13, display: 'flex', alignItems: 'center',
+                background: 'rgba(179, 38, 30, 0.12)', border: '1px solid rgba(179, 38, 30, 0.4)',
+                color: 'var(--sd-danger)', fontSize: 13, display: 'flex', alignItems: 'center',
                 justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
               }}
             >
@@ -271,7 +271,7 @@ export function AdminShell() {
               <button
                 onClick={() => void reload()}
                 style={{
-                  border: '1px solid rgba(200,90,27,0.5)', background: 'transparent', color: '#A04714',
+                  border: '1px solid rgba(179, 38, 30, 0.5)', background: 'transparent', color: 'var(--sd-danger)',
                   borderRadius: 8, padding: '4px 12px', fontSize: 12, cursor: 'pointer',
                 }}
               >
@@ -319,7 +319,7 @@ export function AdminShell() {
                         Calendar connected
                       </button>
                     )}
-                    {section !== 'clients' && section !== 'sessions' && section !== 'settings' && section !== 'analytics' && (
+                    {section !== 'clients' && section !== 'sessions' && section !== 'settings' && section !== 'analytics' && section !== 'hours' && section !== 'waitlist' && (
                       <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
                         + Add client
                       </button>
@@ -333,9 +333,9 @@ export function AdminShell() {
                   margin: '0 0 18px',
                   padding: '12px 18px',
                   borderRadius: 12,
-                  background: flash.kind === 'success' ? 'rgba(79,138,104,0.12)' : 'rgba(200,90,27,0.12)',
-                  border: `1px solid ${flash.kind === 'success' ? 'rgba(79,138,104,0.35)' : 'rgba(200,90,27,0.4)'}`,
-                  color: flash.kind === 'success' ? '#2D5A42' : '#A04714',
+                  background: flash.kind === 'success' ? 'rgba(79,138,104,0.12)' : 'rgba(179, 38, 30, 0.12)',
+                  border: `1px solid ${flash.kind === 'success' ? 'rgba(79,138,104,0.35)' : 'rgba(179, 38, 30, 0.4)'}`,
+                  color: flash.kind === 'success' ? '#2D5A42' : 'var(--sd-danger)',
                   fontSize: 13,
                 }}>
                   {flash.msg}

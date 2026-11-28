@@ -213,7 +213,7 @@ export function StatementImport({ clients, onReload }: Props) {
       {open && (
         <div style={{ marginTop: 16, borderTop: '1px solid var(--line)', paddingTop: 16 }}>
           {parseError && (
-            <p style={{ fontSize: 13, color: 'var(--terracotta)', margin: 0 }}>{parseError}</p>
+            <p style={{ fontSize: 13, color: 'var(--sd-danger)', margin: 0 }}>{parseError}</p>
           )}
 
           {result && (

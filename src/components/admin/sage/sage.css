@@ -48,7 +48,9 @@
 @media (max-width: 768px) {
   .admin-root .sd-band { min-height: 190px; margin-bottom: 20px; }
   .admin-root .sd-band-circle { right: 14px; top: calc(var(--sd-pt) + 4px); width: 96px; height: 96px; }
-  .admin-root .sd-band-inner { padding: calc(var(--sd-pt) + 56px) var(--sd-pr) 40px var(--sd-pl); }
+  .admin-root .sd-band-inner { padding: calc(var(--sd-pt) + 56px) var(--sd-pr) 64px var(--sd-pl); }
+  /* Small text can't sit on the sage (4.1:1); the status pill is on the desktop band only. */
+  .admin-root .sd-band-action .admin-status-pill { display: none; }
   .admin-root .sd-band-title { font-size: 34px; }
   .admin-root .sd-band-sub { font-size: 19px; }
 }

@@ -236,7 +236,7 @@ export function Dashboard({
       const parts = ['Marked attended'];
       if (choice.record_payment && json.paid) parts.push('payment recorded');
       if (json.receipt_sent) parts.push('receipt emailed');
-      setFeedback({ id: sessionId, msg: parts.join(' — ') + '.' });
+      setFeedback({ id: sessionId, msg: parts.join(', ') + '.' });
       onReload();
     } catch { setFeedback({ id: sessionId, msg: 'Network error.' }); }
     finally { setBusyId(null); }
@@ -369,7 +369,7 @@ export function Dashboard({
               <span className={`admin-status-dot${calendarStatus?.connected ? '' : ' is-off'}`} />
               {calendarStatus?.connected ? 'Calendar connected' : 'Calendar not connected'}
             </button>
-            <button onClick={onNewClient} className="admin-btn-primary">+ Add client</button>
+            <button onClick={onNewClient} className="admin-btn-secondary">+ Add client</button>
           </>
         )}
       />
@@ -558,7 +558,7 @@ function SessionRow({
       <div className="admin-session-side">
         <div className="admin-session-btns">
           {session.status === 'scheduled' && onSessionDone && (
-            <button onClick={onSessionDone} disabled={busy} className="admin-btn-primary admin-btn-compact">Session done</button>
+            <button onClick={onSessionDone} disabled={busy} className="admin-btn-secondary admin-btn-compact">Session done</button>
           )}
           {!paid && session.status !== 'cancelled' && onMarkPaid && (
             <button onClick={onMarkPaid} disabled={busy} className="admin-btn-secondary"

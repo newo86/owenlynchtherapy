@@ -140,7 +140,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
           type="checkbox"
           checked={sendIntake}
           onChange={e => setSendIntake(e.target.checked)}
-          style={{ accentColor: 'var(--terracotta)', marginTop: 3 }}
+          style={{ accentColor: 'var(--sd-rail)', marginTop: 3 }}
         />
         <div style={{ flex: 1 }}>
           <label htmlFor="send-intake" style={{
@@ -204,7 +204,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
                 value={v}
                 checked={sessionFormat === v}
                 onChange={() => setSessionFormat(v)}
-                style={{ accentColor: 'var(--terracotta)' }}
+                style={{ accentColor: 'var(--sd-rail)' }}
               />
               {v === 'in_person' ? 'In person' : 'Online'}
             </label>
@@ -220,7 +220,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
           type="checkbox"
           checked={isLowCost}
           onChange={e => setIsLowCost(e.target.checked)}
-          style={{ accentColor: 'var(--terracotta)' }}
+          style={{ accentColor: 'var(--sd-rail)' }}
         />
         Mark as low-cost client
         <span style={{ fontSize: 12, color: 'var(--ink-muted)', fontStyle: 'italic' }}>
@@ -267,7 +267,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
       </div>
 
       {error && (
-        <p style={{ margin: 0, fontSize: 13, color: 'var(--terracotta)' }}>{error}</p>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--sd-danger)' }}>{error}</p>
       )}
 
       <button
@@ -369,7 +369,7 @@ export function NewClientModal({ asModal = false, initialClientName, onClose, on
               margin: 0,
               fontSize: 10, fontWeight: 500,
               letterSpacing: '4px', textTransform: 'uppercase',
-              color: 'var(--terracotta-soft)',
+              color: 'var(--sd-danger-soft)',
             }}>Onboarding</p>
             <h2 className="admin-sheet-title" style={{
               margin: '4px 0 0',

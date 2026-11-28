@@ -173,12 +173,12 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
               {contents}
             </p>
             {(session.session_reminders?.length ?? 0) > 0 && (
-              <p style={{ fontSize: 12, color: 'var(--terracotta)', margin: '6px 0 0', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: 'var(--sd-danger)', margin: '6px 0 0', lineHeight: 1.5 }}>
                 A reminder was already sent for this session — sending again will email the client twice.
               </p>
             )}
             {!canSend && (
-              <p style={{ fontSize: 12, color: 'var(--terracotta)', margin: '6px 0 0' }}>
+              <p style={{ fontSize: 12, color: 'var(--sd-danger)', margin: '6px 0 0' }}>
                 This session is {session.status === 'attended' ? 'already attended' : session.status} — reminders only go to scheduled sessions.
               </p>
             )}
@@ -216,9 +216,9 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
         ) : (
           <div style={{
             marginBottom: 20, padding: '14px 18px', borderRadius: 12,
-            background: 'rgba(200,90,27,0.08)', border: '1px solid rgba(200,90,27,0.4)',
+            background: 'rgba(179, 38, 30, 0.08)', border: '1px solid rgba(179, 38, 30, 0.4)',
           }}>
-            <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#A04714' }}>Is this session online or in person?</p>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--sd-danger)' }}>Is this session online or in person?</p>
             <p style={{ margin: '4px 0 12px', fontSize: 12, color: 'var(--ink-muted)', lineHeight: 1.5 }}>
               Your calendar event didn&rsquo;t say, so the reminder is held until you choose.
             </p>
@@ -254,9 +254,9 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
             marginBottom: 18,
             padding: '12px 16px',
             borderRadius: 10,
-            background: feedback.kind === 'success' ? 'rgba(79,138,104,0.10)' : 'rgba(200,90,27,0.10)',
-            border: `1px solid ${feedback.kind === 'success' ? 'rgba(79,138,104,0.35)' : 'rgba(200,90,27,0.4)'}`,
-            color: feedback.kind === 'success' ? '#2D5A42' : '#A04714',
+            background: feedback.kind === 'success' ? 'rgba(79,138,104,0.10)' : 'rgba(179, 38, 30, 0.10)',
+            border: `1px solid ${feedback.kind === 'success' ? 'rgba(79,138,104,0.35)' : 'rgba(179, 38, 30, 0.4)'}`,
+            color: feedback.kind === 'success' ? '#2D5A42' : 'var(--sd-danger)',
             fontSize: 13,
           }}>
             {feedback.msg}
@@ -292,7 +292,7 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
           </div>
         </div>
         {receiptStatus === 'error' && (
-          <p style={{ fontSize: 12, color: 'var(--terracotta)', textAlign: 'right', margin: '10px 0 0' }}>
+          <p style={{ fontSize: 12, color: 'var(--sd-danger)', textAlign: 'right', margin: '10px 0 0' }}>
             {receiptError ?? "Couldn't send the receipt — please try again."}
           </p>
         )}
@@ -318,8 +318,8 @@ function ChannelCard({
       style={{
         padding: '18px 16px',
         borderRadius: 16,
-        border: `2px solid ${selected ? 'var(--terracotta)' : 'var(--line)'}`,
-        background: disabled ? 'var(--cream)' : selected ? 'rgba(200,90,27,0.06)' : 'white',
+        border: `2px solid ${selected ? 'var(--sd-rail)' : 'var(--line)'}`,
+        background: disabled ? 'var(--cream)' : selected ? 'rgba(179, 38, 30, 0.06)' : 'white',
         cursor: disabled ? 'default' : 'pointer',
         textAlign: 'left',
         display: 'flex',
@@ -332,7 +332,7 @@ function ChannelCard({
       }}
       disabled={disabled}
     >
-      <span style={{ color: selected ? 'var(--terracotta)' : 'var(--ink-muted)' }}>
+      <span style={{ color: selected ? 'var(--sd-rail)' : 'var(--ink-muted)' }}>
         {icon}
       </span>
       <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--forest-deep)', display: 'block' }}>
