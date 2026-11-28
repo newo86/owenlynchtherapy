@@ -155,8 +155,33 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
   key from the browser, recomputes the target server-side
   (`/api/admin/calendar/fix`), and makes every write that follows an external
   API call conditional (`.eq('status', …)`, `.is('gcal_event_id', null)`), so a
-  slow or repeated call can't overwrite or duplicate. Google never changes the
-  schedule on its own; the app is the source of truth.
+  slow or repeated call can't overwrite or duplicate. The app is the source
+  of truth; Google changes the schedule only through the narrow, capped
+  follow step (`src/lib/followGoogle.ts`, see docs/OPERATIONS.md "Following
+  Google").
+- **Act only on events Owen organised:** an event whose organiser isn't the
+  practice's own account (an invitation from someone else) is never acted on
+  by the follow step and never linked to a session (`toMaster` marks it
+  unknown; `planLinks` skips `foreign` events). Someone else editing or
+  cancelling their invitation can't cancel a client's session.
+- **Automated-change caps count a rolling 24 hours from the database**, not
+  just the current run: the follow step adds the cancellations recorded in
+  `calendar_followed_changes` in the last 24 hours (not undone) to this run's,
+  and holds everything back (with one alert a day) above the limit. A run cap
+  alone lets a fault cancel a little every 5 minutes.
+- **Undo re-checks the current state first:** undoing a followed change
+  only proceeds if the series still looks exactly as the change left it
+  (conditional update on interval, Google id and anchor), and an older change
+  can't be undone once a newer one exists for the same series. Otherwise
+  nothing is touched and the message says so.
+- **Two-step changes across Google and the database** (e.g. "How often")
+  claim the row first with a conditional update (a short lock with a random
+  owner token, so a double submit or a background job can't act at the same
+  time, and only the owner can use or release it), do the database part in
+  one transaction that re-checks the token and the claimed state, and only
+  then make the irreversible Google edit. On a reported failure, re-read the
+  row before undoing anything in Google: a lost reply after a commit must not
+  trigger a rollback.
 - **Any automated change to client records** (cancel, merge, move) leaves a
   trace naming the rows and the reason, and alerts the practitioner.
 - **Server-side reads that drive writes** page through results or check for

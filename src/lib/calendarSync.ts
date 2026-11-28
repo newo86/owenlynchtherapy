@@ -41,8 +41,8 @@ export interface ReconcileOutcome {
 type ActiveClient = { id: string; full_name: string };
 
 // Words that mark a calendar event as a client session. A bare first name is
-// NOT enough: "Walk Kate", "Claire coffee" or "Day off" must never be read as
-// a session for a client called Kate / Claire / Ann Day — that is how a
+// NOT enough: "Walk Orla", "Maeve coffee" or "Day off" must never be read as
+// a session for a client called Orla / Maeve / Rosa Day — that is how a
 // personal event became a scheduled session and emailed a client a reminder.
 const SESSION_WORDS = new Set(['session', 'sessions', 'client']);
 
@@ -53,8 +53,8 @@ const SESSION_WORDS = new Set(['session', 'sessions', 'client']);
  * to a client record (auto-import, auto-cancel, reminder confirmation).
  *
  * A title counts as a client's session when it contains EITHER
- *   - the client's full name ("Session — Jane Durnin", what the app writes), or
- *   - any part of their name plus "session"/"client" ("Philip client").
+ *   - the client's full name ("Session — Nora Invented", what the app writes), or
+ *   - any part of their name plus "session"/"client" ("Tom client").
  * Full-name hits win over part+keyword hits, so two clients sharing a first
  * name don't make an app-created title ambiguous.
  */
@@ -178,7 +178,9 @@ export function planLinks(
   clients: ActiveClient[],
   now: Date,
 ): LinkPlan {
-  const timed = events.filter(e => !e.allDay);
+  // All-day items are never sessions; an invitation from someone else is
+  // never the practice's own session to tie a booking to.
+  const timed = events.filter(e => !e.allDay && !e.foreign);
   const eventIds = new Set(timed.map(e => e.id));
   const seriesBases = new Set(timed.map(e => (e.recurringEventId ?? e.id).split('_')[0]));
   const isLinked = (gid: string | null) =>
@@ -208,6 +210,17 @@ export function planLinks(
   return plan;
 }
 
+/** The one list call the window read needs, so tests can drive it through a
+ *  fake calendar (src/lib/testing/fakeGoogleCalendar.ts). */
+export interface CalListLike {
+  events: {
+    list(p: {
+      calendarId: string; timeMin: string; timeMax: string; singleEvents: boolean;
+      orderBy: string; maxResults: number; pageToken?: string;
+    }): Promise<{ data: { items?: calendar_v3.Schema$Event[] | null; nextPageToken?: string | null } }>;
+  };
+}
+
 /** Read the calendar window. `truncated` means a page cap was hit: events may
  *  be missing, so the caller must not conclude anything from an absence. */
 export async function fetchCalendarEvents(
@@ -215,7 +228,15 @@ export async function fetchCalendarEvents(
   timeMin: string,
   timeMax: string,
 ): Promise<{ events: MappedEvent[]; truncated: boolean }> {
-  const calendar = google.calendar({ version: 'v3', auth });
+  return listCalendarEvents(google.calendar({ version: 'v3', auth }) as unknown as CalListLike, timeMin, timeMax);
+}
+
+/** fetchCalendarEvents against any calendar client (the real one or a fake). */
+export async function listCalendarEvents(
+  calendar: CalListLike,
+  timeMin: string,
+  timeMax: string,
+): Promise<{ events: MappedEvent[]; truncated: boolean }> {
   const raw: calendar_v3.Schema$Event[] = [];
   let pageToken: string | undefined;
   let truncated = false;
@@ -266,7 +287,10 @@ export async function fetchCalendarEvents(
  *     need them), and
  *   - tie sessions to the events they already match (see planLinks).
  * Differences between the app and Google are reported by calendarDrift.ts for
- * the practitioner to resolve; they are never "fixed" silently.
+ * the practitioner to resolve. The one exception (27 Nov 2026) lives outside
+ * this function: the 5-minute job then runs src/lib/followGoogle.ts, which
+ * follows deletions and repeat changes made in Google to sessions linked BY
+ * ID (never by name), with a cap, a record and an undo.
  *
  * Read-only toward Google: nothing here creates, edits or deletes an event.
  */

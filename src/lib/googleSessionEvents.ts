@@ -17,23 +17,31 @@ const TZ = 'Europe/Dublin';
 const CAL = 'primary';
 // `<id>_20261124T190000Z`: a single occurrence. A split-series master is
 // `<id>_R20261030T180000` (an `R` after the underscore), so it doesn't match.
-const INSTANCE_ID = /_\d{8}T\d{6}Z?$/;
+export const INSTANCE_ID = /_\d{8}T\d{6}Z?$/;
 
-interface EventTime { dateTime?: string | null; date?: string | null }
+interface EventTime { dateTime?: string | null; date?: string | null; timeZone?: string | null }
 export interface EventLike {
   id?: string | null;
   status?: string | null;
+  summary?: string | null;
+  description?: string | null;
+  location?: string | null;
   recurrence?: string[] | null;
+  recurringEventId?: string | null;
   start?: EventTime | null;
+  end?: EventTime | null;
   originalStartTime?: EventTime | null;
+  /** Who organised it; `self` is true for the practice's own events. */
+  organizer?: { self?: boolean | null } | null;
 }
 
-/** The slice of the Google Calendar client used here, so tests can fake it. */
+/** The slice of the Google Calendar client used here, so tests can fake it
+ *  (src/lib/testing/fakeGoogleCalendar.ts). */
 export interface CalLike {
   events: {
     get(p: { calendarId: string; eventId: string }): Promise<{ data: EventLike }>;
-    instances(p: { calendarId: string; eventId: string; timeMin: string; timeMax: string; showDeleted?: boolean; maxResults?: number }):
-      Promise<{ data: { items?: EventLike[] | null } }>;
+    instances(p: { calendarId: string; eventId: string; timeMin: string; timeMax: string; showDeleted?: boolean; maxResults?: number; pageToken?: string }):
+      Promise<{ data: { items?: EventLike[] | null; nextPageToken?: string | null } }>;
     patch(p: { calendarId: string; eventId: string; requestBody: Record<string, unknown> }): Promise<unknown>;
     delete(p: { calendarId: string; eventId: string }): Promise<unknown>;
     insert(p: { calendarId: string; requestBody: Record<string, unknown> }): Promise<{ data: { id?: string | null } }>;
@@ -46,7 +54,7 @@ export type GoogleResult =
 
 const slotOf = (t?: EventTime | null) => (t?.dateTime ? utcToDublinLocal(new Date(t.dateTime).toISOString()) : null);
 
-function isGone(err: unknown): boolean {
+export function isGone(err: unknown): boolean {
   const e = err as { code?: number | string; status?: number; response?: { status?: number }; message?: string };
   const code = Number(e?.code ?? e?.status ?? e?.response?.status);
   if (code === 404 || code === 410) return true;

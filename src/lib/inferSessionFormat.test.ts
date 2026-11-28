@@ -3,15 +3,15 @@ import { inferSessionFormat } from './calendarSync';
 
 describe('inferSessionFormat (calendar import)', () => {
   it('a Meet link means online, confirmed', () => {
-    expect(inferSessionFormat({ title: 'Kieran session', hasVideo: true }, 'in_person'))
+    expect(inferSessionFormat({ title: 'Niamh session', hasVideo: true }, 'in_person'))
       .toEqual({ format: 'online', confirmed: true });
   });
 
   it('"in person", the venue or Capel Street means in person, confirmed', () => {
     for (const ev of [
-      { title: 'Philip (in person)' },
-      { title: 'Kieran in-person' },
-      { title: 'Kieran session', location: '106 Capel Street, Dublin 1' },
+      { title: 'Tom (in person)' },
+      { title: 'Niamh in-person' },
+      { title: 'Niamh session', location: '106 Capel Street, Dublin 1' },
       { title: 'Session at Insight Matters' },
     ]) {
       expect(inferSessionFormat(ev, 'online')).toEqual({ format: 'in_person', confirmed: true });
@@ -19,17 +19,17 @@ describe('inferSessionFormat (calendar import)', () => {
   });
 
   it('"online" in the title means online, confirmed', () => {
-    expect(inferSessionFormat({ title: 'Kieran online' }, 'in_person'))
+    expect(inferSessionFormat({ title: 'Niamh online' }, 'in_person'))
       .toEqual({ format: 'online', confirmed: true });
   });
 
   it('17 Nov 2026 case: no link, no location, client was last online — NOT confirmed', () => {
-    expect(inferSessionFormat({ title: 'Kieran session' }, 'online'))
+    expect(inferSessionFormat({ title: 'Niamh session' }, 'online'))
       .toEqual({ format: 'online', confirmed: false });
   });
 
   it('nothing to go on and no history — in person placeholder, NOT confirmed', () => {
-    expect(inferSessionFormat({ title: 'Kieran session' }, null))
+    expect(inferSessionFormat({ title: 'Niamh session' }, null))
       .toEqual({ format: 'in_person', confirmed: false });
   });
 });

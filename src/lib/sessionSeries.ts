@@ -16,7 +16,13 @@ import { inPersonAddressFor } from '@/lib/emailTemplates';
  * doesn't end anything. The series ends when the client is marked Completed
  * (src/app/api/admin/clients/update) or `active` is set false.
  *
- * It never reads Google and never imports anything from it.
+ * Changing how often (in the client record, or followed from Google by
+ * src/lib/followGoogle.ts) sets `interval_weeks` and moves `anchor_at` to the
+ * first date of the new rhythm, so from then on the daily top-up steps from
+ * the new anchor at the new interval. Getting MORE frequent also fills the
+ * new in-between weeks once, at the time of the change (planGapFill).
+ *
+ * The daily top-up never reads Google and never imports anything from it.
  */
 
 export const HORIZON_WEEKS = 16;
@@ -32,6 +38,8 @@ export interface SeriesRow {
   gcal_event_id: string | null;
   anchor_at: string;             // UTC ISO of a session on the series' rhythm
   active: boolean;
+  /** Set while "How often" is changing the series: hands off until then. */
+  change_lock_until?: string | null;
 }
 
 export interface SeriesSession {
@@ -58,9 +66,104 @@ export function addDaysLocal(local: string, days: number): string {
 }
 
 /** Whole calendar days from local date a to local date b. */
-function daysBetweenLocal(a: string, b: string): number {
+export function daysBetweenLocal(a: string, b: string): number {
   const day = (s: string) => { const [y, m, d] = s.slice(0, 10).split('-').map(Number); return Date.UTC(y, m - 1, d) / DAY; };
   return day(b) - day(a);
+}
+
+/** Is a Dublin wall-clock slot on the rhythm "anchor + k × interval weeks"
+ *  (same weekday and time, any whole k, before or after the anchor)? */
+export function onRhythmLocal(anchorLocal: string, intervalWeeks: number, slotLocal: string): boolean {
+  if (anchorLocal.slice(11, 16) !== slotLocal.slice(11, 16)) return false;
+  return daysBetweenLocal(anchorLocal, slotLocal) % (7 * intervalWeeks) === 0;
+}
+
+/** A session this close to a rhythm date (any status) already covers that
+ *  week: a holiday cancelled in the app, or a session moved a day or two. */
+export const NEAR_DAYS = 3;
+/** Most sessions one frequency change may add. */
+export const MAX_GAP_FILL = 60;
+
+/**
+ * Rhythm dates (UTC ISO) in (fromMs, untilMs] for which the client has no
+ * session near (within NEAR_DAYS, any status). Used once, when a series gets
+ * MORE frequent (every 2 weeks → weekly): the daily extension only adds dates
+ * after the latest session, so the new in-between weeks are filled here.
+ */
+export function planGapFill(
+  anchorLocal: string,
+  intervalWeeks: number,
+  clientSessions: { session_date: string }[],
+  fromMs: number,
+  untilMs: number,
+): string[] {
+  if (!(intervalWeeks >= 1 && intervalWeeks <= 4) || untilMs <= fromMs) return [];
+  const step = 7 * intervalWeeks;
+  const near = NEAR_DAYS * DAY;
+  const taken = clientSessions.map(s => new Date(s.session_date).getTime());
+  let k = Math.max(0, Math.floor(daysBetweenLocal(anchorLocal, utcToDublinLocal(new Date(fromMs).toISOString())) / step) - 1);
+  const out: string[] = [];
+  for (; out.length < MAX_GAP_FILL; k++) {
+    const ms = new Date(localDublinToUtcIso(addDaysLocal(anchorLocal, step * k))).getTime();
+    if (ms > untilMs) break;
+    if (ms <= fromMs) continue;
+    if (taken.some(t => Math.abs(t - ms) <= near)) continue;
+    out.push(new Date(ms).toISOString());
+  }
+  return out;
+}
+
+export interface IntervalSession { id: string; session_date: string; status: string; gcal_event_id: string | null }
+
+export interface IntervalPlan {
+  /** First session on the new rhythm (UTC ISO): the next upcoming one. */
+  effectiveFrom: string;
+  /** Upcoming sessions on the new rhythm: kept. */
+  keep: IntervalSession[];
+  /** Upcoming sessions on the old rhythm but not the new one: cancelled. */
+  cancel: IntervalSession[];
+  /** Upcoming sessions moved off the old rhythm by hand: left exactly as they are. */
+  moved: IntervalSession[];
+  /** New dates (UTC ISO) when the series gets more frequent. */
+  add: string[];
+}
+
+/**
+ * What changing an ongoing series to every `toWeeks` weeks does, from the
+ * client's next session on. Pure so the confirm text and the change itself
+ * come from the same plan. `upcoming` = the series' scheduled sessions after
+ * now; `clientSessions` = every session the client has from now (any status).
+ */
+export function planIntervalChange(
+  series: Pick<SeriesRow, 'interval_weeks' | 'anchor_at'>,
+  upcoming: IntervalSession[],
+  clientSessions: { id?: string; session_date: string }[],
+  toWeeks: number,
+  now: Date,
+): IntervalPlan | { error: string } {
+  if (!(toWeeks >= 1 && toWeeks <= 4)) return { error: 'Choose weekly or every 2, 3 or 4 weeks.' };
+  if (toWeeks === series.interval_weeks) return { error: 'It already repeats at that rhythm.' };
+  const oldAnchor = utcToDublinLocal(series.anchor_at);
+  const sorted = upcoming
+    .filter(s => s.status === 'scheduled' && new Date(s.session_date).getTime() > now.getTime())
+    .sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime());
+  const slot = (s: IntervalSession) => utcToDublinLocal(s.session_date);
+  const first = sorted.find(s => onRhythmLocal(oldAnchor, series.interval_weeks, slot(s)));
+  if (!first) return { error: 'There are no upcoming sessions in this series to change.' };
+  const fromLocal = slot(first);
+  const plan: IntervalPlan = { effectiveFrom: new Date(first.session_date).toISOString(), keep: [], cancel: [], moved: [], add: [] };
+  for (const s of sorted) {
+    const sl = slot(s);
+    if (!onRhythmLocal(oldAnchor, series.interval_weeks, sl)) { plan.moved.push(s); continue; }
+    if (new Date(s.session_date).getTime() < new Date(first.session_date).getTime()) continue;
+    if (onRhythmLocal(fromLocal, toWeeks, sl)) plan.keep.push(s); else plan.cancel.push(s);
+  }
+  const latest = new Date(sorted[sorted.length - 1].session_date).getTime();
+  const cancelled = new Set(plan.cancel.map(c => c.id));
+  plan.add = toWeeks < series.interval_weeks
+    ? planGapFill(fromLocal, toWeeks, clientSessions.filter(c => !c.id || !cancelled.has(c.id)), now.getTime(), latest)
+    : [];
+  return plan;
 }
 
 /**
@@ -76,6 +179,7 @@ export function planExtension(
   clientActive: boolean,
 ): string[] {
   if (!series.active || !clientActive || !series.gcal_event_id) return [];
+  if (series.change_lock_until && new Date(series.change_lock_until).getTime() > now.getTime()) return [];
   if (!(series.interval_weeks >= 1 && series.interval_weeks <= 4)) return [];
   if (!seriesSessions.length) return [];
 
@@ -102,9 +206,10 @@ export interface ExtendOutcome { series: number; added: number; errors: string[]
 
 /** Top up every active series. Safe to run any number of times. */
 export async function extendAllSeries(now = new Date()): Promise<ExtendOutcome> {
+  // '*' so change_lock_until is read once its migration is applied.
   const { data: series, error } = await supabaseAdmin
     .from('session_series')
-    .select('id, client_id, interval_weeks, gcal_event_id, anchor_at, active')
+    .select('*')
     .eq('active', true);
   if (error) return { series: 0, added: 0, errors: [dbError(error).message ?? 'error'] };
   if (!series?.length) return { series: 0, added: 0, errors: [] };
@@ -145,6 +250,10 @@ export async function extendAllSeries(now = new Date()): Promise<ExtendOutcome> 
 
   let added = 0;
   for (const { s, template, dates } of planned) {
+    // The 5-minute job or "How often" may have changed the series since it
+    // was read: only add if its rhythm is exactly what this plan used.
+    const { data: now2, error: reErr } = await supabaseAdmin.from('session_series').select('*').eq('id', s.id).maybeSingle();
+    if (reErr || !now2 || !sameRhythm(s, now2 as SeriesRow, now)) { errors.push(`${s.id}: changed while planning; skipped`); continue; }
     const rows = dates.map(d => ({
       client_id: s.client_id,
       session_date: d,
@@ -161,6 +270,14 @@ export async function extendAllSeries(now = new Date()): Promise<ExtendOutcome> 
     added += data?.length ?? 0;
   }
   return { series: series.length, added, errors };
+}
+
+/** True when the series still has the rhythm the plan was made for. */
+export function sameRhythm(planned: SeriesRow, current: SeriesRow, now: Date): boolean {
+  const locked = current.change_lock_until && new Date(current.change_lock_until).getTime() > now.getTime();
+  return !locked && current.active && current.interval_weeks === planned.interval_weeks
+    && current.gcal_event_id === planned.gcal_event_id
+    && new Date(current.anchor_at).getTime() === new Date(planned.anchor_at).getTime();
 }
 
 /** End a client's ongoing series (the client was marked Completed). */

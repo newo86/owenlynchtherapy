@@ -2627,3 +2627,51 @@ details.admin-qa-block summary { cursor: pointer; font-size: 14px; color: var(--
   .pp-note, .pp-when, .pp-snoozed, .pp-failed, .pp-quiet, .pp-saving { font-size: 14px; }
   .pp-confirm-text, .pp-amount { font-size: 16px; }
 }
+
+/* "Followed from Google" card (FollowedFromGoogleCard.tsx) */
+.fg-card { margin-bottom: 20px; }
+.fg-note { margin: -6px 0 12px; font-size: 14px; color: var(--forest-deep); line-height: 1.5; }
+.fg-done, .fg-problem { margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; background: var(--cream); font-size: 14px; line-height: 1.5; }
+.fg-done { color: #2D5A42; }
+.fg-problem { color: #A04714; }
+.fg-done:focus, .fg-problem:focus { outline: 2px solid var(--sage); outline-offset: 3px; }
+.fg-list { list-style: none; margin: 0; padding: 0; }
+.fg-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.fg-item:first-child { border-top: 0; padding-top: 0; }
+.fg-line { flex: 1; min-width: 0; margin: 0; font-size: 15px; line-height: 1.4; color: var(--forest-deep); }
+.fg-btn { flex: none; min-height: 44px; min-width: 88px; justify-content: center; }
+.admin-card .fg-btn:focus-visible { outline: 2px solid var(--sage); outline-offset: 3px; }
+/* Phone: Undo is a quiet text button on the right; rows stay compact. */
+.fg-btn-quiet {
+  min-width: 64px; padding: 0 4px; background: transparent; border: 0;
+  font: inherit; font-size: 15px; font-weight: 500; color: var(--forest-deep);
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.fg-btn-quiet:disabled { opacity: 0.5; cursor: default; }
+.admin-card .fg-more { margin-top: 8px; color: var(--forest-deep); text-decoration: underline; text-underline-offset: 3px; min-height: 44px; }
+.admin-card .fg-more:focus-visible { outline: 2px solid var(--sage); outline-offset: 3px; }
+@media (max-width: 768px) {
+  .fg-card { padding: 20px 18px; border-radius: 18px; }
+  .fg-line { font-size: 16px; }
+  .fg-note, .fg-done, .fg-problem { font-size: 14px; }
+}
+
+/* "How often" in the client record (SeriesFrequency.tsx) */
+.sf-box { background: white; border: 1px solid var(--line); border-radius: 12px; padding: 12px 15px; }
+.sf-head { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.sf-label { margin: 0; font-size: 14px; font-weight: 500; color: var(--forest-deep); }
+.sf-options .admin-segmented-btn { min-height: 44px; }
+.sf-options .admin-segmented-btn:not(.is-active) { color: var(--forest-deep); }
+.admin-card .sf-box button:focus-visible, .admin-root .sf-box button:focus-visible { outline: 2px solid var(--sage); outline-offset: 3px; }
+.sf-confirm { margin-top: 12px; background: var(--cream); border-radius: 12px; padding: 12px 14px; }
+.sf-confirm:focus, .sf-msg:focus { outline: 2px solid var(--sage); outline-offset: 3px; }
+.sf-confirm-text { margin: 0 0 12px; font-size: 14px; line-height: 1.55; color: var(--forest-deep); }
+.sf-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.sf-actions > button { min-height: 44px; justify-content: center; }
+.sf-msg { margin: 10px 0 0; font-size: 14px; line-height: 1.5; color: #2D5A42; }
+.sf-msg.is-alert { color: #A04714; }
+@media (max-width: 768px) {
+  .sf-actions { flex-direction: column; }
+  .sf-actions > button { width: 100%; }
+  .sf-confirm-text, .sf-msg { font-size: 16px; }
+}

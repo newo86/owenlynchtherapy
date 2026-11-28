@@ -22,7 +22,7 @@ function fake(opts: { events?: Record<string, EventLike>; instances?: EventLike[
   return { cal, calls };
 }
 
-const kieranSeries = '9jcgvjaa052l8nf23a5il0bg1s';   // a real series id from production
+const niamhSeries = '3hq7zwe4ycb91nd6xk0trs5vfa';   // an example series id
 const inst = (id: string, start: string, original = start): EventLike =>
   ({ id, status: 'confirmed', start: { dateTime: start }, originalStartTime: { dateTime: original } });
 
@@ -34,35 +34,35 @@ describe('resolveEventId', () => {
   });
 
   it('uses a one-off event id as it is', async () => {
-    const { cal } = fake({ events: { 'a8gfo1r8frjr41mjq98ocr06rk': { status: 'confirmed' } } });
-    expect(await resolveEventId(cal, 'a8gfo1r8frjr41mjq98ocr06rk', '2026-11-24T20:00')).toBe('a8gfo1r8frjr41mjq98ocr06rk');
+    const { cal } = fake({ events: { 'v5kz0hd8mq2ewc7pxy1nbr4jgt': { status: 'confirmed' } } });
+    expect(await resolveEventId(cal, 'v5kz0hd8mq2ewc7pxy1nbr4jgt', '2026-11-24T20:00')).toBe('v5kz0hd8mq2ewc7pxy1nbr4jgt');
   });
 
   it('turns a SERIES id into the one occurrence at that session\'s time', async () => {
     const { cal } = fake({
-      events: { [kieranSeries]: { status: 'confirmed', recurrence: ['RRULE:FREQ=WEEKLY'] } },
+      events: { [niamhSeries]: { status: 'confirmed', recurrence: ['RRULE:FREQ=WEEKLY'] } },
       instances: [
-        inst(`${kieranSeries}_20270126T180000Z`, '2027-01-26T18:00:00Z'),
-        inst(`${kieranSeries}_20270202T180000Z`, '2027-02-02T18:00:00Z'),
+        inst(`${niamhSeries}_20270126T180000Z`, '2027-01-26T18:00:00Z'),
+        inst(`${niamhSeries}_20270202T180000Z`, '2027-02-02T18:00:00Z'),
       ],
     });
-    expect(await resolveEventId(cal, kieranSeries, '2027-02-02T18:00')).toBe(`${kieranSeries}_20270202T180000Z`);
+    expect(await resolveEventId(cal, niamhSeries, '2027-02-02T18:00')).toBe(`${niamhSeries}_20270202T180000Z`);
   });
 
   it('finds an occurrence that was moved, by where the series put it', async () => {
     const { cal } = fake({
-      events: { [kieranSeries]: { status: 'confirmed', recurrence: ['RRULE:FREQ=WEEKLY'] } },
-      instances: [inst(`${kieranSeries}_20270202T180000Z`, '2027-02-03T19:00:00Z', '2027-02-02T18:00:00Z')],
+      events: { [niamhSeries]: { status: 'confirmed', recurrence: ['RRULE:FREQ=WEEKLY'] } },
+      instances: [inst(`${niamhSeries}_20270202T180000Z`, '2027-02-03T19:00:00Z', '2027-02-02T18:00:00Z')],
     });
-    expect(await resolveEventId(cal, kieranSeries, '2027-02-02T18:00')).toBe(`${kieranSeries}_20270202T180000Z`);
+    expect(await resolveEventId(cal, niamhSeries, '2027-02-02T18:00')).toBe(`${niamhSeries}_20270202T180000Z`);
   });
 
   it('returns null for an occurrence that has been deleted, never the series', async () => {
     const { cal } = fake({
-      events: { [kieranSeries]: { status: 'confirmed', recurrence: ['RRULE:FREQ=WEEKLY'] } },
-      instances: [inst(`${kieranSeries}_20270126T180000Z`, '2027-01-26T18:00:00Z')],
+      events: { [niamhSeries]: { status: 'confirmed', recurrence: ['RRULE:FREQ=WEEKLY'] } },
+      instances: [inst(`${niamhSeries}_20270126T180000Z`, '2027-01-26T18:00:00Z')],
     });
-    expect(await resolveEventId(cal, kieranSeries, '2027-02-02T18:00')).toBeNull();
+    expect(await resolveEventId(cal, niamhSeries, '2027-02-02T18:00')).toBeNull();
   });
 
   it('returns null when the event no longer exists', async () => {
@@ -71,12 +71,12 @@ describe('resolveEventId', () => {
   });
 
   it('treats a split-series master (`_R…`) as a series, not an instance', async () => {
-    const master = '544e3vhvjfannb14noukkeubqg_R20261030T180000';
+    const master = '7d2q9wzkhs5tnb30rcmyeaf1vj_R20261030T180000';
     const { cal } = fake({
       events: { [master]: { status: 'confirmed', recurrence: ['RRULE:FREQ=WEEKLY'] } },
-      instances: [inst('544e3vhvjfannb14noukkeubqg_20261127T180000Z', '2026-11-27T18:00:00Z')],
+      instances: [inst('7d2q9wzkhs5tnb30rcmyeaf1vj_20261127T180000Z', '2026-11-27T18:00:00Z')],
     });
-    expect(await resolveEventId(cal, master, '2026-11-27T18:00')).toBe('544e3vhvjfannb14noukkeubqg_20261127T180000Z');
+    expect(await resolveEventId(cal, master, '2026-11-27T18:00')).toBe('7d2q9wzkhs5tnb30rcmyeaf1vj_20261127T180000Z');
   });
 });
 
@@ -116,9 +116,9 @@ describe('patchEvent / deleteEvent / insertSessionEvent', () => {
 
   it('creates a one-off event and returns its id (no repeat rule)', async () => {
     const { cal, calls } = fake();
-    const id = await insertSessionEvent(cal, { summary: 'Session — Paul Cashman', startLocal: '2026-12-01T19:00', minutes: 50, location: 'Insight Matters' });
+    const id = await insertSessionEvent(cal, { summary: 'Session — Aoife Example', startLocal: '2026-12-01T19:00', minutes: 50, location: 'Insight Matters' });
     expect(id).toBe('new-event-id');
     expect(calls[0].body).not.toHaveProperty('recurrence');
-    expect(calls[0].body).toMatchObject({ summary: 'Session — Paul Cashman', start: { dateTime: '2026-12-01T19:00:00' } });
+    expect(calls[0].body).toMatchObject({ summary: 'Session — Aoife Example', start: { dateTime: '2026-12-01T19:00:00' } });
   });
 });

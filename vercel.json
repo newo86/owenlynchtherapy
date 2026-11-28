@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/admin/sessions/extend",
-      "schedule": "30 5 * * *"
+      "schedule": "32 5 * * *"
     },
     {
       "path": "/api/admin/reminders/run",

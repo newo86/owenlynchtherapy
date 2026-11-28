@@ -48,13 +48,25 @@ docs/DB-REVIEW.md. Plain-English history: docs/WHAT-WAS-DONE-PLATFORM.md.
   it (19 Nov 2026).** App changes (book, move, edit, cancel) push to the
   practice's primary calendar for that one session's event only
   (src/lib/googleSessionEvents.ts; a repeating series' stored id is resolved
-  to the occurrence first, never the whole series). Google never changes a
-  session: `reconcileCalendar` (src/lib/calendarSync.ts) only reads events and
-  links sessions to the events they match. Differences are found by
-  src/lib/calendarDrift.ts and shown on the dashboard for the owner to
-  resolve with a tap (src/lib/calendarFix.ts); only a failed write from the
-  last 7 days is retried automatically. Keep it that way: no job may import,
-  cancel or move sessions from Google (that is what made edits "sometimes"
+  to the occurrence first, never the whole series). `reconcileCalendar`
+  (src/lib/calendarSync.ts) only reads events and links sessions to the
+  events they match. **Google may change a session in exactly two ways (27 Nov
+  2026, src/lib/followGoogle.ts, run by the 5-minute sync):** it can CANCEL
+  sessions linked to it by Google id (an occurrence, or a whole series,
+  deleted or ended in Google), and it can change a linked series' FREQUENCY
+  (weekly ↔ every 2–4 weeks: off-rhythm sessions cancelled, new in-between
+  weeks added). Nothing else: never by title or name, never a past or
+  non-scheduled session, never a move, never a new client or session from
+  Google, never a write back to Google, never an email to a client. A
+  truncated or failed read does nothing; only events Owen organised count;
+  more than 10 cancellations in one run, or 15 in a rolling 24 hours, does
+  nothing and alerts info@; every change is recorded in
+  `calendar_followed_changes` and can be undone for 7 days. All other
+  differences are found by src/lib/calendarDrift.ts and shown on the
+  dashboard for the owner to resolve with a tap (src/lib/calendarFix.ts); a
+  failed write from the last 7 days is retried automatically. Keep it that
+  way: no job may import or move sessions from Google, or match Google events
+  to sessions by name to change them (that is what made edits "sometimes"
   appear and left stale rows).
 
 ## Working practices (learned from past sessions — follow these)
@@ -101,10 +113,12 @@ Full detail in **docs/OPERATIONS.md**. The must-knows:
 - **Ongoing clients (Nov 2026):** weekly / fortnightly clients booked with no
   end have a `session_series` row; a daily job keeps ~16 weeks of sessions
   ahead (src/lib/sessionSeries.ts). Marking the client Completed ends it.
+  "How often" in the client record changes the rhythm and updates Google
+  (src/lib/seriesInterval.ts); a rhythm changed in Google is followed.
 - **Calendar → client matching is strict (Sep 2026):** an event is only tied to
-  a client if its title has their FULL name ("Session — Jane Durnin") or a name
-  part plus "session"/"client" ("Philip client"). A bare first name ("Walk
-  Kate") never matches, and all-day events are never sessions — loose matching
+  a client if its title has their FULL name ("Session — Nora Invented") or a name
+  part plus "session"/"client" ("Tom client"). A bare first name ("Walk
+  Orla") never matches, and all-day events are never sessions — loose matching
   once turned personal events into sessions that emailed clients. One matcher
   (`matchOneActiveClient`) serves linking, difference detection and reminder
   confirmation.

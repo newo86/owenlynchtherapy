@@ -5,6 +5,7 @@ import { X, Download, Trash2, Pencil, Check, ChevronDown, ChevronLeft, ChevronRi
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatDateTime, formatTime, downloadAdminPdf, dedupeSessions, ageFromDob, matchSubmissionForClient } from './api';
 import { FORMAT_LABELS } from './types';
+import { SeriesFrequency } from './SeriesFrequency';
 import type { ClientRow, SessionRow, SubmissionRow } from './types';
 
 interface Props {
@@ -405,6 +406,9 @@ export function ClientDetail({ client, submissions, onClose, onReload, onEditSes
               </div>
             ))}
           </div>
+
+          {/* How often — only for a client with an ongoing series */}
+          <SeriesFrequency key={client.id} clientId={client.id} onChanged={onReload} />
 
           {/* Sessions — this month, navigable */}
           <section>

@@ -61,13 +61,21 @@ comes back poor, redo it one level up and log it under "Where the line is".
 - `src/app/api/admin/*` dashboard API (auth: `requireAdmin`; crons: `CRON_SECRET` bearer)
 - `src/lib/` logic: `resend.ts` (email + kill switch), `emailTemplates.ts`,
   `sendSessionReminder.ts`, `calendarSync.ts`/`calendarDrift.ts`/`calendarFix.ts`,
-  `googleSessionEvents.ts`, `sessionSeries.ts`, `generateReceiptPDF.ts`,
+  `googleSessionEvents.ts`, `sessionSeries.ts`, `followGoogle.ts` (+ store
+  `followGoogleStore.ts`: Google deletions / repeat changes the app follows),
+  `seriesInterval.ts` ("How often" change), `generateReceiptPDF.ts`,
   `sendReceiptEmail.ts`, `closeOutSession.ts` (shared "Session done" close-out),
   `paymentPrompts.ts` ("Did they pay?" rules), `signingKeys.ts`, `practiceSettings.ts`
 - "Did they pay?": `api/admin/payment-prompts` (+ `/run` cron), card
   `PaymentPromptsCard.tsx` + `PaymentPromptsPanel.tsx`; read-only
   `api/admin/schedule-snapshot` (bearer `SCHEDULE_READ_TOKEN`); dev-only
   `(admin)/admin-demo` with `demoData.ts` (see docs/OPERATIONS.md)
+- Calendar: `api/admin/calendar/sync` (5-min cron: link, follow Google,
+  retry), `api/admin/calendar/followed` (list + undo; card
+  `FollowedFromGoogleCard.tsx` + `FollowedFromGooglePanel.tsx`),
+  `api/admin/sessions/series` (+ `/interval`; `SeriesFrequency.tsx` in
+  ClientDetail). Test bench: `src/lib/testing/fakeGoogleCalendar.ts` +
+  `memoryFollowStore.ts`, scenarios in `src/lib/followGoogle.test.ts`
 - `src/practice.config.ts` practice facts (overridden by Settings)
 - `vercel.json` crons · `supabase/migrations/` schema · tests are `*.test.ts` beside the code (vitest)
 - Docs: `docs/OPERATIONS.md` (how things run), `docs/SECURITY.md`,
@@ -87,6 +95,12 @@ Format: date · task · agent → caught by · why.
   feature, but `designer` (opus) found 7 must-fixes against TASTE.md and
   `security-guardian` found a race in "mark paid". Expected: that's what the
   review steps are for, not a reason to move the build to opus.
+- 28 Nov 2026 · calendar "follow Google" build · `developer` run on opus
+  (tests passing on a fake Google) → a separate read-only opus correctness
+  review found 11 real bugs (moves read as deletions, undo disabling
+  following, race on frequency change). For calendar sync, always add a
+  dedicated correctness review on top of security and design; the fake
+  calendar must mimic real Google closely or tests give false comfort.
 
 ## End of every session
 

@@ -8,6 +8,7 @@ import { NextUpCard, AccreditationMiniCard, findNextUp } from './TodayCards';
 import { MobileHome } from './MobileHome';
 import { CalendarDriftCard } from './CalendarDriftCard';
 import { PaymentPromptsPanel } from './PaymentPromptsPanel';
+import { FollowedFromGooglePanel } from './FollowedFromGooglePanel';
 import type { DriftItem } from '@/lib/calendarDrift';
 import { useAccreditationSettings, useAccreditationHours } from './accreditation';
 import type {
@@ -435,6 +436,8 @@ export function Dashboard({
           </div>
         )}
       </section>
+
+      <FollowedFromGooglePanel onChanged={onReload} />
 
       <div className="admin-row-split">
         <section className="admin-card">
