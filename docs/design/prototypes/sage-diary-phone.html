@@ -379,12 +379,12 @@ button { font: inherit; color: inherit; }
 (() => {
   // ── Example data (fictional clients) ───────────────────
   const CLIENTS = [
-    { id: 'a', name: 'Aoife Byrne', dot: 'var(--art-blue)', how: 'In person', rep: 'Every 2 wks', fee: 80 },
-    { id: 'b', name: 'Seán Doyle', dot: 'var(--art-yellow)', how: 'In person', rep: 'Every 2 wks', fee: 60 },
-    { id: 'c', name: 'Niamh Kelly', dot: 'var(--art-dot)', how: 'Online', rep: 'Weekly', fee: 80 },
-    { id: 'd', name: 'Darragh Ryan', dot: 'var(--art-blue)', how: 'In person', rep: 'Every 2 wks', fee: 60 },
-    { id: 'e', name: 'Ciara Walsh', dot: 'var(--art-yellow)', how: 'Online', rep: 'Weekly', fee: 80 },
-    { id: 'f', name: 'Fionn Murphy', dot: 'var(--art-dot)', how: 'In person', rep: 'Weekly', fee: 80 },
+    { id: 'a', name: 'Aoife Example', dot: 'var(--art-blue)', how: 'In person', rep: 'Every 2 wks', fee: 80 },
+    { id: 'b', name: 'Seán Sample', dot: 'var(--art-yellow)', how: 'In person', rep: 'Every 2 wks', fee: 60 },
+    { id: 'c', name: 'Niamh Placeholder', dot: 'var(--art-dot)', how: 'Online', rep: 'Weekly', fee: 80 },
+    { id: 'd', name: 'Darragh Invented', dot: 'var(--art-blue)', how: 'In person', rep: 'Every 2 wks', fee: 60 },
+    { id: 'e', name: 'Ciara Testcase', dot: 'var(--art-yellow)', how: 'Online', rep: 'Weekly', fee: 80 },
+    { id: 'f', name: 'Fionn Fictional', dot: 'var(--art-dot)', how: 'In person', rep: 'Weekly', fee: 80 },
   ];
   const byId = id => CLIENTS.find(c => c.id === id);
   const TODAY = '2026-12-04';                         // a Friday clinic day
@@ -416,8 +416,8 @@ button { font: inherit; color: inherit; }
     { id: 'ending', name: 'Ending feedback', what: 'For the last session' },
   ];
   const WAITLIST = [
-    { name: 'Róisín Brennan', when: 'Joined 3 Nov', wants: 'Online, evenings' },
-    { name: 'Conor Healy', when: 'Joined 19 Nov', wants: 'In person, Fridays' },
+    { name: 'Róisín Notreal', when: 'Joined 3 Nov', wants: 'Online, evenings' },
+    { name: 'Conor Madeup', when: 'Joined 19 Nov', wants: 'In person, Fridays' },
   ];
   const FREE = [['2026-12-04', '17:00'], ['2026-12-08', '18:00'], ['2026-12-11', '17:00']];
 

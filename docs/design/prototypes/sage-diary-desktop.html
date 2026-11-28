@@ -209,12 +209,12 @@ main { min-width: 0; }
   const $ = s => document.querySelector(s);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const CLIENTS = [
-    { id: 'a', name: 'Aoife Byrne', dot: 'var(--art-blue)', how: 'In person', rep: 'Every 2 wks', fee: 80 },
-    { id: 'b', name: 'Seán Doyle', dot: 'var(--art-yellow)', how: 'In person', rep: 'Every 2 wks', fee: 60 },
-    { id: 'c', name: 'Niamh Kelly', dot: 'var(--art-dot)', how: 'Online', rep: 'Weekly', fee: 80 },
-    { id: 'd', name: 'Darragh Ryan', dot: 'var(--art-blue)', how: 'In person', rep: 'Every 2 wks', fee: 60 },
-    { id: 'e', name: 'Ciara Walsh', dot: 'var(--art-yellow)', how: 'Online', rep: 'Weekly', fee: 80 },
-    { id: 'f', name: 'Fionn Murphy', dot: 'var(--art-dot)', how: 'In person', rep: 'Weekly', fee: 80 },
+    { id: 'a', name: 'Aoife Example', dot: 'var(--art-blue)', how: 'In person', rep: 'Every 2 wks', fee: 80 },
+    { id: 'b', name: 'Seán Sample', dot: 'var(--art-yellow)', how: 'In person', rep: 'Every 2 wks', fee: 60 },
+    { id: 'c', name: 'Niamh Placeholder', dot: 'var(--art-dot)', how: 'Online', rep: 'Weekly', fee: 80 },
+    { id: 'd', name: 'Darragh Invented', dot: 'var(--art-blue)', how: 'In person', rep: 'Every 2 wks', fee: 60 },
+    { id: 'e', name: 'Ciara Testcase', dot: 'var(--art-yellow)', how: 'Online', rep: 'Weekly', fee: 80 },
+    { id: 'f', name: 'Fionn Fictional', dot: 'var(--art-dot)', how: 'In person', rep: 'Weekly', fee: 80 },
   ];
   const byId = id => CLIENTS.find(c => c.id === id);
   const TODAY = '2026-12-04';
@@ -237,7 +237,7 @@ main { min-width: 0; }
     ['Intake form', 'Contact details, GP, what brings them'], ['Therapeutic agreement', 'Fees, cancellations, confidentiality'],
     ['Values questionnaire', 'What matters to them, at the start'], ['Progress check-in', 'Ten short questions, every few sessions'], ['Ending feedback', 'For the last session'],
   ];
-  const WAIT = [['Róisín Brennan', 'Joined 3 Nov', 'Online, evenings'], ['Conor Healy', 'Joined 19 Nov', 'In person, Fridays']];
+  const WAIT = [['Róisín Notreal', 'Joined 3 Nov', 'Online, evenings'], ['Conor Madeup', 'Joined 19 Nov', 'In person, Fridays']];
   const d = iso => new Date(iso + 'T12:00:00');
   const longDay = iso => d(iso).toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'long' });
   const shortDay = iso => d(iso).toLocaleDateString('en-IE', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -296,7 +296,7 @@ main { min-width: 0; }
         </div>
         <div class="stack">
           <div class="group"><h2 class="h">Needs a decision <small>1</small></h2>
-            <div class="card pad"><div class="notice"><span class="ndot"></span><div><b>Niamh Kelly</b> hasn't paid for 20 Nov.<div class="hint" style="margin:2px 0 0">€80 · reminders don't chase payment</div></div></div><div><button type="button" class="btn" data-open-unpaid>Open session</button></div></div></div>
+            <div class="card pad"><div class="notice"><span class="ndot"></span><div><b>Niamh Placeholder</b> hasn't paid for 20 Nov.<div class="hint" style="margin:2px 0 0">€80 · reminders don't chase payment</div></div></div><div><button type="button" class="btn" data-open-unpaid>Open session</button></div></div></div>
           <div class="group"><h2 class="h">Clinic days <small>Tue and Fri</small></h2>
             <div class="week">${days.map(dd => `<div class="wday${dd === TODAY ? ' today' : ''}"><b>${shortDay(dd)}</b>${sessions.filter(s => s.date === dd).sort((a, b) => a.time.localeCompare(b.time)).map(s => `<span class="wslot">${s.time} ${esc(byId(s.cid).name.split(' ')[0])}</span>`).join('')}${FREE.filter(f => f[0] === dd).map(f => `<span class="wslot free">${f[1]} free</span>`).join('')}</div>`).join('')}</div></div>
         </div>
