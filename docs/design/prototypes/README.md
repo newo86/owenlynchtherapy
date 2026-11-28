@@ -17,3 +17,5 @@ items turn yellow on hover and when selected. Inter type.
 
 Live copies (Owen's account): phone https://claude.ai/artifact/M9LswyeLicKV5pAxhhsRwq,
 desktop https://claude.ai/artifact/VCtmEsVEFgzx8G7JNjTJ7V.
+
+Hover on light rows and option tiles: a soft yellow row with a full-yellow icon square (text stays dark, since yellow text on light cards is unreadable).

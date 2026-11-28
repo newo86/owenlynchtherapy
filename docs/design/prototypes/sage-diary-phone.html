@@ -239,6 +239,17 @@ button { font: inherit; color: inherit; }
 .money-row .amt { font-variant-numeric: tabular-nums; font-weight: 600; }
 .money-row .soft { font-size: 14px; color: var(--ink-soft); }
 
+
+/* Hover and press on light rows: soft yellow, icon tile full yellow (text stays dark to stay readable) */
+.nav-row, .opt-head, .row { transition: background 150ms; }
+.nav-row:hover, .nav-row:focus-visible, .nav-row:active,
+.opt-head:hover, .opt-head:focus-visible { background: color-mix(in srgb, var(--action) 24%, var(--card)); }
+.nav-row:hover .ic, .nav-row:focus-visible .ic, .nav-row:active .ic,
+.opt-head:hover .ic, .opt-head:focus-visible .ic { background: var(--action); color: var(--on-action); }
+.opt.is-danger .opt-head:hover { background: var(--danger-soft); }
+.opt.is-danger .opt-head:hover .ic { background: var(--danger); color: #FFFFFF; }
+.row:hover { background: color-mix(in srgb, var(--action) 18%, var(--card)); }
+
 /* Book sheet */
 .sheet-scrim { position: absolute; inset: 0; z-index: 15; background: var(--scrim); opacity: 0; pointer-events: none; transition: opacity 200ms; }
 .sheet-scrim.open { opacity: 1; pointer-events: auto; }

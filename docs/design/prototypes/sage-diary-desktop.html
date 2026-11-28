@@ -68,7 +68,7 @@ main { min-width: 0; }
 /* Session rows: hover shows quick actions (no swipe on a mouse) */
 .srow { display: flex; align-items: center; gap: 14px; padding: 14px 18px; min-height: 68px; cursor: pointer; position: relative; }
 .srow + .srow { border-top: 1px solid var(--line); }
-.srow:hover, .srow.is-sel { background: color-mix(in srgb, var(--pill) 55%, var(--card)); }
+.srow:hover, .srow.is-sel { background: color-mix(in srgb, var(--action) 20%, var(--card)); }
 .srow .t { width: 52px; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
 .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
 .srow .who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -81,7 +81,7 @@ main { min-width: 0; }
 .qbtn { width: 40px; height: 40px; border: 0; border-radius: 10px; background: var(--card); cursor: pointer; display: grid; place-items: center; }
 .qbtn svg { width: 18px; height: 18px; }
 .qbtn.del { color: var(--danger); }
-.qbtn:hover { background: var(--pill); }
+.qbtn:hover { background: var(--action); color: var(--on-action); }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { border: 1.5px solid transparent; background: var(--card); border-radius: 999px; padding: 9px 14px; min-height: 44px; font-size: 15px; font-weight: 600; cursor: pointer; font-variant-numeric: tabular-nums; }
@@ -114,7 +114,7 @@ main { min-width: 0; }
 .lrow + .lrow { border-top: 1px solid var(--line); }
 .lrow .grow { flex: 1; min-width: 0; }
 .lrow .soft { color: var(--ink-soft); font-size: 14px; }
-.lrow.click { cursor: pointer; } .lrow.click:hover, .lrow.is-sel { background: color-mix(in srgb, var(--pill) 55%, var(--card)); }
+.lrow.click { cursor: pointer; } .lrow.click:hover, .lrow.is-sel { background: color-mix(in srgb, var(--action) 20%, var(--card)); }
 .amt { font-variant-numeric: tabular-nums; font-weight: 600; }
 .btn { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--pill); font-weight: 600; cursor: pointer; white-space: nowrap; }
 .btn.yellow { background: var(--action); color: var(--on-action); }
@@ -144,6 +144,10 @@ main { min-width: 0; }
 .opt-head .ic svg { width: 19px; height: 19px; }
 .opt-head .txt { flex: 1; display: flex; flex-direction: column; }
 .opt-head .txt span { font-size: 14px; color: var(--ink-soft); }
+.opt-head:hover { background: color-mix(in srgb, var(--action) 22%, var(--card)); }
+.opt-head:hover .ic { background: var(--action); color: var(--on-action); }
+.btn:hover { background: color-mix(in srgb, var(--action) 45%, var(--pill)); }
+.opt.is-danger .opt-head:hover { background: var(--danger-soft); } .opt.is-danger .opt-head:hover .ic { background: var(--danger); color: #FFF; }
 .opt.is-danger .ic { background: var(--danger-soft); color: var(--danger); } .opt.is-danger b { color: var(--danger); }
 .opt-panel { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
 .opt-panel[hidden] { display: none !important; }
