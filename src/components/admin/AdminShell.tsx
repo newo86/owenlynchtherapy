@@ -47,6 +47,8 @@ const DESKTOP_TITLE_OVERRIDES: Partial<Record<AdminSection, string>> = { hours: 
 /** One short line under the desktop band, as in the prototype. */
 function desktopSubtitle(section: AdminSection, clientCount: number, waiting: number, fallback: string): string {
   switch (section) {
+    case 'sessions': return new Date().toLocaleDateString('en-IE', { month: 'long', year: 'numeric', timeZone: 'Europe/Dublin' });
+    case 'revenue': return 'This month';
     case 'clients': return `${clientCount} client${clientCount === 1 ? '' : 's'}`;
     case 'forms':
     case 'analytics': return 'Send to a client, or download a PDF';
@@ -336,7 +338,7 @@ export function AdminShell() {
                         style={{ cursor: 'pointer' }}
                       >
                         <span className="admin-status-dot is-off" />
-                        Calendar not connected. Connect
+                        Connect Google Calendar
                       </button>
                     )}
                     {/* Phone keeps its Add client button; the desktop prototype has none on these pages. */}

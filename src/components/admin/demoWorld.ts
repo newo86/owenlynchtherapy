@@ -230,6 +230,11 @@ export function demoRoute(world: DemoWorld, method: string, rawUrl: string): Dem
     case '/api/admin/calendar/followed': return ok({ items: demoFollowed });
     case '/api/admin/payment-prompts': return ok({ prompts: world.prompts });
     case '/api/admin/settings': return ok({ settings: world.settings, saved: true, updated_at: null });
+    case '/api/admin/accreditation': return ok({ entries: [
+      { id: 'demo-a1', kind: 'supervision', entry_date: '2026-10-14', hours: 1.5, detail: 'Group supervision' },
+      { id: 'demo-a2', kind: 'own_therapy', entry_date: '2026-10-28', hours: 1, detail: null },
+      { id: 'demo-a3', kind: 'cpd', entry_date: '2026-11-05', hours: 6, detail: 'Training day' },
+    ] });
     case '/api/admin/questionnaires': return ok({ responses: [], pending: [] });
     case '/api/admin/sessions/series': return ok({ series: { id: 'demo-series', interval_weeks: 1 } });
     case '/api/admin/sessions': {

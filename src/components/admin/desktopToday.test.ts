@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { clinicDays, clinicDaysLabel, slotsThisWeek, cadenceLabel } from './desktopToday';
+import { clinicDays, clinicDaysLabel, slotsNextWeek, cadenceLabel } from './desktopToday';
 import type { ClientRow, SessionRow } from './types';
 import type { FreeSlot } from './freeSlots';
 
@@ -42,11 +42,10 @@ describe('clinic days', () => {
 });
 
 describe('free this week', () => {
-  it('stops at the end of the Monday to Sunday week', () => {
-    const slots = [slot('2026-12-01T18:00'), slot('2026-12-04T17:00'), slot('2026-12-08T18:00')];
-    expect(slotsThisWeek(slots, '2026-12-01').map(s => s.local)).toEqual(['2026-12-01T18:00', '2026-12-04T17:00']);
-    // on a Sunday the week ends that day
-    expect(slotsThisWeek(slots.slice(2), '2026-12-06').map(s => s.local)).toEqual([]);
+  it('runs from today through the next seven days', () => {
+    const slots = [slot('2026-12-01T18:00'), slot('2026-12-04T17:00'), slot('2026-12-08T18:00'), slot('2026-12-11T17:00')];
+    expect(slotsNextWeek(slots, '2026-12-01').map(s => s.local)).toEqual(['2026-12-01T18:00', '2026-12-04T17:00', '2026-12-08T18:00']);
+    expect(slotsNextWeek(slots, '2026-12-04').map(s => s.local)).toEqual(['2026-12-01T18:00', '2026-12-04T17:00', '2026-12-08T18:00', '2026-12-11T17:00']);
   });
 });
 

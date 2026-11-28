@@ -23,7 +23,7 @@ import { IconChart, IconClose, IconDone, IconMail, IconMoney, IconMove } from '.
 import { clockTime, dublinYmd, firstName, shortDay } from './desktopToday';
 import type { ClientRow, SessionRow } from './types';
 
-export type PanelOption = 'done' | 'paid' | 'receipt' | 'move';
+export type PanelOption = 'done' | 'paid' | 'receipt';
 
 interface Props {
   session: SessionRow;
@@ -38,8 +38,9 @@ interface Props {
   onChanged: () => void;
 }
 
+// 24-hour, like the rest of Today ("Tue 24 Nov, 16:00").
 const when = (iso: string) => new Date(iso).toLocaleString('en-IE', {
-  weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true,
+  weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   timeZone: 'Europe/Dublin',
 });
 
@@ -68,6 +69,7 @@ export function SessionPanel({ session, client, initialOption, onClose, onEdit, 
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [reminderOpen, setReminderOpen] = useState(false);
+  const reminderTile = useRef<HTMLButtonElement>(null);
 
   const paid = session.payment_status === 'paid';
   const viaStripe = paid && Boolean(session.stripe_payment_intent_id);
@@ -95,7 +97,11 @@ export function SessionPanel({ session, client, initialOption, onClose, onEdit, 
   useEffect(() => { onCloseRef.current = onClose; });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (reminderOpen) return;
+      if (reminderOpen) {
+        // The reminder pop-up is on top: Escape closes just that, and focus comes back to its tile.
+        if (e.key === 'Escape') { e.preventDefault(); setReminderOpen(false); window.setTimeout(() => reminderTile.current?.focus(), 0); }
+        return;
+      }
       if (e.key === 'Escape') { e.preventDefault(); onCloseRef.current(); return; }
       if (e.key !== 'Tab') return;
       const els = Array.from(panelRef.current?.querySelectorAll<HTMLElement>(
@@ -217,7 +223,7 @@ export function SessionPanel({ session, client, initialOption, onClose, onEdit, 
           </div>
 
           {scheduled && (
-            <Opt id="done" icon={<IconDone />} title="Session done" sub="Marks it attended; you choose payment and receipt"
+            <Opt id="done" icon={<IconDone />} title="Session done" sub="Then choose payment and receipt"
               open={openOpt === 'done'} onToggle={() => toggle('done')} optRef={reg('done')}>
               <SessionDoneOptions variant="panel" session={session} client={client} busy={busy}
                 onChoose={c => void done(c)} onCancel={() => setOpenOpt(null)} />
@@ -226,9 +232,9 @@ export function SessionPanel({ session, client, initialOption, onClose, onEdit, 
 
           {upcoming && !optedOut && (
             <div className="dt-opt">
-              <button type="button" className="dt-opt-head" onClick={() => setReminderOpen(true)}>
+              <button type="button" className="dt-opt-head" ref={reminderTile} onClick={() => setReminderOpen(true)}>
                 <span className="dt-opt-ic" aria-hidden><IconMail /></span>
-                <span className="dt-opt-txt"><b>{firstReminder ? 'Resend reminder' : 'Send reminder'}</b><span>Shows a preview first; nothing is sent until you confirm</span></span>
+                <span className="dt-opt-txt"><b>{firstReminder ? 'Resend reminder' : 'Send reminder'}</b><span>You see it before it&rsquo;s sent</span></span>
               </button>
             </div>
           )}
@@ -236,7 +242,7 @@ export function SessionPanel({ session, client, initialOption, onClose, onEdit, 
           {!paid && session.status !== 'cancelled' && (
             <Opt id="paid" icon={<IconMoney />} title={lowCost ? 'Cash received' : 'Mark as paid'} sub={`${displayFee(session.fee)} · no receipt is emailed`}
               open={openOpt === 'paid'} onToggle={() => toggle('paid')} optRef={reg('paid')}>
-              <p className="dt-hint">{lowCost ? 'Records the cash you were given.' : 'Records that this session was paid.'} No email goes to {first}.</p>
+              <p className="dt-hint">{lowCost ? 'Records the cash you were given.' : 'Records that this session was paid.'} No email goes to <span className="pii">{first}</span>.</p>
               <button type="button" className="dt-btn is-main" disabled={busy} onClick={() => void markPaid()}>
                 {busy ? 'Saving…' : lowCost ? 'Cash received' : 'Mark as paid'}
               </button>
@@ -256,16 +262,19 @@ export function SessionPanel({ session, client, initialOption, onClose, onEdit, 
             </Opt>
           )}
 
-          <Opt id="move" icon={<IconMove />} title="Move or edit" sub="Change the time, format or fee, or mark it cancelled"
-            open={openOpt === 'move'} onToggle={() => toggle('move')} optRef={reg('move')}>
-            <p className="dt-hint">Opens the session editor, where you can change anything about this session.</p>
-            <button type="button" className="dt-btn" onClick={onEdit}>Open the session editor</button>
-          </Opt>
+          <div className="dt-opt">
+            <button type="button" className="dt-opt-head" onClick={onEdit}>
+              <span className="dt-opt-ic" aria-hidden><IconMove /></span>
+              <span className="dt-opt-txt"><b>Move or edit</b><span>Opens the session editor</span></span>
+            </button>
+          </div>
         </div>
       </aside>
 
       {reminderOpen && (
-        <SendReminderModal session={session} client={client} onClose={() => setReminderOpen(false)} onSessionChanged={onChanged} />
+        <SendReminderModal session={session} client={client}
+        onClose={() => { setReminderOpen(false); window.setTimeout(() => reminderTile.current?.focus(), 0); }}
+        onSessionChanged={onChanged} />
       )}
     </>
   );

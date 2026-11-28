@@ -7,7 +7,7 @@
 // followed from Google, in one card, each with its own buttons and confirms)
 // and the next clinic days. The header band is rendered by Dashboard.
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { displayFee } from './api';
 import { CalendarDriftCard } from './CalendarDriftCard';
 import { PaymentPromptsPanel } from './PaymentPromptsPanel';
@@ -16,7 +16,7 @@ import { SessionPanel, type PanelOption } from './SessionPanel';
 import { IconChart, IconDone, IconMoney, IconMove } from './sage';
 import { useFreeTimes } from './useFreeTimes';
 import {
-  cadenceLabel, clinicDays, clinicDaysLabel, clockTime, dotColour, dublinYmd, firstName, shortDay, slotsThisWeek,
+  cadenceLabel, clinicDays, clinicDaysLabel, clockTime, dotColour, dublinYmd, firstName, shortDay, slotsNextWeek,
 } from './desktopToday';
 import type { DriftItem } from '@/lib/calendarDrift';
 import type { ClientRow, SessionRow } from './types';
@@ -42,27 +42,36 @@ export function DesktopToday({
   const [sel, setSel] = useState<{ id: string; option: PanelOption | null } | null>(null);
   const [payCount, setPayCount] = useState(0);
   const [followCount, setFollowCount] = useState(0);
+  const [showAll, setShowAll] = useState(false);
+  const [fgOpen, setFgOpen] = useState(false);
+  // What had focus when the panel opened, so Escape/close can give it back.
+  const opener = useRef<HTMLElement | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const free = useFreeTimes(clients, reloadKey);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const todayYmd = useMemo(() => dublinYmd(new Date().toISOString()), [todaySessions]);
-  const weekSlots = useMemo(() => slotsThisWeek(free.slots, todayYmd), [free.slots, todayYmd]);
+  const weekSlots = useMemo(() => slotsNextWeek(free.slots, todayYmd).slice(0, 6), [free.slots, todayYmd]);
   const days = useMemo(
     () => clinicDays(free.hours, allSessions, free.slots, todayYmd, 5),
     [free.hours, allSessions, free.slots, todayYmd],
   );
-  const decisions = payCount + drift.length + followCount;
+  const decisions = payCount + drift.length;
+  const NOTICES = 3;
 
   const refresh = useCallback(() => { onReload(); setReloadKey(k => k + 1); }, [onReload]);
 
-  const open = (id: string, option: PanelOption | null = null) => setSel({ id, option });
+  const open = (id: string, option: PanelOption | null = null) => {
+    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setSel({ id, option });
+  };
   const close = () => {
     const id = sel?.id;
     setSel(null);
-    // Focus goes back to the row that opened the panel.
+    // Focus goes back to what opened the panel (the row, or a notice's button).
     window.setTimeout(() => {
-      document.querySelector<HTMLElement>(`[data-session-row="${id}"] .dt-srow-main`)?.focus();
+      const el = opener.current?.isConnected ? opener.current : document.querySelector<HTMLElement>(`[data-session-row="${id}"] .dt-srow-main`);
+      el?.focus();
     }, 0);
   };
   // Look the session up fresh each render so a reload shows its new state.
@@ -78,7 +87,7 @@ export function DesktopToday({
               {todaySessions.length === 0 && <p className="dt-hint dt-empty">No clients today.</p>}
               {todaySessions.map(({ s, c }) => (
                 <TodayRow key={s.id} s={s} c={c} selected={sel?.id === s.id}
-                  onOpen={option => open(s.id, option)} onOpenClient={() => onOpenClient(c)} />
+                  onOpen={option => open(s.id, option)} onEdit={() => onEditSession(s, c)} onOpenClient={() => onOpenClient(c)} />
               ))}
             </div>
           </div>
@@ -109,9 +118,19 @@ export function DesktopToday({
           <div className="dt-group">
             <h2 className="dt-h">Needs a decision <small>{decisions}</small></h2>
             <div className="dt-card dt-pad dt-nd">
-              <div className="dt-nd-group"><PaymentPromptsPanel bare onChanged={refresh} onCount={setPayCount} /></div>
-              <div className="dt-nd-group"><CalendarDriftCard bare items={drift} onResolved={refresh} /></div>
-              <div className="dt-nd-group"><FollowedFromGooglePanel bare onChanged={refresh} onCount={setFollowCount} /></div>
+              <div className="dt-nd-group">
+                <PaymentPromptsPanel bare onChanged={refresh} onCount={setPayCount}
+                  limit={showAll ? undefined : NOTICES} onOpenSession={id => open(id, 'paid')} />
+              </div>
+              <div className="dt-nd-group">
+                <CalendarDriftCard bare items={drift} onResolved={refresh}
+                  limit={showAll ? undefined : Math.max(0, NOTICES - payCount)} />
+              </div>
+              {decisions > NOTICES && (
+                <button type="button" className="dt-link" aria-expanded={showAll} onClick={() => setShowAll(s => !s)}>
+                  {showAll ? 'Show fewer' : `Show all (${decisions})`}
+                </button>
+              )}
               {decisions === 0 && <p className="dt-hint">Nothing needs a decision right now.</p>}
             </div>
           </div>
@@ -129,6 +148,18 @@ export function DesktopToday({
               ))}
             </ul>
             {free.unavailable && <p className="dt-hint">Free times aren&apos;t shown: Google Calendar couldn&apos;t be read.</p>}
+            {/* Changes the app copied from Google: a quiet line, not a decision. Undo is in the expanded list. */}
+            {(followCount > 0 || fgOpen) && (
+              <p className="dt-fg-line">
+                {followCount} {followCount === 1 ? 'change' : 'changes'} followed from Google ·{' '}
+                <button type="button" className="dt-link" aria-expanded={fgOpen} onClick={() => setFgOpen(o => !o)}>
+                  {fgOpen ? 'Hide' : 'Review'}
+                </button>
+              </p>
+            )}
+            <div className="dt-card dt-pad" hidden={!fgOpen}>
+              <FollowedFromGooglePanel bare onChanged={refresh} onCount={setFollowCount} />
+            </div>
           </div>
         </div>
       </div>
@@ -149,9 +180,9 @@ export function DesktopToday({
   );
 }
 
-function TodayRow({ s, c, selected, onOpen, onOpenClient }: {
+function TodayRow({ s, c, selected, onOpen, onEdit, onOpenClient }: {
   s: SessionRow; c: ClientRow; selected: boolean;
-  onOpen: (option: PanelOption | null) => void; onOpenClient: () => void;
+  onOpen: (option: PanelOption | null) => void; onEdit: () => void; onOpenClient: () => void;
 }) {
   const paid = s.payment_status === 'paid';
   const lowCost = Boolean(c.is_low_cost);
@@ -174,8 +205,8 @@ function TodayRow({ s, c, selected, onOpen, onOpenClient }: {
       </button>
       <span className="dt-quick">
         {s.status === 'scheduled' && quick('Session done', <IconDone />, () => onOpen('done'))}
+        {quick('Move or edit', <IconMove />, onEdit)}
         {!paid && quick(lowCost ? 'Cash received' : 'Mark as paid', <IconMoney />, () => onOpen('paid'))}
-        {quick('Move or edit', <IconMove />, () => onOpen('move'))}
         {quick(`Open ${firstName(c.full_name)}'s page`, <IconChart />, onOpenClient)}
       </span>
       {paid ? <span className="dt-tag is-paid">Paid</span> : <span className="dt-tag">{how}</span>}

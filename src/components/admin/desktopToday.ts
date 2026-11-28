@@ -54,10 +54,9 @@ export function dotColour(clientId: string): string {
   return DOTS[h % DOTS.length];
 }
 
-/** Free slots from `todayYmd` to the end of that (Monday to Sunday) week. */
-export function slotsThisWeek(slots: FreeSlot[], todayYmd: string): FreeSlot[] {
-  const toSunday = (7 - weekdayIndex(todayYmd)) % 7;
-  const last = addDaysYmd(todayYmd, toSunday);
+/** Free slots from today through the next seven days (what "Free this week" shows). */
+export function slotsNextWeek(slots: FreeSlot[], todayYmd: string): FreeSlot[] {
+  const last = addDaysYmd(todayYmd, 7);
   return slots.filter(s => s.local.slice(0, 10) <= last);
 }
 

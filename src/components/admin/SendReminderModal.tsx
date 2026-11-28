@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { X, Mail, Phone, Receipt, Check } from 'lucide-react';
-import { adminFetch, formatDateTime } from './api';
+import { adminFetch, displayFee, formatDateTime } from './api';
 import type { SessionRow, ClientRow } from './types';
 import { PRACTICE } from '@/practice.config';
 
@@ -104,6 +104,31 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
   }
 
   const [receiptError, setReceiptError] = useState<string | null>(null);
+  // Sending a receipt is never one click: the first tap asks, naming the address.
+  const [confirmReceipt, setConfirmReceipt] = useState(false);
+
+  // Dialog behaviour: focus moves in, Tab stays inside, Escape closes.
+  const titleId = useId();
+  const boxRef = useRef<HTMLDivElement>(null);
+  const closeBtn = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; });
+  useEffect(() => {
+    closeBtn.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.preventDefault(); onCloseRef.current(); return; }
+      if (e.key !== 'Tab') return;
+      const els = Array.from(boxRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled])') ?? []);
+      if (els.length === 0) return;
+      const first = els[0], last = els[els.length - 1];
+      const active = document.activeElement;
+      if (!boxRef.current?.contains(active)) { e.preventDefault(); first.focus(); }
+      else if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
   async function sendReceipt(force = false) {
     setReceiptStatus('sending');
@@ -150,6 +175,10 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
       onClick={onClose}
     >
       <div
+        ref={boxRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         style={{
           background: 'white',
           borderRadius: 22,
@@ -165,9 +194,9 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>
             <p className="admin-eyebrow">Reminder</p>
-            <h2 className="admin-h3" style={{ margin: '4px 0 6px' }}>Send reminder</h2>
+            <h2 className="admin-h3" id={titleId} style={{ margin: '4px 0 6px' }}>Send reminder</h2>
             <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: 0 }}>
-              {client.full_name} · {formatDateTime(session.session_date)}
+              <span className="pii">{client.full_name}</span> · {formatDateTime(session.session_date)}
             </p>
             <p style={{ fontSize: 12, color: 'var(--sd-rail)', margin: '8px 0 0', lineHeight: 1.5 }}>
               {contents}
@@ -184,6 +213,7 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
             )}
           </div>
           <button
+            ref={closeBtn}
             onClick={onClose}
             style={{
               width: 32, height: 32, borderRadius: 8,
@@ -263,6 +293,24 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
           </div>
         )}
 
+        {confirmReceipt && receiptStatus !== 'sent' && (
+          <div role="group" aria-label="Confirm the receipt" style={{
+            marginBottom: 18, padding: '14px 16px', borderRadius: 12,
+            background: 'var(--linen, #F5F0E8)', border: '1px solid var(--line)',
+          }}>
+            <p style={{ margin: '0 0 12px', fontSize: 14, lineHeight: 1.5 }}>
+              Email a receipt for {displayFee(session.fee)} to <span className="pii">{client.email}</span>?
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="admin-btn-secondary" disabled={receiptStatus === 'sending'}
+                onClick={() => { setConfirmReceipt(false); void sendReceipt(); }}>
+                Send receipt
+              </button>
+              <button className="admin-btn-secondary" onClick={() => setConfirmReceipt(false)}>Back</button>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button onClick={onClose} className="admin-btn-secondary" disabled={sending}>
@@ -271,8 +319,8 @@ export function SendReminderModal({ session: initialSession, client, onClose, on
           <div style={{ display: 'flex', gap: 10, marginLeft: 'auto' }}>
             {/* Send Receipt — wired to the existing /api/admin/send-receipt route. */}
             <button
-              onClick={() => void sendReceipt()}
-              disabled={receiptStatus === 'sending' || receiptStatus === 'sent'}
+              onClick={() => setConfirmReceipt(true)}
+              disabled={receiptStatus === 'sending' || receiptStatus === 'sent' || confirmReceipt}
               className="admin-btn-secondary is-filled"
               style={{ background: 'var(--sage)', borderColor: 'var(--sage)' }}
               title="Email this session's receipt to the client"

@@ -124,7 +124,7 @@ const RAIL: Array<{ id: AdminSection; label: string; Icon: () => React.JSX.Eleme
   { id: 'settings',  label: 'Settings', Icon: IconGear, also: ['hours'] },
 ];
 
-function DesktopSidebar({ active, onNavigate }: Props) {
+function DesktopSidebar({ active, onNavigate, privacy, onTogglePrivacy }: Props) {
   return (
     <nav className="admin-sidebar" aria-label="Main">
       <button
@@ -140,6 +140,14 @@ function DesktopSidebar({ active, onNavigate }: Props) {
         return (
           <Fragment key={id}>
             {id === 'settings' && <div className="admin-sidebar-spacer" />}
+            {id === 'settings' && (
+              // One-tap privacy mode (blurs client names and emails) with its state always visible.
+              <button type="button" className="admin-nav-btn is-privacy" aria-pressed={privacy} onClick={onTogglePrivacy}>
+                {privacy ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+                Privacy
+                {privacy && <span className="admin-privacy-on">On</span>}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onNavigate(id)}

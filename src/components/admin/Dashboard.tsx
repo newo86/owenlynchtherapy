@@ -53,18 +53,18 @@ function reminderStripState(health: ReminderHealth | null):
   | null {
   if (!health) return null;
   if (!health.emailsEnabled) {
-    return { tone: 'alert', msg: 'Email sending is switched OFF — no reminders or receipts are going out (EMAILS_ENABLED).' };
+    return { tone: 'alert', msg: 'Email sending is switched off. No reminders or receipts are going out (EMAILS_ENABLED).' };
   }
   const run = health.lastRun;
   if (!run) {
-    return { tone: 'warn', msg: 'No automatic reminder run recorded yet — the health log starts with the next 7 a.m. run.' };
+    return { tone: 'warn', msg: 'No automatic reminder run recorded yet. The health log starts with the next 7 a.m. run.' };
   }
   const ranAt = new Date(run.ran_at);
   const when = ranAt.toLocaleString('en-IE', {
-    weekday: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
+    weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Europe/Dublin',
   });
   if (Date.now() - ranAt.getTime() > 26 * 60 * 60 * 1000) {
-    return { tone: 'alert', msg: `The automatic reminder run hasn't fired since ${when} — reminders may not be going out.` };
+    return { tone: 'alert', msg: `The automatic reminder run hasn't fired since ${when}. Reminders may not be going out.` };
   }
   if (run.outcome.startsWith('aborted') || run.outcome.startsWith('error')) {
     const reason: Record<string, string> = {
@@ -76,17 +76,17 @@ function reminderStripState(health: ReminderHealth | null):
     };
     return {
       tone: 'alert',
-      msg: `This morning's reminders were held back (${reason[run.outcome] ?? run.outcome}) — no clients were emailed. Send today's by hand if needed.`,
+      msg: `This morning's reminders were held back (${reason[run.outcome] ?? run.outcome}). No clients were emailed. Send today's by hand if needed.`,
     };
   }
   if (run.failed > 0) {
     return {
       tone: 'warn',
-      msg: `Reminders ${when}: ${run.sent} sent, ${run.failed} failed — the failed clients got nothing; send theirs by hand.`,
+      msg: `Reminders ${when}: ${run.sent} sent, ${run.failed} failed. The failed clients got nothing; send theirs by hand.`,
     };
   }
   if (run.candidates === 0) {
-    return { tone: 'ok', msg: `Reminders ${when}: no sessions to remind — all quiet.` };
+    return { tone: 'ok', msg: `Reminders ${when}: no sessions to remind. All quiet.` };
   }
   return {
     tone: 'ok',
@@ -160,7 +160,7 @@ export function Dashboard({
             {calendarStatus && !calendarStatus.connected && (
               <button type="button" onClick={onConnectCalendar} className="admin-status-pill" style={{ cursor: 'pointer' }}>
                 <span className="admin-status-dot is-off" />
-                Calendar not connected. Connect
+                Connect Google Calendar
               </button>
             )}
             <button type="button" className="sd-btn sd-btn-primary dt-cta" onClick={() => onSchedule()}>

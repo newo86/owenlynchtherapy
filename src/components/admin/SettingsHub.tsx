@@ -83,7 +83,7 @@ function AccountTab({ calendar, onConnectCalendar, onDisconnectCalendar, privacy
       )}
       {row('Two-factor sign-in', 'A code from your authenticator app when you sign in.',
         <button type="button" className="admin-btn-secondary" onClick={onOpenMfa}>Manage</button>)}
-      {row('Sign out', 'Ends this session on this device.',
+      {row('Sign out', 'Signs you out on this device.',
         <button type="button" className="admin-btn-secondary" onClick={onSignOut}>Sign out</button>)}
     </section>
   );

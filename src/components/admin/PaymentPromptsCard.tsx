@@ -48,6 +48,10 @@ interface Props {
   compact?: boolean;
   /** Desktop "Needs a decision": no card of its own, a smaller heading. */
   bare?: boolean;
+  /** Desktop: open the session panel for a prompt's session. */
+  onOpenSession?: (sessionId: string) => void;
+  /** Desktop: show at most this many prompts. */
+  limit?: number;
 }
 
 /** "Tue 2 Dec, 4:00pm" in Dublin time (same text on server and browser). */
@@ -218,7 +222,7 @@ function PromptSheet({ p, root, onClose, children }: { p: PaymentPromptItem; roo
   );
 }
 
-export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConfirm = null, compact = false, bare = false }: Props) {
+export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConfirm = null, compact = false, bare = false, onOpenSession, limit }: Props) {
   const [confirm, setConfirm] = useState<PendingChoice | null>(() => {
     if (!initialConfirm) return null;
     const p = prompts.find(x => x.session_id === initialConfirm.sessionId);
@@ -230,6 +234,7 @@ export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConf
   const rowRefs = useRef(new Map<string, HTMLLIElement>());
   const sheetOpener = useRef<HTMLButtonElement | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+  const refocus = useRef<string | null>(null);
   // Where the sheet is portalled; known only after mount.
   const [sheetRoot, setSheetRoot] = useState<Element | null>(null);
   useEffect(() => {
@@ -243,7 +248,17 @@ export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConf
     rowRefs.current.get(focusId)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
   }, [focusId]);
 
+  // Back from a "Not yet" confirm returns focus to that notice's link.
+  useEffect(() => {
+    if (confirm === null && refocus.current) {
+      const id = refocus.current; refocus.current = null;
+      window.setTimeout(() => document.querySelector<HTMLElement>(`[data-notice-link="${id}"]`)?.focus(), 0);
+    }
+  }, [confirm]);
+
   if (prompts.length === 0) return null;
+  // A prompt that is open for confirming (e.g. from the email link) always shows.
+  const shownPrompts = limit === undefined ? prompts : prompts.filter((p, i) => i < limit || p.session_id === confirm?.sessionId);
 
   const closeSheet = () => {
     setSheetId(null); setConfirm(null);
@@ -267,17 +282,36 @@ export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConf
   const sheetPrompt = sheetId ? prompts.find(p => p.session_id === sheetId) : undefined;
 
   return (
-    <section ref={sectionRef} className={bare ? 'pp-card is-bare' : 'admin-card pp-card'} aria-labelledby="pp-heading">
-      {bare ? (
-        <h3 className="nd-sub" id="pp-heading">Did they pay?</h3>
-      ) : (
+    <section ref={sectionRef} className={bare ? 'pp-card is-bare' : 'admin-card pp-card'}
+      aria-labelledby={bare ? undefined : 'pp-heading'} aria-label={bare ? 'Did they pay?' : undefined}>
+      {bare ? null : (
         <div className="admin-card-head">
           <h2 className="admin-h2" id="pp-heading">Did they pay?</h2>
         </div>
       )}
-      <p className="pp-note">Bank transfers don&apos;t show up here, so tick them off yourself. Nothing is sent to anyone unless you confirm.</p>
+      {!bare && <p className="pp-note">Bank transfers don&apos;t show up here, so tick them off yourself. Nothing is sent to anyone unless you confirm.</p>}
       <ul className="pp-list">
-        {prompts.map(p => (
+        {shownPrompts.map(p => (bare && confirm?.sessionId !== p.session_id && !p.receipt_failed && onOpenSession ? (
+          <li key={p.session_id} id={`payprompt-${p.session_id}`} className="pp-row is-notice"
+            ref={el => { if (el) rowRefs.current.set(p.session_id, el); else rowRefs.current.delete(p.session_id); }}>
+            <span className="dt-ndot" aria-hidden />
+            <div className="dt-notice-body">
+              <p className="dt-notice-line"><b className="pii">{p.label}</b> hasn&apos;t paid for {formatShortDay(p.session_date)}.</p>
+              <p className="dt-notice-hint">{displayFee(p.fee)} · reminders don&apos;t chase payment{p.snoozed ? ' · Reminding you tomorrow' : ''}</p>
+              {busy === p.session_id ? <p className="pp-saving" role="status">Saving…</p> : (
+                <div className="dt-notice-actions">
+                  <button type="button" className="dt-btn" aria-label={`Open session: ${p.label}, ${formatShortDay(p.session_date)}`}
+                    onClick={() => onOpenSession(p.session_id)}>Open session</button>
+                  <button type="button" className="dt-link" data-notice-link={p.session_id}
+                    aria-label={`Not yet, ask me tomorrow: ${p.label}, ${formatShortDay(p.session_date)}`}
+                    onClick={() => { refocus.current = p.session_id; setConfirm({ sessionId: p.session_id, choice: 'remind_tomorrow' }); }}>
+                    Not yet, ask me tomorrow
+                  </button>
+                </div>
+              )}
+            </div>
+          </li>
+        ) : (
           <li
             key={p.session_id}
             id={`payprompt-${p.session_id}`}
@@ -314,7 +348,7 @@ export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConf
               </>
             )}
           </li>
-        ))}
+        )))}
       </ul>
       {compact && sheetPrompt && sheetRoot && (
         <PromptSheet p={sheetPrompt} root={sheetRoot} onClose={closeSheet}>

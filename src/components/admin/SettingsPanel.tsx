@@ -353,7 +353,7 @@ export function SettingsPanel() {
           ))}
           {s.availability.length === 0 && (
             <p style={{ fontSize: 12, color: 'var(--sd-danger)', margin: 0 }}>
-              No open slots — the contact page will say you&apos;re currently full and offer the waiting list.
+              No open slots: the contact page will say you&apos;re currently full and offer the waiting list.
             </p>
           )}
           <button
@@ -365,12 +365,12 @@ export function SettingsPanel() {
         </div>
       </section>
 
-      <Card title="Links & integrations" sub="Public links only — API keys and secrets stay in Vercel, never here.">
+      <Card title="Links & integrations" sub="Public links only. API keys and secrets stay in Vercel, never here.">
         <Field label="Fixed video room link (optional)" value={s.telehealthUrl} onChange={v => set('telehealthUrl', v)}
           placeholder="https://… (leave blank for Google Meet)" hint="Only if you use one permanent room link. Leave blank when each session gets its own link (e.g. Google Meet via the calendar invite)." />
-        <Field label="Stripe payment link — online" value={s.stripeLinks.online}
+        <Field label="Stripe payment link: online" value={s.stripeLinks.online}
           onChange={v => setIn('stripeLinks', 'online', v)} placeholder="https://buy.stripe.com/…" />
-        <Field label="Stripe payment link — in person" value={s.stripeLinks.inPerson}
+        <Field label="Stripe payment link: in person" value={s.stripeLinks.inPerson}
           onChange={v => setIn('stripeLinks', 'inPerson', v)} placeholder="https://buy.stripe.com/…" />
         <Field label="Google Maps embed URL" value={s.mapsEmbedUrl} onChange={v => set('mapsEmbedUrl', v)}
           hint="Google Maps → Share → Embed a map → copy the src URL. Drives the /contact map." />
@@ -412,8 +412,8 @@ export function SettingsPanel() {
       <section className="admin-card" style={{ padding: 24, marginTop: 8 }}>
         <h2 className="admin-h2" style={{ marginBottom: 4 }}>Backup</h2>
         <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '0 0 16px', maxWidth: 560 }}>
-          Downloads a complete copy of your practice data — clients, sessions, payments,
-          intake forms, waitlist — as one file to keep on your own computer. Your data
+          Downloads a complete copy of your practice data (clients, sessions, payments,
+          intake forms, waitlist) as one file to keep on your own computer. Your data
           always stays in your database; this is an extra copy for peace of mind.
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
@@ -435,8 +435,7 @@ export function SettingsPanel() {
         <h2 className="admin-h2" style={{ marginBottom: 4 }}>Test receipt email</h2>
         <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '0 0 16px', maxWidth: 560 }}>
           Sends a sample receipt to any address so you can see exactly what clients get,
-          and confirm receipt emails are working. It uses made-up “Sample Client” details —
-          no real client is involved and nothing is recorded.
+          and confirm receipt emails are working. It uses made-up “Sample Client” details. No real client is involved and nothing is recorded.
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <input

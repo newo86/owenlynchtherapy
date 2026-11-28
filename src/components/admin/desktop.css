@@ -4,9 +4,10 @@
 
 /* ── Page frame (the prototype's .wrap) ───────────────────────────────── */
 .admin-root .dt-wrap {
-  margin: 0 calc(-1 * var(--sd-pr)) 0 calc(-1 * var(--sd-pl));
-  padding: 8px 48px 0;
-  max-width: 1240px;
+  /* The page gutters are 48px on desktop (admin.css), so content lines up with the band title. */
+  margin: 0;
+  padding: 8px 0 0;
+  max-width: 1144px;
   box-sizing: border-box;
   line-height: 1.45;
   font-size: 16px;
@@ -70,11 +71,25 @@
 /* ── Needs a decision (the three existing cards, framed as one) ───────── */
 .admin-root .dt-nd { gap: 0; }
 .admin-root .dt-nd-group:empty { display: none; }
-.admin-root .dt-nd-group:not(:empty) ~ .dt-nd-group:not(:empty) { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--sd-line); }
+.admin-root .dt-nd-group:not(:empty) ~ .dt-nd-group:not(:empty) { margin-top: 14px; }
 .admin-root .dt-nd .is-bare { margin: 0; }
+.admin-root .dt-card[hidden] { display: none; }
 .admin-root .nd-sub { margin: 0 0 8px; font-size: 15px; font-weight: 700; color: var(--sd-ink); }
 .admin-root .dt-nd .admin-banner { margin: 0 0 12px; }
-.admin-root .dt-nd .drift-actions { grid-template-columns: 1fr; }
+/* Notices, as in the prototype: a yellow dot, one line, a quiet hint, one grey button. */
+.admin-root .dt-ndot { width: 10px; height: 10px; border-radius: 50%; background: var(--sd-art-yellow); margin-top: 8px; flex: none; }
+.admin-root .dt-notice-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.admin-root .dt-notice-line { margin: 0; font-size: 16px; color: var(--sd-ink); line-height: 1.45; }
+.admin-root .dt-notice-hint { margin: 0; font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .dt-notice-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; }
+.admin-root .dt-nd .pp-list, .admin-root .dt-nd .drift-list { gap: 14px; display: flex; flex-direction: column; }
+.admin-root .dt-nd .pp-row, .admin-root .dt-nd .pp-row:first-child { border-top: 0; padding-top: 0; }
+.admin-root .dt-nd .pp-row.is-notice, .admin-root .dt-nd .drift-item.is-notice { display: flex; gap: 12px; align-items: flex-start; }
+.admin-root .dt-nd .drift-item { border-top: 0; padding: 0; }
+.admin-root .dt-nd .drift-line { margin: 0 0 4px; font-size: 16px; color: var(--sd-ink); }
+.admin-root .dt-nd .drift-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.admin-root .dt-fg-line { margin: 0 2px; font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .dt-fg-line .dt-link { padding: 0 2px; }
 
 /* ── Clinic days ──────────────────────────────────────────────────────── */
 .admin-root .dt-week { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
@@ -111,14 +126,14 @@
 .admin-root .dt-opt-ic svg { width: 19px; height: 19px; }
 .admin-root .dt-opt-txt { flex: 1; display: flex; flex-direction: column; }
 .admin-root .dt-opt-txt b { font-weight: 600; }
-.admin-root .dt-opt-txt span { font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .dt-opt-txt > span { font-size: 14px; color: var(--sd-ink-soft); }
 .admin-root .dt-opt-head:hover { background: color-mix(in srgb, var(--sd-action) 22%, var(--sd-card)); }
 .admin-root .dt-opt-head:hover .dt-opt-ic { background: var(--sd-action); color: var(--sd-on-action); }
 .admin-root .dt-opt-head:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: -2px; }
 .admin-root .dt-opt-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
 .admin-root .dt-opt-body[hidden] { display: none; }
 .admin-root .dt-opt-body .dt-hint { margin: 0; }
-.admin-root .dt-btn { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--sd-pill); color: var(--sd-ink); font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
+.admin-root .dt-btn { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--sd-pill); color: var(--sd-ink); font: inherit; font-weight: 600; cursor: pointer; text-align: center; }
 .admin-root .dt-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--sd-action) 45%, var(--sd-pill)); }
 .admin-root .dt-btn.is-main { background: var(--sd-action); color: var(--sd-on-action); }
 .admin-root .dt-btn.is-main:hover:not(:disabled) { background: var(--sd-action-hover); }
@@ -148,6 +163,10 @@
 .admin-root .sd-account-row span { font-size: 14px; color: var(--sd-ink-soft); }
 .admin-root .admin-qa-resultshead { margin: 8px 0 0; }
 
+@media (min-width: 769px) {
+  .admin-root .sd-band-title, .admin-root .sd-band-sub { line-height: 1.45; }
+  .admin-root .admin-foot { display: none; }
+}
 @media (max-width: 768px) {
   .admin-root .sd-settings-tabs { display: none; }
 }
