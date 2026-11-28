@@ -12,8 +12,8 @@
   line-height: 1.45;
   font-size: 16px;
 }
-/* The band keeps a 28px gap under it; the prototype has 8px. */
-.admin-root .sd-band + .dt-wrap { margin-top: -20px; }
+/* The band keeps a 28px gap under it; the prototype has none (content starts 8px below the band). */
+.admin-root .sd-band + .dt-wrap { margin-top: -28px; }
 .admin-root .dt-notices .admin-banner { margin-bottom: 12px; }
 .admin-root .dt-wrap.admin-health { padding-bottom: 56px; margin-top: 0; }
 
@@ -200,11 +200,13 @@
 .admin-root .dt-mday { min-height: 104px; min-width: 0; background: var(--sd-card); color: var(--sd-ink); border: 0; border-radius: 14px; padding: 8px; text-align: left; cursor: pointer; display: flex; flex-direction: column; align-items: stretch; gap: 4px; font: inherit; line-height: 1.45; }
 .admin-root .dt-mday:hover { background: var(--sd-action-soft); }
 .admin-root .dt-mn { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.admin-root .dt-mday.is-out { opacity: 0.45; }
+.admin-root .dt-mday.is-out { background: transparent; box-shadow: inset 0 0 0 1px var(--sd-line); }
+.admin-root .dt-mday.is-out .dt-mn, .admin-root .dt-mday.is-out .dt-mev { color: var(--sd-ink-soft); }
 .admin-root .dt-mday.is-today .dt-mn { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--sd-ink); }
 .admin-root .dt-mday[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--sd-header); }
 .admin-root .dt-mday:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
 .admin-root .dt-mev { font-size: 12px; display: flex; gap: 5px; align-items: center; white-space: nowrap; overflow: hidden; }
+.admin-root .dt-mev span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .admin-root .dt-mev i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .admin-root .dt-more-count { color: var(--sd-ink-soft); }
 
@@ -220,8 +222,16 @@
 .admin-root .dt-more-chev { transition: transform 150ms; color: var(--sd-ink-soft); }
 .admin-root .dt-more[open] .dt-more-chev { transform: rotate(180deg); }
 .admin-root .dt-more-body { padding: 8px 16px 20px; }
+/* The old calendar's own yellow "schedule" button: the band already has the one primary. */
+.admin-root .dt-more-body .admin-cal-actions { display: none; }
 .admin-root .dt-qa { display: flex; flex-direction: column; gap: 14px; }
 .admin-root .dt-qa .admin-qa-clientpick { display: none; }
+/* Client page: section titles at the prototype's heading size, dates as quiet pill chips. */
+.admin-root .dt-qa .admin-qa-detail .admin-h2 { font-size: 16px; font-weight: 700; }
+.admin-root .dt-qa .admin-qa-chips button { background: var(--sd-pill); color: var(--sd-ink); border: 0; }
+.admin-root .dt-qa .admin-qa-chips button.is-on { background: var(--sd-pill); color: var(--sd-ink); font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--sd-ink); }
+.admin-root .dt-qa .dt-more { background: var(--sd-page); }
+.admin-root .dt-chev { color: var(--sd-ink-soft); font-size: 22px; line-height: 1; flex: none; }
 .admin-root .dt-lrow-forms { display: grid; grid-template-columns: 1fr 210px 150px; align-items: center; }
 .admin-root .dt-lrow-forms > :nth-child(2), .admin-root .dt-lrow-forms > :nth-child(3) { justify-self: end; }
 

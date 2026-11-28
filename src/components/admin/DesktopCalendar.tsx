@@ -11,6 +11,7 @@ import { dedupeSessions } from './api';
 import { DesktopPage } from './DesktopPage';
 import { DesktopSessionRow } from './DesktopSessionRow';
 import { DtDisclosure } from './DtDisclosure';
+import { Clock24Context } from './clock24';
 import { addDaysYmd, clockTime, dotColour, dublinYmd, firstName, longDay } from './desktopToday';
 import type { PanelOption } from './SessionPanel';
 import type { ClientRow, SessionRow } from './types';
@@ -113,7 +114,7 @@ export function DesktopCalendar({ clients, onSchedule, onOpenPanel, panelSession
           <div className="dt-card">
             {list.length === 0 && <p className="dt-hint dt-empty">Nothing booked this day.</p>}
             {list.map(({ s, c }) => (
-              <DesktopSessionRow key={s.id} s={s} c={c} selected={panelSessionId === s.id}
+              <DesktopSessionRow key={s.id} s={s} c={c} quick={false} selected={panelSessionId === s.id}
                 onOpen={option => onOpenPanel(s.id, option)} onEdit={() => onEditSession(s, c)} onOpenClient={() => onOpenClient(c)} />
             ))}
           </div>
@@ -121,7 +122,7 @@ export function DesktopCalendar({ clients, onSchedule, onOpenPanel, panelSession
       </div>
 
       <DtDisclosure title="Week view, Google events and filters" sub="The full calendar: week, list, unpaid and receipt filters, and linking Google events to clients">
-        {fullCalendar}
+        <Clock24Context.Provider value>{fullCalendar}</Clock24Context.Provider>
       </DtDisclosure>
     </DesktopPage>
   );

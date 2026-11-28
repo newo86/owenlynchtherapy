@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { adminFetch, isSameDay, startOfWeek } from './api';
+import { useClock24 } from './clock24';
 import { mergedEventsForDay, CalendarLegend, type MergedEvent } from './CalendarWeekGrid';
 import type { CalendarEvent, ClientRow, GcalRef, SessionRow } from './types';
 
@@ -38,6 +39,7 @@ function gridDays(month: Date): Date[] {
 }
 
 export function CalendarMonth({ clients, onClickSession, onScheduleDay, onEditGcalEvent }: Props) {
+  const h23 = useClock24();
   const [month, setMonth] = useState(() => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), 1); });
   const [selected, setSelected] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -61,9 +63,9 @@ export function CalendarMonth({ clients, onClickSession, onScheduleDay, onEditGc
 
   const byDay = useMemo(() => {
     const m = new Map<string, MergedEvent[]>();
-    for (const d of days) m.set(dayKey(d), mergedEventsForDay(clients, events, d));
+    for (const d of days) m.set(dayKey(d), mergedEventsForDay(clients, events, d, h23));
     return m;
-  }, [days, clients, events]);
+  }, [days, clients, events, h23]);
 
   const today = new Date();
   const isCurrentMonth = month.getFullYear() === today.getFullYear() && month.getMonth() === today.getMonth();

@@ -47,6 +47,8 @@ export function SettingsHub({ section, onSection, clients, ...account }: Props) 
   const go = (t: Tab) => {
     setLocal(t);
     onSection(t === 'hours' ? 'hours' : 'settings');
+    // Keyboard focus follows the move: onto the tab that is now selected.
+    window.setTimeout(() => document.querySelector<HTMLElement>('.sd-settings-tabs [aria-pressed="true"]')?.focus(), 0);
   };
 
   return (

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { List, CalendarRange, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { adminFetch, displayFee, formatDateTime, startOfWeek, dedupeSessions } from './api';
+import { useClock24 } from './clock24';
 import { FORMAT_LABELS } from './types';
 import type { ClientRow, SessionRow, CalendarEvent, SessionFilter, GcalRef } from './types';
 import { SendReminderModal } from './SendReminderModal';
@@ -64,14 +65,16 @@ export function lastReminderAt(s: SessionRow): string | null {
   return rows.reduce((max, r) => (r.sent_at > max ? r.sent_at : max), rows[0].sent_at);
 }
 
-function shortWhen(iso: string) {
+function shortWhen(iso: string, h23 = false) {
   return new Date(iso).toLocaleString('en-IE', {
-    day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true,
+    day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
+    ...(h23 ? { hourCycle: 'h23' as const } : { hour12: true }),
     timeZone: 'Europe/Dublin',
   });
 }
 
 export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, onReload, initialFilter, onClickSession, onScheduleDay, onNewClient, onEditGcalEvent }: Props) {
+  const h23 = useClock24();
   // Phones open on the month (like Google Calendar), larger screens on the week.
   // Only drop to the list when arriving with a filter intent (Quick Actions
   // like "Unpaid this week") because filters only apply in the list.
@@ -149,9 +152,9 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
       const parts = ['Marked attended'];
       if (choice.record_payment && json.paid) parts.push('payment recorded');
       if (json.receipt_sent) parts.push('receipt emailed');
-      setFeedback({ id: sessionId, kind: 'ok', msg: parts.join(' — ') + '.' });
+      setFeedback({ id: sessionId, kind: 'ok', msg: parts.join(', ') + '.' });
       onReload();
-    } catch { setFeedback({ id: sessionId, kind: 'error', msg: 'Network error — not saved.' }); }
+    } catch { setFeedback({ id: sessionId, kind: 'error', msg: 'Network error. Not saved.' }); }
     finally { setBusyId(null); }
   }
   async function sendReceipt(sessionId: string, force = false) {
@@ -163,7 +166,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
       const json = await res.json().catch(() => ({}));
       if (res.status === 409 && json.already_sent_at) {
         // Receipt was already emailed — make resending a deliberate choice.
-        if (confirm(`A receipt for this session was already emailed on ${shortWhen(json.already_sent_at)}. Send it again?`)) {
+        if (confirm(`A receipt for this session was already emailed on ${shortWhen(json.already_sent_at, h23)}. Send it again?`)) {
           await sendReceipt(sessionId, true);
         }
         return;
@@ -171,7 +174,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
       if (!res.ok) { setFeedback({ id: sessionId, kind: 'error', msg: json.error ?? 'Receipt not sent.' }); return; }
       setFeedback({ id: sessionId, kind: 'ok', msg: 'Receipt emailed.' });
       onReload();
-    } catch { setFeedback({ id: sessionId, kind: 'error', msg: 'Network error — receipt not sent.' }); }
+    } catch { setFeedback({ id: sessionId, kind: 'error', msg: 'Network error. Receipt not sent.' }); }
     finally { setBusyId(null); }
   }
   async function markPaid(sessionId: string, isLowCost: boolean) {
@@ -184,7 +187,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
       if (!res.ok) { setFeedback({ id: sessionId, kind: 'error', msg: json.error ?? 'Failed to record payment.' }); return; }
       setFeedback({ id: sessionId, kind: 'ok', msg: isLowCost ? 'Cash payment recorded.' : 'Marked paid.' });
       onReload();
-    } catch { setFeedback({ id: sessionId, kind: 'error', msg: 'Network error — not saved.' }); }
+    } catch { setFeedback({ id: sessionId, kind: 'error', msg: 'Network error. Not saved.' }); }
     finally { setBusyId(null); }
   }
 
@@ -305,7 +308,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                     </div>
                   </div>
                 </td>
-                <td className="st-when" data-label="When" style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date)}</td>
+                <td className="st-when" data-label="When" style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(s.session_date, h23)}</td>
                 <td className="st-format" data-label="Format">
                   {FORMAT_LABELS[s.session_format] ?? s.session_format}
                   {s.format_confirmed === false && s.status === 'scheduled' && (
@@ -338,7 +341,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   )}
                   {s.receipt_sent_at && (
                     <span style={{ display: 'block', fontSize: 10, color: 'var(--sd-rail)', marginTop: 3, fontWeight: 500 }}>
-                      ✓ Receipt sent {shortWhen(s.receipt_sent_at)}
+                      ✓ Receipt sent {shortWhen(s.receipt_sent_at, h23)}
                     </span>
                   )}
                 </td>
@@ -346,7 +349,7 @@ export function SessionsList({ clients, events, weekOffset, onWeekOffsetChange, 
                   <span className={`admin-tag ${statusTag(s.status)}`}>{statusLabel(s.status)}</span>
                   {lastReminderAt(s) && (
                     <span style={{ display: 'block', fontSize: 10, color: 'var(--sd-rail)', marginTop: 3, fontWeight: 500 }}>
-                      ✓ Reminder sent {shortWhen(lastReminderAt(s)!)}
+                      ✓ Reminder sent {shortWhen(lastReminderAt(s)!, h23)}
                     </span>
                   )}
                 </td>

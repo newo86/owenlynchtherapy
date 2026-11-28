@@ -21,9 +21,11 @@ interface Props {
   onOpenClient: () => void;
   /** What the quiet line shows: "Weekly · €80" (default) or the date. */
   meta?: 'cadence' | 'date';
+  /** Hover quick actions (default). Off where the row simply opens the panel. */
+  quick?: boolean;
 }
 
-export function DesktopSessionRow({ s, c, selected, onOpen, onEdit, onOpenClient, meta = 'cadence' }: Props) {
+export function DesktopSessionRow({ s, c, selected, onOpen, onEdit, onOpenClient, meta = 'cadence', quick: showQuick = true }: Props) {
   const paid = s.payment_status === 'paid';
   const lowCost = Boolean(c.is_low_cost);
   const how = s.session_format === 'online' ? 'Online' : 'In person';
@@ -43,12 +45,12 @@ export function DesktopSessionRow({ s, c, selected, onOpen, onEdit, onOpenClient
           </span>
         </span>
       </button>
-      <span className="dt-quick"><span className="dt-quick-in">
+      {showQuick && <span className="dt-quick"><span className="dt-quick-in">
         {s.status === 'scheduled' && quick('Session done', <IconDone />, () => onOpen('done'))}
         {quick('Move or edit', <IconMove />, onEdit)}
         {!paid && quick(lowCost ? 'Cash received' : 'Mark as paid', <IconMoney />, () => onOpen('paid'))}
         {quick(`Open ${firstName(c.full_name)}'s page`, <IconChart />, onOpenClient)}
-      </span></span>
+      </span></span>}
       {paid ? <span className="dt-tag is-paid">Paid</span> : <span className="dt-tag">{how}</span>}
     </div>
   );

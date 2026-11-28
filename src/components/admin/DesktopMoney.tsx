@@ -11,7 +11,7 @@
 // together with the monthly chart and the Revolut statement import.
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { dedupeSessions, displayFee } from './api';
+import { dedupeSessions } from './api';
 import { DesktopPage } from './DesktopPage';
 import { DtDisclosure } from './DtDisclosure';
 import { clockTime, dublinYmd, shortDay } from './desktopToday';
@@ -29,6 +29,8 @@ interface Props {
 const OUTSTANDING_FLOOR = new Date('2026-06-01');
 const FIRST_ROWS = 6;
 
+/** Whole euros with a thousands separator: €1,140. */
+const eur = (cents: number) => `€${Math.round(cents / 100).toLocaleString('en-IE')}`;
 const monthOf = (iso: string) => dublinYmd(iso).slice(0, 7);
 
 export function DesktopMoney({ clients, onOpenPanel, fullMoney }: Props) {
@@ -54,7 +56,7 @@ export function DesktopMoney({ clients, onOpenPanel, fullMoney }: Props) {
   const methods = [
     { label: 'Cash', cents: paidNow.filter(({ s, c }) => !s.stripe_payment_intent_id && c.is_low_cost).reduce((n, { s }) => n + s.fee, 0) },
     { label: 'Card (Stripe)', cents: paidNow.filter(({ s }) => s.stripe_payment_intent_id).reduce((n, { s }) => n + s.fee, 0) },
-    { label: 'Bank transfer / other', cents: paidNow.filter(({ s, c }) => !s.stripe_payment_intent_id && !c.is_low_cost).reduce((n, { s }) => n + s.fee, 0) },
+    { label: 'Revolut or bank transfer', cents: paidNow.filter(({ s, c }) => !s.stripe_payment_intent_id && !c.is_low_cost).reduce((n, { s }) => n + s.fee, 0) },
   ].filter(m => m.cents > 0);
   const total = methods.reduce((n, m) => n + m.cents, 0) || 1;
   const rows = showAll ? unpaid : unpaid.slice(0, FIRST_ROWS);
@@ -71,8 +73,8 @@ export function DesktopMoney({ clients, onOpenPanel, fullMoney }: Props) {
     <DesktopPage title="Money" subtitle={`${monthName} so far`}>
       <div className="dt-stack">
         <div className="dt-stats">
-          <div className="dt-stat"><b>{displayFee(paidCents)}</b><span>Paid</span></div>
-          <div className="dt-stat"><b>{displayFee(unpaidCents)}</b><span>Not paid yet</span></div>
+          <div className="dt-stat"><b>{eur(paidCents)}</b><span>Paid</span></div>
+          <div className="dt-stat"><b>{eur(unpaidCents)}</b><span>Not paid yet</span></div>
           <div className="dt-stat"><b>{paidNow.length}</b><span>Sessions paid</span></div>
         </div>
 
@@ -87,7 +89,7 @@ export function DesktopMoney({ clients, onOpenPanel, fullMoney }: Props) {
                     <b className="pii">{c.full_name}</b>
                     <div className="dt-soft">{shortDay(dublinYmd(s.session_date))}, {clockTime(s.session_date)}</div>
                   </div>
-                  <span className="dt-amt">{displayFee(s.fee)}</span>
+                  <span className="dt-amt">{eur(s.fee)}</span>
                   <button type="button" className="dt-btn" aria-label={`Mark paid: ${c.full_name}, ${shortDay(dublinYmd(s.session_date))}`}
                     onClick={() => onOpenPanel(s.id, 'paid')}>
                     Mark paid
@@ -109,7 +111,7 @@ export function DesktopMoney({ clients, onOpenPanel, fullMoney }: Props) {
                 {methods.length === 0 && <p className="dt-hint">Nothing paid yet this month.</p>}
                 {methods.map(m => (
                   <div key={m.label}>
-                    <div className="dt-bar-row"><span>{m.label}</span><b className="dt-amt">{displayFee(m.cents)}</b></div>
+                    <div className="dt-bar-row"><span>{m.label}</span><b className="dt-amt">{eur(m.cents)}</b></div>
                     <div className="dt-bar" role="img" aria-label={`${m.label}: ${Math.round((m.cents / total) * 100)}% of what was paid`}>
                       <i style={{ width: `${(m.cents / total) * 100}%` }} />
                     </div>

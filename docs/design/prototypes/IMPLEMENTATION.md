@@ -119,7 +119,7 @@ sections reachable under a prototype-style page. Page gutters are 48px
 - **Money** (`DesktopMoney.tsx`): this month's Paid / Not paid yet / Sessions
   paid, Not paid yet rows (Mark paid opens the session panel on payment), How
   people paid (derived from sessions: Stripe payment recorded = Card (Stripe),
-  low-cost client = Cash, anything else = Bank transfer / other; the payments
+  low-cost client = Cash, anything else = Revolut or bank transfer; the payments
   ledger has no read route). No year-statement PDF exists (statements are per
   client), so the button leads to the income report and accountant CSV, which stay
   in full with the monthly chart, weekly report email and Revolut statement

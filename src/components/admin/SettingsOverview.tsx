@@ -84,7 +84,7 @@ export function SettingsOverview({ clients, calendar, onGo }: Props) {
       ['Working hours', hours, 'practice'],
       ['Fees', `Online ${euro(p.fees.onlineCents)}, in person ${euro(p.fees.inPersonCents)}, low cost ${euro(p.fees.lowCostCents)}`, 'practice'],
       ['In-person address', p.hasInPerson ? `${p.address.venue}, ${p.address.streetAddress}` : 'Online only', 'practice'],
-      ['Payment link', PRACTICE.revolutLink ? 'Revolut' : 'Stripe', 'practice'],
+      ['Payment link', PRACTICE.revolutLink ? 'Revolut' : p.stripeLinks.online || p.stripeLinks.inPerson ? 'Stripe' : 'Not set', 'practice'],
       ['Video link', host, 'practice'],
     ],
     [
@@ -103,6 +103,7 @@ export function SettingsOverview({ clients, calendar, onGo }: Props) {
               <button key={label} type="button" className="dt-lrow dt-setrow" aria-label={`${label}: ${value}. Edit`} onClick={() => onGo(tab)}>
                 <span className="dt-grow">{label}</span>
                 <span className="dt-soft">{value}</span>
+                <span className="dt-chev" aria-hidden>›</span>
               </button>
             ))}
           </div>

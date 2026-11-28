@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Copy, Mail, Link2, Check, Users } from 'lucide-react';
 import { adminFetch, formatDate } from './api';
 import type { ClientRow } from './types';
+import { DtDisclosure } from './DtDisclosure';
 import { PRACTICE } from '@/practice.config';
 import {
   CNIP_SCALES, CNIP_ADDITIONAL, CNIP_ADDITIONAL_SHORT, scoreCnip, summariseCnip,
@@ -67,8 +68,8 @@ export function ClientQuestionnaireResults({ client }: { client: ClientRow }) {
   }
   return (
     <div className="admin-qa dt-qa">
-      {cnip.length > 0 && <CnipSection responses={cnip} nameOf={nameOf} />}
-      {values.length > 0 && <ValuesSection responses={values} nameOf={nameOf} />}
+      {cnip.length > 0 && <CnipSection responses={cnip} nameOf={nameOf} compact />}
+      {values.length > 0 && <ValuesSection responses={values} nameOf={nameOf} compact />}
     </div>
   );
 }
@@ -475,7 +476,14 @@ function scoresOf(r: ResponseRow): CnipScaleScore[] {
   return s?.scales ?? scoreCnip(r.answers as CnipAnswers).scales;
 }
 
-function CnipSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf: (id: string) => string }) {
+/** On a client's page (`compact`) the long parts sit under "Full results". */
+function FullResults({ compact, children }: { compact?: boolean; children: React.ReactNode }) {
+  return compact
+    ? <DtDisclosure title="Full results" sub="The sliders, every item answered and the rest">{children}</DtDisclosure>
+    : <>{children}</>;
+}
+
+function CnipSection({ responses, nameOf, compact }: { responses: ResponseRow[]; nameOf: (id: string) => string; compact?: boolean }) {
   const { clientIds, active, setClientId, history } = useClientPicker(responses);
   const [sel, setSel] = useState('');
   if (clientIds.length === 0) {
@@ -508,6 +516,7 @@ function CnipSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf: 
         {summary.map((t, k) => <p key={k} className={firstName !== 'You' && t.includes(firstName) ? 'pii' : undefined}>{t}</p>)}
       </div>
 
+      <FullResults compact={compact}>
       <h3 className="admin-h3 admin-qa-resultshead">Results</h3>
       <div className="admin-qa-legend" aria-hidden>
         <span><i className="admin-qa-zone-swatch" />No strong preference (UK norms)</span>
@@ -582,6 +591,7 @@ function CnipSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf: 
       </details>
 
       <p className="admin-qa-foot">Scored with the UK cut-offs on the C–NIP–2 form (about 20% of people fall in each strong band). The scores start a conversation rather than set a plan: adopt, adapt, offer an alternative, or refer on. C–NIP–2 © Cooper &amp; Norcross, CC BY-NC-ND 4.0.</p>
+      </FullResults>
     </section>
   );
 }
@@ -590,7 +600,7 @@ function fmtScore(n: number) { return n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '0'
 
 // ── Values ─────────────────────────────────────────────────────────────────
 
-function ValuesSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf: (id: string) => string }) {
+function ValuesSection({ responses, nameOf, compact }: { responses: ResponseRow[]; nameOf: (id: string) => string; compact?: boolean }) {
   const { clientIds, active, setClientId, history } = useClientPicker(responses);
   const [sel, setSel] = useState('');
   if (clientIds.length === 0) {
@@ -631,6 +641,7 @@ function ValuesSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf
           <p className="admin-qa-muted">{veryCount} values marked very important{a.neglected.length === 0 ? ' · none marked as neglected' : ''}.</p>
         </div>
 
+        <FullResults compact={compact}>
         {gaps.length > 0 && (
           <div className="admin-qa-block">
             <h3 className="admin-h3">Values in my life</h3>
@@ -682,6 +693,7 @@ function ValuesSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf
             ))}
           </div>
         </details>
+        </FullResults>
       </section>
 
       <Caseload responses={responses} />

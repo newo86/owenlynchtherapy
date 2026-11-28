@@ -69,8 +69,9 @@ export function Waitlist({ waitlist, onReload, rows = false }: Props) {
   const saidYes = emailed.filter(w => w.response === 'yes').length;
   const noReply = emailed.filter(w => !w.response).length;
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+  // The email-the-list bar and the explainer: above the table, or below the rows on desktop (people first).
+  const intro = (
+    <>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: 13, color: 'var(--forest-deep)' }}>
           {emailed.length > 0
@@ -91,6 +92,13 @@ export function Waitlist({ waitlist, onReload, rows = false }: Props) {
         deletes the details permanently. Use it once someone becomes a client, asks to be
         taken off, or the entry goes stale.</span>
       </p>
+
+    </>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      {!rows && intro}
 
       {rows ? (
         <div className="dt-card">
@@ -229,6 +237,8 @@ export function Waitlist({ waitlist, onReload, rows = false }: Props) {
         </table>
       </div>
       )}
+
+      {rows && intro}
 
       {declined.length > 0 && (
         <details open style={{ border: '1px solid var(--line)', borderRadius: 12, padding: '12px 16px', background: 'white' }}>

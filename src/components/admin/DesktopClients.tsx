@@ -107,11 +107,6 @@ export function DesktopClients({ clients, onNewClient, onOpenPanel, panelSession
             </div>
 
             <div className="dt-group">
-              <h2 className="dt-h">Questionnaire results</h2>
-              <ClientQuestionnaireResults key={current.id} client={current} />
-            </div>
-
-            <div className="dt-group">
               <h2 className="dt-h">Coming up</h2>
               <div className="dt-card">
                 {ahead.length === 0 && <p className="dt-hint dt-empty">Nothing booked.</p>}
@@ -120,6 +115,11 @@ export function DesktopClients({ clients, onNewClient, onOpenPanel, panelSession
                     onOpen={option => onOpenPanel(s.id, option)} onEdit={() => onEditSession(s, current)} onOpenClient={() => onOpenClient(current)} />
                 ))}
               </div>
+            </div>
+
+            <div className="dt-group">
+              <h2 className="dt-h">Questionnaire results</h2>
+              <ClientQuestionnaireResults key={current.id} client={current} />
             </div>
 
             <div className="dt-opt">
