@@ -7,6 +7,7 @@ import { DesktopToday } from './DesktopToday';
 import { SageHeaderBand } from './sage';
 import { CalendarDriftCard } from './CalendarDriftCard';
 import { useIsPhone } from './useIsPhone';
+import type { PanelOption } from './SessionPanel';
 import { longDay, dublinYmd } from './desktopToday';
 import type { DriftItem } from '@/lib/calendarDrift';
 import type {
@@ -31,6 +32,9 @@ interface Props {
   onSchedule: (isoLocal?: string) => void;
   /** Desktop: open a client's record. */
   onOpenClient: (client: ClientRow) => void;
+  /** Desktop: open the session panel (hosted by AdminShell). */
+  onOpenPanel: (sessionId: string, option?: PanelOption | null) => void;
+  panelSessionId: string | null;
   /** Navigate to any section, optionally carrying a filter intent. */
   onNavigateSection: (section: AdminSection, opts?: {
     sessionsFilter?: SessionFilter;
@@ -98,7 +102,7 @@ function reminderStripState(health: ReminderHealth | null):
 
 export function Dashboard({
   clients, calendarStatus, drift, reminderHealth, flash,
-  onReload, onConnectCalendar, onClickSession, onSchedule, onOpenClient,
+  onReload, onConnectCalendar, onClickSession, onSchedule, onOpenClient, onOpenPanel, panelSessionId,
 }: Props) {
   const today = new Date();
   const allSessions = useMemo(() => {
@@ -191,6 +195,8 @@ export function Dashboard({
         onSchedule={onSchedule}
         onEditSession={onClickSession}
         onOpenClient={onOpenClient}
+        onOpenPanel={onOpenPanel}
+        panelSessionId={panelSessionId}
       />
 
       <footer className="admin-health dt-wrap">

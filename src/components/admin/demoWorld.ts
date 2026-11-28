@@ -9,6 +9,8 @@ import type { PracticeSettings } from '@/lib/practiceSettings';
 import type { DriftItem } from '@/lib/calendarDrift';
 import type { CalendarEvent, ClientRow, SessionRow, SubmissionRow, TokenRow, WaitlistRow } from './types';
 import { demoFollowed } from './demoData';
+import { CNIP_ITEMS, type CnipResponse } from '@/lib/questionnaires/cnip';
+import { VALUES, type ValuesAnswers } from '@/lib/questionnaires/values';
 
 interface Spec {
   id: string; name: string; email: string; day: 'tue' | 'fri'; time: string;
@@ -235,7 +237,8 @@ export function demoRoute(world: DemoWorld, method: string, rawUrl: string): Dem
       { id: 'demo-a2', kind: 'own_therapy', entry_date: '2026-10-28', hours: 1, detail: null },
       { id: 'demo-a3', kind: 'cpd', entry_date: '2026-11-05', hours: 6, detail: 'Training day' },
     ] });
-    case '/api/admin/questionnaires': return ok({ responses: [], pending: [] });
+    case '/api/admin/mfa': return ok({ enabled: true });
+    case '/api/admin/questionnaires': return ok({ responses: demoQuestionnaires(world), pending: [] });
     case '/api/admin/sessions/series': return ok({ series: { id: 'demo-series', interval_weeks: 1 } });
     case '/api/admin/sessions': {
       const id = url.searchParams.get('client_id');
@@ -244,4 +247,27 @@ export function demoRoute(world: DemoWorld, method: string, rawUrl: string): Dem
     default:
       return { status: 404, body: { error: `Demo has no fixture for ${path}` } };
   }
+}
+
+/** Made-up questionnaire results for the first demo client (two C–NIP–2 completions and one values worksheet). */
+function demoQuestionnaires(world: DemoWorld) {
+  const cnip = (shift: number) => ({
+    items: Object.fromEntries(CNIP_ITEMS.map((it, i) => [it.id, (((i + shift) % 7) - 3) as CnipResponse])),
+    additional: [],
+  });
+  const ids = VALUES.map(v => v.id);
+  const values: ValuesAnswers = {
+    ratings: Object.fromEntries(ids.map((id, i) => [id, i % 3 === 0 ? 'very' : i % 3 === 1 ? 'quite' : 'not'])) as ValuesAnswers['ratings'],
+    ownValues: {},
+    top: ids.filter((_, i) => i % 3 === 0).slice(0, 6),
+    neglected: ids.slice(1, 3),
+    areas: {},
+    step: { action: 'Walk with a friend on Sundays', value: 'friendship', obstacles: 'Busy weeks', worth: 'It would help me feel connected' },
+  };
+  const at = (weeks: number) => new Date(world.nowMs - weeks * 7 * 86_400_000).toISOString();
+  return [
+    { id: 'demo-q2', client_id: 'demo-c1', kind: 'cnip', answers: cnip(2), scores: null, submitted_at: at(2) },
+    { id: 'demo-q1', client_id: 'demo-c1', kind: 'cnip', answers: cnip(0), scores: null, submitted_at: at(10) },
+    { id: 'demo-q3', client_id: 'demo-c1', kind: 'values', answers: values, scores: null, submitted_at: at(9) },
+  ];
 }

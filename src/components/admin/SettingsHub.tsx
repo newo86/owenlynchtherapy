@@ -10,6 +10,8 @@
 import { useState } from 'react';
 import { SettingsPanel } from './SettingsPanel';
 import { HoursPage } from './HoursPage';
+import { SettingsOverview } from './SettingsOverview';
+import { useIsPhone } from './useIsPhone';
 import type { AdminSection, CalendarStatus, ClientRow } from './types';
 
 export interface AccountProps {
@@ -28,30 +30,37 @@ interface Props extends AccountProps {
   clients: ClientRow[];
 }
 
-type Tab = 'practice' | 'hours' | 'account';
+type Tab = 'overview' | 'practice' | 'hours' | 'account';
 const TABS: Array<{ id: Tab; label: string }> = [
+  { id: 'overview', label: 'Overview' },
   { id: 'practice', label: 'Practice' },
   { id: 'hours', label: 'Hours' },
   { id: 'account', label: 'Account and privacy' },
 ];
 
 export function SettingsHub({ section, onSection, clients, ...account }: Props) {
-  const [accountOpen, setAccountOpen] = useState(false);
-  const tab: Tab = section === 'hours' ? 'hours' : accountOpen && section === 'settings' ? 'account' : 'practice';
+  const isPhone = useIsPhone();
+  // Desktop opens on the overview (the prototype's Settings); the phone's More
+  // menu opens `settings` and `hours` directly, so it has no overview.
+  const [local, setLocal] = useState<Tab>(isPhone ? 'practice' : 'overview');
+  const tab: Tab = section === 'hours' ? 'hours' : local;
   const go = (t: Tab) => {
-    setAccountOpen(t === 'account');
+    setLocal(t);
     onSection(t === 'hours' ? 'hours' : 'settings');
   };
 
   return (
     <div className="sd-settings">
-      <div className="sd-settings-tabs" role="group" aria-label="Settings sections">
-        {TABS.map(t => (
-          <button key={t.id} type="button" aria-pressed={tab === t.id} onClick={() => go(t.id)}>{t.label}</button>
-        ))}
-      </div>
+      {!isPhone && (
+        <div className="sd-settings-tabs" role="group" aria-label="Settings sections">
+          {TABS.map(t => (
+            <button key={t.id} type="button" aria-pressed={tab === t.id} onClick={() => go(t.id)}>{t.label}</button>
+          ))}
+        </div>
+      )}
+      {tab === 'overview' && !isPhone && <SettingsOverview clients={clients} calendar={account.calendar} onGo={go} />}
       {tab === 'hours' && <HoursPage clients={clients} />}
-      {tab === 'practice' && <SettingsPanel />}
+      {(tab === 'practice' || (tab === 'overview' && isPhone)) && <SettingsPanel />}
       {tab === 'account' && <AccountTab {...account} />}
     </div>
   );

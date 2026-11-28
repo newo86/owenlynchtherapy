@@ -49,7 +49,11 @@
 .admin-root .dt-meta { font-size: 14px; color: var(--sd-ink-soft); }
 .admin-root .dt-tag { font-size: 13px; padding: 3px 9px; border-radius: 999px; background: var(--sd-pill); white-space: nowrap; color: var(--sd-ink); }
 .admin-root .dt-tag.is-paid { background: var(--sd-paid); }
-.admin-root .dt-quick { display: flex; gap: 4px; opacity: 0; transition: opacity 150ms; position: relative; z-index: 1; }
+/* The quick actions float over the right edge of the name area (zero width), so a narrow
+   column never squeezes the name onto several lines. */
+.admin-root .dt-quick { width: 0; flex: none; opacity: 0; transition: opacity 150ms; position: relative; z-index: 1; overflow: visible; }
+.admin-root .dt-quick-in { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: flex; gap: 4px; }
+.admin-root .dt-name, .admin-root .dt-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-root .dt-srow:hover .dt-quick,
 .admin-root .dt-srow:focus-within .dt-quick,
 .admin-root .dt-srow.is-sel .dt-quick { opacity: 1; }
@@ -149,6 +153,77 @@
 .admin-root .dt-status a { color: var(--sd-ink); }
 .admin-root .dt-msg { margin: 0; padding: 12px 16px; border-radius: 14px; background: var(--sd-paid); font-size: 15px; color: var(--sd-ink); }
 .admin-root .dt-msg.is-error { background: var(--sd-danger-soft); color: var(--sd-danger); }
+
+/* ── Shared page pieces (Calendar, Clients, Money, Forms, Waitlist, Settings) ── */
+.admin-root .dt-page { padding-bottom: 56px; }
+.admin-root .dt-cols-clients { grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.6fr); }
+@media (max-width: 1000px) { .admin-root .dt-cols-clients { grid-template-columns: 1fr; } }
+.admin-root .dt-h-lg { font-size: 22px; }
+.admin-root .dt-search { width: 100%; min-height: 48px; border: 0; border-radius: 14px; padding: 0 14px; background: var(--sd-card); color: var(--sd-ink); font: inherit; box-sizing: border-box; }
+.admin-root .dt-search:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+
+/* Rows in lists and tables (prototype .lrow) */
+.admin-root .dt-lrow { display: flex; align-items: center; gap: 14px; padding: 14px 18px; min-height: 60px; width: 100%; box-sizing: border-box; background: transparent; border: 0; color: var(--sd-ink); font: inherit; text-align: left; line-height: 1.45; }
+.admin-root .dt-lrow + .dt-lrow { border-top: 1px solid var(--sd-line); }
+.admin-root button.dt-lrow { cursor: pointer; }
+.admin-root button.dt-lrow:hover, .admin-root .dt-lrow.is-sel { background: var(--sd-action-soft); }
+.admin-root button.dt-lrow:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: -2px; }
+.admin-root .dt-grow { flex: 1; min-width: 0; }
+.admin-root .dt-grow b { font-weight: 600; }
+.admin-root .dt-soft { color: var(--sd-ink-soft); font-size: 14px; }
+.admin-root .dt-soft.is-error { color: var(--sd-danger); }
+.admin-root .dt-amt { font-variant-numeric: tabular-nums; font-weight: 600; }
+.admin-root .dt-row-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; justify-content: flex-end; }
+.admin-root .dt-lrow-wait { align-items: flex-start; }
+.admin-root .dt-setrow .dt-grow { font-size: 16px; }
+.admin-root .dt-setrow .dt-soft { text-align: right; }
+
+.admin-root .dt-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.admin-root .dt-stat { background: var(--sd-card); border-radius: 16px; padding: 14px 16px; }
+.admin-root .dt-stat b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; color: var(--sd-ink); line-height: 1.3; }
+.admin-root .dt-stat span { font-size: 14px; color: var(--sd-ink-soft); }
+
+.admin-root .dt-bar { display: block; height: 8px; border-radius: 4px; background: var(--sd-pill); overflow: hidden; }
+.admin-root .dt-bar i { display: block; height: 100%; background: var(--sd-header); }
+.admin-root .dt-bar-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: var(--sd-ink); }
+.admin-root .dt-bar-block { display: block; }
+.admin-root .dt-bars { border: 0; width: 100%; font: inherit; color: var(--sd-ink); text-align: left; cursor: pointer; box-sizing: border-box; line-height: 1.45; }
+.admin-root .dt-bars:hover { background: var(--sd-action-soft); }
+.admin-root .dt-bars:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+
+/* Calendar month (prototype .month) */
+.admin-root .dt-monthnav { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.admin-root .dt-monthnav .dt-link { align-self: auto; }
+.admin-root .dt-monthnav .dt-link:disabled { opacity: 0.4; cursor: default; text-decoration: none; }
+.admin-root .dt-month { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.admin-root .dt-mwd { font-size: 13px; color: var(--sd-ink-soft); padding: 0 6px; }
+.admin-root .dt-mday { min-height: 104px; min-width: 0; background: var(--sd-card); color: var(--sd-ink); border: 0; border-radius: 14px; padding: 8px; text-align: left; cursor: pointer; display: flex; flex-direction: column; align-items: stretch; gap: 4px; font: inherit; line-height: 1.45; }
+.admin-root .dt-mday:hover { background: var(--sd-action-soft); }
+.admin-root .dt-mn { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.admin-root .dt-mday.is-out { opacity: 0.45; }
+.admin-root .dt-mday.is-today .dt-mn { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--sd-ink); }
+.admin-root .dt-mday[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--sd-header); }
+.admin-root .dt-mday:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+.admin-root .dt-mev { font-size: 12px; display: flex; gap: 5px; align-items: center; white-space: nowrap; overflow: hidden; }
+.admin-root .dt-mev i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.admin-root .dt-more-count { color: var(--sd-ink-soft); }
+
+/* A quiet "there is more" disclosure (existing full sections kept underneath) */
+.admin-root .dt-more { background: var(--sd-card); border-radius: 16px; margin-top: 8px; }
+.admin-root .dt-more-head { list-style: none; display: flex; align-items: center; gap: 14px; padding: 14px 16px; min-height: 60px; cursor: pointer; border-radius: 16px; box-sizing: border-box; }
+.admin-root .dt-more-head::-webkit-details-marker { display: none; }
+.admin-root .dt-more-head:hover { background: color-mix(in srgb, var(--sd-action) 22%, var(--sd-card)); }
+.admin-root .dt-more-head:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: -2px; }
+.admin-root .dt-more-txt { flex: 1; display: flex; flex-direction: column; }
+.admin-root .dt-more-txt b { font-weight: 600; }
+.admin-root .dt-more-txt > span { font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .dt-more-chev { transition: transform 150ms; color: var(--sd-ink-soft); }
+.admin-root .dt-more[open] .dt-more-chev { transform: rotate(180deg); }
+.admin-root .dt-more-body { padding: 8px 16px 20px; }
+.admin-root .dt-qa { display: flex; flex-direction: column; gap: 14px; }
+.admin-root .dt-qa .admin-qa-clientpick { display: none; }
+.admin-root .dt-lrow-forms { display: grid; grid-template-columns: 1fr 210px 150px; align-items: center; }
+.admin-root .dt-lrow-forms > :nth-child(2), .admin-root .dt-lrow-forms > :nth-child(3) { justify-self: end; }
 
 /* ── Settings: tabs (desktop only; the phone's More menu opens each page) ─ */
 .admin-root .sd-settings-tabs { display: inline-flex; background: var(--sd-card); border-radius: 12px; padding: 3px; margin-bottom: 20px; gap: 2px; flex-wrap: wrap; }

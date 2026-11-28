@@ -7,16 +7,15 @@
 // followed from Google, in one card, each with its own buttons and confirms)
 // and the next clinic days. The header band is rendered by Dashboard.
 
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { displayFee } from './api';
+import { useCallback, useMemo, useState } from 'react';
 import { CalendarDriftCard } from './CalendarDriftCard';
 import { PaymentPromptsPanel } from './PaymentPromptsPanel';
 import { FollowedFromGooglePanel } from './FollowedFromGooglePanel';
-import { SessionPanel, type PanelOption } from './SessionPanel';
-import { IconChart, IconDone, IconMoney, IconMove } from './sage';
+import type { PanelOption } from './SessionPanel';
+import { DesktopSessionRow } from './DesktopSessionRow';
 import { useFreeTimes } from './useFreeTimes';
 import {
-  cadenceLabel, clinicDays, clinicDaysLabel, clockTime, dotColour, dublinYmd, firstName, shortDay, slotsNextWeek,
+  clinicDays, clinicDaysLabel, dublinYmd, shortDay, slotsNextWeek,
 } from './desktopToday';
 import type { DriftItem } from '@/lib/calendarDrift';
 import type { ClientRow, SessionRow } from './types';
@@ -34,18 +33,19 @@ interface Props {
   /** The existing session editor (SessionEditModal). */
   onEditSession: (s: SessionRow, c: ClientRow) => void;
   onOpenClient: (c: ClientRow) => void;
+  /** Open the session panel (hosted by AdminShell). */
+  onOpenPanel: (sessionId: string, option?: PanelOption | null) => void;
+  /** The session whose panel is open, to mark its row. */
+  panelSessionId: string | null;
 }
 
 export function DesktopToday({
-  clients, allSessions, todaySessions, drift, onReload, onSchedule, onEditSession, onOpenClient,
+  clients, allSessions, todaySessions, drift, onReload, onSchedule, onEditSession, onOpenClient, onOpenPanel, panelSessionId,
 }: Props) {
-  const [sel, setSel] = useState<{ id: string; option: PanelOption | null } | null>(null);
   const [payCount, setPayCount] = useState(0);
   const [followCount, setFollowCount] = useState(0);
   const [showAll, setShowAll] = useState(false);
   const [fgOpen, setFgOpen] = useState(false);
-  // What had focus when the panel opened, so Escape/close can give it back.
-  const opener = useRef<HTMLElement | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const free = useFreeTimes(clients, reloadKey);
 
@@ -61,21 +61,7 @@ export function DesktopToday({
 
   const refresh = useCallback(() => { onReload(); setReloadKey(k => k + 1); }, [onReload]);
 
-  const open = (id: string, option: PanelOption | null = null) => {
-    opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    setSel({ id, option });
-  };
-  const close = () => {
-    const id = sel?.id;
-    setSel(null);
-    // Focus goes back to what opened the panel (the row, or a notice's button).
-    window.setTimeout(() => {
-      const el = opener.current?.isConnected ? opener.current : document.querySelector<HTMLElement>(`[data-session-row="${id}"] .dt-srow-main`);
-      el?.focus();
-    }, 0);
-  };
-  // Look the session up fresh each render so a reload shows its new state.
-  const current = sel ? allSessions.find(x => x.s.id === sel.id) ?? todaySessions.find(x => x.s.id === sel.id) : undefined;
+  const open = onOpenPanel;
 
   return (
     <div className="dt-wrap">
@@ -86,7 +72,7 @@ export function DesktopToday({
             <div className="dt-card">
               {todaySessions.length === 0 && <p className="dt-hint dt-empty">No clients today.</p>}
               {todaySessions.map(({ s, c }) => (
-                <TodayRow key={s.id} s={s} c={c} selected={sel?.id === s.id}
+                <DesktopSessionRow key={s.id} s={s} c={c} selected={panelSessionId === s.id}
                   onOpen={option => open(s.id, option)} onEdit={() => onEditSession(s, c)} onOpenClient={() => onOpenClient(c)} />
               ))}
             </div>
@@ -164,52 +150,6 @@ export function DesktopToday({
         </div>
       </div>
 
-      {sel && current && (
-        <SessionPanel
-          key={sel.id}
-          session={current.s}
-          client={current.c}
-          initialOption={sel.option}
-          onClose={close}
-          onChanged={refresh}
-          onOpenClient={() => { setSel(null); onOpenClient(current.c); }}
-          onEdit={() => { setSel(null); onEditSession(current.s, current.c); }}
-        />
-      )}
-    </div>
-  );
-}
-
-function TodayRow({ s, c, selected, onOpen, onEdit, onOpenClient }: {
-  s: SessionRow; c: ClientRow; selected: boolean;
-  onOpen: (option: PanelOption | null) => void; onEdit: () => void; onOpenClient: () => void;
-}) {
-  const paid = s.payment_status === 'paid';
-  const lowCost = Boolean(c.is_low_cost);
-  const how = s.session_format === 'online' ? 'Online' : 'In person';
-  const time = clockTime(s.session_date);
-  const quick = (label: string, icon: React.ReactNode, go: () => void) => (
-    <button type="button" className="dt-qbtn" aria-label={`${label}: ${c.full_name}`} title={label} onClick={go}>{icon}</button>
-  );
-  return (
-    <div className={`dt-srow${selected ? ' is-sel' : ''}`} data-session-row={s.id}>
-      {/* One button holds the time, dot and name; its stretched hit area (CSS)
-          makes the whole row open the panel without nesting buttons. */}
-      <button type="button" className="dt-srow-main" aria-haspopup="dialog" onClick={() => onOpen(null)}>
-        <span className="dt-t">{time}</span>
-        <span className="dt-dot" style={{ background: dotColour(c.id) }} aria-hidden />
-        <span className="dt-who">
-          <span className="dt-name pii">{c.full_name}</span>
-          <span className="dt-meta">{cadenceLabel(c)} · {displayFee(s.fee)}</span>
-        </span>
-      </button>
-      <span className="dt-quick">
-        {s.status === 'scheduled' && quick('Session done', <IconDone />, () => onOpen('done'))}
-        {quick('Move or edit', <IconMove />, onEdit)}
-        {!paid && quick(lowCost ? 'Cash received' : 'Mark as paid', <IconMoney />, () => onOpen('paid'))}
-        {quick(`Open ${firstName(c.full_name)}'s page`, <IconChart />, onOpenClient)}
-      </span>
-      {paid ? <span className="dt-tag is-paid">Paid</span> : <span className="dt-tag">{how}</span>}
     </div>
   );
 }

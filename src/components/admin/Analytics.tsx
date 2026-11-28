@@ -37,7 +37,43 @@ interface PendingRow {
 
 /** `embedded`: inside the Forms page, where the sending tools come first and the
  *  results follow under a "Questionnaire results" heading. */
-export function Analytics({ clients, embedded = false }: { clients: ClientRow[]; embedded?: boolean }) {
+/** One client's questionnaire results, for the desktop Clients page: the
+ *  C–NIP–2 summary and how it changed over time, and their values worksheet.
+ *  Read-only; it uses the same results pieces as the Forms page. */
+export function ClientQuestionnaireResults({ client }: { client: ClientRow }) {
+  const [responses, setResponses] = useState<ResponseRow[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await adminFetch('/api/admin/questionnaires');
+        const json = await res.json().catch(() => ({}));
+        if (!alive) return;
+        if (!res.ok) { setFailed(true); return; }
+        setResponses((json.responses ?? []).filter((r: ResponseRow) => r.client_id === client.id));
+      } catch { if (alive) setFailed(true); }
+    })();
+    return () => { alive = false; };
+  }, [client.id]);
+  const nameOf = useCallback(() => client.full_name, [client.full_name]);
+
+  if (failed) return <p className="dt-hint">Couldn&apos;t load questionnaire results.</p>;
+  if (responses === null) return <p className="dt-hint">Loading questionnaire results…</p>;
+  const cnip = responses.filter(r => r.kind === 'cnip');
+  const values = responses.filter(r => r.kind === 'values');
+  if (cnip.length === 0 && values.length === 0) {
+    return <p className="dt-hint">No questionnaires completed yet. Send one from Forms; the results appear here.</p>;
+  }
+  return (
+    <div className="admin-qa dt-qa">
+      {cnip.length > 0 && <CnipSection responses={cnip} nameOf={nameOf} />}
+      {values.length > 0 && <ValuesSection responses={values} nameOf={nameOf} />}
+    </div>
+  );
+}
+
+export function Analytics({ clients, embedded = false, sendPreset }: { clients: ClientRow[]; embedded?: boolean; sendPreset?: { kind: SendChoice; n: number } }) {
   const [responses, setResponses] = useState<ResponseRow[]>([]);
   const [pending, setPending] = useState<PendingRow[]>([]);
   const [loadState, setLoadState] = useState<'loading' | 'ok' | 'error' | 'missing'>('loading');
@@ -75,7 +111,7 @@ export function Analytics({ clients, embedded = false }: { clients: ClientRow[];
 
   return (
     <div className="admin-qa">
-      <SendPanel clients={clients} onSent={load} />
+      <SendPanel key={sendPreset?.n ?? 0} clients={clients} onSent={load} initialKind={sendPreset?.kind} />
 
       {hasTests && (
         <p className="admin-qa-testbar">
@@ -152,13 +188,13 @@ function ChoiceSeg({ value, onChange, labelId }: { value: SendChoice; onChange: 
   );
 }
 
-function SendPanel({ clients, onSent }: { clients: ClientRow[]; onSent: () => void }) {
+function SendPanel({ clients, onSent, initialKind }: { clients: ClientRow[]; onSent: () => void; initialKind?: SendChoice }) {
   const sorted = useMemo(
     () => clients.slice().sort((a, b) => Number(a.status === 'completed') - Number(b.status === 'completed') || a.full_name.localeCompare(b.full_name)),
     [clients],
   );
   const [clientId, setClientId] = useState('');
-  const [kind, setKind] = useState<SendChoice>('both');
+  const [kind, setKind] = useState<SendChoice>(initialKind ?? 'both');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ urls: Partial<Record<Kind, string>>; emailed: boolean; emailError: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
