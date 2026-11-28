@@ -52,17 +52,21 @@ interface Props {
   /** Phone: a one-line banner that opens on tap, so it never pushes today's
    *  clients off the first screen. */
   compact?: boolean;
+  /** Desktop "Needs a decision": no card of its own, a smaller heading. */
+  bare?: boolean;
+  /** Desktop: show at most this many differences (no "show more" here). */
+  limit?: number;
 }
 
-export function CalendarDriftCard({ items, onResolved, compact = false }: Props) {
+export function CalendarDriftCard({ items, onResolved, compact = false, bare = false, limit }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<{ key: string; msg: string } | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [all, setAll] = useState(false);
   const [open, setOpen] = useState(false);
 
-  if (items.length === 0 && !done) return null;
-  const shown = all ? items : items.slice(0, SHOW_FIRST);
+  if ((items.length === 0 || limit === 0) && !done) return null;
+  const shown = limit !== undefined ? items.slice(0, limit) : all ? items : items.slice(0, SHOW_FIRST);
   const collapsed = compact && !open && items.length > 0;
 
   async function apply(item: DriftItem, choice: FixChoice) {
@@ -88,7 +92,7 @@ export function CalendarDriftCard({ items, onResolved, compact = false }: Props)
   }
 
   return (
-    <section className={`admin-card drift-card${collapsed ? ' is-collapsed' : ''}`} aria-label="Differences between the app and Google Calendar">
+    <section className={`${bare ? 'is-bare' : 'admin-card'} drift-card${collapsed ? ' is-collapsed' : ''}`} aria-label="Differences between the app and Google Calendar">
       {collapsed ? (
         <button type="button" className="drift-banner" onClick={() => setOpen(true)}>
           <span className="drift-banner-dot" aria-hidden />
@@ -97,25 +101,31 @@ export function CalendarDriftCard({ items, onResolved, compact = false }: Props)
         </button>
       ) : items.length > 0 && (
         <>
-          <div className="admin-card-head">
-            <h2 className="admin-h2">Google Calendar doesn&apos;t match the app</h2>
-          </div>
-          <p className="drift-note">
-            The app is your diary. Choose what to do with each one; nothing changes until you tap.
-          </p>
+          {!bare && (
+            <>
+              <div className="admin-card-head">
+                <h2 className="admin-h2">Google Calendar doesn&apos;t match the app</h2>
+              </div>
+              <p className="drift-note">
+                The app is your diary. Choose what to do with each one; nothing changes until you tap.
+              </p>
+            </>
+          )}
         </>
       )}
       {done && <p className="drift-done" role="status">{done}</p>}
       {!collapsed && <ul className="drift-list">
         {shown.map(i => (
-          <li key={i.key} className="drift-item">
+          <li key={i.key} className={`drift-item${bare ? ' is-notice' : ''}`}>
+            {bare && <span className="dt-ndot" aria-hidden />}
+            <div className={bare ? 'dt-notice-body' : undefined}>
             <p className="drift-line"><b className="pii">{i.clientName}</b> · {COPY[i.kind].line(i)}</p>
             <div className="drift-actions">
               {COPY[i.kind].actions.map(a => (
                 <button
                   key={a.choice}
                   type="button"
-                  className="admin-btn-secondary"
+                  className={bare ? 'dt-btn' : 'admin-btn-secondary'}
                   disabled={busy !== null}
                   onClick={() => void apply(i, a.choice)}
                 >
@@ -124,10 +134,11 @@ export function CalendarDriftCard({ items, onResolved, compact = false }: Props)
               ))}
             </div>
             {problem?.key === i.key && <p className="drift-problem" role="alert">{problem.msg}</p>}
+            </div>
           </li>
         ))}
       </ul>}
-      {!collapsed && items.length > SHOW_FIRST && (
+      {!collapsed && limit === undefined && items.length > SHOW_FIRST && (
         <button type="button" className="admin-link" onClick={() => setAll(a => !a)}>
           {all ? 'Show fewer' : `Show ${items.length - SHOW_FIRST} more`}
         </button>

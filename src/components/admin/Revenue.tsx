@@ -206,7 +206,7 @@ export function Revenue({ clients }: Props) {
     const esc = (v: string) => '"' + (/^[=+\-@\t\r]/.test(v) ? "'" + v : v).replace(/"/g, '""') + '"';
     const totalCents = rows.reduce((sum, { s }) => sum + (s.fee ?? 0), 0);
     const lines = [
-      `Income report — ${basisLabel} — ${scopeLabel} — excludes low-cost sessions — generated ${dublinDay(now)}`,
+      `Income report: ${basisLabel}. ${scopeLabel}. Excludes low-cost sessions. Generated ${dublinDay(now)}`,
       '',
       ['Date', 'Time', 'Client', 'Format', 'Fee (EUR)', 'Payment', 'Paid on'].join(','),
       ...rows.map(({ s, c }) => [
@@ -751,7 +751,7 @@ function MonthlyChart({
               </div>
             </div>
             <div style={{ fontSize: 10, color: 'var(--forest-deep)', fontWeight: 500 }}>
-              {total > 0 ? euro(total) : '—'}
+              {total > 0 ? euro(total) : '–'}
             </div>
             <div style={{
               fontSize: 10,

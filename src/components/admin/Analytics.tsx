@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Copy, Mail, Link2, Check, Users } from 'lucide-react';
 import { adminFetch, formatDate } from './api';
 import type { ClientRow } from './types';
+import { DtDisclosure } from './DtDisclosure';
 import { PRACTICE } from '@/practice.config';
 import {
   CNIP_SCALES, CNIP_ADDITIONAL, CNIP_ADDITIONAL_SHORT, scoreCnip, summariseCnip,
@@ -35,7 +36,45 @@ interface PendingRow {
   emailed_at: string | null;
 }
 
-export function Analytics({ clients }: { clients: ClientRow[] }) {
+/** `embedded`: inside the Forms page, where the sending tools come first and the
+ *  results follow under a "Questionnaire results" heading. */
+/** One client's questionnaire results, for the desktop Clients page: the
+ *  C–NIP–2 summary and how it changed over time, and their values worksheet.
+ *  Read-only; it uses the same results pieces as the Forms page. */
+export function ClientQuestionnaireResults({ client }: { client: ClientRow }) {
+  const [responses, setResponses] = useState<ResponseRow[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await adminFetch('/api/admin/questionnaires');
+        const json = await res.json().catch(() => ({}));
+        if (!alive) return;
+        if (!res.ok) { setFailed(true); return; }
+        setResponses((json.responses ?? []).filter((r: ResponseRow) => r.client_id === client.id));
+      } catch { if (alive) setFailed(true); }
+    })();
+    return () => { alive = false; };
+  }, [client.id]);
+  const nameOf = useCallback(() => client.full_name, [client.full_name]);
+
+  if (failed) return <p className="dt-hint">Couldn&apos;t load questionnaire results.</p>;
+  if (responses === null) return <p className="dt-hint">Loading questionnaire results…</p>;
+  const cnip = responses.filter(r => r.kind === 'cnip');
+  const values = responses.filter(r => r.kind === 'values');
+  if (cnip.length === 0 && values.length === 0) {
+    return <p className="dt-hint">No questionnaires completed yet. Send one from Forms; the results appear here.</p>;
+  }
+  return (
+    <div className="admin-qa dt-qa">
+      {cnip.length > 0 && <CnipSection responses={cnip} nameOf={nameOf} compact />}
+      {values.length > 0 && <ValuesSection responses={values} nameOf={nameOf} compact />}
+    </div>
+  );
+}
+
+export function Analytics({ clients, embedded = false, sendPreset }: { clients: ClientRow[]; embedded?: boolean; sendPreset?: { kind: SendChoice; n: number } }) {
   const [responses, setResponses] = useState<ResponseRow[]>([]);
   const [pending, setPending] = useState<PendingRow[]>([]);
   const [loadState, setLoadState] = useState<'loading' | 'ok' | 'error' | 'missing'>('loading');
@@ -73,7 +112,7 @@ export function Analytics({ clients }: { clients: ClientRow[] }) {
 
   return (
     <div className="admin-qa">
-      <SendPanel clients={clients} onSent={load} />
+      <SendPanel key={sendPreset?.n ?? 0} clients={clients} onSent={load} initialKind={sendPreset?.kind} />
 
       {hasTests && (
         <p className="admin-qa-testbar">
@@ -107,6 +146,8 @@ export function Analytics({ clients }: { clients: ClientRow[] }) {
           </ul>
         </section>
       )}
+
+      {embedded && <h2 className="admin-h2 admin-qa-resultshead">Questionnaire results</h2>}
 
       <div className="admin-qa-tabs" role="tablist" aria-label="Questionnaire">
         {(['cnip', 'values'] as Kind[]).map(k => (
@@ -148,13 +189,13 @@ function ChoiceSeg({ value, onChange, labelId }: { value: SendChoice; onChange: 
   );
 }
 
-function SendPanel({ clients, onSent }: { clients: ClientRow[]; onSent: () => void }) {
+function SendPanel({ clients, onSent, initialKind }: { clients: ClientRow[]; onSent: () => void; initialKind?: SendChoice }) {
   const sorted = useMemo(
     () => clients.slice().sort((a, b) => Number(a.status === 'completed') - Number(b.status === 'completed') || a.full_name.localeCompare(b.full_name)),
     [clients],
   );
   const [clientId, setClientId] = useState('');
-  const [kind, setKind] = useState<SendChoice>('both');
+  const [kind, setKind] = useState<SendChoice>(initialKind ?? 'both');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ urls: Partial<Record<Kind, string>>; emailed: boolean; emailError: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -435,7 +476,14 @@ function scoresOf(r: ResponseRow): CnipScaleScore[] {
   return s?.scales ?? scoreCnip(r.answers as CnipAnswers).scales;
 }
 
-function CnipSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf: (id: string) => string }) {
+/** On a client's page (`compact`) the long parts sit under "Full results". */
+function FullResults({ compact, children }: { compact?: boolean; children: React.ReactNode }) {
+  return compact
+    ? <DtDisclosure title="Full results" sub="The sliders, every item answered and the rest">{children}</DtDisclosure>
+    : <>{children}</>;
+}
+
+function CnipSection({ responses, nameOf, compact }: { responses: ResponseRow[]; nameOf: (id: string) => string; compact?: boolean }) {
   const { clientIds, active, setClientId, history } = useClientPicker(responses);
   const [sel, setSel] = useState('');
   if (clientIds.length === 0) {
@@ -468,6 +516,7 @@ function CnipSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf: 
         {summary.map((t, k) => <p key={k} className={firstName !== 'You' && t.includes(firstName) ? 'pii' : undefined}>{t}</p>)}
       </div>
 
+      <FullResults compact={compact}>
       <h3 className="admin-h3 admin-qa-resultshead">Results</h3>
       <div className="admin-qa-legend" aria-hidden>
         <span><i className="admin-qa-zone-swatch" />No strong preference (UK norms)</span>
@@ -542,6 +591,7 @@ function CnipSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf: 
       </details>
 
       <p className="admin-qa-foot">Scored with the UK cut-offs on the C–NIP–2 form (about 20% of people fall in each strong band). The scores start a conversation rather than set a plan: adopt, adapt, offer an alternative, or refer on. C–NIP–2 © Cooper &amp; Norcross, CC BY-NC-ND 4.0.</p>
+      </FullResults>
     </section>
   );
 }
@@ -550,7 +600,7 @@ function fmtScore(n: number) { return n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '0'
 
 // ── Values ─────────────────────────────────────────────────────────────────
 
-function ValuesSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf: (id: string) => string }) {
+function ValuesSection({ responses, nameOf, compact }: { responses: ResponseRow[]; nameOf: (id: string) => string; compact?: boolean }) {
   const { clientIds, active, setClientId, history } = useClientPicker(responses);
   const [sel, setSel] = useState('');
   if (clientIds.length === 0) {
@@ -591,6 +641,7 @@ function ValuesSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf
           <p className="admin-qa-muted">{veryCount} values marked very important{a.neglected.length === 0 ? ' · none marked as neglected' : ''}.</p>
         </div>
 
+        <FullResults compact={compact}>
         {gaps.length > 0 && (
           <div className="admin-qa-block">
             <h3 className="admin-h3">Values in my life</h3>
@@ -642,6 +693,7 @@ function ValuesSection({ responses, nameOf }: { responses: ResponseRow[]; nameOf
             ))}
           </div>
         </details>
+        </FullResults>
       </section>
 
       <Caseload responses={responses} />

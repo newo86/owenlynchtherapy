@@ -70,6 +70,14 @@ comes back poor, redo it one level up and log it under "Where the line is".
   `PaymentPromptsCard.tsx` + `PaymentPromptsPanel.tsx`; read-only
   `api/admin/schedule-snapshot` (bearer `SCHEDULE_READ_TOKEN`); dev-only
   `(admin)/admin-demo` with `demoData.ts` (see docs/OPERATIONS.md)
+- Sage Diary desktop (stage 2): `DesktopToday.tsx` (+ `desktopToday.ts`,
+  `useFreeTimes.ts`, `desktop.css`), `SessionPanel.tsx` (right-hand session
+  panel), `SettingsHub.tsx` (Settings tabs: Practice, Hours, Account), rail in
+  `Sidebar.tsx`; Forms page also holds the questionnaire tools
+  (`Analytics` embedded). Stage 2b desktop pages: `DesktopPage`, `DesktopCalendar`,
+  `DesktopClients`, `DesktopMoney`, `DesktopForms`, `SettingsOverview`,
+  `DesktopSessionRow`, `DtDisclosure`, shared session panel via
+  `SessionPanelHost.tsx`. Notes: docs/design/prototypes/IMPLEMENTATION.md
 - Calendar: `api/admin/calendar/sync` (5-min cron: link, follow Google,
   retry), `api/admin/calendar/followed` (list + undo; card
   `FollowedFromGoogleCard.tsx` + `FollowedFromGooglePanel.tsx`),

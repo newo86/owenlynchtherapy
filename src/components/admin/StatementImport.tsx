@@ -104,7 +104,7 @@ export function StatementImport({ clients, onReload }: Props) {
     const iAmount = col('amount');
     const iState = col('state');
     if (iDate < 0 || iDesc < 0 || iAmount < 0) {
-      setParseError("Couldn't find the Date / Description / Amount columns — is this a Revolut CSV export?");
+      setParseError("Couldn't find the Date / Description / Amount columns. Is this a Revolut CSV export?");
       return;
     }
 
@@ -177,7 +177,7 @@ export function StatementImport({ clients, onReload }: Props) {
       } catch { failed++; }
     }
     setApplying(false);
-    setResult(`${ok} session${ok === 1 ? '' : 's'} marked paid${failed > 0 ? ` · ${failed} failed — try those again` : ''}.`);
+    setResult(`${ok} session${ok === 1 ? '' : 's'} marked paid${failed > 0 ? ` · ${failed} failed. Try those again` : ''}.`);
     onReload();
   }
 
@@ -206,7 +206,7 @@ export function StatementImport({ clients, onReload }: Props) {
       <p style={{ fontSize: 12.5, color: 'var(--ink-muted)', margin: 0, maxWidth: 640 }}>
         Export a statement from the Revolut app (Account → Statement → <strong>Excel/CSV</strong>),
         drop it here, and incoming payments are matched to unpaid sessions by name, amount and
-        date. Nothing is marked paid until you confirm — and the file itself never leaves your
+        date. Nothing is marked paid until you confirm, and the file itself never leaves your
         browser.
       </p>
 
@@ -227,7 +227,7 @@ export function StatementImport({ clients, onReload }: Props) {
           {!result && matches.length > 0 && (
             <>
               <p style={{ fontSize: 12, color: 'var(--ink-muted)', margin: '0 0 10px' }}>
-                {matches.length} payment{matches.length === 1 ? '' : 's'} matched — confident
+                {matches.length} payment{matches.length === 1 ? '' : 's'} matched, confident
                 matches are pre-ticked; review the rest before confirming.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -301,7 +301,7 @@ export function StatementImport({ clients, onReload }: Props) {
               <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: 'var(--ink-muted)' }}>
                 {unmatched.slice(0, 8).map((t, i) => (
                   <li key={i} className="pii">
-                    {displayFee(t.amountCents)} — “{t.description.slice(0, 48)}” ·{' '}
+                    {displayFee(t.amountCents)}: “{t.description.slice(0, 48)}” ·{' '}
                     {t.date.toLocaleDateString('en-IE', { day: 'numeric', month: 'short' })}
                   </li>
                 ))}

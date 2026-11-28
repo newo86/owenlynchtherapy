@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import '@/components/admin/admin.css';
 import '@/components/admin/sage/sage.css';
+import '@/components/admin/desktop.css';
 import { Inter } from 'next/font/google';
 import { PRACTICE } from '@/practice.config';
 

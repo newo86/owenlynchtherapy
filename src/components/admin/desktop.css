@@ -1,0 +1,264 @@
+/* Sage Diary stage 2: desktop Today, session panel, Settings tabs.
+   Built to docs/design/prototypes/sage-diary-desktop.html (sizes, weights and
+   spacing are the prototype's). Tokens are the --sd-* ones on .admin-root. */
+
+/* ── Page frame (the prototype's .wrap) ───────────────────────────────── */
+.admin-root .dt-wrap {
+  /* The page gutters are 48px on desktop (admin.css), so content lines up with the band title. */
+  margin: 0;
+  padding: 8px 0 0;
+  max-width: 1144px;
+  box-sizing: border-box;
+  line-height: 1.45;
+  font-size: 16px;
+}
+/* The band keeps a 28px gap under it; the prototype has none (content starts 8px below the band). */
+.admin-root .sd-band + .dt-wrap { margin-top: -28px; }
+.admin-root .dt-notices .admin-banner { margin-bottom: 12px; }
+.admin-root .dt-wrap.admin-health { padding-bottom: 56px; margin-top: 0; }
+
+.admin-root .dt-cta { min-height: 52px; padding: 0 26px; border-radius: 16px; font-size: 17px; }
+
+.admin-root .dt-cols { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr); gap: 28px; align-items: start; padding-bottom: 32px; }
+@media (max-width: 1000px) { .admin-root .dt-cols { grid-template-columns: 1fr; } }
+.admin-root .dt-stack { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.admin-root .dt-group { display: flex; flex-direction: column; gap: 10px; }
+.admin-root .dt-h { margin: 0 2px; font-size: 16px; font-weight: 700; color: var(--sd-ink); display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.admin-root .dt-h small { font-weight: 500; color: var(--sd-ink-soft); font-size: 14px; }
+.admin-root .dt-card { background: var(--sd-card); border-radius: 18px; overflow: hidden; }
+.admin-root .dt-pad { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.admin-root .dt-hint { margin: 0 2px; font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .dt-card > .dt-empty { margin: 0; padding: 16px; }
+
+/* ── Today's clients: rows with hover quick actions ───────────────────── */
+.admin-root .dt-srow { display: flex; align-items: center; gap: 14px; padding: 14px 18px; min-height: 68px; position: relative; }
+.admin-root .dt-srow + .dt-srow { border-top: 1px solid var(--sd-line); }
+.admin-root .dt-srow:hover, .admin-root .dt-srow.is-sel { background: var(--sd-action-soft); }
+.admin-root .dt-srow-main {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px;
+  padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+/* The whole row is the click target, without a button inside a button. */
+.admin-root .dt-srow-main::after { content: ''; position: absolute; inset: 0; }
+.admin-root .dt-srow-main:focus-visible { outline: none; }
+.admin-root .dt-srow-main:focus-visible::after { outline: 2px solid var(--sd-ink); outline-offset: -2px; border-radius: 4px; }
+.admin-root .dt-t { width: 52px; font-variant-numeric: tabular-nums; color: var(--sd-ink-soft); flex: none; }
+.admin-root .dt-dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+.admin-root .dt-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.admin-root .dt-name { font-weight: 600; color: var(--sd-ink); }
+.admin-root .dt-meta { font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .dt-tag { font-size: 13px; padding: 3px 9px; border-radius: 999px; background: var(--sd-pill); white-space: nowrap; color: var(--sd-ink); }
+.admin-root .dt-tag.is-paid { background: var(--sd-paid); }
+/* The quick actions float over the right edge of the name area (zero width), so a narrow
+   column never squeezes the name onto several lines. */
+.admin-root .dt-quick { width: 0; flex: none; opacity: 0; transition: opacity 150ms; position: relative; z-index: 1; overflow: visible; }
+.admin-root .dt-quick-in { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: flex; gap: 4px; }
+.admin-root .dt-name, .admin-root .dt-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-root .dt-srow:hover .dt-quick,
+.admin-root .dt-srow:focus-within .dt-quick,
+.admin-root .dt-srow.is-sel .dt-quick { opacity: 1; }
+.admin-root .dt-qbtn { width: 44px; height: 44px; border: 0; border-radius: 10px; background: var(--sd-card); color: var(--sd-ink); cursor: pointer; display: grid; place-items: center; }
+.admin-root .dt-qbtn svg { width: 18px; height: 18px; }
+.admin-root .dt-qbtn:hover { background: var(--sd-action); color: var(--sd-on-action); }
+.admin-root .dt-qbtn:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+
+/* ── Free this week ───────────────────────────────────────────────────── */
+.admin-root .dt-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-root .dt-chip {
+  border: 1.5px solid transparent; background: var(--sd-card); color: var(--sd-ink);
+  border-radius: 999px; padding: 9px 14px; min-height: 44px; font: inherit; font-size: 15px; font-weight: 600;
+  cursor: pointer; font-variant-numeric: tabular-nums;
+}
+.admin-root .dt-chip:hover { background: var(--sd-action-soft); }
+.admin-root .dt-chip:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+
+/* ── Needs a decision (the three existing cards, framed as one) ───────── */
+.admin-root .dt-nd { gap: 0; }
+.admin-root .dt-nd-group:empty { display: none; }
+.admin-root .dt-nd-group:not(:empty) ~ .dt-nd-group:not(:empty) { margin-top: 14px; }
+.admin-root .dt-nd .is-bare { margin: 0; }
+.admin-root .dt-card[hidden] { display: none; }
+.admin-root .nd-sub { margin: 0 0 8px; font-size: 15px; font-weight: 700; color: var(--sd-ink); }
+.admin-root .dt-nd .admin-banner { margin: 0 0 12px; }
+/* Notices, as in the prototype: a yellow dot, one line, a quiet hint, one grey button. */
+.admin-root .dt-ndot { width: 10px; height: 10px; border-radius: 50%; background: var(--sd-art-yellow); margin-top: 8px; flex: none; }
+.admin-root .dt-notice-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.admin-root .dt-notice-line { margin: 0; font-size: 16px; color: var(--sd-ink); line-height: 1.45; }
+.admin-root .dt-notice-hint { margin: 0; font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .dt-notice-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; }
+.admin-root .dt-nd .pp-list, .admin-root .dt-nd .drift-list { gap: 14px; display: flex; flex-direction: column; }
+.admin-root .dt-nd .pp-row, .admin-root .dt-nd .pp-row:first-child { border-top: 0; padding-top: 0; }
+.admin-root .dt-nd .pp-row.is-notice, .admin-root .dt-nd .drift-item.is-notice { display: flex; gap: 12px; align-items: flex-start; }
+.admin-root .dt-nd .drift-item { border-top: 0; padding: 0; }
+.admin-root .dt-nd .drift-line { margin: 0 0 4px; font-size: 16px; color: var(--sd-ink); }
+.admin-root .dt-nd .drift-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.admin-root .dt-fg-line { margin: 0 2px; font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .dt-fg-line .dt-link { padding: 0 2px; }
+
+/* ── Clinic days ──────────────────────────────────────────────────────── */
+.admin-root .dt-week { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.admin-root .dt-wday { background: var(--sd-card); border-radius: 14px; padding: 10px 8px; display: flex; flex-direction: column; gap: 6px; min-height: 120px; min-width: 0; }
+.admin-root .dt-wday b { font-size: 13px; color: var(--sd-ink); }
+.admin-root .dt-wday.is-today { box-shadow: inset 0 0 0 1.5px var(--sd-ink); }
+.admin-root .dt-wslot { font-size: 12px; border-radius: 8px; padding: 4px 6px; background: var(--sd-pill); line-height: 1.25; color: var(--sd-ink); overflow-wrap: anywhere; }
+.admin-root .dt-wslot.is-free { background: transparent; box-shadow: inset 0 0 0 1px var(--sd-line); color: var(--sd-ink-soft); }
+
+/* ── Session panel (right) ────────────────────────────────────────────── */
+.admin-root .dt-scrim { position: fixed; inset: 0; background: var(--sd-scrim); z-index: 20; animation: dt-fade 200ms ease both; }
+.admin-root .dt-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100vw);
+  background: var(--sd-page); color: var(--sd-ink); z-index: 21; line-height: 1.45; font-size: 16px;
+  display: flex; flex-direction: column;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.1);
+  animation: dt-slide 260ms cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes dt-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dt-slide { from { transform: translateX(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .admin-root .dt-scrim, .admin-root .dt-panel { animation: none; } }
+.admin-root .dt-panel-head { background: var(--sd-header); color: var(--sd-on-header); padding: 28px 24px 22px; display: flex; justify-content: space-between; gap: 12px; }
+.admin-root .dt-panel-head h2 { margin: 0; font-size: 26px; font-weight: 700; color: var(--sd-on-header); }
+/* Large bold only on the sage (4.1:1): the prototype's 16px/600 would fail. */
+.admin-root .dt-panel-head p { margin: 4px 0 0; font-size: 19px; font-weight: 700; color: var(--sd-on-header); }
+.admin-root .dt-close { width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.18); color: var(--sd-on-header); cursor: pointer; display: grid; place-items: center; flex: none; }
+.admin-root .dt-close svg { width: 22px; height: 22px; }
+.admin-root .dt-close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.admin-root .dt-panel-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+
+.admin-root .dt-opt { background: var(--sd-card); border-radius: 16px; overflow: hidden; flex-shrink: 0; }
+.admin-root .dt-opt-head { width: 100%; border: 0; background: transparent; color: var(--sd-ink); font: inherit; display: flex; align-items: center; gap: 14px; padding: 14px 16px; min-height: 60px; cursor: pointer; text-align: left; }
+.admin-root .dt-opt-ic { width: 38px; height: 38px; border-radius: 11px; background: var(--sd-pill); display: grid; place-items: center; flex: none; }
+.admin-root .dt-opt-ic svg { width: 19px; height: 19px; }
+.admin-root .dt-opt-txt { flex: 1; display: flex; flex-direction: column; }
+.admin-root .dt-opt-txt b { font-weight: 600; }
+.admin-root .dt-opt-txt > span { font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .dt-opt-head:hover { background: color-mix(in srgb, var(--sd-action) 22%, var(--sd-card)); }
+.admin-root .dt-opt-head:hover .dt-opt-ic { background: var(--sd-action); color: var(--sd-on-action); }
+.admin-root .dt-opt-head:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: -2px; }
+.admin-root .dt-opt-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.admin-root .dt-opt-body[hidden] { display: none; }
+.admin-root .dt-opt-body .dt-hint { margin: 0; }
+.admin-root .dt-btn { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--sd-pill); color: var(--sd-ink); font: inherit; font-weight: 600; cursor: pointer; text-align: center; }
+.admin-root .dt-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--sd-action) 45%, var(--sd-pill)); }
+.admin-root .dt-btn.is-main { background: var(--sd-action); color: var(--sd-on-action); }
+.admin-root .dt-btn.is-main:hover:not(:disabled) { background: var(--sd-action-hover); }
+.admin-root .dt-btn:disabled { opacity: 0.5; cursor: default; }
+.admin-root .dt-btn:focus-visible, .admin-root .dt-link:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+.admin-root .dt-link { align-self: flex-start; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--sd-ink); font: inherit; text-decoration: underline; cursor: pointer; }
+.admin-root .dt-done-options { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+
+.admin-root .dt-status ul { list-style: none; margin: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; }
+.admin-root .dt-status li { display: flex; align-items: center; gap: 10px; color: var(--sd-ink-soft); }
+.admin-root .dt-status li.is-ok { color: var(--sd-ink); }
+.admin-root .dt-status svg { flex: none; width: 16px; height: 16px; }
+.admin-root .dt-status a { color: var(--sd-ink); }
+.admin-root .dt-msg { margin: 0; padding: 12px 16px; border-radius: 14px; background: var(--sd-paid); font-size: 15px; color: var(--sd-ink); }
+.admin-root .dt-msg.is-error { background: var(--sd-danger-soft); color: var(--sd-danger); }
+
+/* ── Shared page pieces (Calendar, Clients, Money, Forms, Waitlist, Settings) ── */
+.admin-root .dt-page { padding-bottom: 56px; }
+.admin-root .dt-cols-clients { grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.6fr); }
+@media (max-width: 1000px) { .admin-root .dt-cols-clients { grid-template-columns: 1fr; } }
+.admin-root .dt-h-lg { font-size: 22px; }
+.admin-root .dt-search { width: 100%; min-height: 48px; border: 0; border-radius: 14px; padding: 0 14px; background: var(--sd-card); color: var(--sd-ink); font: inherit; box-sizing: border-box; }
+.admin-root .dt-search:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+
+/* Rows in lists and tables (prototype .lrow) */
+.admin-root .dt-lrow { display: flex; align-items: center; gap: 14px; padding: 14px 18px; min-height: 60px; width: 100%; box-sizing: border-box; background: transparent; border: 0; color: var(--sd-ink); font: inherit; text-align: left; line-height: 1.45; }
+.admin-root .dt-lrow + .dt-lrow { border-top: 1px solid var(--sd-line); }
+.admin-root button.dt-lrow { cursor: pointer; }
+.admin-root button.dt-lrow:hover, .admin-root .dt-lrow.is-sel { background: var(--sd-action-soft); }
+.admin-root button.dt-lrow:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: -2px; }
+.admin-root .dt-grow { flex: 1; min-width: 0; }
+.admin-root .dt-grow b { font-weight: 600; }
+.admin-root .dt-soft { color: var(--sd-ink-soft); font-size: 14px; }
+.admin-root .dt-soft.is-error { color: var(--sd-danger); }
+.admin-root .dt-amt { font-variant-numeric: tabular-nums; font-weight: 600; }
+.admin-root .dt-row-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; justify-content: flex-end; }
+.admin-root .dt-lrow-wait { align-items: flex-start; }
+.admin-root .dt-setrow .dt-grow { font-size: 16px; }
+.admin-root .dt-setrow .dt-soft { text-align: right; }
+
+.admin-root .dt-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.admin-root .dt-stat { background: var(--sd-card); border-radius: 16px; padding: 14px 16px; }
+.admin-root .dt-stat b { display: block; font-size: 26px; font-variant-numeric: tabular-nums; color: var(--sd-ink); line-height: 1.3; }
+.admin-root .dt-stat span { font-size: 14px; color: var(--sd-ink-soft); }
+
+.admin-root .dt-bar { display: block; height: 8px; border-radius: 4px; background: var(--sd-pill); overflow: hidden; }
+.admin-root .dt-bar i { display: block; height: 100%; background: var(--sd-header); }
+.admin-root .dt-bar-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: var(--sd-ink); }
+.admin-root .dt-bar-block { display: block; }
+.admin-root .dt-bars { border: 0; width: 100%; font: inherit; color: var(--sd-ink); text-align: left; cursor: pointer; box-sizing: border-box; line-height: 1.45; }
+.admin-root .dt-bars:hover { background: var(--sd-action-soft); }
+.admin-root .dt-bars:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+
+/* Calendar month (prototype .month) */
+.admin-root .dt-monthnav { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.admin-root .dt-monthnav .dt-link { align-self: auto; }
+.admin-root .dt-monthnav .dt-link:disabled { opacity: 0.4; cursor: default; text-decoration: none; }
+.admin-root .dt-month { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.admin-root .dt-mwd { font-size: 13px; color: var(--sd-ink-soft); padding: 0 6px; }
+.admin-root .dt-mday { min-height: 104px; min-width: 0; background: var(--sd-card); color: var(--sd-ink); border: 0; border-radius: 14px; padding: 8px; text-align: left; cursor: pointer; display: flex; flex-direction: column; align-items: stretch; gap: 4px; font: inherit; line-height: 1.45; }
+.admin-root .dt-mday:hover { background: var(--sd-action-soft); }
+.admin-root .dt-mn { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.admin-root .dt-mday.is-out { background: transparent; box-shadow: inset 0 0 0 1px var(--sd-line); }
+.admin-root .dt-mday.is-out .dt-mn, .admin-root .dt-mday.is-out .dt-mev { color: var(--sd-ink-soft); }
+.admin-root .dt-mday.is-today .dt-mn { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--sd-ink); }
+.admin-root .dt-mday[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--sd-header); }
+.admin-root .dt-mday:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+.admin-root .dt-mev { font-size: 12px; display: flex; gap: 5px; align-items: center; white-space: nowrap; overflow: hidden; }
+.admin-root .dt-mev span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.admin-root .dt-mev i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.admin-root .dt-more-count { color: var(--sd-ink-soft); }
+
+/* A quiet "there is more" disclosure (existing full sections kept underneath) */
+.admin-root .dt-more { background: var(--sd-card); border-radius: 16px; margin-top: 8px; }
+.admin-root .dt-more-head { list-style: none; display: flex; align-items: center; gap: 14px; padding: 14px 16px; min-height: 60px; cursor: pointer; border-radius: 16px; box-sizing: border-box; }
+.admin-root .dt-more-head::-webkit-details-marker { display: none; }
+.admin-root .dt-more-head:hover { background: color-mix(in srgb, var(--sd-action) 22%, var(--sd-card)); }
+.admin-root .dt-more-head:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: -2px; }
+.admin-root .dt-more-txt { flex: 1; display: flex; flex-direction: column; }
+.admin-root .dt-more-txt b { font-weight: 600; }
+.admin-root .dt-more-txt > span { font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .dt-more-chev { transition: transform 150ms; color: var(--sd-ink-soft); }
+.admin-root .dt-more[open] .dt-more-chev { transform: rotate(180deg); }
+.admin-root .dt-more-body { padding: 8px 16px 20px; }
+/* The old calendar's own yellow "schedule" button: the band already has the one primary. */
+.admin-root .dt-more-body .admin-cal-actions { display: none; }
+.admin-root .dt-qa { display: flex; flex-direction: column; gap: 14px; }
+.admin-root .dt-qa .admin-qa-clientpick { display: none; }
+/* Client page: section titles at the prototype's heading size, dates as quiet pill chips. */
+.admin-root .dt-qa .admin-qa-detail .admin-h2 { font-size: 16px; font-weight: 700; }
+.admin-root .dt-qa .admin-qa-chips button { background: var(--sd-pill); color: var(--sd-ink); border: 0; }
+.admin-root .dt-qa .admin-qa-chips button.is-on { background: var(--sd-pill); color: var(--sd-ink); font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--sd-ink); }
+.admin-root .dt-qa .dt-more { background: var(--sd-page); }
+.admin-root .dt-chev { color: var(--sd-ink-soft); font-size: 22px; line-height: 1; flex: none; }
+.admin-root .dt-lrow-forms { display: grid; grid-template-columns: 1fr 210px 150px; align-items: center; }
+.admin-root .dt-lrow-forms > :nth-child(2), .admin-root .dt-lrow-forms > :nth-child(3) { justify-self: end; }
+
+/* ── Settings: tabs (desktop only; the phone's More menu opens each page) ─ */
+.admin-root .sd-settings-tabs { display: inline-flex; background: var(--sd-card); border-radius: 12px; padding: 3px; margin-bottom: 20px; gap: 2px; flex-wrap: wrap; }
+.admin-root .sd-settings-tabs button { min-height: 44px; padding: 0 18px; border: 0; border-radius: 10px; background: transparent; color: var(--sd-ink); font: inherit; cursor: pointer; }
+.admin-root .sd-settings-tabs button:hover { background: var(--sd-action-soft); }
+.admin-root .sd-settings-tabs button[aria-pressed="true"] { background: var(--sd-pill); font-weight: 700; }
+.admin-root .sd-settings-tabs button:focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+.admin-root .sd-account { display: flex; flex-direction: column; gap: 4px; max-width: 720px; }
+.admin-root .sd-account-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 1px solid var(--sd-line); }
+.admin-root .sd-account-row:first-of-type { border-top: 0; }
+.admin-root .sd-account-row b { display: block; font-weight: 600; }
+.admin-root .sd-account-row span { font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .admin-qa-resultshead { margin: 8px 0 0; }
+
+@media (min-width: 769px) {
+  .admin-root .sd-band-title, .admin-root .sd-band-sub { line-height: 1.45; }
+  .admin-root .admin-foot { display: none; }
+}
+@media (max-width: 768px) {
+  .admin-root .sd-settings-tabs { display: none; }
+}
+
+/* Needs a decision confirm buttons: the band's "Book next session" is Today's
+   one yellow primary, so confirms inside the card use the secondary pill. */
+.admin-root .pp-card.is-bare .pp-btn.admin-btn-primary {
+  background: var(--sd-pill); color: var(--sd-ink); border-color: transparent; box-shadow: none;
+}
+.admin-root .pp-card.is-bare .pp-btn.admin-btn-primary:hover { background: var(--sd-action-soft); }

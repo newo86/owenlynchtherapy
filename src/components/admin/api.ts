@@ -187,7 +187,8 @@ export function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export function formatDateTime(iso: string): string {
+/** `h23`: 24-hour clock (the desktop Sage Diary pages); default is the 12-hour clock. */
+export function formatDateTime(iso: string, h23 = false): string {
   return new Date(iso).toLocaleString('en-IE', {
     weekday: 'short',
     day: 'numeric',
@@ -195,16 +196,16 @@ export function formatDateTime(iso: string): string {
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true,
+    ...(h23 ? { hourCycle: 'h23' as const } : { hour12: true }),
     timeZone: 'Europe/Dublin',
   });
 }
 
-export function formatTime(iso: string): string {
+export function formatTime(iso: string, h23 = false): string {
   return new Date(iso).toLocaleTimeString('en-IE', {
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true,
+    ...(h23 ? { hourCycle: 'h23' as const } : { hour12: true }),
     timeZone: 'Europe/Dublin',
   });
 }

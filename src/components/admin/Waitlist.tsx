@@ -9,6 +9,8 @@ import { WaitlistEmailModal } from './WaitlistEmailModal';
 interface Props {
   waitlist: WaitlistRow[];
   onReload: () => void;
+  /** Desktop (Sage Diary): the people as prototype rows instead of a table. */
+  rows?: boolean;
 }
 
 const FORMAT_LABEL: Record<string, string> = { online: 'Online', in_person: 'In person', either: 'Online or in person' };
@@ -19,14 +21,18 @@ function joinedWhen(iso: string) {
   });
 }
 
-export function Waitlist({ waitlist, onReload }: Props) {
+function joinedShort(iso: string) {
+  return new Date(iso).toLocaleDateString('en-IE', { day: 'numeric', month: 'short', timeZone: 'Europe/Dublin' });
+}
+
+export function Waitlist({ waitlist, onReload, rows = false }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; kind: 'ok' | 'error'; msg: string } | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
 
   async function act(id: string, action: 'contacted' | 'waiting' | 'spam' | 'delete') {
     if (action === 'delete'
-        && !confirm('Remove this person from the waiting list? Their details are permanently deleted — this is how an erasure request is honoured.')) {
+        && !confirm('Remove this person from the waiting list? Their details are permanently deleted. This is how an erasure request is honoured.')) {
       return;
     }
     setBusyId(id);
@@ -35,12 +41,12 @@ export function Waitlist({ waitlist, onReload }: Props) {
         method: 'POST', body: JSON.stringify({ id, action }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) { setFeedback({ id, kind: 'error', msg: json.error ?? 'Failed — try again.' }); return; }
+      if (!res.ok) { setFeedback({ id, kind: 'error', msg: json.error ?? 'Failed. Try again.' }); return; }
       if (action !== 'delete') {
         setFeedback({ id, kind: 'ok', msg: action === 'contacted' ? 'Marked contacted.' : action === 'spam' ? 'Moved to spam.' : 'Back to waiting.' });
       }
       onReload();
-    } catch { setFeedback({ id, kind: 'error', msg: 'Network error — try again.' }); }
+    } catch { setFeedback({ id, kind: 'error', msg: 'Network error. Try again.' }); }
     finally { setBusyId(null); }
   }
 
@@ -63,15 +69,16 @@ export function Waitlist({ waitlist, onReload }: Props) {
   const saidYes = emailed.filter(w => w.response === 'yes').length;
   const noReply = emailed.filter(w => !w.response).length;
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+  // The email-the-list bar and the explainer: above the table, or below the rows on desktop (people first).
+  const intro = (
+    <>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: 13, color: 'var(--forest-deep)' }}>
           {emailed.length > 0
             ? <>Last email: <strong>{emailed.length}</strong> sent · <strong>{saidYes}</strong> still interested · <strong>{declined.length}</strong> no longer looking · <strong>{noReply}</strong> no reply yet</>
             : <>No email sent to the list yet.</>}
         </div>
-        <button className="admin-btn-primary" onClick={() => setEmailOpen(true)} disabled={waiting.length === 0}>
+        <button className={rows ? 'dt-btn' : 'admin-btn-primary'} onClick={() => setEmailOpen(true)} disabled={waiting.length === 0}>
           Email the waiting list
         </button>
       </div>
@@ -82,10 +89,53 @@ export function Waitlist({ waitlist, onReload }: Props) {
       <p style={{ fontSize: 13, color: 'var(--ink-muted)', margin: 0, maxWidth: 640 }}>
         People who asked to be contacted when a space opens up ({waiting.length} waiting{prefCounts}).
         <span className="admin-hide-phone"> Entries store only name, email and phone, with their consent recorded. &ldquo;Remove&rdquo;
-        deletes the details permanently — use it once someone becomes a client, asks to be
+        deletes the details permanently. Use it once someone becomes a client, asks to be
         taken off, or the entry goes stale.</span>
       </p>
 
+    </>
+  );
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      {!rows && intro}
+
+      {rows ? (
+        <div className="dt-card">
+          {people.length === 0 && <p className="dt-hint dt-empty">No one on the waiting list yet. The signup form is on the contact page.</p>}
+          {people.map(w => (
+            <div key={w.id} className="dt-lrow dt-lrow-static dt-lrow-wait">
+              <div className="dt-grow">
+                <b className="pii">{w.full_name}</b>
+                <div className="dt-soft">
+                  Joined {joinedShort(w.created_at)}
+                  {w.format_preference ? ` · ${FORMAT_LABEL[w.format_preference] ?? w.format_preference}` : ''}
+                  {w.status === 'contacted' ? ' · Contacted' : ''}
+                </div>
+                <div className="dt-soft pii">{w.email}{w.phone ? ` · ${w.phone}` : ''}</div>
+                {w.reason && <div className="dt-soft pii">&ldquo;{w.reason}&rdquo;</div>}
+                {w.last_emailed_at && (
+                  <div className="dt-soft">
+                    Emailed {joinedWhen(w.last_emailed_at)} · {w.response === 'yes' ? 'Still interested' : 'No reply yet'}
+                  </div>
+                )}
+                {feedback?.id === w.id && (
+                  <div className={`dt-soft${feedback.kind === 'error' ? ' is-error' : ''}`} role="status">{feedback.msg}</div>
+                )}
+              </div>
+              <div className="dt-row-actions">
+                {w.status === 'waiting' ? (
+                  <button type="button" className="dt-btn" disabled={busyId === w.id} onClick={() => act(w.id, 'contacted')}>Mark contacted</button>
+                ) : (
+                  <button type="button" className="dt-btn" disabled={busyId === w.id} onClick={() => act(w.id, 'waiting')}>Back to waiting</button>
+                )}
+                <button type="button" className="dt-link" disabled={busyId === w.id} title="A sales pitch, not someone looking for therapy" onClick={() => act(w.id, 'spam')}>Spam</button>
+                <button type="button" className="dt-link" disabled={busyId === w.id} onClick={() => act(w.id, 'delete')}>Remove</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
@@ -186,6 +236,9 @@ export function Waitlist({ waitlist, onReload }: Props) {
           </tbody>
         </table>
       </div>
+      )}
+
+      {rows && intro}
 
       {declined.length > 0 && (
         <details open style={{ border: '1px solid var(--line)', borderRadius: 12, padding: '12px 16px', background: 'white' }}>

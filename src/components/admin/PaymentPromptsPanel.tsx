@@ -49,14 +49,24 @@ interface Props {
   onChanged: () => void;
   /** Phone layout (compact rows + bottom sheet). */
   compact?: boolean;
+  /** Desktop "Needs a decision": card without its own frame. */
+  bare?: boolean;
+  /** Tells the parent how many prompts are open (for the count). */
+  onCount?: (n: number) => void;
+  /** Desktop: open the session panel for a prompt. */
+  onOpenSession?: (sessionId: string) => void;
+  /** Desktop: show at most this many prompts. */
+  limit?: number;
 }
 
-export function PaymentPromptsPanel({ onChanged, compact = false }: Props) {
+export function PaymentPromptsPanel({ onChanged, compact = false, bare = false, onCount, onOpenSession, limit }: Props) {
   const [prompts, setPrompts] = useState<PaymentPromptItem[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: 'ok' | 'alert'; text: string } | null>(null);
   // The email link is read once (and taken off the address bar) on first render.
   const [linked, setLinked] = useState<PendingChoice | null>(() => takeEmailLink());
+
+  useEffect(() => { if (prompts) onCount?.(prompts.length); }, [prompts, onCount]);
 
   const reload = useCallback(async () => {
     const list = await fetchPrompts();
@@ -124,6 +134,9 @@ export function PaymentPromptsPanel({ onChanged, compact = false }: Props) {
           prompts={prompts}
           busy={busy}
           compact={compact}
+          bare={bare}
+          onOpenSession={onOpenSession}
+          limit={limit}
           initialConfirm={initial}
           onChoose={(id, c) => void choose(id, c)}
         />

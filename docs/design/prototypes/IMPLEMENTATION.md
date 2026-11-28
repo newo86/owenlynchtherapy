@@ -60,3 +60,80 @@ by Dashboard's phone branch). Layouts and navigation are unchanged.
   (`Revenue`, `FormsTable`/`FormLibrary`, `Waitlist`, `SettingsPanel`).
 - **Shared, change with care (tell the lead):** `admin.css` tokens block,
   `theme.ts`, `sage/*`, `demoWorld.ts` (append fixtures, don't reshape).
+
+## Stage 2 (desktop, built Nov 2026)
+Built to sage-diary-desktop.html (rail, band, two-column Today, session panel).
+- **Rail** (`Sidebar.tsx` `DesktopSidebar`, `.admin-nav-btn` in admin.css): the
+  seven prototype items only (Today, Calendar, Clients, Money, Forms, Waitlist,
+  Settings at the foot), prototype icons (`sage/icons.tsx`). Settings stays lit
+  on Hours. No profile menu any more. Rail hover/selected use the darker stage 1
+  wash (not the prototype's white wash) so yellow stays above 4.5:1.
+- **Today** (`Dashboard.tsx` desktop branch -> `DesktopToday.tsx`, styles in
+  `desktop.css`, helpers `desktopToday.ts` + tests, `useFreeTimes.ts`): band
+  "Today" + date + one yellow "Book next session" (the existing Schedule
+  session modal, via `onSchedule`). Left: Today's clients (hover quick actions
+  open the panel on that option), Free this week (chips book that time). Right:
+  Needs a decision (count) = pay prompts + Google differences + followed from
+  Google, each existing card in a `bare` variant with its own buttons/confirms;
+  Clinic days (next five working days from Settings hours, today outlined).
+- **Session panel** (`SessionPanel.tsx`): right-hand dialog with scrim, focus in,
+  Tab kept inside, Escape closes, focus returns to the row. Status (reminder,
+  paid, receipt), the client's page, Session done (`SessionDoneOptions`
+  `variant="panel"`), Send reminder (opens the existing `SendReminderModal`),
+  Mark as paid (no email), Email receipt (names the address; 409 re-send asks),
+  Move or edit (existing `SessionEditModal`). Existing routes only.
+- **Settings** (`SettingsHub.tsx`): tabs Practice | Hours | Account and privacy
+  (Google Calendar connect/disconnect, privacy mode, two-factor, sign out moved
+  here from the rail's profile menu). Tabs are hidden on a phone; the phone's
+  More menu still opens `settings` and `hours` directly.
+- **Forms** also holds the questionnaire tools and results (`Analytics`
+  `embedded`, heading "Questionnaire results"). There is no Analytics rail
+  item; the section id `analytics` remains only for the phone's More menu.
+- **Removed from the desktop Today** (not in the prototype): Next up card
+  (actions are row quick actions + panel), Accreditation card (Hours tab in
+  Settings), "Today" list card, "Needs attention" counts (unpaid past
+  sessions, receipts not sent, forms not returned, waitlist, unlinked events;
+  all still reachable via Money, Calendar filters, Forms, Waitlist), "This week"
+  summary. `TodayCards.tsx` is now unused on desktop.
+- Demo: Orla has an unpaid Friday and Nora a session missing from Google, so
+  Needs a decision shows several of each kind.
+
+## Stage 2b: every desktop page (Nov 2026)
+Calendar, Clients, Money, Forms, Waitlist and Settings follow the prototype on
+desktop (>= 769px). Each page is `DesktopPage` (band + 1144px content column)
+plus its own component; the phone keeps its old screens (stage 3). One session
+panel for all pages: `useSessionPanel` + `SessionPanelHost` (AdminShell owns
+it); rows are `DesktopSessionRow`. `DtDisclosure` keeps the old full-featured
+sections reachable under a prototype-style page. Page gutters are 48px
+(`--sd-pl/--sd-pr` in admin.css) so content lines up with the band title.
+- **Calendar** (`DesktopCalendar.tsx`): month grid + chosen day's rows, previous
+  / next month and Today as quiet buttons. Week view, list with filters, Google
+  events and linking an event to a client: unchanged `SessionsList` under
+  "Week view, Google events and filters". Differences with Google show on Today.
+- **Clients** (`DesktopClients.tsx`): search + list; right: name line, three
+  numbers, "Questionnaire results" (C-NIP-2 summary and change over time, values
+  top six: `ClientQuestionnaireResults` in `Analytics.tsx`, same pieces as Forms),
+  Coming up, and "Details and records" which opens the existing `ClientDetail`
+  (contact details, notes, intake PDF, receipts and statement, How often,
+  reminders opt-out, Completed, delete: all still there).
+- **Money** (`DesktopMoney.tsx`): this month's Paid / Not paid yet / Sessions
+  paid, Not paid yet rows (Mark paid opens the session panel on payment), How
+  people paid (derived from sessions: Stripe payment recorded = Card (Stripe),
+  low-cost client = Cash, anything else = Revolut or bank transfer; the payments
+  ledger has no read route). No year-statement PDF exists (statements are per
+  client), so the button leads to the income report and accountant CSV, which stay
+  in full with the monthly chart, weekly report email and Revolut statement
+  import under "Income report, monthly chart and statement import".
+- **Forms** (`DesktopForms.tsx`): rows for Intake form (Send opens "Add a
+  client", which makes and emails the intake link), Therapeutic agreement and
+  Privacy policy (PDF), Values and Therapy preferences questionnaires (Send
+  jumps to the existing "Send a questionnaire" panel with that one chosen; no
+  blank PDF exists). Below: that panel, questionnaire results, intake forms
+  received. `FormLibrary` is not used on desktop (its Open/Download are the
+  Download PDF buttons).
+- **Waitlist**: `Waitlist rows`: prototype rows with Mark contacted, Spam,
+  Remove, plus the existing email-the-list, declined and spam lists. There is no
+  "Offer a time" action in the app.
+- **Settings** (`SettingsOverview.tsx`, `SettingsHub.tsx`): opens on an overview
+  like the prototype (grouped rows, accreditation bars); each row/bar opens the
+  Practice, Hours or Account tab where it is edited. Phone unchanged.

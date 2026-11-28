@@ -126,7 +126,7 @@ export function FormsTable({ submissions, tokens, initialTab }: Props) {
                     <div className="pii" style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{sub.full_name}</div>
                   </div>
                 </td>
-                <td className="pii" data-label="Email">{sub.email ?? '—'}</td>
+                <td className="pii" data-label="Email">{sub.email ?? 'Not given'}</td>
                 <td data-label="Format">{FORMAT_LABELS[sub.session_format] ?? sub.session_format}</td>
                 <td data-label="Submitted" style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(sub.submitted_at)}</td>
                 <td style={{ textAlign: 'right' as const }}>
@@ -163,9 +163,9 @@ export function FormsTable({ submissions, tokens, initialTab }: Props) {
               return (
                 <tr key={row.id}>
                   <td>
-                    <div style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{row.client_name ?? '—'}</div>
+                    <div className="pii" style={{ fontWeight: 500, color: 'var(--forest-deep)' }}>{row.client_name ?? 'Not given'}</div>
                     {row.client_email && (
-                      <div style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{row.client_email}</div>
+                      <div className="pii" style={{ fontSize: 11, color: 'var(--ink-muted)' }}>{row.client_email}</div>
                     )}
                   </td>
                   <td data-label="Created" style={{ whiteSpace: 'nowrap' as const }}>{formatDateTime(row.created_at)}</td>

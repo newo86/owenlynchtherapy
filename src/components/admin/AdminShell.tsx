@@ -9,10 +9,9 @@ import { SessionsList } from './SessionsList';
 import { FormsTable } from './FormsTable';
 import { FormLibrary } from './FormLibrary';
 import { Revenue } from './Revenue';
-import { HoursPage } from './HoursPage';
 import { Waitlist } from './Waitlist';
 import { Analytics } from './Analytics';
-import { SettingsPanel } from './SettingsPanel';
+import { SettingsHub } from './SettingsHub';
 import { StatementImport } from './StatementImport';
 import { NewClientModal } from './NewClientModal';
 import { ScheduleSessionModal } from './ScheduleSessionModal';
@@ -22,24 +21,49 @@ import { GcalEventEditModal } from './GcalEventEditModal';
 import { MfaModal } from './MfaModal';
 import { SageHeaderBand } from './sage';
 import { adminFetch, logout } from './api';
+import { useIsPhone } from './useIsPhone';
+import { useSessionPanel, SessionPanelHost } from './SessionPanelHost';
+import { DesktopPage } from './DesktopPage';
+import { DesktopCalendar } from './DesktopCalendar';
+import { DesktopClients } from './DesktopClients';
+import { DesktopMoney } from './DesktopMoney';
+import { DesktopForms } from './DesktopForms';
 import type {
   AdminSection, ClientRow, SessionRow, TokenRow, SubmissionRow, CalendarEvent, CalendarStatus,
   SessionFilter, FormsTab, GcalRef, ReminderHealth, WaitlistRow,
 } from './types';
 import { PRACTICE } from '@/practice.config';
 
+// Band titles. Desktop matches the rail (Sage Diary): Money, Waitlist, and
+// Hours/Analytics live inside Settings/Forms. The phone keeps its own names.
 const SECTION_TITLES: Record<AdminSection, string> = {
   dashboard: 'Practice Overview',
   clients: 'Clients',
   sessions: 'Calendar',
-  revenue: 'Revenue',
+  revenue: 'Money',
   forms: 'Forms',
-  waitlist: 'Waiting list',
+  waitlist: 'Waitlist',
   analytics: 'Analytics',
   settings: 'Settings',
   hours: 'Accreditation hours',
   'new-client': 'Onboarding',
 };
+const DESKTOP_TITLE_OVERRIDES: Partial<Record<AdminSection, string>> = { hours: 'Settings', analytics: 'Forms' };
+
+/** One short line under the desktop band, as in the prototype. */
+function desktopSubtitle(section: AdminSection, clientCount: number, waiting: number, fallback: string): string {
+  switch (section) {
+    case 'sessions': return new Date().toLocaleDateString('en-IE', { month: 'long', year: 'numeric', timeZone: 'Europe/Dublin' });
+    case 'revenue': return 'This month';
+    case 'clients': return `${clientCount} client${clientCount === 1 ? '' : 's'}`;
+    case 'forms':
+    case 'analytics': return 'Send to a client, or download a PDF';
+    case 'waitlist': return waiting === 0 ? 'Nobody waiting' : `${waiting} ${waiting === 1 ? 'person' : 'people'} waiting`;
+    case 'settings':
+    case 'hours': return 'Your practice';
+    default: return fallback;
+  }
+}
 
 function greet() {
   const h = new Date().getHours();
@@ -57,6 +81,8 @@ function dateLine() {
 
 export function AdminShell() {
   const [section, setSection] = useState<AdminSection>('dashboard');
+  const isPhone = useIsPhone();
+  const sp = useSessionPanel();
 
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [tokens, setTokens] = useState<TokenRow[]>([]);
@@ -292,6 +318,10 @@ export function AdminShell() {
               onDisconnectCalendar={disconnectCalendar}
               onNewClient={() => setModalOpen(true)}
               onClickSession={(session, client) => setEditSession({ session, client })}
+              onSchedule={iso => { setScheduleInitialIso(iso); setScheduleOpen(true); }}
+              onOpenClient={setOpenClient}
+              onOpenPanel={sp.open}
+              panelSessionId={sp.panel?.id ?? null}
               onNavigateSection={navigateSection}
               greeting={greet()}
               dateLine={dateLine()}
@@ -301,25 +331,103 @@ export function AdminShell() {
             />
           )}
 
-          {section !== 'dashboard' && (
+          {/* Desktop pages follow the Sage Diary prototype; the phone keeps its own screens (stage 3). */}
+          {section !== 'dashboard' && !isPhone && (
+            <>
+              {section === 'sessions' && (
+                <DesktopCalendar
+                  clients={clients}
+                  onSchedule={() => { setScheduleInitialIso(undefined); setScheduleOpen(true); }}
+                  onOpenPanel={sp.open}
+                  panelSessionId={sp.panel?.id ?? null}
+                  onEditSession={(session, client) => setEditSession({ session, client })}
+                  onOpenClient={setOpenClient}
+                  fullCalendar={(
+                    <SessionsList
+                      clients={clients}
+                      events={events}
+                      weekOffset={weekOffset}
+                      onWeekOffsetChange={setWeekOffset}
+                      onReload={reload}
+                      initialFilter={sessionsFilter}
+                      onClickSession={(session, client) => setEditSession({ session, client })}
+                      onScheduleDay={iso => { setScheduleInitialIso(iso); setScheduleOpen(true); }}
+                      onNewClient={() => setModalOpen(true)}
+                      onEditGcalEvent={setEditGcalData}
+                    />
+                  )}
+                />
+              )}
+              {section === 'clients' && (
+                <DesktopClients
+                  clients={clients}
+                  onNewClient={() => setModalOpen(true)}
+                  onOpenPanel={sp.open}
+                  panelSessionId={sp.panel?.id ?? null}
+                  onEditSession={(session, client) => setEditSession({ session, client })}
+                  onOpenClient={setOpenClient}
+                />
+              )}
+              {section === 'revenue' && (
+                <DesktopMoney
+                  clients={clients}
+                  onOpenPanel={sp.open}
+                  fullMoney={(
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                      <Revenue clients={clients} />
+                      <StatementImport clients={clients} onReload={reload} />
+                    </div>
+                  )}
+                />
+              )}
+              {(section === 'forms' || section === 'analytics') && (
+                <DesktopForms clients={clients} submissions={submissions} tokens={tokens} formsTab={formsTab} onNewClient={() => setModalOpen(true)} />
+              )}
+              {section === 'waitlist' && (
+                <DesktopPage title="Waitlist" subtitle={desktopSubtitle('waitlist', clients.length, waitlist.filter(w => w.status === 'waiting').length, '')}>
+                  <Waitlist rows waitlist={waitlist} onReload={reload} />
+                </DesktopPage>
+              )}
+              {(section === 'settings' || section === 'hours') && (
+                <DesktopPage title="Settings" subtitle="Your practice">
+                  <SettingsHub
+                    section={section}
+                    onSection={setSection}
+                    clients={clients}
+                    calendar={calStatus}
+                    onConnectCalendar={connectCalendar}
+                    onDisconnectCalendar={disconnectCalendar}
+                    privacy={privacy}
+                    onTogglePrivacy={togglePrivacy}
+                    onOpenMfa={() => setMfaOpen(true)}
+                    onSignOut={() => { void logout().then(() => window.location.reload()); }}
+                  />
+                </DesktopPage>
+              )}
+            </>
+          )}
+
+          {section !== 'dashboard' && isPhone && (
             <>
               <SageHeaderBand
-                title={SECTION_TITLES[section]}
-                subtitle={dateLine()}
+                title={(!isPhone && DESKTOP_TITLE_OVERRIDES[section]) || SECTION_TITLES[section]}
+                subtitle={isPhone ? dateLine() : desktopSubtitle(section, clients.length, waitlist.filter(w => w.status === 'waiting').length, dateLine())}
                 action={(
                   <>
-                    {calStatus?.connected && (
+                    {/* The calm "connected" state lives in Settings > Account; only the warning shows here. */}
+                    {calStatus && !calStatus.connected && (
                       <button
-                        onClick={disconnectCalendar}
+                        type="button"
+                        onClick={connectCalendar}
                         className="admin-status-pill"
                         style={{ cursor: 'pointer' }}
-                        title={calStatus.email ? `Connected as ${calStatus.email}` : 'Connected'}
                       >
-                        <span className="admin-status-dot" />
-                        Calendar connected
+                        <span className="admin-status-dot is-off" />
+                        Connect Google Calendar
                       </button>
                     )}
-                    {section !== 'clients' && section !== 'sessions' && section !== 'settings' && section !== 'analytics' && section !== 'hours' && section !== 'waitlist' && (
+                    {/* Phone keeps its Add client button; the desktop prototype has none on these pages. */}
+                    {isPhone && section !== 'clients' && section !== 'sessions' && section !== 'settings' && section !== 'analytics' && section !== 'hours' && section !== 'waitlist' && (
                       <button onClick={() => setModalOpen(true)} className="admin-btn-primary">
                         + Add client
                       </button>
@@ -367,8 +475,6 @@ export function AdminShell() {
                 />
               )}
 
-              {section === 'hours' && <HoursPage clients={clients} />}
-
               {section === 'revenue' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                   <Revenue clients={clients} />
@@ -380,6 +486,8 @@ export function AdminShell() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                   <FormLibrary />
                   <FormsTable submissions={submissions} tokens={tokens} initialTab={formsTab} />
+                  {/* Questionnaire sending and results (were the Analytics page). */}
+                  <Analytics clients={clients} embedded />
                 </div>
               )}
 
@@ -389,7 +497,20 @@ export function AdminShell() {
                 <Waitlist waitlist={waitlist} onReload={reload} />
               )}
 
-              {section === 'settings' && <SettingsPanel />}
+              {(section === 'settings' || section === 'hours') && (
+                <SettingsHub
+                  section={section}
+                  onSection={setSection}
+                  clients={clients}
+                  calendar={calStatus}
+                  onConnectCalendar={connectCalendar}
+                  onDisconnectCalendar={disconnectCalendar}
+                  privacy={privacy}
+                  onTogglePrivacy={togglePrivacy}
+                  onOpenMfa={() => setMfaOpen(true)}
+                  onSignOut={() => { void logout().then(() => window.location.reload()); }}
+                />
+              )}
             </>
           )}
 
@@ -444,6 +565,18 @@ export function AdminShell() {
       )}
 
       {mfaOpen && <MfaModal onClose={() => setMfaOpen(false)} />}
+
+      {!isPhone && (
+        <SessionPanelHost
+          panel={sp.panel}
+          clients={clients}
+          onClose={sp.close}
+          onDismiss={sp.dismiss}
+          onChanged={reload}
+          onEditSession={(session, client) => setEditSession({ session, client })}
+          onOpenClient={setOpenClient}
+        />
+      )}
     </div>
   );
 }

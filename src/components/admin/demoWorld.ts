@@ -9,6 +9,8 @@ import type { PracticeSettings } from '@/lib/practiceSettings';
 import type { DriftItem } from '@/lib/calendarDrift';
 import type { CalendarEvent, ClientRow, SessionRow, SubmissionRow, TokenRow, WaitlistRow } from './types';
 import { demoFollowed } from './demoData';
+import { CNIP_ITEMS, type CnipResponse } from '@/lib/questionnaires/cnip';
+import { VALUES, type ValuesAnswers } from '@/lib/questionnaires/values';
 
 interface Spec {
   id: string; name: string; email: string; day: 'tue' | 'fri'; time: string;
@@ -27,7 +29,7 @@ const SPECS: Spec[] = [
   { id: 'demo-c3', name: 'Tom Placeholder', email: 'tom@example.com', day: 'tue', time: '18:00', every: 2, fee: 8000, format: 'in_person', status: 'active', from: -6, to: 4 },
   { id: 'demo-c4', name: 'Sam Tester', email: 'sam@example.com', day: 'fri', time: '15:00', every: 1, fee: 8000, format: 'in_person', status: 'active', unpaidWeeks: [-1], from: -6, to: 5 },
   { id: 'demo-c5', name: 'Nora Invented', email: 'nora@example.com', day: 'fri', time: '16:00', every: 2, fee: 8000, format: 'online', status: 'active', from: -6, to: 4 },
-  { id: 'demo-c6', name: 'Orla Fictional', email: 'orla@example.com', day: 'fri', time: '17:00', every: 1, fee: 8000, format: 'online', status: 'active', from: -6, to: 5 },
+  { id: 'demo-c6', name: 'Orla Fictional', email: 'orla@example.com', day: 'fri', time: '17:00', every: 1, fee: 8000, format: 'online', status: 'active', unpaidWeeks: [-2], from: -6, to: 5 },
   { id: 'demo-c7', name: 'Jamie Demo', email: 'jamie@example.com', day: 'fri', time: '18:00', every: 1, fee: 8000, format: 'in_person', status: 'active', from: -5, to: 5 },
   { id: 'demo-c8', name: 'Niamh Pretend', email: 'niamh@example.com', day: 'tue', time: '19:00', every: 1, fee: 8000, format: 'in_person', status: 'new', from: 1, to: 1 },
   { id: 'demo-c9', name: 'Declan Sample', email: 'declan@example.com', day: 'fri', time: '19:00', every: 1, fee: 8000, format: 'online', status: 'completed', from: -6, to: -3 },
@@ -160,6 +162,15 @@ export function buildDemoWorld(nowMs: number, opts: { calendarConnected?: boolea
     googleStart: new Date(new Date(jamie.session_date).getTime() + 60 * 60_000).toISOString(),
   }] : [];
 
+  const nora = sessions.find(s => s.client_id === 'demo-c5' && s.status === 'scheduled');
+  if (nora) {
+    drift.push({
+      key: `not_in_google:${nora.id}`,
+      kind: 'not_in_google', clientId: 'demo-c5', clientName: 'Nora Invented',
+      sessionId: nora.id, appStart: nora.session_date,
+    });
+  }
+
   const created = isoAt(nowMs, -1, 'tue', '10:00');
   return {
     nowMs, clients, sessions, events, drift, prompts,
@@ -221,7 +232,13 @@ export function demoRoute(world: DemoWorld, method: string, rawUrl: string): Dem
     case '/api/admin/calendar/followed': return ok({ items: demoFollowed });
     case '/api/admin/payment-prompts': return ok({ prompts: world.prompts });
     case '/api/admin/settings': return ok({ settings: world.settings, saved: true, updated_at: null });
-    case '/api/admin/questionnaires': return ok({ responses: [], pending: [] });
+    case '/api/admin/accreditation': return ok({ entries: [
+      { id: 'demo-a1', kind: 'supervision', entry_date: '2026-10-14', hours: 1.5, detail: 'Group supervision' },
+      { id: 'demo-a2', kind: 'own_therapy', entry_date: '2026-10-28', hours: 1, detail: null },
+      { id: 'demo-a3', kind: 'cpd', entry_date: '2026-11-05', hours: 6, detail: 'Training day' },
+    ] });
+    case '/api/admin/mfa': return ok({ enabled: true });
+    case '/api/admin/questionnaires': return ok({ responses: demoQuestionnaires(world), pending: [] });
     case '/api/admin/sessions/series': return ok({ series: { id: 'demo-series', interval_weeks: 1 } });
     case '/api/admin/sessions': {
       const id = url.searchParams.get('client_id');
@@ -230,4 +247,27 @@ export function demoRoute(world: DemoWorld, method: string, rawUrl: string): Dem
     default:
       return { status: 404, body: { error: `Demo has no fixture for ${path}` } };
   }
+}
+
+/** Made-up questionnaire results for the first demo client (two C–NIP–2 completions and one values worksheet). */
+function demoQuestionnaires(world: DemoWorld) {
+  const cnip = (shift: number) => ({
+    items: Object.fromEntries(CNIP_ITEMS.map((it, i) => [it.id, (((i + shift) % 7) - 3) as CnipResponse])),
+    additional: [],
+  });
+  const ids = VALUES.map(v => v.id);
+  const values: ValuesAnswers = {
+    ratings: Object.fromEntries(ids.map((id, i) => [id, i % 3 === 0 ? 'very' : i % 3 === 1 ? 'quite' : 'not'])) as ValuesAnswers['ratings'],
+    ownValues: {},
+    top: ids.filter((_, i) => i % 3 === 0).slice(0, 6),
+    neglected: ids.slice(1, 3),
+    areas: {},
+    step: { action: 'Walk with a friend on Sundays', value: 'friendship', obstacles: 'Busy weeks', worth: 'It would help me feel connected' },
+  };
+  const at = (weeks: number) => new Date(world.nowMs - weeks * 7 * 86_400_000).toISOString();
+  return [
+    { id: 'demo-q2', client_id: 'demo-c1', kind: 'cnip', answers: cnip(2), scores: null, submitted_at: at(2) },
+    { id: 'demo-q1', client_id: 'demo-c1', kind: 'cnip', answers: cnip(0), scores: null, submitted_at: at(10) },
+    { id: 'demo-q3', client_id: 'demo-c1', kind: 'values', answers: values, scores: null, submitted_at: at(9) },
+  ];
 }

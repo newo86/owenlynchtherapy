@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Pencil, Trash2, Mail, CircleCheck } from 'lucide-react';
+import { useClock24 } from './clock24';
 import { adminFetch, formatTime, isSameDay, startOfWeek, dedupeSessions } from './api';
 import type { ClientRow, SessionRow, CalendarEvent, GcalRef } from './types';
 import { PRACTICE } from '@/practice.config';
@@ -59,12 +60,12 @@ function lastReminderAt(s: SessionRow): string | null {
  *  green = a reminder was sent · orange = not sent yet, on a future day (the
  *  6 a.m. cron will send it) · red = it's today and nothing went out (a miss —
  *  send one by hand). No dot for past untracked sessions or opted-out clients. */
-function reminderDot(s: SessionRow, c: ClientRow): { color: string; title: string } | null {
+function reminderDot(s: SessionRow, c: ClientRow, h23 = false): { color: string; title: string } | null {
   if (c.reminders_opted_out) return null;
   const sent = lastReminderAt(s);
   if (sent) {
     const when = new Date(sent).toLocaleString('en-IE', {
-      day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Europe/Dublin',
+      day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', ...(h23 ? { hourCycle: 'h23' as const } : { hour12: true }), timeZone: 'Europe/Dublin',
     });
     return { color: '#4F8A68', title: `Reminder sent — ${when}` };
   }
@@ -104,7 +105,7 @@ export interface MergedEvent {
 /** Everything on one day: sessions (de-duplicated) plus Google events that
  *  aren't a session's own copy. Shared by the week and month views so they
  *  always agree. */
-export function mergedEventsForDay(clients: ClientRow[], events: CalendarEvent[], day: Date): MergedEvent[] {
+export function mergedEventsForDay(clients: ClientRow[], events: CalendarEvent[], day: Date, h23 = false): MergedEvent[] {
   const matched = new Set<string>();
   const out: MergedEvent[] = [];
 
@@ -124,7 +125,7 @@ export function mergedEventsForDay(clients: ClientRow[], events: CalendarEvent[]
       });
       if (ev) matched.add(ev.id);
       out.push({
-        time: formatTime(s.session_date),
+        time: formatTime(s.session_date, h23),
         label: c.full_name,
         accent: accentForSession(s, c),
         start: s.session_date,
@@ -139,7 +140,7 @@ export function mergedEventsForDay(clients: ClientRow[], events: CalendarEvent[]
     if (matched.has(e.id)) continue;
     if (!isSameDay(new Date(e.start), day)) continue;
     out.push({
-      time: formatTime(e.start),
+      time: formatTime(e.start, h23),
       label: e.title || '(no title)',
       accent: 'e-lilac',
       start: e.start,
@@ -166,6 +167,7 @@ export interface CalendarWeekGridProps {
 export function CalendarWeekGrid({
   clients, events, weekOffset, onClickSession, onScheduleDay, onReload, onReminderSession, onEditGcalEvent,
 }: CalendarWeekGridProps) {
+  const h23 = useClock24();
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [busyDeleteId, setBusyDeleteId] = useState<string | null>(null);
   // Quick-pay tick: optimistic per-session paid override + a brief confirmation
@@ -321,7 +323,7 @@ export function CalendarWeekGrid({
     });
   }, [clients]);
 
-  function eventsForDay(day: Date): MergedEvent[] { return mergedEventsForDay(clients, events, day); }
+  function eventsForDay(day: Date): MergedEvent[] { return mergedEventsForDay(clients, events, day, h23); }
 
   const clickable = !!onScheduleDay;
   const gcalEditable = !!onEditGcalEvent;
@@ -334,7 +336,7 @@ export function CalendarWeekGrid({
     if (ev.session && ev.client) {
       const s = ev.session, c = ev.client;
       const n = dedupeSessions(c.sessions).filter(x => x.status !== 'cancelled' && new Date(x.session_date) < new Date(s.session_date)).length + 1;
-      const dot = reminderDot(s, c);
+      const dot = reminderDot(s, c, h23);
       const paid = isPaid(s);
       return (
         <div className="admin-event-peek" role="dialog" aria-label={`Preview: ${c.full_name}`} style={{ top: peekShown.top, left: peekShown.left }}>
@@ -387,7 +389,7 @@ export function CalendarWeekGrid({
                     title={isClickable && !isOpen ? `${e.label} — click for actions` : undefined}
                   >
                     {isSession && !isOpen && (() => {
-                      const dot = reminderDot(e.session!, e.client!);
+                      const dot = reminderDot(e.session!, e.client!, h23);
                       const owed = isOwed(e.session!) && !isPaid(e.session!);
                       return (dot || owed) ? (
                         <span className="admin-event-dots">
