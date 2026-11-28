@@ -75,12 +75,22 @@ change made in Google, by itself, safely.
   already-cancelled sessions are never changed.
 - Only events Owen organised: an invitation from someone else is never acted on.
 - A deletion needs explicit evidence: Google reports the event or occurrence
-  as `cancelled` (or 410 Gone). Occurrences are read from five weeks before
+  as `cancelled` (or 410 Gone), or an EXDATE on the repeat removes a date the
+  rule generates (that is how the iPhone Calendar app records "delete this
+  event"). Occurrences are read from five weeks before
   now to five weeks after the series' last session; a session whose
   occurrence still isn't in that list is looked up by its occurrence id:
   live means it was moved (not followed), cancelled means deleted, 404 means
-  unknown (not followed). Any Google error, a truncated read or Google not
-  connected → **no actions** that run.
+  unknown (not followed). At most 20 lookups a run, starting at a different
+  one each run. Any Google error, a truncated read or Google not connected →
+  **no actions** that run.
+- If any part of a series can't be read (for example an old "this and
+  following" part Google has purged, which answers 404), that whole series is
+  never followed: its differences stay on the "doesn't match" card for a tap.
+- When a "this and following" edit in Google only changes details (title,
+  place), the app quietly ties the later sessions to the new part, so moving
+  or cancelling them in the app still reaches the right Google occurrence.
+  That is bookkeeping, not a change, so it isn't listed or capped.
 - **Endings far out wait.** A repeat that now ends (UNTIL) is only believed
   once its last date is about four weeks inside the ten-week read window,
   i.e. within roughly six weeks of today, so a "this and following"
@@ -97,7 +107,9 @@ change made in Google, by itself, safely.
   would touch more than 80 sessions in all, it applies **none**, emails the
   practice address once per Dublin day (via `getResend()`, so the kill switch
   applies; idempotency key `follow-google-held:<date>`), and the sessions stay
-  on the differences card.
+  on the differences card. Once the 15-a-day limit is reached, **every**
+  follow (even a single deletion) is held back until enough of the last 24
+  hours has passed; resolve them on the card meanwhile.
   (A whole weekly series is ~10 sessions in that window; sessions further out
   in an ended or changed series are cancelled with it, inside the 80.)
 - The follow step **never writes to Google, never emails a client, never
@@ -109,6 +121,8 @@ change made in Google, by itself, safely.
   app; Google still shows the change, so the card says to fix it there or it
   will show as a difference. An undone change is not re-applied for the same
   Google state (a later, different change in Google is followed as usual).
+  An undone frequency change is forgotten once Google is seen matching the
+  app's rhythm again, so changing it in Google again later is followed.
   Undo first checks the series is still as the change left it, and an older
   change can't be undone once a newer one exists for the same series.
 - A series being changed from the app ("How often", below) is locked for a
@@ -126,12 +140,17 @@ every 2 weeks. Cancels 4 sessions: … Google Calendar will be updated. Your
 client isn't emailed."), via `POST /api/admin/sessions/series/interval`
 (preview without `confirm`, apply with `confirm: true`). The change starts
 from the client's next session. The series row is claimed first with a
-short lock (`change_lock_until`): a double tap, a second tab or the
-background jobs can't act on it at the same time, and a refused claim says
-"This changed meanwhile, so nothing was done". All the database steps run in
-one transaction (`apply_series_interval_change`); if that fails, the new
-Google repeat is deleted (or an in-place rule edit put back) and nothing has
-changed. Google is updated to match
+short lock (`change_lock_until` + a random `change_lock_token`): a double
+tap, a second tab or the background jobs can't act on it at the same time,
+only the request holding the token can run or release it, and a refused
+claim says "This changed meanwhile, so nothing was done". All the database
+steps run in one transaction (`apply_series_interval_change`, which also
+checks the token and that the rhythm and Google id are still what was
+claimed). If the transaction reports a failure, the app re-reads the series
+first: if the change did save (the answer was lost on the way back), it
+carries on; if it can't tell, it leaves Google alone and says so; only a
+real failure deletes the new Google repeat (or puts an in-place rule edit
+back). Google is updated to match
 (`src/lib/seriesInterval.ts`): the old repeating event is ended the day before
 ("this and following") and a new one starts on the new rhythm, so past
 occurrences in Google stay exactly as they were. If Google isn't connected or

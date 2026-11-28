@@ -137,6 +137,9 @@ export interface UndoneMarks {
   seriesIntervals: Set<string>;
   /** `${seriesId or base}:${mark}`: the exact Google ending that was undone. */
   seriesEnded: Set<string>;
+  /** Series that have at least one interval mark: cleared once Google is seen
+   *  matching the app again, so a later genuine change is followed. */
+  intervalSeries: Set<string>;
 }
 
 export interface FollowInput {
@@ -180,6 +183,13 @@ export interface FollowPlan {
   cancelInWindow: number;
   /** Every session the plan cancels or adds. */
   touched: number;
+  /** Bookkeeping, not schedule changes: sessions whose occurrence now lives in
+   *  a later part of a split series get that part's id, so app moves and
+   *  cancels find it (like linking; not recorded, nothing to undo). */
+  relinks: { id: string; from: string; to: string }[];
+  /** Series whose undone interval marks can be cleared: Google matches the
+   *  app's rhythm again. */
+  clearMarks: string[];
 }
 
 // ── Repeat rules ────────────────────────────────────────────────────────────
@@ -252,6 +262,24 @@ const slotOfIso = (iso: string) => utcToDublinLocal(new Date(iso).toISOString())
 const baseOf = (id: string) => id.split('_')[0];
 const utcStamp = (ms: number) => new Date(ms).toISOString().replace(/[-:]/g, '').slice(0, 15);
 
+/** EXDATE lines (UTC `…Z`, or `TZID=…:` / floating local Irish time) as UTC
+ *  ms. An EXDATE is how some calendar apps (the iPhone one included) record
+ *  "delete this event" on one occurrence. */
+export function parseExdates(recurrence: string[] | null | undefined): number[] {
+  const out: number[] = [];
+  for (const line of recurrence ?? []) {
+    const m = /^EXDATE(;[^:]*)?:(.+)$/i.exec(line);
+    if (!m) continue;
+    for (const v of m[2].split(',')) {
+      const x = /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z?)$/.exec(v.trim());
+      if (!x) continue;
+      const [, y, mo, d, h, mi, sec, z] = x;
+      out.push(z ? Date.UTC(+y, +mo - 1, +d, +h, +mi, +sec) : msOfLocal(`${y}-${mo}-${d}T${h}:${mi}`) + Number(sec) * 1000);
+    }
+  }
+  return out;
+}
+
 /** When a master starts: its first date, or for a split part whose details
  *  Google no longer gives, the stamp in its `_R<stamp>` id. */
 function masterStartMs(m: GMaster): number | null {
@@ -298,7 +326,7 @@ const ref = (s: FollowSession): SessionRef => ({ id: s.id, session_date: new Dat
 export function decideFollowActions(input: FollowInput): FollowPlan {
   const { now, sessions, families, undone } = input;
   const nowMs = now.getTime();
-  const plan: FollowPlan = { actions: [], skipped: [], cancelInWindow: 0, touched: 0 };
+  const plan: FollowPlan = { actions: [], skipped: [], cancelInWindow: 0, touched: 0, relinks: [], clearMarks: [] };
 
   const byBase = new Map<string, FollowSession[]>();
   for (const s of sessions) {
@@ -316,7 +344,7 @@ export function decideFollowActions(input: FollowInput): FollowPlan {
     if (clients.size !== 1) { plan.skipped.push({ base, reason: 'several clients' }); continue; }
     const clientId = famSessions[0].client_id;
     const series = input.series.find(r => r.active && r.client_id === clientId && r.gcal_event_id && baseOf(r.gcal_event_id) === base) ?? null;
-    const out = decideFamily(fam, famSessions, series, clientId, input);
+    const out = decideFamily(fam, famSessions, series, clientId, input, plan);
     if (out.skip) plan.skipped.push({ base, reason: out.skip });
     plan.actions.push(...out.actions);
   }
@@ -339,6 +367,7 @@ function decideFamily(
   series: FollowSeries | null,
   clientId: string,
   input: FollowInput,
+  plan: Pick<FollowPlan, 'relinks' | 'clearMarks'>,
 ): { actions: FollowAction[]; skip?: string } {
   const { undone } = input;
   const nowMs = input.now.getTime();
@@ -358,8 +387,10 @@ function decideFamily(
   const liveSlots = new Set<string>();
   const cancelledSlots = new Set<string>();
   const byId = new Map<string, GInstance>();
+  const liveAt = new Map<string, GInstance>();              // unmoved live occurrence at its rule slot
   for (const i of fam.instances) {
     byId.set(i.id, i);
+    if (!i.cancelled && i.originalMs !== null && i.startMs === i.originalMs) liveAt.set(slotOfMs(i.originalMs), i);
     if (i.cancelled) {
       const at = i.originalMs ?? i.startMs;
       if (at !== null) cancelledSlots.add(slotOfMs(at));
@@ -378,7 +409,16 @@ function decideFamily(
         if (byId.get(gid)!.cancelled && !liveSlots.has(slot)) out.push({ kind: 'cancelled_occurrence', clientId, seriesId, base, session: ref(s) });
         continue;                                   // live: present (a move is drift)
       }
-      if (liveSlots.has(slot)) continue;
+      if (liveSlots.has(slot)) {
+        // Present. If the occurrence now belongs to a later part of a split
+        // series ("this and following", e.g. a new title), point the session
+        // at that part so a move or cancel in the app finds it.
+        const holder = liveAt.get(slot);
+        if (holder && /_R\d{8}T/.test(holder.masterId) && gid !== holder.masterId && !gid.startsWith(`${holder.masterId}_`)) {
+          plan.relinks.push({ id: s.id, from: gid, to: holder.masterId });
+        }
+        continue;
+      }
       if (cancelledSlots.has(slot)) out.push({ kind: 'cancelled_occurrence', clientId, seriesId, base, session: ref(s) });
       // Missing with no answer from Google: never treated as a deletion.
     }
@@ -446,6 +486,9 @@ function decideFamily(
   // 3. The series' repeat changed in Google.
   const governing = [...recurring].sort((a, b) => msOfLocal(b.startLocal!) - msOfLocal(a.startLocal!))[0];
   const gRule = rules.get(governing.id)!;
+  if (series && gRule.interval === series.interval_weeks && undone.intervalSeries.has(series.id)) {
+    plan.clearMarks.push(series.id);                         // Google matches the app again
+  }
   if (series && gRule.interval !== series.interval_weeks) {
     const anchorLocal = utcToDublinLocal(series.anchor_at);
     const anchorAfter = new Date(localDublinToUtcIso(governing.startLocal!)).toISOString();
@@ -561,7 +604,7 @@ export async function fetchFamilies(
     byBase.set(b, [...(byBase.get(b) ?? []), s]);
   }
   const out = new Map<string, GFamily>();
-  let probes = 0;
+  const lookups: { base: string; masterId: string; slot: string }[] = [];
   for (const [base, list] of byBase) {
     const masterIds = new Set<string>([base]);
     for (const s of list) if (!INSTANCE_ID.test(s.gcal_event_id!)) masterIds.add(s.gcal_event_id!);
@@ -611,10 +654,25 @@ export async function fetchFamilies(
       }
     }
 
-    // Sessions on a date a live rule generates but with no occurrence in the
-    // list: ask Google about that exact occurrence.
+    // A date the rule generates but that an EXDATE on the master removes:
+    // "delete this event" as some apps (the iPhone one) record it. That is
+    // explicit evidence, so it counts as a deleted occurrence.
     const covered = new Set<string>();
     for (const i of instances) for (const at of [i.startMs, i.originalMs]) if (at !== null) covered.add(slotOfMs(at));
+    for (const m of masters) {
+      if (m.state !== 'live' || !m.recurrence || !m.dublinZone) continue;
+      const rr = parseRrule(m.recurrence);
+      if (!rr || !isPlainWeekly(rr, m.startLocal)) continue;
+      for (const ms of parseExdates(m.recurrence)) {
+        const slot = slotOfMs(ms);
+        if (covered.has(slot) || !onMasterRhythm(m, rr, slot)) continue;
+        instances.push({ id: `${m.id}_${utcStamp(ms)}Z`, masterId: m.id, cancelled: true, startMs: null, originalMs: ms });
+        covered.add(slot);
+      }
+    }
+
+    // Sessions on a date a live rule generates but still with no occurrence:
+    // ask Google about that exact occurrence (after all families are read).
     for (const s of list) {
       const slot = slotOfIso(s.session_date);
       if (covered.has(slot) || INSTANCE_ID.test(s.gcal_event_id!) && instances.some(i => i.id === s.gcal_event_id)) continue;
@@ -622,20 +680,29 @@ export async function fetchFamilies(
         if (m.state !== 'live' || !m.recurrence || !m.dublinZone) continue;
         const rr = parseRrule(m.recurrence);
         if (!rr || !isPlainWeekly(rr, m.startLocal) || !onMasterRhythm(m, rr, slot)) continue;
-        if (probes >= MAX_PROBES) break;
-        probes++;
-        const iid = `${m.id}_${utcStamp(msOfLocal(slot))}Z`;
-        try {
-          const inst = toInstance((await cal.events.get({ calendarId: 'primary', eventId: iid })).data, m.id);
-          if (inst) { instances.push(inst); covered.add(slot); }
-        } catch (err) {
-          if (httpStatus(err) !== 404 && httpStatus(err) !== 410) throw err;   // 404: unknown, no action
-          if (httpStatus(err) === 410) { instances.push({ id: iid, masterId: m.id, cancelled: true, startMs: null, originalMs: msOfLocal(slot) }); covered.add(slot); }
-        }
+        lookups.push({ base, masterId: m.id, slot });
+        covered.add(slot);
         break;
       }
     }
     out.set(base, { base, masters, instances });
+  }
+
+  // At most MAX_PROBES lookups a run, starting at a different place each run,
+  // so a few occurrences that always 404 can't crowd out all the others.
+  const start = lookups.length ? Math.floor(now.getTime() / 300_000) % lookups.length : 0;
+  const chosen = [...lookups.slice(start), ...lookups.slice(0, start)].slice(0, MAX_PROBES);
+  for (const l of chosen) {
+    const iid = `${l.masterId}_${utcStamp(msOfLocal(l.slot))}Z`;
+    const fam = out.get(l.base)!;
+    try {
+      const inst = toInstance((await cal.events.get({ calendarId: 'primary', eventId: iid })).data, l.masterId);
+      if (inst) fam.instances.push(inst);
+    } catch (err) {
+      const code = httpStatus(err);
+      if (code === 410) fam.instances.push({ id: iid, masterId: l.masterId, cancelled: true, startMs: null, originalMs: msOfLocal(l.slot) });
+      else if (code !== 404) throw err;                       // 404: unknown, no action
+    }
   }
   return out;
 }
@@ -687,8 +754,12 @@ export interface FollowStore {
   /** Re-point scheduled sessions from one Google id to another (only where
    *  the id is still `from`); returns the ids changed. */
   relinkSessions(moves: { id: string; from: string; to: string }[]): Promise<string[]>;
-  /** Conditional: applies only when every `expect` field still matches. */
+  /** Conditional: applies only when every `expect` field still matches AND
+   *  the series isn't locked by a change from the app. */
   updateSeries(id: string, patch: SeriesPatch, expect: SeriesPatch): Promise<boolean>;
+  /** Stop honouring undone interval marks for these series (Google matches
+   *  the app again, so a later change in Google is a new one). */
+  clearIntervalMarks(seriesIds: string[], now: Date): Promise<void>;
   recordChange(c: NewFollowedChange, now: Date): Promise<boolean>;
   listChanges(since: Date): Promise<FollowedChangeRow[] | null>;
   /** Marks a change undone if it is recent and not undone yet; returns it. */
@@ -814,6 +885,9 @@ export async function followGoogle(opts: {
     return { status: 'skipped', reason: 'google' };
   }
   const plan = decideFollowActions({ ...loaded, now, windowEnd, families });
+  // Bookkeeping first (never a schedule change, so not capped or recorded).
+  if (plan.clearMarks.length) await store.clearIntervalMarks(plan.clearMarks, now);
+  if (plan.relinks.length) await store.relinkSessions(plan.relinks);
   if (plan.actions.length === 0) return { status: 'nothing', skipped: plan.skipped };
   const last24h = await store.cancelledLast24h(now);
   if (last24h === null) return { status: 'skipped', reason: 'db' };
@@ -907,15 +981,17 @@ export async function undoFollowedChange(store: FollowStore, id: string, now: Da
 /** Undone changes as the decision's "don't follow this again" marks, each tied
  *  to the exact Google state that was undone. */
 export function undoneMarks(rows: Pick<FollowedChangeRow, 'kind' | 'session_id' | 'series_id' | 'before' | 'after' | 'undone_at'>[]): UndoneMarks {
-  const m: UndoneMarks = { sessionIds: new Set(), seriesIntervals: new Set(), seriesEnded: new Set() };
+  const m: UndoneMarks = { sessionIds: new Set(), seriesIntervals: new Set(), seriesEnded: new Set(), intervalSeries: new Set() };
   for (const r of rows) {
     if (!r.undone_at) continue;
     if (r.kind === 'cancelled_occurrence' && r.session_id) m.sessionIds.add(r.session_id);
     if (r.kind === 'series_ended' && typeof r.after?.mark === 'string') {
       m.seriesEnded.add(`${r.series_id ?? String(r.before?.base)}:${r.after.mark}`);
     }
-    if (r.kind === 'interval_changed' && r.series_id && typeof r.after?.gcal_event_id === 'string' && typeof r.after?.anchor_at === 'string') {
+    if (r.kind === 'interval_changed' && r.series_id && !r.after?.mark_cleared_at
+        && typeof r.after?.gcal_event_id === 'string' && typeof r.after?.anchor_at === 'string') {
       m.seriesIntervals.add(intervalMark(r.series_id, Number(r.after.interval_weeks), r.after.gcal_event_id, r.after.anchor_at));
+      m.intervalSeries.add(r.series_id);
     }
   }
   return m;

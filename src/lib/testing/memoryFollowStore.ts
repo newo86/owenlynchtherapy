@@ -13,6 +13,8 @@ export class MemoryFollowStore implements FollowStore {
   changes: FollowedChangeRow[] = [];
   tableExists = true;
   failRecord = false;
+  /** The clock the lock check uses (tests pin it). */
+  nowMs = () => Date.now();
   private seq = 0;
 
   constructor(init: { sessions?: FollowSession[]; series?: FollowSeries[] } = {}) {
@@ -85,9 +87,18 @@ export class MemoryFollowStore implements FollowStore {
   async updateSeries(id: string, patch: SeriesPatch, expect: SeriesPatch) {
     const s = this.series.find(x => x.id === id) as (FollowSeries & Record<string, unknown>) | undefined;
     if (!s) return false;
+    if (s.change_lock_until && new Date(s.change_lock_until).getTime() > this.nowMs()) return false;
     for (const [k, v] of Object.entries(expect)) if (s[k] !== v) return false;
     Object.assign(s, patch);
     return true;
+  }
+
+  async clearIntervalMarks(seriesIds: string[], now: Date) {
+    for (const c of this.changes) {
+      if (c.kind === 'interval_changed' && c.undone_at && c.series_id && seriesIds.includes(c.series_id)) {
+        c.after = { ...c.after, mark_cleared_at: now.toISOString() };
+      }
+    }
   }
 
   async recordChange(c: NewFollowedChange, now: Date) {

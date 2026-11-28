@@ -76,6 +76,7 @@ export interface FakeOptions {
 export class FakeGoogleCalendar {
   private events = new Map<string, StoredEvent>();
   private exceptions = new Map<string, Exception>();           // instance id → exception
+  private vanished = new Set<string>();                         // instance ids Google just doesn't have
   private seq = 0;
   readonly calls: FakeCall[] = [];
   opts: FakeOptions;
@@ -145,6 +146,12 @@ export class FakeGoogleCalendar {
     this.exceptions.set(iid, { status: 'confirmed', start: dt(newLocal), end: dt(addMinutes(newLocal, minutesBetween(m.start, m.end))) });
   }
 
+  /** An occurrence Google simply doesn't have, with no EXDATE and no
+   *  deleted record (not listed, get 404): an unexplained gap. */
+  vanishOccurrence(seriesId: string, originalLocal: string): void {
+    this.vanished.add(this.instanceId(seriesId, originalLocal));
+  }
+
   /** Remove one date from the rule itself (an EXDATE line). */
   excludeDate(seriesId: string, originalLocal: string): void {
     const m = this.events.get(this.partFor(seriesId, originalLocal))!;
@@ -211,7 +218,7 @@ export class FakeGoogleCalendar {
       const ms = new Date(isoOf(addDaysLocal(startLocal, step * k))).getTime();
       if (rr.untilMs !== undefined && ms > rr.untilMs) break;
       if (ms > limitMs) break;
-      if (!ex.has(ms)) out.push(ms);
+      if (!ex.has(ms) && !this.vanished.has(`${m.id}_${utcStamp(ms)}Z`)) out.push(ms);
     }
     return out;
   }

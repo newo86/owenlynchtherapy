@@ -175,10 +175,13 @@ Numbers 1–20 match the "20 ways someone hacks your vibecoded app" list.
   can't be undone once a newer one exists for the same series. Otherwise
   nothing is touched and the message says so.
 - **Two-step changes across Google and the database** (e.g. "How often")
-  claim the row first with a conditional update (a short lock, so a double
-  submit or a background job can't act at the same time), do the database
-  part in one transaction, and only then make the irreversible Google edit;
-  if the database part fails, the earlier Google edit is put back.
+  claim the row first with a conditional update (a short lock with a random
+  owner token, so a double submit or a background job can't act at the same
+  time, and only the owner can use or release it), do the database part in
+  one transaction that re-checks the token and the claimed state, and only
+  then make the irreversible Google edit. On a reported failure, re-read the
+  row before undoing anything in Google: a lost reply after a commit must not
+  trigger a rollback.
 - **Any automated change to client records** (cancel, merge, move) leaves a
   trace naming the rows and the reason, and alerts the practitioner.
 - **Server-side reads that drive writes** page through results or check for

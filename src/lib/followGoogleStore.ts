@@ -106,10 +106,23 @@ export const supabaseFollowStore: FollowStore = {
 
   async updateSeries(id, patch: SeriesPatch, expect: SeriesPatch) {
     let q = supabaseAdmin.from('session_series').update(patch).eq('id', id);
+    // Never while "How often" holds the series (once that column exists).
+    if (await hasLockColumn()) q = q.or(`change_lock_until.is.null,change_lock_until.lt.${new Date().toISOString()}`);
     for (const [k, v] of Object.entries(expect)) q = v === null ? q.is(k, null) : q.eq(k, v as string | number | boolean);
     const { data, error } = await q.select('id');
     if (error) { console.error('[followGoogle] series update failed:', dbError(error)); return false; }
     return !!data?.length;
+  },
+
+  async clearIntervalMarks(seriesIds, now) {
+    const { data, error } = await supabaseAdmin.from(TABLE).select('id, after')
+      .eq('kind', 'interval_changed').in('series_id', seriesIds).not('undone_at', 'is', null);
+    if (error || !data) return;
+    for (const r of data) {
+      const after = (r.after ?? {}) as Record<string, unknown>;
+      if (after.mark_cleared_at) continue;
+      await supabaseAdmin.from(TABLE).update({ after: { ...after, mark_cleared_at: now.toISOString() } }).eq('id', r.id);
+    }
   },
 
   async recordChange(c: NewFollowedChange, now) {
@@ -136,6 +149,16 @@ export const supabaseFollowStore: FollowStore = {
     await supabaseAdmin.from(TABLE).update({ undone_at: null }).eq('id', id);
   },
 };
+
+let lockColumn: boolean | null = null;
+/** Whether session_series.change_lock_until exists yet (migration
+ *  session_series_change.sql). Cached once it does. */
+async function hasLockColumn(): Promise<boolean> {
+  if (lockColumn) return true;
+  const { error } = await supabaseAdmin.from('session_series').select('change_lock_until').limit(1);
+  lockColumn = !error;
+  return lockColumn;
+}
 
 /** Recent changes for the drift filter; [] when unreadable (never blocks drift). */
 export async function recentFollowedChanges(now: Date): Promise<FollowedChangeRow[]> {

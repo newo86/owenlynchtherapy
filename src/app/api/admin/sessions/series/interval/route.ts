@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'node:crypto';
 import { requireAdmin } from '@/lib/adminAuth';
 import { supabaseAdmin, dbError } from '@/lib/supabase';
 import { google } from 'googleapis';
@@ -99,28 +100,38 @@ export async function POST(req: NextRequest) {
 const supabaseIntervalDb: IntervalDb = {
   async claim(seriesId, expect, until) {
     const nowIso = new Date().toISOString();
+    const token = randomUUID();
     const { data, error } = await supabaseAdmin.from('session_series')
-      .update({ change_lock_until: until.toISOString() })
+      .update({ change_lock_until: until.toISOString(), change_lock_token: token })
       .eq('id', seriesId).eq('active', true)
       .eq('interval_weeks', expect.interval_weeks).eq('gcal_event_id', expect.gcal_event_id)
       .or(`change_lock_until.is.null,change_lock_until.lt.${nowIso}`)
       .select('id');
     if (error) {
       console.error('[series/interval] claim failed (migration session_series_change.sql applied?):', dbError(error).message);
-      return 'unavailable';
+      return { status: 'unavailable' };
     }
-    return data?.length ? 'ok' : 'conflict';
+    return data?.length ? { status: 'ok', token } : { status: 'conflict' };
   },
-  async release(seriesId) {
-    await supabaseAdmin.from('session_series').update({ change_lock_until: null }).eq('id', seriesId);
+  async release(seriesId, token) {
+    await supabaseAdmin.from('session_series').update({ change_lock_until: null, change_lock_token: null })
+      .eq('id', seriesId).eq('change_lock_token', token);
   },
   async runChange(p) {
     const { data, error } = await supabaseAdmin.rpc('apply_series_interval_change', {
-      p_series_id: p.seriesId, p_interval: p.interval, p_anchor: p.anchor, p_new_gcal: p.newGcal,
+      p_series_id: p.seriesId, p_lock_token: p.token,
+      p_expect_interval: p.expect.interval_weeks, p_expect_gcal: p.expect.gcal_event_id,
+      p_interval: p.interval, p_anchor: p.anchor, p_new_gcal: p.newGcal,
       p_cancel: p.cancel, p_relink: p.relink, p_adds: p.adds,
     });
     if (error) { console.error('[series/interval] change not saved:', dbError(error).message); return { ok: false }; }
     return { ok: true, added: Number((data as { added?: number } | null)?.added ?? 0) };
+  },
+  async readSeries(seriesId) {
+    const { data, error } = await supabaseAdmin.from('session_series')
+      .select('interval_weeks, gcal_event_id, anchor_at').eq('id', seriesId).maybeSingle();
+    if (error || !data) return null;
+    return data as { interval_weeks: number; gcal_event_id: string | null; anchor_at: string };
   },
   async setSessionEvent(sessionId, gcal) {
     await supabaseAdmin.from('sessions').update({ gcal_event_id: gcal }).eq('id', sessionId).eq('status', 'scheduled');

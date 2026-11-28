@@ -142,13 +142,21 @@ export interface AddRow { session_date: string; session_format: string; format_c
 /** The database side of a change (Supabase in the route, in memory in tests). */
 export interface IntervalDb {
   /** Conditional claim: only if the series still has this rhythm and Google
-   *  id, is active, and isn't locked. 'unavailable' = the lock column or the
-   *  transaction function doesn't exist yet (migration not applied). */
-  claim(seriesId: string, expect: { interval_weeks: number; gcal_event_id: string }, until: Date): Promise<'ok' | 'conflict' | 'unavailable'>;
-  release(seriesId: string): Promise<void>;
-  /** Every database step in one transaction; also releases the lock. */
-  runChange(p: { seriesId: string; interval: number; anchor: string; newGcal: string; cancel: string[]; relink: string[]; adds: AddRow[] }):
-    Promise<{ ok: true; added: number } | { ok: false }>;
+   *  id, is active, and isn't locked. Stores a random token with the lock, so
+   *  only this request can use or release it. 'unavailable' = the lock
+   *  columns or the transaction function don't exist yet (migration). */
+  claim(seriesId: string, expect: { interval_weeks: number; gcal_event_id: string }, until: Date):
+    Promise<{ status: 'ok'; token: string } | { status: 'conflict' | 'unavailable' }>;
+  /** Clears the lock only if it is still this token's. */
+  release(seriesId: string, token: string): Promise<void>;
+  /** Every database step in one transaction; refuses unless the lock token
+   *  and the expected rhythm still match; clears the lock on success. */
+  runChange(p: {
+    seriesId: string; token: string; expect: { interval_weeks: number; gcal_event_id: string };
+    interval: number; anchor: string; newGcal: string; cancel: string[]; relink: string[]; adds: AddRow[];
+  }): Promise<{ ok: true; added: number } | { ok: false }>;
+  /** The series as it is now (null = couldn't read it). */
+  readSeries(seriesId: string): Promise<{ interval_weeks: number; gcal_event_id: string | null; anchor_at: string } | null>;
   setSessionEvent(sessionId: string, gcal: string): Promise<void>;
 }
 
@@ -179,27 +187,32 @@ export async function changeSeriesInterval(
   const { series, plan, weeks, upcoming, now } = input;
   if (!cal) return { ok: false, status: 502, message: `Google Calendar isn’t connected. ${NOTHING} Connect it and try again.` };
 
-  const claim = await db.claim(series.id, { interval_weeks: series.interval_weeks, gcal_event_id: series.gcal_event_id }, new Date(now.getTime() + LOCK_MINUTES * 60_000));
-  if (claim === 'conflict') return { ok: false, status: 409, message: 'This changed meanwhile, so nothing was done. Close the record and open it again.' };
-  if (claim === 'unavailable') return { ok: false, status: 503, message: `This needs a one-off database update before it can be used. ${NOTHING}` };
+  const expect = { interval_weeks: series.interval_weeks, gcal_event_id: series.gcal_event_id };
+  const claim = await db.claim(series.id, expect, new Date(now.getTime() + LOCK_MINUTES * 60_000));
+  if (claim.status !== 'ok') {
+    return claim.status === 'conflict'
+      ? { ok: false, status: 409, message: 'This changed meanwhile, so nothing was done. Close the record and open it again.' }
+      : { ok: false, status: 503, message: `This needs a one-off database update before it can be used. ${NOTHING}` };
+  }
+  const token = claim.token;
 
   const fromLocal = utcToDublinLocal(plan.effectiveFrom);
   let repeat: Repeat;
   let started: { id: string; inPlace: boolean };
   try {
     const r = await readRepeat(cal, series.gcal_event_id);
-    if ('error' in r) { await db.release(series.id); return { ok: false, status: 409, message: `${r.error} ${NOTHING}` }; }
+    if ('error' in r) { await db.release(series.id, token); return { ok: false, status: 409, message: `${r.error} ${NOTHING}` }; }
     repeat = r;
     started = await startNewRepeat(cal, repeat, fromLocal, weeks);
   } catch {
-    await db.release(series.id);
+    await db.release(series.id, token);
     return { ok: false, status: 502, message: `Google Calendar didn’t accept the change. ${NOTHING} Try again in a moment.` };
   }
 
   // The app: all in one transaction.
   const template = upcoming.find(s => plan.keep.some(k => k.id === s.id)) ?? upcoming[0];
-  const saved = await db.runChange({
-    seriesId: series.id, interval: weeks, anchor: plan.effectiveFrom, newGcal: started.id,
+  let saved = await db.runChange({
+    seriesId: series.id, token, expect, interval: weeks, anchor: plan.effectiveFrom, newGcal: started.id,
     cancel: plan.cancel.map(c => c.id),
     relink: started.inPlace ? [] : plan.keep.map(k => k.id),
     adds: template ? plan.add.map(d => ({
@@ -208,6 +221,23 @@ export async function changeSeriesInterval(
       fee: template.fee,
     })) : [],
   });
+  if (!saved.ok) {
+    // The answer may have been lost after the transaction committed. Look
+    // before rolling back: deleting the new repeat while the app already
+    // points at it would make the next sync end the series.
+    const nowRow = await db.readSeries(series.id);
+    if (nowRow === null) {
+      console.error('[seriesInterval] change outcome unknown; Google left as it is');
+      return {
+        ok: false, status: 500,
+        message: 'Couldn’t confirm the change was saved, so nothing more was done. Check this client’s sessions: Google Calendar may show both repeats for now.',
+      };
+    }
+    if (nowRow.interval_weeks === weeks && nowRow.gcal_event_id === started.id
+        && new Date(nowRow.anchor_at).getTime() === new Date(plan.effectiveFrom).getTime()) {
+      saved = { ok: true, added: -1 };                     // it did save; carry on
+    }
+  }
   if (!saved.ok) {
     // Put Google back so both stay as they were.
     try {
@@ -219,7 +249,7 @@ export async function changeSeriesInterval(
     } catch (err) {
       console.error('[seriesInterval] could not put Google back:', err instanceof Error ? err.message : String(err));
     }
-    await db.release(series.id);
+    await db.release(series.id, token);
     return { ok: false, status: 500, message: `Couldn’t save the change in the app, so Google Calendar was put back. ${NOTHING}` };
   }
 
@@ -246,7 +276,7 @@ export async function changeSeriesInterval(
 
   const parts = [`Now ${freqLabel(weeks)} from ${formatShortDay(plan.effectiveFrom)}.`];
   if (plan.cancel.length) parts.push(`Cancelled ${plan.cancel.length} session${plan.cancel.length === 1 ? '' : 's'}.`);
-  if (saved.added) parts.push(`Added ${saved.added}.`);
+  if (saved.added > 0) parts.push(`Added ${saved.added}.`);
   parts.push(googleOk
     ? 'Google Calendar updated.'
     : `Google Calendar still shows the old repeat from ${formatShortDay(plan.effectiveFrom)}: delete those dates in Google (“this and following”).`);

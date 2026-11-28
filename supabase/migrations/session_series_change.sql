@@ -3,13 +3,14 @@
 -- The client record's "How often" (POST /api/admin/sessions/series/interval)
 -- changes a series in Google AND in the app. Two things make that safe:
 --
--- 1. A short lock on the series row (change_lock_until). The request claims
---    the row first, with a conditional update that only succeeds if the
---    series still has the rhythm and Google id the page showed and nobody
---    else holds the lock. A double tap, a second tab, or the 5-minute
---    calendar job (which leaves a locked series alone) can't act on it at the
---    same time. The lock expires by itself after a few minutes, so a crashed
---    request can't leave it stuck.
+-- 1. A short lock on the series row (change_lock_until + change_lock_token).
+--    The request claims the row first, with a conditional update that only
+--    succeeds if the series still has the rhythm and Google id the page
+--    showed and nobody else holds the lock, and stores a random token. Only
+--    the holder of that token can run the change or release the lock. A
+--    double tap, a second tab, or the 5-minute calendar job (which leaves a
+--    locked series alone) can't act on it at the same time. The lock expires
+--    by itself after a few minutes, so a crashed request can't leave it stuck.
 --
 -- 2. apply_series_interval_change(): every database step of the change
 --    (cancel the sessions that no longer fit, tie the kept ones to the new
@@ -22,9 +23,16 @@
 -- sessions_format_confirmed.sql first. Safe to re-run.
 
 alter table public.session_series add column if not exists change_lock_until timestamptz;
+alter table public.session_series add column if not exists change_lock_token uuid;
+
+-- An earlier draft of this function had fewer arguments: drop it if present.
+drop function if exists public.apply_series_interval_change(uuid, int, timestamptz, text, uuid[], uuid[], jsonb);
 
 create or replace function public.apply_series_interval_change(
-  p_series_id uuid,
+  p_series_id       uuid,
+  p_lock_token      uuid,
+  p_expect_interval int,
+  p_expect_gcal     text,
   p_interval  int,
   p_anchor    timestamptz,
   p_new_gcal  text,
@@ -47,8 +55,13 @@ begin
 
   select * into v_series from public.session_series where id = p_series_id for update;
   if not found or not v_series.active
-     or v_series.change_lock_until is null or v_series.change_lock_until < now() then
-    raise exception 'series is not claimed for a change';
+     or v_series.change_lock_until is null or v_series.change_lock_until < now()
+     or v_series.change_lock_token is distinct from p_lock_token then
+    raise exception 'series is not claimed for this change';
+  end if;
+  if v_series.interval_weeks is distinct from p_expect_interval
+     or v_series.gcal_event_id is distinct from p_expect_gcal then
+    raise exception 'series changed since it was claimed';
   end if;
 
   update public.sessions set status = 'cancelled'
@@ -77,12 +90,13 @@ begin
   end loop;
 
   update public.session_series
-     set interval_weeks = p_interval, anchor_at = p_anchor, gcal_event_id = p_new_gcal, change_lock_until = null
+     set interval_weeks = p_interval, anchor_at = p_anchor, gcal_event_id = p_new_gcal,
+         change_lock_until = null, change_lock_token = null
    where id = p_series_id;
 
   return jsonb_build_object('added', v_added);
 end;
 $$;
 
-revoke all on function public.apply_series_interval_change(uuid, int, timestamptz, text, uuid[], uuid[], jsonb) from public, anon, authenticated;
-grant execute on function public.apply_series_interval_change(uuid, int, timestamptz, text, uuid[], uuid[], jsonb) to service_role;
+revoke all on function public.apply_series_interval_change(uuid, uuid, int, text, int, timestamptz, text, uuid[], uuid[], jsonb) from public, anon, authenticated;
+grant execute on function public.apply_series_interval_change(uuid, uuid, int, text, int, timestamptz, text, uuid[], uuid[], jsonb) to service_role;
