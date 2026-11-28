@@ -12,13 +12,12 @@
 // together with the monthly chart and the Revolut statement import.
 
 import { useMemo, useState, type ReactNode } from 'react';
-import { dedupeSessions } from './api';
 import { DesktopPage } from './DesktopPage';
 import { DtDisclosure } from './DtDisclosure';
 import { clockTime, dublinYmd, shortDay } from './desktopToday';
-import { paidByMethod } from './paymentMethods';
+import { moneySummary } from './moneySummary';
 import type { PanelOption } from './SessionPanel';
-import type { ClientRow, SessionRow } from './types';
+import type { ClientRow } from './types';
 
 interface Props {
   clients: ClientRow[];
@@ -27,36 +26,17 @@ interface Props {
   fullMoney: ReactNode;
 }
 
-// Sessions before this date predate proper payment tracking (as in Revenue).
-const OUTSTANDING_FLOOR = new Date('2026-06-01');
 const FIRST_ROWS = 6;
 
 /** Whole euros with a thousands separator: €1,140. */
 const eur = (cents: number) => `€${Math.round(cents / 100).toLocaleString('en-IE')}`;
-const monthOf = (iso: string) => dublinYmd(iso).slice(0, 7);
 
 export function DesktopMoney({ clients, onOpenPanel, fullMoney }: Props) {
   const [showAll, setShowAll] = useState(false);
   const now = new Date();
-  const thisMonth = dublinYmd(now.toISOString()).slice(0, 7);
   const monthName = now.toLocaleDateString('en-IE', { month: 'long', timeZone: 'Europe/Dublin' });
 
-  const all = useMemo(() => {
-    const out: Array<{ s: SessionRow; c: ClientRow }> = [];
-    for (const c of clients) for (const s of dedupeSessions(c.sessions)) if (s.status !== 'cancelled') out.push({ s, c });
-    return out;
-  }, [clients]);
-
-  const paidNow = all.filter(({ s }) => s.payment_status === 'paid' && monthOf(s.session_date) === thisMonth);
-  const paidCents = paidNow.reduce((n, { s }) => n + (s.fee ?? 0), 0);
-  const unpaid = all
-    .filter(({ s }) => s.payment_status !== 'paid' && s.payment_status !== 'refunded'
-      && new Date(s.session_date) <= now && new Date(s.session_date) >= OUTSTANDING_FLOOR)
-    .sort((a, b) => new Date(b.s.session_date).getTime() - new Date(a.s.session_date).getTime());
-  const unpaidCents = unpaid.reduce((n, { s }) => n + (s.fee ?? 0), 0);
-
-  // Uses how it was paid when that was recorded, else the old derivation.
-  const methods = paidByMethod(paidNow);
+  const { paidNow, paidCents, unpaid, unpaidCents, methods } = useMemo(() => moneySummary(clients, new Date()), [clients]);
   const total = methods.reduce((n, m) => n + m.cents, 0) || 1;
   const rows = showAll ? unpaid : unpaid.slice(0, FIRST_ROWS);
 

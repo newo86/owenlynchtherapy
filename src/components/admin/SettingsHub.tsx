@@ -68,7 +68,7 @@ export function SettingsHub({ section, onSection, clients, ...account }: Props) 
   );
 }
 
-function AccountTab({ calendar, onConnectCalendar, onDisconnectCalendar, privacy, onTogglePrivacy, onOpenMfa, onSignOut }: AccountProps) {
+export function AccountTab({ calendar, onConnectCalendar, onDisconnectCalendar, privacy, onTogglePrivacy, onOpenMfa, onSignOut }: AccountProps) {
   const row = (title: string, sub: string, button: React.ReactNode) => (
     <div className="sd-account-row">
       <div><b>{title}</b><span>{sub}</span></div>

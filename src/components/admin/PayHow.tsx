@@ -5,6 +5,7 @@
 // low-cost client. Nothing is emailed by choosing; the button that follows says
 // what it will do.
 
+import { useId } from 'react';
 import { PAY_CHOICES, type PayChoice } from './paymentMethods';
 
 interface Props {
@@ -16,10 +17,11 @@ interface Props {
 }
 
 export function PayHow({ value, onChange, disabled, label = 'How did they pay?' }: Props) {
+  const labelId = useId();
   return (
     <div className="sd-seg-wrap">
-      <p className="sd-seg-label" id="pay-how-label">{label}</p>
-      <div className="sd-seg" role="radiogroup" aria-labelledby="pay-how-label">
+      <p className="sd-seg-label" id={labelId}>{label}</p>
+      <div className="sd-seg" role="radiogroup" aria-labelledby={labelId}>
         {PAY_CHOICES.map(c => (
           <button key={c.value} type="button" role="radio" aria-checked={value === c.value}
             disabled={disabled} onClick={() => onChange(c.value)}>

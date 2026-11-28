@@ -18,6 +18,8 @@ interface Props {
   clients: ClientRow[];
   calendar: CalendarStatus | null;
   onGo: (tab: Tab) => void;
+  /** Phone: one column, accreditation first (the prototype's order). */
+  phone?: boolean;
 }
 
 const DAY3: Record<string, string> = { Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat', Sunday: 'Sun' };
@@ -32,7 +34,7 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
 
 function addMonths(d: Date, n: number): Date { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; }
 
-export function SettingsOverview({ clients, calendar, onGo }: Props) {
+export function SettingsOverview({ clients, calendar, onGo, phone = false }: Props) {
   const [s, setS] = useState<PracticeSettings | null>(null);
   const [mfa, setMfa] = useState<boolean | null>(null);
   useEffect(() => {
@@ -87,7 +89,7 @@ export function SettingsOverview({ clients, calendar, onGo }: Props) {
   ];
 
   return (
-    <div className="dt-cols">
+    <div className={`dt-cols${phone ? ' ph-settings-cols' : ''}`}>
       <div className="dt-stack">
         {groups.map((g, i) => (
           <div key={i} className="dt-card">

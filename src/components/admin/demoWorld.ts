@@ -216,6 +216,8 @@ export function demoRoute(world: DemoWorld, method: string, rawUrl: string): Dem
   if (m !== 'GET') {
     if (path === '/api/admin/mark-attended') return ok({ ok: true, demo: true, paid: false, receipt_sent: false });
     if (path === '/api/admin/payment-prompts') return ok({ ok: true, demo: true, outcome: 'paid', receipt_requested: false });
+    if (path === '/api/admin/questionnaires/send') return ok({ ok: true, demo: true, urls: {}, emailed: true, email_error: null });
+    if (path === '/api/admin/sessions') return ok({ ok: true, demo: true, calendarAdded: true });
     if (path.startsWith('/api/admin/calendar/followed')) return ok();
     return ok();
   }

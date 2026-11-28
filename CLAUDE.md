@@ -56,7 +56,7 @@ comes back poor, redo it one level up and log it under "Where the line is".
 ## Project map (read this instead of the whole repo)
 
 - `src/app/(marketing)/` public site · `src/app/(admin)/admin/intake/` the dashboard
-- `src/components/admin/` dashboard UI (Dashboard, MobileHome, SessionsList,
+- `src/components/admin/` dashboard UI (Dashboard, SessionsList,
   SessionDoneOptions, StatementImport, SettingsPanel…)
 - `src/app/api/admin/*` dashboard API (auth: `requireAdmin`; crons: `CRON_SECRET` bearer)
 - `src/lib/` logic: `resend.ts` (email + kill switch), `emailTemplates.ts`,
@@ -84,6 +84,17 @@ comes back poor, redo it one level up and log it under "Where the line is".
   `api/admin/sessions/series` (+ `/interval`; `SeriesFrequency.tsx` in
   ClientDetail). Test bench: `src/lib/testing/fakeGoogleCalendar.ts` +
   `memoryFollowStore.ts`, scenarios in `src/lib/followGoogle.test.ts`
+- Sage Diary phone (stage 3, <= 768px): `phone/PhoneApp.tsx` (tab bar, main
+  action, sub-page stack, session page, Book sheet; AdminShell renders it
+  instead of the rail on a phone), `PhoneToday` / `PhoneCalendar` /
+  `PhoneClients` (+ client page) / `PhoneMore` (+ `PhoneMoney`),
+  `PhoneSessionPage`, `PhoneBookSheet`, `SwipeRow`, `phone.css`, pure
+  `phoneHelpers.ts`. "Needs a decision" (desktop and phone) is the shared
+  `NeedsDecision.tsx` (+ `needsAttention.ts`, `FollowedQuiet.tsx`). Money's
+  numbers: `moneySummary.ts`, `paymentMethods.ts` (how they paid; `PayHow.tsx`
+  is the Revolut/Cash/Card choice; `src/lib/paidVia.ts` stores it, migration
+  `payments_paid_via.sql`, optional). Dashboard times are 24-hour; client
+  emails keep 12-hour (docs/OPERATIONS.md, "Times are 24-hour")
 - Sage Diary look (Nov 2026): tokens `--sd-*` in `admin.css` + `sageDiary` in
   `theme.ts`; shared pieces in `src/components/admin/sage/` (SageHeaderBand,
   SageButton, SageNavItem, SageOptionTile, SplitCircle, `sage.css`); Inter via

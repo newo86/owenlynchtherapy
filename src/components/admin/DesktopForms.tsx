@@ -43,6 +43,15 @@ const ROWS: Row[] = [
 ];
 
 export function DesktopForms({ clients, submissions, tokens, formsTab, onNewClient }: Props) {
+  return (
+    <DesktopPage title="Forms" subtitle="Send to a client, or download a PDF">
+      <FormsBody clients={clients} submissions={submissions} tokens={tokens} formsTab={formsTab} onNewClient={onNewClient} />
+    </DesktopPage>
+  );
+}
+
+/** The Forms page without its band (also the phone's Forms sub-page). */
+export function FormsBody({ clients, submissions, tokens, formsTab, onNewClient }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [preset, setPreset] = useState<{ kind: 'values' | 'cnip'; n: number } | undefined>();
 
@@ -57,32 +66,30 @@ export function DesktopForms({ clients, submissions, tokens, formsTab, onNewClie
   }
 
   return (
-    <DesktopPage title="Forms" subtitle="Send to a client, or download a PDF">
-      <div className="dt-stack">
-        <div className="dt-card">
-          {ROWS.map(r => (
-            <div key={r.id} className="dt-lrow dt-lrow-static dt-lrow-forms">
-              <div className="dt-grow"><b>{r.title}</b><div className="dt-soft">{r.desc}</div></div>
-              {r.send
-                ? <button type="button" className="dt-btn" aria-label={`Send ${r.title} to a client`} onClick={() => send(r.send!)}>Send to a client</button>
-                : <span className="dt-soft">{r.note}</span>}
-              {r.pdf ? (
-                <button type="button" className="dt-btn" disabled={busy === r.id} aria-label={`Download ${r.title} as a PDF`}
-                  onClick={async () => { setBusy(r.id); await downloadAdminPdf(`/api/admin/forms/blank?form=${r.pdf!.form}`, r.pdf!.file); setBusy(null); }}>
-                  {busy === r.id ? 'Preparing…' : 'Download PDF'}
-                </button>
-              ) : <span />}
-            </div>
-          ))}
-        </div>
-
-        <Analytics clients={clients} embedded sendPreset={preset} />
-
-        <div className="dt-group">
-          <h2 className="dt-h">Intake forms received</h2>
-          <FormsTable submissions={submissions} tokens={tokens} initialTab={formsTab} />
-        </div>
+    <div className="dt-stack ph-forms">
+      <div className="dt-card">
+        {ROWS.map(r => (
+          <div key={r.id} className="dt-lrow dt-lrow-static dt-lrow-forms">
+            <div className="dt-grow"><b>{r.title}</b><div className="dt-soft">{r.desc}</div></div>
+            {r.send
+              ? <button type="button" className="dt-btn" aria-label={`Send ${r.title} to a client`} onClick={() => send(r.send!)}>Send to a client</button>
+              : <span className="dt-soft">{r.note}</span>}
+            {r.pdf ? (
+              <button type="button" className="dt-btn" disabled={busy === r.id} aria-label={`Download ${r.title} as a PDF`}
+                onClick={async () => { setBusy(r.id); await downloadAdminPdf(`/api/admin/forms/blank?form=${r.pdf!.form}`, r.pdf!.file); setBusy(null); }}>
+                {busy === r.id ? 'Preparing…' : 'Download PDF'}
+              </button>
+            ) : <span />}
+          </div>
+        ))}
       </div>
-    </DesktopPage>
+
+      <Analytics clients={clients} embedded sendPreset={preset} />
+
+      <div className="dt-group">
+        <h2 className="dt-h">Intake forms received</h2>
+        <FormsTable submissions={submissions} tokens={tokens} initialTab={formsTab} />
+      </div>
+    </div>
   );
 }

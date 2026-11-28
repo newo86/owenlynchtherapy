@@ -2,11 +2,8 @@
 
 import { useMemo } from 'react';
 import { dedupeSessions } from './api';
-import { MobileHome } from './MobileHome';
 import { DesktopToday } from './DesktopToday';
 import { SageHeaderBand } from './sage';
-import { CalendarDriftCard } from './CalendarDriftCard';
-import { useIsPhone } from './useIsPhone';
 import type { PanelOption } from './SessionPanel';
 import { longDay, dublinYmd } from './desktopToday';
 import type { DriftItem } from '@/lib/calendarDrift';
@@ -52,7 +49,7 @@ interface Props {
 // Translate the latest reminder run into a one-line status for the health
 // strip. Green = the morning run happened and sent what it should; anything
 // else says exactly what's wrong in plain language. `null` = still loading.
-function reminderStripState(health: ReminderHealth | null):
+export function reminderStripState(health: ReminderHealth | null):
   | { tone: 'ok' | 'warn' | 'alert'; msg: string }
   | null {
   if (!health) return null;
@@ -118,39 +115,6 @@ export function Dashboard({
     .sort((a, b) => new Date(a.s.session_date).getTime() - new Date(b.s.session_date).getTime());
 
   const strip = reminderStripState(reminderHealth);
-  const isPhone = useIsPhone();
-
-  // Phones get their own home: today's clients, free times and booking only
-  // (Owen's brief, Nov 2026).
-  if (isPhone) {
-    return (
-      <>
-        <SageHeaderBand
-          title="Today"
-          subtitle={new Date().toLocaleDateString('en-IE', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Dublin' })}
-        />
-        {/* The calm "Calendar connected" pill is hidden on phones (small text can't sit on the band),
-            but "not connected" is a warning Owen must see, so it gets its own row. */}
-        {calendarStatus && !calendarStatus.connected && (
-          <button type="button" className="sd-notice" onClick={onConnectCalendar}>
-            Google Calendar isn&apos;t connected. Tap to reconnect.
-          </button>
-        )}
-        {strip && strip.tone !== 'ok' && (
-          <div className={`admin-banner is-${strip.tone}`} role="alert">
-            <span className="admin-banner-dot" aria-hidden />{strip.msg}
-          </div>
-        )}
-        <CalendarDriftCard items={drift} onResolved={onReload} compact />
-        <MobileHome
-          clients={clients}
-          todaySessions={todaySessions}
-          onOpenSession={onClickSession}
-          onBooked={onReload}
-        />
-      </>
-    );
-  }
 
   const notices = Boolean(flash) || Boolean(strip && strip.tone !== 'ok');
   return (

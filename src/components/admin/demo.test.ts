@@ -3,6 +3,8 @@ import { isDemoAllowed } from './demoGate';
 import { setDemoHandler, adminFetch } from './api';
 import { buildDemoWorld, demoRoute } from './demoWorld';
 import { demoNowMs } from './demoClock';
+import { attentionNotices } from './needsAttention';
+import { moneySummary } from './moneySummary';
 
 describe('demo gate', () => {
   it('only allows development on /admin-demo', () => {
@@ -92,5 +94,16 @@ describe('demo world', () => {
     expect(demoRoute(world, 'GET', '/api/admin/calendar?weekOffset=0&weeks=4').status).toBe(200);
     expect(demoRoute(world, 'POST', '/api/admin/send-receipt').body).toMatchObject({ demo: true });
     expect(demoRoute(world, 'GET', '/api/admin/nope').status).toBe(404);
+  });
+  it('shows every kind of "needs attention" notice and a mix of recorded and derived payment methods', () => {
+    const keys = attentionNotices(world.clients, world.tokens, world.events, new Date(now)).map(n => n.key);
+    expect(keys).toEqual(['unpaid', 'receipts', 'forms', 'unlinked']);
+    const labels = moneySummary(world.clients, new Date(now)).methods.map(m => m.label);
+    expect(labels).toContain('Revolut');                    // recorded paid_via
+    expect(labels).toContain('Revolut or bank transfer');   // old derivation for the rest
+  });
+  it('answers the phone booking and forms sends like the real routes', () => {
+    expect(demoRoute(world, 'POST', '/api/admin/sessions').body).toMatchObject({ calendarAdded: true });
+    expect(demoRoute(world, 'POST', '/api/admin/questionnaires/send').body).toMatchObject({ emailed: true });
   });
 });

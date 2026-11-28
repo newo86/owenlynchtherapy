@@ -47,7 +47,6 @@ export function NeedsDecision({ clients, tokens, events, drift, onChanged, onOpe
   const [loaded, setLoaded] = useState(false);
   const onCount = useCallback((n: number) => { setPayCount(n); setLoaded(true); }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const notices = useMemo(() => attentionNotices(clients, tokens, events, new Date()), [clients, tokens, events]);
   const decisions = payCount + drift.length + notices.length;
 

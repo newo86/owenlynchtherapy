@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { PRACTICE } from '@/practice.config';
 import { adminFetch, startOfWeek, dedupeSessions } from './api';
-import { findFreeSlots, type FreeSlot, type OpeningHours } from './freeSlots';
+import { findFreeSlots, checkTime, type FreeSlot, type OpeningHours } from './freeSlots';
 import type { CalendarEvent, ClientRow } from './types';
 
 const WEEKS_AHEAD = 8;
@@ -46,7 +46,11 @@ export interface FreeTimes {
   loading: boolean;
   /** Google Calendar couldn't be read, so free times are unknown. */
   unavailable: boolean;
+  /** Everything a clash check needs (booking a time outside the free list); null while unknown. */
+  checkInput: CheckInput | null;
 }
+
+export type CheckInput = Parameters<typeof checkTime>[1];
 
 /** `reloadKey` re-reads Google Calendar (bump it after booking something). */
 export function useFreeTimes(clients: ClientRow[], reloadKey: number): FreeTimes {
@@ -66,17 +70,21 @@ export function useFreeTimes(clients: ClientRow[], reloadKey: number): FreeTimes
     return () => { alive = false; };
   }, [reloadKey]);
 
-  const slots = useMemo(() => {
-    if (!cal || cal.error) return [];
+  const checkInput = useMemo<CheckInput | null>(() => {
+    if (!cal || cal.error) return null;
     const now = new Date(cal.at);
     const knownUntil = startOfWeek(now);
     knownUntil.setDate(knownUntil.getDate() + WEEKS_AHEAD * 7);
-    return findFreeSlots({
-      hours: hours.open, sessionMinutes: hours.minutes,
+    return {
+      sessionMinutes: hours.minutes,
       sessions: clients.flatMap(c => dedupeSessions(c.sessions)),
-      events: cal.events, now, knownUntil, days: DAYS_AHEAD,
-    });
-  }, [cal, clients, hours]);
+      events: cal.events, now, knownUntil,
+    };
+  }, [cal, clients, hours.minutes]);
+  const slots = useMemo(
+    () => (checkInput ? findFreeSlots({ hours: hours.open, days: DAYS_AHEAD, ...checkInput }) : []),
+    [checkInput, hours.open],
+  );
 
-  return { hours: hours.open, slots, loading: cal === null, unavailable: cal?.error ?? false };
+  return { hours: hours.open, slots, loading: cal === null, unavailable: cal?.error ?? false, checkInput };
 }

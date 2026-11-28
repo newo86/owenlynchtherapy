@@ -24,3 +24,9 @@ export const IconClose = () => <svg viewBox="0 0 24 24" fill="none" stroke="curr
 // Not in the prototype (it has no "Session done" or receipt): same style.
 export const IconDone = () => <Icon join><circle cx="12" cy="12" r="9" /><path d="M8 12.5l2.7 2.7L16 9.5" /></Icon>;
 export const IconMail = () => <Icon join><rect x="3" y="5" width="18" height="14" rx="3" /><path d="M3.5 7.5l8.5 6 8.5-6" /></Icon>;
+// Phone app (copied from docs/design/prototypes/sage-diary-phone.html).
+export const IconMore = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true" focusable="false"><circle cx="5" cy="12" r="1.4" /><circle cx="12" cy="12" r="1.4" /><circle cx="19" cy="12" r="1.4" /></svg>;
+export const IconTrash = () => <Icon join><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></Icon>;
+export const IconChevronRight = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6" /></svg>;
+export const IconChevronLeft = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6" /></svg>;
+export const IconHours = () => <Icon join><path d="M22 10L12 5 2 10l10 5 10-5z" /><path d="M6 12v5c3 2 9 2 12 0v-5" /></Icon>;

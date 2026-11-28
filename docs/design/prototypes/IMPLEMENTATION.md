@@ -48,7 +48,7 @@ by Dashboard's phone branch). Layouts and navigation are unchanged.
   pages call `notFound()` outside development. Tests: `demo.test.ts`.
 - Screenshots: hide `nextjs-portal`, deviceScaleFactor 2.
 
-## Who owns what (to avoid clashes)
+## Who owns what (to avoid clashes) (stages 1 to 3 are built; this was the plan)
 - **Stage 2, desktop Today:** `Dashboard.tsx` (desktop branch), `TodayCards.tsx`,
   desktop rail in `Sidebar.tsx` (`DesktopSidebar`, `.admin-sidebar*`), session
   side panel.
@@ -101,7 +101,7 @@ Built to sage-diary-desktop.html (rail, band, two-column Today, session panel).
 ## Stage 2b: every desktop page (Nov 2026)
 Calendar, Clients, Money, Forms, Waitlist and Settings follow the prototype on
 desktop (>= 769px). Each page is `DesktopPage` (band + 1144px content column)
-plus its own component; the phone keeps its old screens (stage 3). One session
+plus its own component; the phone has its own app (stage 3, below). One session
 panel for all pages: `useSessionPanel` + `SessionPanelHost` (AdminShell owns
 it); rows are `DesktopSessionRow`. `DtDisclosure` keeps the old full-featured
 sections reachable under a prototype-style page. Page gutters are 48px
@@ -136,4 +136,81 @@ sections reachable under a prototype-style page. Page gutters are 48px
   "Offer a time" action in the app.
 - **Settings** (`SettingsOverview.tsx`, `SettingsHub.tsx`): opens on an overview
   like the prototype (grouped rows, accreditation bars); each row/bar opens the
-  Practice, Hours or Account tab where it is edited. Phone unchanged.
+  Practice, Hours or Account tab where it is edited. The phone reuses the overview in one column (stage 3).
+
+## Stage 3: the phone (Nov 2026)
+The phone (<= 768px) is its own app, built to sage-diary-phone.html:
+`AdminShell` renders `phone/PhoneApp.tsx` instead of the rail and `<main>` when
+`useIsPhone()`. The old phone home (`MobileHome`), phone Clients list
+(`ClientsList`), the old More sheet / tab bar in `Sidebar.tsx` and the unused
+`TodayCards` are gone; their `.m-*` / `.admin-tabbar` CSS in admin.css is dead
+and can be deleted in a tidy-up. Desktop code paths are unchanged apart from
+the shared pieces below.
+- **Tabs** (deep sage bar): Today, Calendar, Clients, More. One yellow main
+  action above it: "Book next session" (Today), "Book a session" (Calendar),
+  "Add a client" (Clients), none on More; hidden while a sub-page is open.
+- **Header art band** per screen: `PhoneBand` (the prototype's `.head`).
+- **Today** (`PhoneToday`): today's clients as `SwipeRow`s (time, dot, name,
+  cadence · fee, Paid or format), the hint, "Free this week" chips (next 7
+  days; open the Book sheet on that time), then "Needs a decision" and the quiet
+  "N changes followed from Google" line, plus a danger notice when Google
+  Calendar isn't connected and a banner when the morning reminder run failed.
+  Rows work by tap and Enter; swipe left (or Left arrow) reveals Move / Forms /
+  Paid / Cancel (each opens the session page on that option). Only one row is
+  open at a time.
+- **Session page** (`PhoneSessionPage`, full screen, z 75): client's page,
+  Reschedule (free-time chips from `useFreeTimes` + "Move to ...", posts to
+  `sessions/update`; "Other time, or edit details" opens `SessionEditModal`),
+  Send forms (the two questionnaires via `questionnaires/send`, after an inline
+  confirm naming the address; the intake form and agreement only go out from
+  Add a client, so they're a note), Mark as paid (Revolut/Cash/Card via
+  `PayHow`, no email) or Paid (+ Mark as not paid, not for Stripe), Send
+  reminder (existing `SendReminderModal`, preview and confirm), Session done
+  (`SessionDoneOptions variant="panel"` with `PayHow`), Email receipt (names the
+  address; 409 re-send asks), Cancel session (danger; `sessions/delete`, which
+  cancels and keeps the record). Undo on the toast for Move and Mark paid.
+- **Calendar** (`PhoneCalendar`): month grid with dots (up to 3), previous/next
+  month, the day's rows below; the old calendar (week view, Google events,
+  linking, filters) under "Week view, Google events and filters".
+- **Clients** (`PhoneClients`): search, rows (dot, name, "Next: Tue 24 Nov,
+  16:00", cadence tag) -> client page (`PhoneClientPage`, a sub-page with a back
+  button): three numbers, Coming up (swipe rows), Book next session (the one
+  yellow) and Send forms, questionnaire results (`ClientQuestionnaireResults`),
+  "Details and records" (opens `ClientDetail`).
+- **More** (`PhoneMore`): Money, Forms, Waitlist, Settings (Hours inside
+  Settings; no Analytics item), each a sub-page reusing the desktop logic:
+  `PhoneMoney` (`moneySummary`), `FormsBody` (from DesktopForms), `Waitlist rows`,
+  `SettingsOverview phone` then Practice / Hours / Account sub-pages. A Privacy
+  mode switch sits below the list (names and emails are `.pii`; toasts are blurred
+  too).
+- **Book sheet** (`PhoneBookSheet`): client, How, Repeats, time chips, Book
+  (`POST /api/admin/sessions`). Starts on a repeat that fits the first free
+  time, warns (and refuses) a repeat that would clash, "Other time, outside your
+  hours" is checked against Google Calendar (`checkTime`), asks for a fee only
+  when the client has none.
+- **Layers** (z-index): tab bar 60, main action 55, sub-page 70, session page
+  75, sheet 80; the dashboard's own pop-ups are 90+ so they open on top. Screens
+  under a layer are `inert`; the page doesn't scroll; Escape closes the top layer;
+  focus returns to what opened it (`useFocusReturn`).
+- **Demo fixtures** (`/admin-demo`, 390px wide): a Supervision event (not a client session), a mix of recorded `paid_via` and older sessions, and routes for booking and sending questionnaires, so every screen, sub-page, sheet and the four notices render.
+- **Deviations from the prototype:** Delete is "Cancel" (we never hard-delete a
+  session; the record is kept and Google's event removed); Move opens the
+  reschedule option with free times rather than a bare editor; prototype Undo on
+  every action became Undo on Move and Mark paid only (a cancel or a sent email
+  can't be undone); the prototype's Year statement PDF is not built (as on
+  desktop); chips read "Tue, 24 Nov, 19:00" because a bare weekday repeats.
+
+## Needs a decision, now with the old "needs attention" counts (desktop and phone)
+`NeedsDecision.tsx` shows, in order: "Did they pay?" prompts, Google
+differences, then notices from `needsAttention.ts` (tested): past sessions not
+marked paid and older than the 7-day prompt window; paid past sessions with no
+receipt sent; intake forms sent and not returned; Google events not linked to a
+client (all-day and "free" events left out). Only when above zero; three show,
+then "Show all". Buttons: Money, Calendar (week view opened, filter
+needs-receipt / all), Forms (pending tab), Calendar. `FollowedQuiet` stays a
+quiet line.
+
+## How they paid and 24-hour times
+See docs/OPERATIONS.md ("How a client paid", "Times are 24-hour"). New
+migration `payments_paid_via.sql` (not applied; the app works without it).
+

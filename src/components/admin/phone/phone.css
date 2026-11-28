@@ -1,0 +1,260 @@
+/* Sage Diary stage 3: the phone app (<= 768px), built to
+   docs/design/prototypes/sage-diary-phone.html. Sizes, weights and spacing are
+   the prototype's; its --page/--card/... tokens are the --sd-* ones on
+   .admin-root. Layers (z-index): tab bar 60, main action 55, sub-page 70,
+   session page 75, book sheet 80, all below the dashboard's own pop-ups
+   (editors, reminder preview, client record: 90 and up). */
+
+.admin-root .ph-app { position: relative; min-height: 100vh; min-height: 100dvh; color: var(--sd-ink); font-size: 16px; line-height: 1.45; }
+.admin-root .ph-app :focus-visible { outline: 2px solid var(--sd-ink); outline-offset: 2px; }
+.admin-root .ph-app button { font-family: inherit; color: inherit; }
+
+/* ── Screens ──────────────────────────────────────────────────────────── */
+.admin-root .ph-screen { padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px)); }
+.admin-root .ph-screen[hidden] { display: none; }
+
+/* Header art band (prototype .head): sage, soft wave, split circle, title and sub. */
+.admin-root .ph-head { position: relative; height: calc(236px + env(safe-area-inset-top, 0px)); }
+.admin-root .ph-head svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.admin-root .ph-head .ph-art-circle { left: auto; right: 14px; top: calc(30px + env(safe-area-inset-top, 0px)); width: 132px; height: 132px; }
+.admin-root .ph-head h1 { position: absolute; left: 22px; top: calc(112px + env(safe-area-inset-top, 0px)); margin: 0; font-size: 34px; font-weight: 700; color: var(--sd-on-header); letter-spacing: -0.01em; line-height: 1.2; }
+.admin-root .ph-head .ph-sub { position: absolute; left: 22px; right: 22px; top: calc(158px + env(safe-area-inset-top, 0px)); margin: 0; font-size: 19px; font-weight: 700; color: var(--sd-on-header); line-height: 1.3; }
+
+.admin-root .ph-content { padding: 8px 18px 0; display: flex; flex-direction: column; gap: 24px; }
+.admin-root .ph-group { display: flex; flex-direction: column; gap: 10px; }
+.admin-root .ph-group-title { margin: 0 2px; font-size: 15px; font-weight: 700; color: var(--sd-ink); }
+.admin-root .ph-hint { margin: 0 2px; font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .ph-card { background: var(--sd-card); border-radius: 18px; overflow: hidden; }
+.admin-root .ph-empty { padding: 18px 14px; color: var(--sd-ink-soft); margin: 0; }
+.admin-root .ph-banner { margin: 0; }
+
+/* ── Swipeable session rows ───────────────────────────────────────────── */
+.admin-root .ph-rowwrap { position: relative; overflow: hidden; }
+.admin-root .ph-card > [role="listitem"] + [role="listitem"] { border-top: 1px solid var(--sd-line); }
+.admin-root .ph-rowactions { position: absolute; inset: 0 0 0 auto; display: flex; }
+.admin-root .ph-rowactions button {
+  width: 76px; border: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  font-size: 12px; font-weight: 600; cursor: pointer; background: var(--sd-pill); color: var(--sd-ink);
+}
+.admin-root .ph-rowactions button svg { width: 20px; height: 20px; }
+.admin-root .ph-rowactions .is-paid { background: var(--sd-paid); }
+.admin-root .ph-rowactions .is-delete { background: var(--sd-danger-soft); color: var(--sd-danger); }
+.admin-root .ph-row {
+  position: relative; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px;
+  padding: 12px 14px; border: 0; background: var(--sd-card); text-align: left; cursor: pointer;
+  touch-action: pan-y; transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), background 150ms; user-select: none; -webkit-user-select: none;
+}
+.admin-root .ph-row.is-dragging { transition: none; }
+.admin-root .ph-row .ph-t { width: 48px; flex: none; font-size: 15px; color: var(--sd-ink-soft); font-variant-numeric: tabular-nums; }
+.admin-root .ph-dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+.admin-root .ph-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.admin-root .ph-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--sd-ink); }
+.admin-root .ph-meta { font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .ph-tag { flex: none; font-size: 13px; padding: 3px 9px; border-radius: 999px; background: var(--sd-pill); white-space: nowrap; color: var(--sd-ink); }
+.admin-root .ph-tag.is-paid { background: var(--sd-paid); }
+
+/* Hover and press on light rows: soft yellow, icon tile full yellow (text stays dark). */
+@media (hover: hover) {
+  .admin-root .ph-row:hover { background: color-mix(in srgb, var(--sd-action) 18%, var(--sd-card)); }
+}
+.admin-root .ph-navrow:hover, .admin-root .ph-navrow:focus-visible, .admin-root .ph-navrow:active,
+.admin-root .ph-opt-head:hover, .admin-root .ph-opt-head:focus-visible { background: color-mix(in srgb, var(--sd-action) 24%, var(--sd-card)); }
+.admin-root .ph-navrow:hover .ph-ic, .admin-root .ph-navrow:focus-visible .ph-ic, .admin-root .ph-navrow:active .ph-ic,
+.admin-root .ph-opt-head:hover .ph-ic, .admin-root .ph-opt-head:focus-visible .ph-ic { background: var(--sd-action); color: var(--sd-on-action); }
+.admin-root .ph-opt.is-danger .ph-opt-head:hover { background: var(--sd-danger-soft); }
+.admin-root .ph-opt.is-danger .ph-opt-head:hover .ph-ic { background: var(--sd-danger); color: #fff; }
+
+/* ── Chips ────────────────────────────────────────────────────────────── */
+.admin-root .ph-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-root .ph-chip {
+  border: 1.5px solid transparent; background: var(--sd-card); color: var(--sd-ink); border-radius: 999px; padding: 9px 14px;
+  font-size: 15px; font-weight: 600; cursor: pointer; min-height: 44px; font-variant-numeric: tabular-nums;
+}
+.admin-root .ph-chip[aria-pressed="true"] { background: var(--sd-pill); border-color: var(--sd-ink); }
+.admin-root .ph-sheet .ph-chip, .admin-root .ph-opt-panel .ph-chip { background: var(--sd-page); }
+.admin-root .ph-sheet .ph-chip[aria-pressed="true"], .admin-root .ph-opt-panel .ph-chip[aria-pressed="true"] { background: var(--sd-pill); }
+
+/* ── The one yellow action, above the tab bar ─────────────────────────── */
+.admin-root .ph-main {
+  position: fixed; left: 18px; right: 18px; bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  height: 56px; border: 0; border-radius: 18px; background: var(--sd-action); color: var(--sd-on-action);
+  font-size: 17px; font-weight: 700; cursor: pointer; z-index: 55; box-shadow: 0 6px 18px rgba(31, 43, 36, 0.12);
+}
+.admin-root .ph-main:hover { background: var(--sd-action-hover); }
+.admin-root .ph-main:active { transform: scale(0.98); background: var(--sd-action-active); }
+.admin-root .ph-main[hidden] { display: none; }
+
+/* ── Tab bar ──────────────────────────────────────────────────────────── */
+.admin-root .ph-tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: var(--sd-rail);
+  display: flex; justify-content: space-around; padding: 8px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+}
+.admin-root .ph-tab {
+  border: 0; background: transparent; min-width: 72px; min-height: 52px; border-radius: 14px; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  font-size: 12px; font-weight: 500; color: var(--sd-on-rail); transition: color 150ms, background 150ms;
+}
+.admin-root .ph-tab svg { width: 22px; height: 22px; }
+.admin-root .ph-tab:hover { color: var(--sd-action); }
+.admin-root .ph-tab[aria-current="page"] { background: rgba(255, 255, 255, 0.12); color: var(--sd-action); font-weight: 700; }
+.admin-root .ph-tabs .ph-tab:focus-visible { outline: 2px solid var(--sd-action); }
+
+/* ── Calendar ─────────────────────────────────────────────────────────── */
+.admin-root .ph-monthhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 2px; }
+.admin-root .ph-monthhead h2 { margin: 0; font-size: 20px; font-weight: 700; flex: 1; }
+.admin-root .ph-iconbtn { width: 44px; height: 44px; border: 0; border-radius: 12px; background: var(--sd-card); color: var(--sd-ink); cursor: pointer; display: grid; place-items: center; }
+.admin-root .ph-iconbtn svg { width: 20px; height: 20px; }
+.admin-root .ph-iconbtn:hover { background: var(--sd-action-soft); }
+.admin-root .ph-grid { display: grid; grid-template-columns: repeat(7, 1fr); padding: 10px 6px; gap: 2px 0; text-align: center; }
+.admin-root .ph-wd { font-size: 12px; color: var(--sd-ink-soft); padding-bottom: 6px; }
+.admin-root .ph-day { border: 0; background: transparent; color: var(--sd-ink); cursor: pointer; min-height: 46px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding-top: 4px; border-radius: 12px; }
+.admin-root .ph-day .ph-n { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; font-size: 15px; font-variant-numeric: tabular-nums; }
+.admin-root .ph-day.is-out .ph-n { color: var(--sd-ink-soft); opacity: 0.6; }
+.admin-root .ph-day.is-today .ph-n { box-shadow: inset 0 0 0 1.5px var(--sd-ink); }
+.admin-root .ph-day[aria-pressed="true"] .ph-n { background: var(--sd-pill); font-weight: 700; }
+.admin-root .ph-dots { display: flex; gap: 2px; height: 5px; }
+.admin-root .ph-dots i { width: 5px; height: 5px; border-radius: 50%; }
+
+/* ── Lists (Clients, More) ────────────────────────────────────────────── */
+.admin-root .ph-search { width: 100%; min-height: 48px; border: 0; border-radius: 14px; padding: 0 14px; background: var(--sd-card); color: var(--sd-ink); font: inherit; font-size: 16px; box-sizing: border-box; }
+.admin-root .ph-field-label { display: flex; flex-direction: column; gap: 6px; }
+.admin-root .ph-navrow { width: 100%; border: 0; background: transparent; color: var(--sd-ink); text-align: left; cursor: pointer; display: flex; align-items: center; gap: 14px; padding: 14px 16px; min-height: 64px; transition: background 150ms; }
+.admin-root .ph-navrow + .ph-navrow { border-top: 1px solid var(--sd-line); }
+.admin-root .ph-ic { width: 40px; height: 40px; border-radius: 12px; background: var(--sd-pill); display: grid; place-items: center; flex: none; transition: background 150ms; }
+.admin-root .ph-ic svg { width: 20px; height: 20px; }
+.admin-root .ph-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.admin-root .ph-txt b { font-size: 17px; font-weight: 600; }
+.admin-root .ph-txt > span { font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .ph-chev { width: 18px; height: 18px; color: var(--sd-ink-soft); flex: none; }
+.admin-root .ph-clientrow .ph-txt b { font-size: 16px; }
+
+/* ── Full-screen layers: the session page and sub-pages ───────────────── */
+.admin-root .ph-layer { position: fixed; inset: 0; background: var(--sd-page); display: flex; flex-direction: column; animation: ph-rise 260ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.admin-root .ph-layer.is-session { z-index: 75; }
+.admin-root .ph-layer.is-page { z-index: 70; bottom: calc(74px + env(safe-area-inset-bottom, 0px)); }
+@keyframes ph-rise { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.admin-root .ph-layer-head { background: var(--sd-header); color: var(--sd-on-header); padding: max(54px, calc(24px + env(safe-area-inset-top, 0px))) 20px 22px; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.admin-root .ph-layer-head h2 { margin: 0; font-size: 26px; font-weight: 700; color: var(--sd-on-header); line-height: 1.2; }
+.admin-root .ph-layer-head p { margin: 4px 0 0; font-size: 19px; font-weight: 700; color: var(--sd-on-header); line-height: 1.3; }
+.admin-root .ph-close { width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.18); color: var(--sd-on-header); cursor: pointer; display: grid; place-items: center; flex: none; }
+.admin-root .ph-close svg { width: 22px; height: 22px; }
+.admin-root .ph-layer-head :focus-visible { outline-color: #fff; }
+.admin-root .ph-layer-body { flex: 1; overflow-y: auto; padding: 20px 18px 40px; display: flex; flex-direction: column; gap: 14px; overscroll-behavior: contain; }
+.admin-root .ph-layer-body > * { flex-shrink: 0; }
+.admin-root .ph-back { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 12px 0 6px; margin: -8px 0 6px -6px; border: 0; border-radius: 12px; background: rgba(255, 255, 255, 0.18); color: var(--sd-on-header); font-weight: 600; cursor: pointer; }
+.admin-root .ph-back svg { width: 20px; height: 20px; }
+.admin-root .ph-page-head { display: flex; flex-direction: column; align-items: flex-start; }
+.admin-root .ph-section-title { margin: 6px 2px 0; font-size: 15px; font-weight: 700; color: var(--sd-ink); }
+
+/* Session options (prototype .opt) */
+.admin-root .ph-opt { background: var(--sd-card); border-radius: 18px; overflow: hidden; }
+.admin-root .ph-opt-head { width: 100%; border: 0; background: transparent; color: var(--sd-ink); display: flex; align-items: center; gap: 14px; padding: 16px; min-height: 64px; cursor: pointer; text-align: left; transition: background 150ms; }
+.admin-root .ph-opt-head .ph-chev { transition: transform 200ms; }
+.admin-root .ph-opt.is-open .ph-opt-head .ph-chev { transform: rotate(90deg); }
+.admin-root .ph-opt.is-open .ph-opt-head { background: color-mix(in srgb, var(--sd-action) 24%, var(--sd-card)); }
+.admin-root .ph-opt.is-open .ph-opt-head .ph-ic { background: var(--sd-action); color: var(--sd-on-action); }
+.admin-root .ph-opt.is-danger .ph-ic { background: var(--sd-danger-soft); color: var(--sd-danger); }
+.admin-root .ph-opt.is-danger .ph-txt b { color: var(--sd-danger); }
+.admin-root .ph-opt.is-danger.is-open .ph-opt-head { background: var(--sd-danger-soft); }
+.admin-root .ph-opt.is-danger.is-open .ph-ic { background: var(--sd-danger); color: #fff; }
+.admin-root .ph-opt-panel { padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.admin-root .ph-opt-panel[hidden] { display: none; }
+.admin-root .ph-opt-panel .ph-label { font-size: 14px; color: var(--sd-ink-soft); margin: 0; }
+.admin-root .ph-check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 16px; cursor: pointer; }
+.admin-root .ph-check input { width: 22px; height: 22px; accent-color: var(--sd-header); flex: none; }
+.admin-root .ph-do { min-height: 52px; border: 0; border-radius: 16px; background: var(--sd-action); color: var(--sd-on-action); font-size: 17px; font-weight: 700; cursor: pointer; padding: 0 16px; }
+.admin-root .ph-do:hover:not(:disabled) { background: var(--sd-action-hover); }
+.admin-root .ph-do:disabled { opacity: 0.5; cursor: default; }
+.admin-root .ph-do.is-danger { background: var(--sd-danger); color: #fff; }
+.admin-root .ph-do.is-danger:hover:not(:disabled) { background: #8f1f19; }
+.admin-root .ph-quiet { min-height: 44px; border: 0; background: transparent; color: var(--sd-ink-soft); cursor: pointer; font-size: 15px; text-decoration: underline; }
+.admin-root .ph-note { margin: 0; font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .ph-msg { margin: 0; padding: 12px 16px; border-radius: 14px; background: var(--sd-paid); font-size: 15px; color: var(--sd-ink); }
+.admin-root .ph-msg.is-error { background: var(--sd-danger-soft); color: var(--sd-danger); }
+.admin-root .ph-status { list-style: none; margin: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; }
+.admin-root .ph-status li { display: flex; align-items: center; gap: 10px; color: var(--sd-ink-soft); }
+.admin-root .ph-status li.is-ok { color: var(--sd-ink); }
+.admin-root .ph-status svg { flex: none; width: 16px; height: 16px; }
+.admin-root .ph-status a { color: var(--sd-ink); }
+.admin-root .ph-confirm { background: var(--sd-page); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.admin-root .ph-confirm p { margin: 0; }
+
+/* Sub-page pieces */
+.admin-root .ph-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.admin-root .ph-stat { background: var(--sd-card); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.admin-root .ph-stat b { font-size: 22px; font-variant-numeric: tabular-nums; }
+.admin-root .ph-stat span { font-size: 13px; color: var(--sd-ink-soft); }
+.admin-root .ph-pad { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.admin-root .ph-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-root .ph-smallbtn { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--sd-pill); color: var(--sd-ink); font-weight: 600; cursor: pointer; }
+.admin-root .ph-smallbtn:hover:not(:disabled) { background: var(--sd-action-soft); }
+.admin-root .ph-smallbtn.is-yellow { background: var(--sd-action); color: var(--sd-on-action); }
+.admin-root .ph-smallbtn.is-yellow:hover { background: var(--sd-action-hover); }
+.admin-root .ph-smallbtn:disabled { opacity: 0.5; cursor: default; }
+.admin-root .ph-moneyrow { display: flex; align-items: center; gap: 12px; padding: 12px 16px; min-height: 60px; }
+.admin-root .ph-moneyrow + .ph-moneyrow { border-top: 1px solid var(--sd-line); }
+.admin-root .ph-grow { flex: 1; min-width: 0; }
+.admin-root .ph-grow b { font-weight: 600; }
+.admin-root .ph-amt { font-variant-numeric: tabular-nums; font-weight: 600; }
+.admin-root .ph-soft { font-size: 14px; color: var(--sd-ink-soft); }
+.admin-root .ph-privacy { display: flex; align-items: center; gap: 14px; padding: 14px 16px; min-height: 64px; }
+.admin-root .ph-switch { min-width: 76px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--sd-pill); color: var(--sd-ink); font-weight: 700; cursor: pointer; }
+.admin-root .ph-switch[aria-pressed="true"] { background: var(--sd-header); color: #fff; }
+
+/* The existing desktop pieces, reused inside a phone sub-page */
+.admin-root .ph-layer-body .dt-bar-row { font-size: 16px; }
+.admin-root .ph-layer-body .dt-more { margin-top: 0; }
+.admin-root .ph-layer-body .dt-stack { gap: 20px; }
+.admin-root .ph-layer-body .dt-cols { padding-bottom: 0; }
+.admin-root .ph-settings-cols > :last-child { order: -1; }
+.admin-root .ph-layer-body .dt-setrow { flex-wrap: wrap; gap: 2px 12px; }
+.admin-root .ph-layer-body .dt-setrow .dt-soft { text-align: left; flex-basis: 100%; order: 3; }
+.admin-root .ph-layer-body .dt-setrow .dt-grow { flex: 1 1 60%; }
+.admin-root .ph-layer-body .dt-lrow-forms { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.admin-root .ph-layer-body .dt-lrow-forms > .dt-grow { flex: 1 1 100%; }
+.admin-root .ph-layer-body .dt-lrow-wait { flex-direction: column; align-items: stretch; gap: 10px; }
+.admin-root .ph-layer-body .dt-lrow-wait > * { min-width: 0; }
+.admin-root .ph-layer-body .dt-lrow-wait .dt-grow { flex: none; width: 100%; }
+.admin-root .ph-layer-body .dt-row-actions { justify-content: flex-start; }
+.admin-root .ph-layer-body .dt-card, .admin-root .ph-layer-body .dt-opt { min-width: 0; }
+.admin-root .ph-layer-body .admin-card { padding: 18px; }
+
+/* ── Book sheet ───────────────────────────────────────────────────────── */
+.admin-root .ph-scrim { position: fixed; inset: 0; z-index: 78; background: var(--sd-scrim); animation: ph-fade 200ms ease both; border: 0; padding: 0; }
+.admin-root .ph-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; background: var(--sd-card); border-radius: 26px 26px 0 0;
+  padding: 10px 18px calc(28px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px;
+  max-height: 92dvh; overflow-y: auto; animation: ph-sheet 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes ph-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ph-sheet { from { transform: translateY(100%); } to { transform: none; } }
+.admin-root .ph-grab { width: 40px; height: 5px; border-radius: 3px; background: var(--sd-line); align-self: center; flex: none; }
+.admin-root .ph-sheet h2 { margin: 0; font-size: 20px; font-weight: 700; }
+.admin-root .ph-field { display: flex; flex-direction: column; gap: 6px; }
+.admin-root .ph-select, .admin-root .ph-input { min-height: 48px; border: 0; border-radius: 12px; padding: 0 12px; background: var(--sd-page); color: var(--sd-ink); font: inherit; font-size: 16px; box-sizing: border-box; width: 100%; }
+.admin-root .ph-warn { margin: 0; font-size: 14px; color: var(--sd-danger); }
+.admin-root .ph-linkbtn { align-self: flex-start; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--sd-ink); text-decoration: underline; cursor: pointer; font-size: 15px; }
+.admin-root .ph-otherrow { display: flex; gap: 8px; }
+
+/* ── Toast ────────────────────────────────────────────────────────────── */
+.admin-root .ph-toast { position: fixed; left: 18px; right: 18px; bottom: calc(160px + env(safe-area-inset-bottom, 0px)); z-index: 85; background: var(--sd-ink); color: var(--sd-page); border-radius: 14px; padding: 6px 6px 6px 16px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; animation: ph-fade 200ms ease both; }
+.admin-root .ph-toast span { flex: 1; padding: 8px 0; }
+.admin-root .ph-toast button { min-height: 44px; padding: 0 12px; border: 0; background: transparent; color: var(--sd-action); font-weight: 700; cursor: pointer; }
+.admin-root .ph-toast.is-error { background: var(--sd-danger); color: #fff; }
+
+/* Needs a decision, compact on a phone */
+.admin-root .ph-content .dt-group { gap: 10px; }
+.admin-root .ph-content .dt-pad { padding: 16px; }
+.admin-root .ph-content .dt-btn, .admin-root .ph-layer-body .dt-btn { min-height: 44px; }
+.admin-root .ph-content .dt-fg-line { margin: 0 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-root .ph-layer, .admin-root .ph-sheet, .admin-root .ph-scrim, .admin-root .ph-toast { animation: none; }
+  .admin-root .ph-row { transition: none; }
+}
+.admin-root .ph-toast svg { width: 18px; height: 18px; }
+
+/* Settings > Account inside a sub-page: let the text and its button wrap instead of squeezing the button. */
+.admin-root .ph-layer-body .sd-account-row { flex-wrap: wrap; }
+.admin-root .ph-layer-body .sd-account-row > div { flex: 1 1 170px; min-width: 0; }
+.admin-root .ph-layer-body .sd-account-row .admin-btn-secondary { white-space: nowrap; flex: none; min-height: 44px; }
