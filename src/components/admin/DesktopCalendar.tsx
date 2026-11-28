@@ -25,12 +25,14 @@ interface Props {
   onOpenClient: (c: ClientRow) => void;
   /** The existing calendar (SessionsList), kept under the month. */
   fullCalendar: ReactNode;
+  /** Open that section on arrival (a "Needs a decision" notice sent Owen here). */
+  openFull?: boolean;
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export function DesktopCalendar({ clients, onSchedule, onOpenPanel, panelSessionId, onEditSession, onOpenClient, fullCalendar }: Props) {
+export function DesktopCalendar({ clients, onSchedule, onOpenPanel, panelSessionId, onEditSession, onOpenClient, fullCalendar, openFull }: Props) {
   const todayYmd = dublinYmd(new Date().toISOString());
   const [ty, tm] = todayYmd.split('-').map(Number);
   const [month, setMonth] = useState({ y: ty, m: tm - 1 });
@@ -121,7 +123,7 @@ export function DesktopCalendar({ clients, onSchedule, onOpenPanel, panelSession
         </div>
       </div>
 
-      <DtDisclosure title="Week view, Google events and filters" sub="The full calendar: week, list, unpaid and receipt filters, and linking Google events to clients">
+      <DtDisclosure id="calendar-full" defaultOpen={openFull} title="Week view, Google events and filters" sub="The full calendar: week, list, unpaid and receipt filters, and linking Google events to clients">
         <Clock24Context.Provider value>{fullCalendar}</Clock24Context.Provider>
       </DtDisclosure>
     </DesktopPage>

@@ -337,6 +337,7 @@ export function AdminShell() {
               {section === 'sessions' && (
                 <DesktopCalendar
                   clients={clients}
+                  openFull={sessionsFilter !== undefined}
                   onSchedule={() => { setScheduleInitialIso(undefined); setScheduleOpen(true); }}
                   onOpenPanel={sp.open}
                   panelSessionId={sp.panel?.id ?? null}

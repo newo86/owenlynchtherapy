@@ -35,6 +35,8 @@ const SPECS: Spec[] = [
   { id: 'demo-c9', name: 'Declan Sample', email: 'declan@example.com', day: 'fri', time: '19:00', every: 1, fee: 8000, format: 'online', status: 'completed', from: -6, to: -3 },
 ];
 
+const PAID_VIA_DEMO: Record<string, string> = { 'demo-c1': 'revolut', 'demo-c2': 'cash', 'demo-c3': 'card', 'demo-c7': 'revolut' };
+
 export interface DemoWorld {
   nowMs: number;
   clients: ClientRow[];
@@ -123,6 +125,8 @@ export function buildDemoWorld(nowMs: number, opts: { calendarConnected?: boolea
         payment_status: past && !unpaid ? 'paid' : 'unpaid',
         stripe_payment_link_url: null,
         paid_at: past && !unpaid ? when : null,
+        // How they paid, where recorded (the rest show Money's older derivation).
+        paid_via: past && !unpaid ? PAID_VIA_DEMO[spec.id] ?? null : null,
         // Most past sessions had a receipt; one paid Friday did not (shows "needs receipt").
         receipt_sent_at: past && !unpaid && !(spec.id === 'demo-c6' && w === -1) ? when : null,
         notes: null,
@@ -152,6 +156,13 @@ export function buildDemoWorld(nowMs: number, opts: { calendarConnected?: boolea
       sessions: own,
     });
   }
+
+  // A Google event that is not a client session (shows the "not linked to a client" notice).
+  const supStart = new Date(new Date(isoAt(nowMs, 0, 'tue', '12:30')).getTime() + 24 * 3600_000).toISOString();
+  events.push({
+    id: 'demo-evt-supervision', title: 'Supervision', start: supStart,
+    end: new Date(new Date(supStart).getTime() + 3600_000).toISOString(),
+  });
 
   const jamie = sessions.find(s => s.client_id === 'demo-c7' && s.status === 'scheduled');
   const drift: DriftItem[] = jamie ? [{

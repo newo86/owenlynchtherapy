@@ -3,14 +3,13 @@
 // Desktop Today (Sage Diary stage 2), built to docs/design/prototypes/
 // sage-diary-desktop.html: two columns. Left: today's clients (hover for quick
 // actions, click for the session panel) and the free times this week. Right:
-// "Needs a decision" (the pay prompts, the Google differences and the changes
-// followed from Google, in one card, each with its own buttons and confirms)
+// "Needs a decision" (the pay prompts, the Google differences and the old
+// "needs attention" notices, in one card, each with its own buttons and confirms)
 // and the next clinic days. The header band is rendered by Dashboard.
 
 import { useCallback, useMemo, useState } from 'react';
-import { CalendarDriftCard } from './CalendarDriftCard';
-import { PaymentPromptsPanel } from './PaymentPromptsPanel';
-import { FollowedFromGooglePanel } from './FollowedFromGooglePanel';
+import { NeedsDecision, type Navigate } from './NeedsDecision';
+import { FollowedQuiet } from './FollowedQuiet';
 import type { PanelOption } from './SessionPanel';
 import { DesktopSessionRow } from './DesktopSessionRow';
 import { useFreeTimes } from './useFreeTimes';
@@ -18,7 +17,7 @@ import {
   clinicDays, clinicDaysLabel, dublinYmd, shortDay, slotsNextWeek,
 } from './desktopToday';
 import type { DriftItem } from '@/lib/calendarDrift';
-import type { ClientRow, SessionRow } from './types';
+import type { CalendarEvent, ClientRow, SessionRow, TokenRow } from './types';
 
 interface Props {
   clients: ClientRow[];
@@ -27,6 +26,10 @@ interface Props {
   /** Today's sessions, soonest first (cancelled ones left out). */
   todaySessions: Array<{ s: SessionRow; c: ClientRow }>;
   drift: DriftItem[];
+  tokens: TokenRow[];
+  events: CalendarEvent[];
+  /** Go to another page (a notice's button). */
+  onNavigate: Navigate;
   onReload: () => void;
   /** Open the existing Schedule session flow, optionally on a chosen time ("YYYY-MM-DDTHH:MM"). */
   onSchedule: (isoLocal?: string) => void;
@@ -40,12 +43,8 @@ interface Props {
 }
 
 export function DesktopToday({
-  clients, allSessions, todaySessions, drift, onReload, onSchedule, onEditSession, onOpenClient, onOpenPanel, panelSessionId,
+  clients, allSessions, todaySessions, drift, tokens, events, onNavigate, onReload, onSchedule, onEditSession, onOpenClient, onOpenPanel, panelSessionId,
 }: Props) {
-  const [payCount, setPayCount] = useState(0);
-  const [followCount, setFollowCount] = useState(0);
-  const [showAll, setShowAll] = useState(false);
-  const [fgOpen, setFgOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const free = useFreeTimes(clients, reloadKey);
 
@@ -56,9 +55,6 @@ export function DesktopToday({
     () => clinicDays(free.hours, allSessions, free.slots, todayYmd, 5),
     [free.hours, allSessions, free.slots, todayYmd],
   );
-  const decisions = payCount + drift.length;
-  const NOTICES = 3;
-
   const refresh = useCallback(() => { onReload(); setReloadKey(k => k + 1); }, [onReload]);
 
   const open = onOpenPanel;
@@ -101,25 +97,8 @@ export function DesktopToday({
         </div>
 
         <div className="dt-stack">
-          <div className="dt-group">
-            <h2 className="dt-h">Needs a decision <small>{decisions}</small></h2>
-            <div className="dt-card dt-pad dt-nd">
-              <div className="dt-nd-group">
-                <PaymentPromptsPanel bare onChanged={refresh} onCount={setPayCount}
-                  limit={showAll ? undefined : NOTICES} onOpenSession={id => open(id, 'paid')} />
-              </div>
-              <div className="dt-nd-group">
-                <CalendarDriftCard bare items={drift} onResolved={refresh}
-                  limit={showAll ? undefined : Math.max(0, NOTICES - payCount)} />
-              </div>
-              {decisions > NOTICES && (
-                <button type="button" className="dt-link" aria-expanded={showAll} onClick={() => setShowAll(s => !s)}>
-                  {showAll ? 'Show fewer' : `Show all (${decisions})`}
-                </button>
-              )}
-              {decisions === 0 && <p className="dt-hint">Nothing needs a decision right now.</p>}
-            </div>
-          </div>
+          <NeedsDecision clients={clients} tokens={tokens} events={events} drift={drift} onChanged={refresh}
+            onOpenSession={id => open(id, 'paid')} onNavigate={onNavigate} />
 
           <div className="dt-group">
             <h2 className="dt-h">Clinic days <small>{clinicDaysLabel(free.hours)}</small></h2>
@@ -135,17 +114,7 @@ export function DesktopToday({
             </ul>
             {free.unavailable && <p className="dt-hint">Free times aren&apos;t shown: Google Calendar couldn&apos;t be read.</p>}
             {/* Changes the app copied from Google: a quiet line, not a decision. Undo is in the expanded list. */}
-            {(followCount > 0 || fgOpen) && (
-              <p className="dt-fg-line">
-                {followCount} {followCount === 1 ? 'change' : 'changes'} followed from Google ·{' '}
-                <button type="button" className="dt-link" aria-expanded={fgOpen} onClick={() => setFgOpen(o => !o)}>
-                  {fgOpen ? 'Hide' : 'Review'}
-                </button>
-              </p>
-            )}
-            <div className="dt-card dt-pad" hidden={!fgOpen}>
-              <FollowedFromGooglePanel bare onChanged={refresh} onCount={setFollowCount} />
-            </div>
+            <FollowedQuiet onChanged={refresh} />
           </div>
         </div>
       </div>

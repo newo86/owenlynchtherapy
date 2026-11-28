@@ -101,7 +101,7 @@ function reminderStripState(health: ReminderHealth | null):
 // ── component ──────────────────────────────────────────────────────────────
 
 export function Dashboard({
-  clients, calendarStatus, drift, reminderHealth, flash,
+  clients, tokens, events, calendarStatus, drift, reminderHealth, flash, onNavigateSection,
   onReload, onConnectCalendar, onClickSession, onSchedule, onOpenClient, onOpenPanel, panelSessionId,
 }: Props) {
   const today = new Date();
@@ -191,6 +191,9 @@ export function Dashboard({
         allSessions={allSessions}
         todaySessions={todaySessions}
         drift={drift}
+        tokens={tokens}
+        events={events}
+        onNavigate={onNavigateSection}
         onReload={onReload}
         onSchedule={onSchedule}
         onEditSession={onClickSession}
