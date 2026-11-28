@@ -57,7 +57,7 @@ function reminderStripState(health: ReminderHealth | null):
   }
   const run = health.lastRun;
   if (!run) {
-    return { tone: 'warn', msg: 'No automatic reminder run recorded yet. The health log starts with the next 7 a.m. run.' };
+    return { tone: 'warn', msg: 'No automatic reminder run recorded yet. The health log starts with the next 07:00 run.' };
   }
   const ranAt = new Date(run.ran_at);
   const when = ranAt.toLocaleString('en-IE', {

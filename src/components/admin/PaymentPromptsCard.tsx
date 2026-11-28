@@ -303,9 +303,9 @@ export function PaymentPromptsCard({ prompts, onChoose, busy = null, initialConf
                   <button type="button" className="dt-btn" aria-label={`Open session: ${p.label}, ${formatShortDay(p.session_date)}`}
                     onClick={() => onOpenSession(p.session_id)}>Open session</button>
                   <button type="button" className="dt-link" data-notice-link={p.session_id}
-                    aria-label={`Not yet, ask me tomorrow: ${p.label}, ${formatShortDay(p.session_date)}`}
+                    aria-label={`Ask me tomorrow: ${p.label}, ${formatShortDay(p.session_date)}`}
                     onClick={() => { refocus.current = p.session_id; setConfirm({ sessionId: p.session_id, choice: 'remind_tomorrow' }); }}>
-                    Not yet, ask me tomorrow
+                    Ask me tomorrow
                   </button>
                 </div>
               )}

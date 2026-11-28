@@ -259,7 +259,7 @@
   transition: color 150ms ease, background 150ms ease;
 }
 .admin-nav-btn svg { width: 22px; height: 22px; }
-.admin-nav-btn.is-privacy[aria-pressed="true"] { background: var(--sd-rail-selected); color: var(--sd-action); }
+.admin-nav-btn.is-privacy[aria-pressed="true"] { background: transparent; color: var(--sd-action); box-shadow: inset 0 0 0 1.5px var(--sd-action); }
 .admin-privacy-on { font-size: 12px; font-weight: 700; line-height: 1; margin-top: -2px; }
 @media (hover: hover) {
   .admin-nav-btn:hover { background: var(--sd-rail-hover); color: var(--sd-action); }

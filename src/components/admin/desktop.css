@@ -145,7 +145,7 @@
 .admin-root .dt-status ul { list-style: none; margin: 0; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; }
 .admin-root .dt-status li { display: flex; align-items: center; gap: 10px; color: var(--sd-ink-soft); }
 .admin-root .dt-status li.is-ok { color: var(--sd-ink); }
-.admin-root .dt-status svg { flex: none; }
+.admin-root .dt-status svg { flex: none; width: 16px; height: 16px; }
 .admin-root .dt-status a { color: var(--sd-ink); }
 .admin-root .dt-msg { margin: 0; padding: 12px 16px; border-radius: 14px; background: var(--sd-paid); font-size: 15px; color: var(--sd-ink); }
 .admin-root .dt-msg.is-error { background: var(--sd-danger-soft); color: var(--sd-danger); }
@@ -170,3 +170,10 @@
 @media (max-width: 768px) {
   .admin-root .sd-settings-tabs { display: none; }
 }
+
+/* Needs a decision confirm buttons: the band's "Book next session" is Today's
+   one yellow primary, so confirms inside the card use the secondary pill. */
+.admin-root .pp-card.is-bare .pp-btn.admin-btn-primary {
+  background: var(--sd-pill); color: var(--sd-ink); border-color: transparent; box-shadow: none;
+}
+.admin-root .pp-card.is-bare .pp-btn.admin-btn-primary:hover { background: var(--sd-action-soft); }
